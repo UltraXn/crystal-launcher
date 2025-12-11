@@ -35,7 +35,7 @@ export default function Footer() {
                         <li><Link to="/#contests">Eventos</Link></li>
                         <li><Link to="/#stories">Historias</Link></li>
                         <li><Link to="/forum">Foro</Link></li>
-                        <li><Link to="/#donors" style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Donar / VIP</Link></li>
+                        <li><Link to="/#donors" style={{ color: 'var(--accent)', fontWeight: 'bold' }}>Donar</Link></li>
                     </ul>
                 </div>
 

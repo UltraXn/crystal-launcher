@@ -1,6 +1,49 @@
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 90px;
+    cursor: url('/cursor.png'), auto;
+}
+
+/* Custom Cursor */
+body {
+    cursor: url('/cursor.png'), auto;
+}
+
+a,
+button,
+.nav-btn,
+.menu-trigger,
+.btn,
+.btn-copy-box,
+.social-link {
+    cursor: url('/cursor.png'), pointer;
+}
+
+/* Animations */
+@keyframes glow-pulse {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 4px rgba(109, 165, 192, 0.3));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 10px rgba(15, 150, 156, 0.6));
+    }
+
+    100% {
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 4px rgba(109, 165, 192, 0.3));
+    }
+}
+
+@keyframes jump {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
 }
 
 .navbar {
@@ -28,6 +71,14 @@ html {
     text-transform: uppercase;
 }
 
+/* Updated Hover Pulse Effect */
+.navbar-brand:hover h2,
+.footer-section:hover h3 {
+    animation: glow-pulse 1.5s infinite alternate;
+}
+
+
+
 .navbar-brand {
     display: flex;
     align-items: center;
@@ -47,6 +98,12 @@ html {
     align-items: center;
 }
 
+/* Footer Logo Jump Animation */
+.footer-logo:hover {
+    animation: jump 0.6s ease;
+    cursor: pointer;
+}
+
 .nav-links a {
     color: var(--muted);
     font-size: 0.9rem;
@@ -58,6 +115,7 @@ html {
 
 .nav-links a:hover {
     color: var(--accent);
+    text-shadow: 0 0 8px currentColor;
 }
 
 /* Dropdown */
@@ -534,7 +592,7 @@ html {
     justify-content: center;
     align-items: center;
     gap: 1rem;
-    background: linear-gradient(to right, #6DA5C0, #0F969C, #0C7075, #072E33, #0F969C);
+    background: linear-gradient(to right, #6DA5C0, #0F969C, #0C7075, #0F969C);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1324,6 +1382,7 @@ html {
     margin-bottom: 1.5rem;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -1756,7 +1815,7 @@ html {
     overflow: hidden;
     transition: transform 0.3s ease;
     position: relative;
-    group-hover: scale(1.05);
+    /* group-hover is a tailwind concept, removed as invalid here */
 }
 
 .place-card:hover {
