@@ -31,10 +31,12 @@ export default function Navbar() {
                 <Link to="/">
                     <img
                         ref={logoRef}
-                        src="/logo.png"
+                        src="/logo.webp"
                         alt="Crystal Tides SMP Logo"
                         className="navbar-logo"
                         onMouseEnter={handleLogoHover}
+                        width="40"
+                        height="40"
                     />
                 </Link>
             </div>

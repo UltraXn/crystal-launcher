@@ -14,7 +14,7 @@ export default function Footer() {
             <div className="footer-content">
                 <div className="footer-section brand-section">
                     <Link to="/" onClick={scrollToTop} style={{ textDecoration: 'none' }}>
-                        <h3><img src="/logo.png" alt="Crystal Tides SMP Logo" className="footer-logo" />CrystalTides SMP</h3>
+                        <h3><img src="/logo.webp" alt="Crystal Tides SMP Logo" className="footer-logo" width="50" height="50" />CrystalTides SMP</h3>
                     </Link>
                     <p className="slogan">¡La mejor opción es diversión en Crystal Tides SMP!</p>
                 </div>
