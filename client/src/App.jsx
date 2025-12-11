@@ -13,6 +13,8 @@ import Suggestions from "@/pages/Suggestions"
 import Account from "@/pages/Account"
 import Login from "@/pages/Login"
 import Register from "@/pages/Register"
+import Map from "@/pages/Map"
+import NewsPage from "@/pages/NewsPage"
 import NotFound from "@/pages/NotFound"
 
 import Stories from "@/pages/Stories"
@@ -58,6 +60,8 @@ export default function App() {
         <Route path="/account" element={<Account />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/news" element={<NewsPage />} />
+        <Route path="/map" element={<Map />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 

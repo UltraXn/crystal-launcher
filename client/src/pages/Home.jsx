@@ -13,7 +13,7 @@ export default function Home() {
                         Si quieres sentir el pulso de este mundo más de cerca, únete a la corriente: acompaña a Killubysmali en su canal de Twitch y sumérgete en la calidez colectiva del Discord de La Pecerita de killu. Allí comienza realmente la aventura, donde cada voz importa y cada presencia deja huella.</p>
                 </AnimatedSection>
 
-                <AnimatedSection delay={200}>
+                <AnimatedSection>
                     <ServerWidgets />
                 </AnimatedSection>
             </Section>
