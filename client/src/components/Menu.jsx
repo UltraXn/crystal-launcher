@@ -87,18 +87,14 @@ export default function Menu() {
                 <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} ref={addToRefs}></div>
 
                 <Link to="/#rules" className="menu-item" onClick={closeMenu} ref={addToRefs}>Reglas</Link>
-                <Link to="/#donors" className="menu-item" onClick={closeMenu} ref={addToRefs}>Donadores</Link>
-                <Link to="/map" className="menu-item" onClick={closeMenu} ref={addToRefs}>Mapa Online 🗺️</Link>
-
-                <div
-                    style={{ padding: '0.5rem 1rem 0.2rem', fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '0.5rem' }}
-                    ref={addToRefs}
-                >
-                    Sobre el Servidor
-                </div>
                 <Link to="/#news" className="menu-item" onClick={closeMenu} ref={addToRefs}>Noticias</Link>
                 <Link to="/#contests" className="menu-item" onClick={closeMenu} ref={addToRefs}>Eventos</Link>
-                <Link to="/#stories" className="menu-item" onClick={closeMenu} ref={addToRefs}>Explorar</Link>
+                <Link to="/#stories" className="menu-item" onClick={closeMenu} ref={addToRefs}>Historias</Link>
+                <Link to="/map" className="menu-item" onClick={closeMenu} ref={addToRefs}>Mapa Online 🗺️</Link>
+
+                <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} ref={addToRefs}></div>
+
+                <Link to="/#donors" className="menu-item" style={{ color: 'var(--accent)', fontWeight: 'bold' }} onClick={closeMenu} ref={addToRefs}>Donadores 💎</Link>
                 <Link to="/#suggestions" className="menu-item" onClick={closeMenu} ref={addToRefs}>Sugerencias</Link>
             </div>
         </div>
