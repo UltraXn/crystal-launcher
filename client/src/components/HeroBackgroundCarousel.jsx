@@ -29,6 +29,8 @@ const HeroBackgroundCarousel = () => {
                             src={src}
                             alt={`Background ${index + 1}`}
                             className="hero-bg-image"
+                            fetchPriority={index === 0 ? "high" : "auto"}
+                            loading={index === 0 ? "eager" : "lazy"}
                         />
                         <div className="hero-bg-overlay"></div>
                     </div>
