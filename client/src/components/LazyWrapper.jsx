@@ -1,9 +1,9 @@
 import { useIntersectionObserver } from '../hooks/useIntersectionObserver'
 
-export default function LazyWrapper({ children, minHeight = "200px" }) {
+export default function LazyWrapper({ children, minHeight = "200px", rootMargin = "200px 0px" }) {
     const [ref, isVisible] = useIntersectionObserver({
         triggerOnce: true,
-        rootMargin: "200px 0px" // Start loading 200px before the element enters the viewport
+        rootMargin: rootMargin
     })
 
     return (

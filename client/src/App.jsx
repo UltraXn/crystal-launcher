@@ -43,7 +43,7 @@ export default function App() {
               </LazyWrapper>
             </div>
             <div id="donors">
-              <LazyWrapper minHeight="60vh">
+              <LazyWrapper minHeight="60vh" rootMargin="600px 0px">
                 <Donors />
               </LazyWrapper>
             </div>
