@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, Suspense, lazy } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'
 
-import SkinViewer from './SkinViewer'
+const SkinViewer = lazy(() => import('./SkinViewer'))
 
 const EmblaCarousel = (props) => {
     const { slides, options } = props
@@ -26,7 +26,21 @@ const EmblaCarousel = (props) => {
                             <div className="donor-card">
                                 <div className="donor-card-image-container">
                                     <div className="donor-card-overlay"></div>
-                                    <SkinViewer skinUrl={donor.image} width={150} height={250} />
+                                    <Suspense fallback={
+                                        <div style={{
+                                            width: 150,
+                                            height: 250,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'rgba(255,255,255,0.5)',
+                                            fontSize: '0.8rem'
+                                        }}>
+                                            Cargando...
+                                        </div>
+                                    }>
+                                        <SkinViewer skinUrl={donor.image} width={150} height={250} />
+                                    </Suspense>
                                 </div>
                                 <div className="donor-card-content">
                                     <h3>{donor.name}</h3>
