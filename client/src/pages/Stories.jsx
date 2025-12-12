@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { FaMapPin, FaQuestion, FaTimes, FaUser } from "react-icons/fa"
 import Section from "@/components/Section"
-import AnimatedSection from "@/components/AnimatedSection"
+
 import { motion, AnimatePresence } from "framer-motion"
 
 const PLACES = [
@@ -44,7 +44,7 @@ export default function Stories() {
 
     return (
         <Section title="lugares y lore">
-            <AnimatedSection>
+            <Section>
                 <div style={{ textAlign: "center", marginBottom: "3rem", color: "var(--muted)", maxWidth: "600px", margin: "0 auto 3rem" }}>
                     <p>Descubre los puntos de interés de nuestro mundo. Haz clic en las tarjetas para ver los detalles.</p>
                 </div>
@@ -80,7 +80,7 @@ export default function Stories() {
                         </div>
                     ))}
                 </div>
-            </AnimatedSection>
+            </Section>
 
             {/* MODAL / LIGHTBOX */}
             <AnimatePresence>

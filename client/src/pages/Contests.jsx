@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import Section from "@/components/Section"
-import AnimatedSection from "@/components/AnimatedSection"
+
 import { FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning } from "react-icons/fa"
 import anime from "animejs/lib/anime.es.js"
 
@@ -69,12 +69,12 @@ export default function Contests() {
 
     return (
         <Section title="concursos y eventos">
-            <AnimatedSection>
+            <Section>
                 <p style={{ textAlign: "center", maxWidth: "700px", margin: "0 auto 3rem", color: "var(--muted)" }}>
                     Participa en nuestros eventos regulares para ganar premios exclusivos, rangos temporales y objetos únicos.
                     ¡La competición es parte de nuestra esencia!
                 </p>
-            </AnimatedSection>
+            </Section>
 
             <div className="contests-grid">
                 {CONTESTS_DATA.map(contest => (

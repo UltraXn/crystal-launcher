@@ -1,7 +1,7 @@
 import { FaCalendarAlt, FaArrowRight, FaTag } from "react-icons/fa"
 import { Link } from "react-router-dom"
 import Section from "@/components/Section"
-import AnimatedSection from "@/components/AnimatedSection"
+
 
 const NEWS = [
     {
@@ -56,7 +56,7 @@ const NewsCard = ({ article }) => (
 export default function Blog() {
     return (
         <Section title="noticias y anuncios">
-            <AnimatedSection>
+            <Section>
                 <div className="news-grid">
                     {NEWS.map(article => (
                         <NewsCard key={article.id} article={article} />
@@ -68,7 +68,7 @@ export default function Blog() {
                         Ver Historial Completo
                     </Link>
                 </div>
-            </AnimatedSection>
+            </Section>
         </Section>
     )
 }

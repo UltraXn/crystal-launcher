@@ -2,7 +2,7 @@ import Section from "@/components/Section"
 import EmblaCarousel from "@/components/EmblaCarousel"
 import { KoFiButton } from "@/components/KoFi"
 import DonationFeed from "@/components/DonationFeed"
-import AnimatedSection from "@/components/AnimatedSection"
+
 
 const DONORS = [
     {
@@ -71,23 +71,23 @@ const OPTIONS = { loop: true }
 export default function Donors() {
     return (
         <Section title={<span><img src="/kiru.png" alt="icon" style={{ height: '1.5em', verticalAlign: 'middle', marginRight: '0.5rem' }} /> Hall de Donadores ✨</span>}>
-            <AnimatedSection>
+            <Section>
                 <p style={{ marginBottom: "2rem" }}>Mantener un servidor de calidad requiere pasión, tiempo y recursos. Las personas listadas a continuación han decidido ir un paso más allá para asegurar la estabilidad y el futuro de CrystalTides. El 100% de estas contribuciones se destinan al mantenimiento del host, desarrollo de plugins y mejoras de infraestructura. ¡Gracias por creer en nosotros! 💜.</p>
-            </AnimatedSection>
+            </Section>
 
-            <AnimatedSection delay={200}>
+            <Section delay={200}>
                 <div style={{ marginBottom: '3rem' }}>
                     <h3 style={{ textAlign: 'center', marginBottom: '2rem', color: 'var(--accent)' }}>Últimas Donaciones</h3>
                     <DonationFeed />
                 </div>
-            </AnimatedSection>
+            </Section>
 
-            <AnimatedSection delay={400}>
+            <Section delay={400}>
                 <div style={{ marginBottom: "3rem", display: "flex", justifyContent: "center", gap: "1rem", flexWrap: "wrap" }}>
                     <div style={{ transform: 'translateY(-2px)' }}><KoFiButton /></div>
                 </div>
                 <EmblaCarousel slides={DONORS} options={OPTIONS} />
-            </AnimatedSection>
+            </Section>
         </Section>
     )
 }

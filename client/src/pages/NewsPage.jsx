@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { FaCalendarAlt, FaTag, FaSearch, FaArrowRight } from "react-icons/fa"
-import AnimatedSection from "@/components/AnimatedSection"
+import Section from "@/components/Section"
 
 // Mock Data
 const ALL_NEWS = [
@@ -68,7 +68,7 @@ export default function NewsPage() {
             <div className="container">
 
                 {/* Header */}
-                <AnimatedSection>
+                <Section>
                     <div style={{ textAlign: "center", marginBottom: "4rem" }}>
                         <h1 className="section-title">Novedades Crystal Tides</h1>
                         <p style={{ color: "var(--muted)", maxWidth: "600px", margin: "0 auto" }}>
@@ -120,12 +120,12 @@ export default function NewsPage() {
                             />
                         </div>
                     </div>
-                </AnimatedSection>
+                </Section>
 
                 {/* News Grid */}
                 <div className="news-grid-page" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "2rem" }}>
                     {filteredNews.map(news => (
-                        <AnimatedSection key={news.id} animation="fadeInUp">
+                        <Section key={news.id}>
                             <article className="news-card-full" style={{
                                 background: "rgba(30, 30, 40, 0.6)",
                                 borderRadius: "12px",
@@ -160,7 +160,7 @@ export default function NewsPage() {
                                     </a>
                                 </div>
                             </article>
-                        </AnimatedSection>
+                        </Section>
                     ))}
 
                     {filteredNews.length === 0 && (

@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { FaPaperPlane, FaPoll, FaCheckCircle } from "react-icons/fa"
 import Section from "@/components/Section"
-import AnimatedSection from "@/components/AnimatedSection"
+
 import { activePoll } from "@/data/pollData"
 
 export default function Suggestions() {
@@ -21,7 +21,7 @@ export default function Suggestions() {
 
     return (
         <Section title="sugerencias y encuestas">
-            <AnimatedSection>
+            <Section>
                 <div className="suggestions-layout">
 
                     {/* IZQUIERDA: FORMULARIO */}
@@ -101,7 +101,7 @@ export default function Suggestions() {
                     </div>
 
                 </div>
-            </AnimatedSection>
+            </Section>
         </Section>
     )
 }
