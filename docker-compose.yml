@@ -1,0 +1,22 @@
+services:
+  # Frontend (React + Vite + Nginx)
+  frontend:
+    # Imagen en GitHub Container Registry
+    image: ghcr.io/ultraxn/crystaltides-frontend:latest
+    build: ./client
+    ports:
+      - "5173:80" # Map host 5173 to container 80
+    depends_on:
+      - backend
+    restart: always
+
+  # Backend (Express)
+  backend:
+    # Imagen en GitHub Container Registry
+    image: ghcr.io/ultraxn/crystaltides-backend:latest
+    build: ./server
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./server/.env # Load environment variables from this file
+    restart: always

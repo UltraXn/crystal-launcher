@@ -96,6 +96,16 @@ const banUser = async (req, res) => {
     }
 };
 
+const deleteTicket = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await ticketService.deleteTicket(id);
+        res.json({ message: "Ticket deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getAllTickets,
     createTicket,
@@ -103,5 +113,6 @@ module.exports = {
     getStats,
     getMessages,
     addMessage,
-    banUser
+    banUser,
+    deleteTicket
 };

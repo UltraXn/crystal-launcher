@@ -193,7 +193,7 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }) {
     const [messages, setMessages] = useState([])
     const [newMessage, setNewMessage] = useState('')
     const [sending, setSending] = useState(false)
-    const messagesEndRef = useRef(null)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false) // New state for delete confirmation
 
     // Load messages
     useEffect(() => {
@@ -230,6 +230,14 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }) {
         }
     }
 
+    const handleDelete = async () => {
+        await fetch(`${API_URL}/tickets/${ticket.id}`, {
+            method: 'DELETE'
+        });
+        refreshTickets();
+        onClose();
+    }
+
     const handleAction = async (action) => {
         if (action === 'ban') {
             const username = prompt("Ingresa el nombre de Usuario de Minecraft a banear:")
@@ -243,6 +251,11 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }) {
             })
             alert(`Comando de ban enviado para ${username}`)
             return
+        }
+
+        if (action === 'delete') {
+            setShowDeleteConfirm(true) // Show confirmation modal
+            return;
         }
 
         // Status update
@@ -260,7 +273,20 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }) {
     }
 
     return (
-        <div className="modal-overlay">
+        <div className="modal-overlay" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            {showDeleteConfirm && (
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="admin-card" style={{ width: '400px', background: '#1a1a1a', border: '1px solid #444', padding: '2rem', textAlign: 'center' }}>
+                        <h3 style={{ marginBottom: '1rem', color: '#fff' }}>¿Eliminar Ticket?</h3>
+                        <p style={{ color: '#aaa', marginBottom: '1.5rem' }}>¿Estás seguro de que deseas eliminar este ticket permanentemente? Esta acción no se puede deshacer.</p>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+                            <button onClick={() => setShowDeleteConfirm(false)} className="btn-secondary" style={{ padding: '0.5rem 1.5rem', cursor: 'pointer' }}>Conservar</button>
+                            <button onClick={handleDelete} className="btn-action delete" style={{ background: '#991b1b', padding: '0.5rem 1.5rem', cursor: 'pointer' }}>Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="admin-card modal-content" style={{ display: 'flex', flexDirection: 'column', height: '80vh', width: '800px' }}>
 
                 {/* Header */}
@@ -308,10 +334,11 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }) {
                 )}
 
                 {/* Action Bar */}
-                <div style={{ borderTop: '1px solid #333', paddingTop: '1rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <div style={{ borderTop: '1px solid #333', paddingTop: '1rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center' }}>
                     <button onClick={() => handleAction('ban')} className="btn-action ban"><FaGavel /> Banear</button>
                     <button onClick={() => handleAction('resolve')} className="btn-action resolve"><FaCheckCircle /> Resolver</button>
                     <button onClick={() => handleAction('close')} className="btn-action close"><FaLock /> Cerrar</button>
+                    <button onClick={() => handleAction('delete')} className="btn-action delete" style={{ background: '#991b1b' }}><FaTimes /> Eliminar</button>
                 </div>
             </div>
         </div>

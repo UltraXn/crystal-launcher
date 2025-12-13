@@ -139,5 +139,14 @@ module.exports = {
     getUserTickets,
     getTicketStats,
     getTicketMessages,
-    addTicketMessage
+    addTicketMessage,
+    deleteTicket: async (ticketId) => {
+        const { error } = await supabase
+            .from('tickets')
+            .delete()
+            .eq('id', ticketId);
+
+        if (error) throw error;
+        return { message: "Ticket deleted successfully" };
+    }
 };
