@@ -250,7 +250,9 @@
         "loading": "Cargando noticias...",
         "view_all": "Ver noticias y anuncios",
         "read_more": "Leer más",
-        "empty": "Sin descripción"
+        "empty": "Sin descripción",
+        "no_news": "No hay anuncios recientes",
+        "stay_tuned": "Mantente atento a próximas actualizaciones."
     },
     "stories": {
         "title": "Lugares y Lore",
@@ -298,7 +300,8 @@
         "total_votes": "Total de votos",
         "closes_in": "Cierra en",
         "suggest_poll": "Sugerir Encuesta",
-        "other_idea": "¿Tienes otra idea para encuesta?"
+        "other_idea": "¿Tienes otra idea para encuesta?",
+        "no_active_poll": "No hay encuestas activas en este momento."
     },
     "account": {
         "avatar": {

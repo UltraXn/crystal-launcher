@@ -161,7 +161,7 @@ export default function Suggestions() {
                         ) : !poll ? (
                             <div className="poll-card" style={{ textAlign: 'center', padding: '3rem', opacity: 0.7 }}>
                                 <FaExclamationTriangle size={32} style={{ marginBottom: '1rem' }} />
-                                <p>No hay encuestas activas en este momento.</p>
+                                <p>{t('suggestions.no_active_poll')}</p>
                             </div>
                         ) : (
                             <div className="poll-card">

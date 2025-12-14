@@ -97,8 +97,8 @@ export default function Blog() {
                                 onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
                             <FaTag size={40} style={{ display: 'none', color: '#6b7280', marginBottom: '1rem' }} /> {/* Fallback Icon */}
                             
-                            <h3 style={{ color: '#fff', fontSize: '1.2rem' }}>No hay anuncios recientes</h3>
-                            <p style={{ color: 'var(--muted)' }}>Mantente atento a próximas actualizaciones.</p>
+                            <h3 style={{ color: '#fff', fontSize: '1.2rem' }}>{t('blog.no_news')}</h3>
+                            <p style={{ color: 'var(--muted)' }}>{t('blog.stay_tuned')}</p>
                         </div>
                     )}
                 </div>

@@ -250,7 +250,9 @@
         "loading": "Loading news...",
         "view_all": "View news and announcements",
         "read_more": "Read more",
-        "empty": "No description"
+        "empty": "No description",
+        "no_news": "No recent announcements",
+        "stay_tuned": "Stay tuned for further updates."
     },
     "stories": {
         "title": "Places and Lore",
@@ -298,7 +300,8 @@
         "total_votes": "Total votes",
         "closes_in": "Closes in",
         "suggest_poll": "Suggest Poll",
-        "other_idea": "Have another idea for a poll?"
+        "other_idea": "Have another idea for a poll?",
+        "no_active_poll": "No active polls at the moment."
     },
     "account": {
         "avatar": {
