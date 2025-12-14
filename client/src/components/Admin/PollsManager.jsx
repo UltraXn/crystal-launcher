@@ -1,0 +1,196 @@
+import { useState, useEffect } from 'react'
+import { FaPoll, FaPlus, FaTimes, FaCheck, FaCheckCircle, FaSpinner, FaStopCircle, FaTrash } from 'react-icons/fa'
+
+const API_URL = import.meta.env.VITE_API_URL
+
+export default function PollsManager() {
+    const [activePoll, setActivePoll] = useState(null)
+    const [loading, setLoading] = useState(true)
+
+    // Form
+    const [title, setTitle] = useState('')
+    const [question, setQuestion] = useState('')
+    const [options, setOptions] = useState(['', ''])
+    const [creating, setCreating] = useState(false)
+    const [daysDuration, setDaysDuration] = useState(7)
+
+    // Fetch Active
+    const fetchActive = async () => {
+        setLoading(true)
+        try {
+            const res = await fetch(`${API_URL}/polls/active`)
+            if(res.ok) {
+                const data = await res.json()
+                setActivePoll(data) // returns null if no active poll
+            }
+        } catch(err) { console.error(err) }
+        finally { setLoading(false) }
+    }
+
+    useEffect(() => { fetchActive() }, [])
+
+    // Create Handler
+    const handleCreate = async (e) => {
+        e.preventDefault()
+        setCreating(true)
+        try {
+            const validOptions = options.filter(o => o.trim() !== '')
+            if (validOptions.length < 2) {
+                alert("Necesitas al menos 2 opciones")
+                setCreating(false)
+                return
+            }
+
+            const closesAt = new Date(Date.now() + daysDuration * 24 * 60 * 60 * 1000).toISOString()
+
+            const res = await fetch(`${API_URL}/polls/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    title, 
+                    question, 
+                    options: validOptions,
+                    closes_at: closesAt
+                })
+            })
+            
+            if(res.ok) {
+                setTitle('')
+                setQuestion('')
+                setOptions(['', ''])
+                fetchActive()
+                alert("Encuesta creada con éxito")
+            } else {
+                alert("Error al crear encuesta")
+            }
+        } catch(err) { console.error(err) }
+        finally { setCreating(false) }
+    }
+
+    // Close Handler
+    const handleClose = async () => {
+        if(!activePoll) return;
+        if(!window.confirm("¿Estás seguro de finalizar la encuesta activa?")) return
+        
+        try {
+            await fetch(`${API_URL}/polls/close/${activePoll.id}`, { method: 'POST' })
+            fetchActive()
+        } catch(err) { console.error(err) }
+    }
+
+    const updateOption = (idx, val) => {
+        const newOpts = [...options]
+        newOpts[idx] = val
+        setOptions(newOpts)
+    }
+
+    const removeOption = (idx) => {
+        const newOpts = options.filter((_, i) => i !== idx)
+        setOptions(newOpts)
+    }
+
+    return (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '1.5rem' }}>
+            
+            {/* COLUMN 1: ACTIVE POLL */}
+            <div className="admin-card">
+                <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <FaPoll /> Encuesta Activa
+                </h3>
+
+                {loading ? <div style={{textAlign:'center'}}><FaSpinner className="spin" /></div> : (
+                    activePoll ? (
+                        <div>
+                            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'1rem' }}>
+                                <span className="badge" style={{background:'#22c55e', color:'#000'}}>EN PROGRESO</span>
+                                <span style={{fontSize:'0.8rem', color:'#aaa'}}>Termina: {activePoll.closesIn}</span>
+                            </div>
+                            
+                            <h4 style={{marginBottom:'0.5rem', color:'var(--accent)'}}>{activePoll.title}</h4>
+                            <p style={{marginBottom:'1.5rem', fontSize:'1.1rem'}}>{activePoll.question}</p>
+
+                            <div style={{display:'flex', flexDirection:'column', gap:'0.5rem', marginBottom:'1.5rem'}}>
+                                {activePoll.options.map(opt => (
+                                    <div key={opt.id} style={{background:'rgba(255,255,255,0.05)', padding:'0.5rem', borderRadius:'4px', display:'flex', justifyContent:'space-between'}}>
+                                        <span>{opt.label}</span>
+                                        <span style={{fontWeight:'bold'}}>{opt.percent}% ({opt.votes} votos)</span>
+                                    </div>
+                                ))}
+                                <div style={{marginTop:'0.5rem', textAlign:'right', color:'#888', fontSize:'0.9rem'}}>
+                                    Total: {activePoll.totalVotes} votos
+                                </div>
+                            </div>
+
+                            <button onClick={handleClose} className="btn-secondary" style={{width:'100%', borderColor:'#ef4444', color:'#ef4444'}}>
+                                <FaStopCircle /> Finalizar Encuesta
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{textAlign:'center', padding:'3rem', color:'#666', border:'1px dashed #444', borderRadius:'8px'}}>
+                            <FaPoll size={32} style={{marginBottom:'1rem'}}/>
+                            <p>No hay ninguna encuesta activa.</p>
+                        </div>
+                    )
+                )}
+            </div>
+
+            {/* COLUMN 2: CREATE NEW */}
+            <div className="admin-card">
+                <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <FaCheckCircle /> Nueva Encuesta
+                </h3>
+
+                <form onSubmit={handleCreate}>
+                    <div className="form-group">
+                        <label className="admin-label">Título</label>
+                        <input className="admin-input" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ej: Votación Semanal" required />
+                    </div>
+                    
+                    <div className="form-group">
+                        <label className="admin-label">Pregunta</label>
+                        <textarea className="admin-input" value={question} onChange={e => setQuestion(e.target.value)} placeholder="¿Qué modo de juego prefieren?" required rows={3} style={{resize:'vertical'}}></textarea>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="admin-label">Opciones</label>
+                        <div style={{display:'flex', flexDirection:'column', gap:'0.5rem'}}>
+                            {options.map((opt, idx) => (
+                                <div key={idx} style={{display:'flex', gap:'0.5rem'}}>
+                                    <input 
+                                        className="admin-input" 
+                                        value={opt} 
+                                        onChange={e => updateOption(idx, e.target.value)} 
+                                        placeholder={`Opción ${idx + 1}`}
+                                        required
+                                    />
+                                    {options.length > 2 && (
+                                        <button type="button" onClick={() => removeOption(idx)} className="btn-icon delete" style={{height:'42px', width:'42px'}}>
+                                            <FaTimes />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <button type="button" onClick={() => setOptions([...options, ''])} className="btn-secondary" style={{marginTop:'0.5rem', width:'100%'}}>
+                            <FaPlus /> Añadir Opción
+                        </button>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="admin-label">Duración (Días)</label>
+                        <input className="admin-input" type="number" min="1" max="30" value={daysDuration} onChange={e => setDaysDuration(e.target.value)} />
+                    </div>
+
+                    <div style={{marginTop:'2rem', paddingTop:'1rem', borderTop:'1px solid #333'}}>
+                        {activePoll && <p style={{color:'#facc15', fontSize:'0.9rem', marginBottom:'1rem'}}>⚠️ Al crear una nueva encuesta, la actual se cerrará automáticamente.</p>}
+                        
+                        <button type="submit" className="btn-primary" style={{width:'100%'}} disabled={creating}>
+                            {creating ? <FaSpinner className="spin" /> : 'Lanzar Encuesta'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    )
+}

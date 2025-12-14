@@ -3,14 +3,6 @@ import { useParams, Link } from "react-router-dom"
 import { FaUser, FaComments, FaEye, FaClock, FaPen, FaThumbtack } from "react-icons/fa"
 import Loader from "@/components/UI/Loader"
 
-const mockThreads = {
-    2: [ // Discusión General (Mantenemos mock por ahora)
-        { id: 201, title: "¿Cuál es vuestra granja favorita?", author: "FarmerJoe", replies: 34, views: 210, lastActivity: "Hace 10 min", pinned: false },
-        { id: 202, title: "Busco equipo para la dungeon", author: "PvP_Master", replies: 5, views: 50, lastActivity: "Hace 2 horas", pinned: false },
-        { id: 203, title: "Opinión sobre la economía actual", author: "MerchantKing", replies: 89, views: 1500, lastActivity: "Hace 5 horas", pinned: false },
-    ]
-}
-
 const categoryNames = {
     1: "Anuncios y Noticias",
     2: "Discusión General",
@@ -23,7 +15,7 @@ export default function ForumCategory() {
     const [threads, setThreads] = useState([])
     const [loading, setLoading] = useState(true)
 
-    const categoryTitle = categoryNames[id] || "Categoría Desconocida"
+    const categoryTitle = categoryNames[id] || "Categoría"
     const API_URL = import.meta.env.VITE_API_URL
 
     useEffect(() => {
@@ -38,7 +30,7 @@ export default function ForumCategory() {
                         title: n.title,
                         author: "Staff",
                         replies: 0,
-                        views: n.views || 0, // Dato real de la DB
+                        views: n.views || 0,
                         lastActivity: new Date(n.created_at).toLocaleDateString(),
                         pinned: true,
                         tag: n.category
@@ -51,9 +43,27 @@ export default function ForumCategory() {
                     setLoading(false)
                 })
         } else {
-            // Use mock for others
-            setThreads(mockThreads[id] || [])
-            setLoading(false)
+            // Fetch real user threads
+            fetch(`${API_URL}/forum/category/${id}`)
+                .then(res => res.json())
+                .then(data => {
+                     const mappedThreads = Array.isArray(data) ? data.map(t => ({
+                         id: t.id,
+                         title: t.title,
+                         author: t.author_name || "Anónimo",
+                         replies: 0, // TODO: Count replies
+                         views: t.views || 0,
+                         lastActivity: new Date(t.created_at).toLocaleDateString(),
+                         pinned: t.pinned || false,
+                         tag: null // No tags in users threads for now
+                     })) : []
+                     setThreads(mappedThreads)
+                     setLoading(false)
+                })
+                .catch(err => {
+                    console.error(err)
+                    setLoading(false)
+                })
         }
     }, [id])
 
@@ -66,9 +76,9 @@ export default function ForumCategory() {
                 </div>
 
                 {id !== "1" && (
-                    <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Link to="/forum/create" className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration:'none' }}>
                         <FaPen /> Nuevo Tema
-                    </button>
+                    </Link>
                 )}
             </div>
 
@@ -80,11 +90,12 @@ export default function ForumCategory() {
                 ) : threads.length === 0 ? (
                     <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--bg-alt)', borderRadius: '12px', border: '1px dashed #444' }}>
                         <p style={{ color: 'var(--muted)' }}>No hay temas en esta categoría aún.</p>
+                        {id !== '1' && <Link to="/forum/create" style={{ color: 'var(--accent)', marginTop: '0.5rem', display: 'inline-block' }}>¡Sé el primero en crear uno!</Link>}
                     </div>
                 ) : (
                     <div className="threads-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                         {threads.map(thread => (
-                            <Link to={id === "1" ? `/forum/thread/${thread.id}` : "#"} key={thread.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Link to={`/forum/thread/${id === "1" ? 'news' : 'topic'}/${thread.id}`} key={thread.id} style={{ textDecoration: 'none', color: 'inherit' }}>
                                 <div className="thread-card" style={{
                                     background: 'var(--bg-alt)',
                                     padding: '1.2rem',

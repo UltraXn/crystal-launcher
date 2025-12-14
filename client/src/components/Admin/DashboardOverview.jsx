@@ -5,20 +5,38 @@ export default function DashboardOverview() {
     const [serverStats, setServerStats] = useState({ online: false, players: { online: 0, max: 0 }, ping: 0 })
     const API_URL = import.meta.env.VITE_API_URL
 
+    const [ticketStats, setTicketStats] = useState({ open: 0, urgent: 0 })
+    const [donationStats, setDonationStats] = useState({ currentMonth: "0.00", percentChange: 0 })
+
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchData = async () => {
             try {
-                const res = await fetch(`${API_URL}/minecraft/status`)
-                const data = await res.json()
-                setServerStats(data)
+                // Fetch Server Stats
+                const resServer = await fetch(`${API_URL}/minecraft/status`)
+                const dataServer = await resServer.json()
+                setServerStats(dataServer)
+
+                // Fetch Ticket Stats
+                const resTickets = await fetch(`${API_URL}/tickets/stats`)
+                if(resTickets.ok) {
+                    const dataTickets = await resTickets.json()
+                    setTicketStats(dataTickets)
+                }
+
+                // Fetch Donation Stats
+                const resDonations = await fetch(`${API_URL}/donations/stats`)
+                if(resDonations.ok) {
+                    const dataDonations = await resDonations.json()
+                    setDonationStats(dataDonations)
+                }
+
             } catch (error) {
-                console.error("Error loading server stats", error)
+                console.error("Error loading dashboard data", error)
             }
         }
 
-        fetchStats()
-        // Refresh every 30s
-        const interval = setInterval(fetchStats, 30000)
+        fetchData()
+        const interval = setInterval(fetchData, 30000)
         return () => clearInterval(interval)
     }, [])
 
@@ -43,15 +61,15 @@ export default function DashboardOverview() {
                 />
                 <StatCard
                     title="Tickets Pendientes"
-                    value="5"
-                    percent="2 de Alta Prioridad"
+                    value={ticketStats.open}
+                    percent={`${ticketStats.urgent} de Alta Prioridad`}
                     icon={<FaTicketAlt />}
                     color="#facc15"
                 />
                 <StatCard
                     title="Ingresos del Mes"
-                    value="$350.00"
-                    percent="+25% vs mes anter."
+                    value={`$${donationStats.currentMonth}`}
+                    percent={`${parseFloat(donationStats.percentChange) >= 0 ? '+' : ''}${donationStats.percentChange}% vs mes ant.`}
                     icon={<FaMoneyBillWave />}
                     color="#c084fc"
                 />

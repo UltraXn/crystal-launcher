@@ -9,70 +9,95 @@ import UsersManager from "@/components/Admin/UsersManager"
 import TicketsManager from "@/components/Admin/TicketsManager"
 import AuditLog from "@/components/Admin/AuditLog"
 import AdminNews from "@/components/Admin/AdminNews"
+import SuggestionsManager from "@/components/Admin/SuggestionsManager"
+import PollsManager from "@/components/Admin/PollsManager"
 
 export default function AdminPanel() {
     const { user, loading } = useAuth()
     const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState('overview')
 
-    // Simulación de verificación de Admin
-    const isAdmin = true
+    // Verificación Real de Permisos
+    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper']
+    const isAdmin = allowedRoles.includes(user?.user_metadata?.role)
 
     useEffect(() => {
         if (!loading && !user) navigate('/login')
     }, [user, loading, navigate])
 
-    if (loading) return <div className="section">Cargando panel...</div>
-    if (!isAdmin) return <div className="section"><h2>Acceso Denegado 🛑</h2><p>No tienes permisos de Administrador.</p></div>
+    if (loading) return <div className="admin-layout-full"><div className="section" style={{textAlign:'center', marginTop:'4rem'}}>Cargando panel...</div></div>
+    
+    if (!isAdmin) {
+        return (
+            <div style={{
+                height: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#0a0a0a',
+                color: '#ef4444',
+                flexDirection: 'column',
+                gap: '1rem',
+                zIndex: 9999
+            }}>
+                <FaShieldAlt size={64} />
+                <h1 style={{fontSize: '2rem'}}>ACCESO DENEGADO 🛑</h1>
+                <p style={{color: '#aaa'}}>No tienes los permisos necesarios para estar aquí.</p>
+                <button onClick={() => navigate('/')} className="btn-primary" style={{marginTop: '1rem'}}>
+                    Volver al Inicio
+                </button>
+            </div>
+        )
+    }
 
     return (
-        <div className="admin-container">
-            {/* Sidebar */}
-            <aside className="admin-sidebar">
-                <div className="admin-brand">
-                    <h3 style={{ color: 'var(--accent)', textTransform: 'uppercase', fontSize: '0.9rem', letterSpacing: '2px' }}>Crystal Panel</h3>
-                    <p style={{ color: '#666', fontSize: '0.8rem' }}>v1.1.0 Beta</p>
+        <div className="admin-layout-full">
+            <div className="admin-top-bar">
+                <div className="admin-brand-top">
+                    <h3 style={{ color: 'var(--accent)', textTransform: 'uppercase', margin: 0, letterSpacing: '2px' }}>Crystal Panel</h3>
+                    <span className="version-badge">v1.1.0 Beta</span>
                 </div>
 
-                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <AdminVerifyBtn active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<FaChartLine />} label="General" />
-                    <AdminVerifyBtn active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')} icon={<FaTicketAlt />} label="Tickets & Soporte" />
-                    <AdminVerifyBtn active={activeTab === 'users'} onClick={() => setActiveTab('users')} icon={<FaUsers />} label="Usuarios" />
-                    <AdminVerifyBtn active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<FaNewspaper />} label="Gestión Noticias" />
-                    <AdminVerifyBtn active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} icon={<FaHistory />} label="Registro de Acciones" />
-                    <div style={{ height: '1px', background: 'rgba(255,255,255,0.05)', margin: '1rem 0' }}></div>
-                    <AdminVerifyBtn active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<FaCogs />} label="Configuración" />
-                </nav>
-            </aside>
+                <div className="admin-user-profile">
+                     <div className="user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="user-name" style={{ fontSize: '1.2rem', marginBottom: '0.2rem', fontWeight: 'bold' }}>{user?.email?.split('@')[0] || 'Admin'}</span>
+                        <UserRoleDisplay role={user?.user_metadata?.role || 'user'} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="admin-nav-tabs">
+                <AdminTab active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} label="General" />
+                <AdminTab active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')} label="Tickets" />
+                <AdminTab active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuarios" />
+                <AdminTab active={activeTab === 'suggestions'} onClick={() => setActiveTab('suggestions')} label="Sugerencias" />
+                <AdminTab active={activeTab === 'polls'} onClick={() => setActiveTab('polls')} label="Encuestas" />
+                <AdminTab active={activeTab === 'news'} onClick={() => setActiveTab('news')} label="Noticias" />
+                <AdminTab active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} label="Logs" />
+                <AdminTab active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Config" />
+            </div>
 
             {/* Main Content */}
-            <main className="admin-content">
-                <div className="admin-header">
-                    <div>
-                        <h2 style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>
-                            {activeTab === 'overview' && 'Dashboard General'}
-                            {activeTab === 'tickets' && 'Centro de Tickets'}
-                            {activeTab === 'users' && 'Gestión de Usuarios'}
-                            {activeTab === 'news' && 'Editor de Noticias'}
-                            {activeTab === 'logs' && 'Registro de Auditoría'}
-                            {activeTab === 'settings' && 'Configuración del Sitio'}
-                        </h2>
-                        <p style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>Bienvenido al panel de control administrativo.</p>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ textAlign: 'right' }}>
-                            <div style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{user?.email?.split('@')[0] || 'Admin'}</div>
-                            <div style={{ fontSize: '0.8rem', color: '#666' }}>Super Admin</div>
-                        </div>
-                        <div style={{ width: '40px', height: '40px', background: 'var(--accent)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-                            <FaShieldAlt />
-                        </div>
-                    </div>
+            <main className="admin-content-full">
+                 <div className="section-header">
+                    <h2>
+                        {activeTab === 'overview' && 'Dashboard General'}
+                        {activeTab === 'tickets' && 'Centro de Tickets'}
+                        {activeTab === 'users' && 'Gestión de Usuarios'}
+                        {activeTab === 'suggestions' && 'Buzón de Sugerencias'}
+                        {activeTab === 'polls' && 'Gestor de Encuestas'}
+                        {activeTab === 'news' && 'Editor de Noticias'}
+                        {activeTab === 'logs' && 'Registro de Auditoría'}
+                        {activeTab === 'settings' && 'Configuración del Sitio'}
+                    </h2>
+                     <p className="section-subtitle">Panel de control administrativo</p>
                 </div>
 
                 {activeTab === 'overview' && <DashboardOverview />}
                 {activeTab === 'tickets' && <TicketsManager />}
                 {activeTab === 'users' && <UsersManager />}
+                {activeTab === 'suggestions' && <SuggestionsManager />}
+                {activeTab === 'polls' && <PollsManager />}
                 {activeTab === 'news' && <AdminNews user={user} />}
                 {activeTab === 'logs' && <AuditLog />}
                 {activeTab === 'settings' && <div className="admin-card">Configuraciones globales del sitio (Mantenimiento, Textos, etc) - Próximamente</div>}
@@ -81,13 +106,39 @@ export default function AdminPanel() {
     )
 }
 
-function AdminVerifyBtn({ active, onClick, icon, label }) {
+function AdminTab({ active, onClick, label }) {
     return (
         <button
-            className={`admin-nav-btn ${active ? 'active' : ''}`}
+            className={`admin-tab-btn ${active ? 'active' : ''}`}
             onClick={onClick}
         >
-            <span className="admin-icon">{icon}</span> {label}
+            {label}
         </button>
+    )
+}
+
+function UserRoleDisplay({ role }) {
+    const roles = {
+        neroferno: { label: 'Neroferno', color: '#8b5cf6', img: '/ranks/rank-neroferno.png' },
+        killu: { label: 'Killu', color: '#ec4899', img: '/ranks/rank-killu.png' },
+        founder: { label: 'Fundador', color: '#a855f7', img: '/ranks/rank-fundador.png' },
+        admin: { label: 'Admin', color: '#f59e0b', img: '/ranks/admin.png' },
+        helper: { label: 'Helper', color: '#3b82f6', img: '/ranks/helper.png' },
+        donor: { label: 'Donador', color: '#22c55e', img: '/ranks/rank-donador.png' },
+        user: { label: 'Usuario', img: '/ranks/user.png' }
+    }
+
+    const current = roles[role] || roles.user
+
+    if(current.img) {
+        // Display only image at original size (natural size)
+        return <img src={current.img} alt={current.label} />
+    }
+
+    return (
+        <span className="user-role" style={{ color: current.color, display:'flex', alignItems:'center', gap:'0.5rem', justifyContent:'flex-end' }}>
+             <span style={{ fontSize: '1.2rem' }}>{current.icon}</span>
+             <span style={{ fontWeight: 'bold' }}>{current.label}</span>
+        </span>
     )
 }

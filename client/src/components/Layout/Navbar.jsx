@@ -118,8 +118,9 @@ export default function Navbar() {
         navigate('/')
     }
 
-    // Check if admin (Simulated for now)
-    const isAdmin = true // user?.user_metadata?.role === 'admin'
+    // Check if admin (Allowed roles: admin, neroferno, killu, helper)
+    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper']
+    const isAdmin = allowedRoles.includes(user?.user_metadata?.role)
 
     return (
         <header className="navbar">
@@ -141,7 +142,6 @@ export default function Navbar() {
                 <Menu />
 
                 <div className="nav-right-section">
-                    {/* Selector de Idioma */}
                     {/* Selector de Idioma */}
                     <div className="language-selector">
                         <button
@@ -181,7 +181,7 @@ export default function Navbar() {
 
                                 {/* Dropdown Menu - ALWAYS RENDERED but visibility controlled by anime.js */}
                                 <div
-                                    className="profile-dropdown-menu"
+                                    className="menu-dropdown"
                                     ref={userDropdownRef}
                                     style={{
                                         visibility: 'hidden', // Controlled by anime.js
@@ -190,29 +190,31 @@ export default function Navbar() {
                                     }}
                                 >
                                     <div className="dropdown-header" ref={addToUserRefs}>
-                                        <span className="dropdown-role">{user.user_metadata?.role || 'Aventurero'}</span>
-                                    </div>
-                                    <Link to="/account" className="dropdown-item" onClick={closeUserDropdown} ref={addToUserRefs}>
+                                         <div className="dropdown-role" style={{ display:'flex', justifyContent:'center', marginBottom: '0.5rem' }}>
+                                             <UserRoleDisplay role={user.user_metadata?.role || 'user'} />
+                                         </div>
+                                     </div>
+                                    <Link to="/account" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs}>
                                         <FaCog /> {t('navbar.account')}
                                     </Link>
-                                    <Link to="/account?tab=achievements" className="dropdown-item" onClick={closeUserDropdown} ref={addToUserRefs}>
+                                    <Link to="/account?tab=achievements" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs}>
                                         <FaTrophy /> {t('navbar.achievements')}
                                     </Link>
-                                    <Link to="/account?tab=posts" className="dropdown-item" onClick={closeUserDropdown} ref={addToUserRefs}>
+                                    <Link to="/account?tab=posts" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs}>
                                         <FaEdit /> {t('navbar.forum')}
                                     </Link>
 
                                     {isAdmin && (
                                         <>
                                             <div className="dropdown-divider"></div>
-                                            <Link to="/admin" className="dropdown-item admin-link" onClick={closeUserDropdown} ref={addToUserRefs}>
+                                            <Link to="/admin" className="menu-item admin-link" onClick={closeUserDropdown} ref={addToUserRefs}>
                                                 <FaShieldAlt /> Panel Admin
                                             </Link>
                                         </>
                                     )}
 
                                     <div className="dropdown-divider"></div>
-                                    <button className="dropdown-item logout-link" onClick={handleLogout} ref={addToUserRefs}>
+                                    <button className="menu-item logout-link" onClick={handleLogout} ref={addToUserRefs}>
                                         <FaSignOutAlt /> Cerrar Sesión
                                     </button>
                                 </div>
@@ -227,5 +229,36 @@ export default function Navbar() {
                 </div>
             </div>
         </header>
+    )
+}
+
+function UserRoleDisplay({ role }) {
+    const roles = {
+        neroferno: { label: 'Neroferno', img: '/ranks/rank-neroferno.png' },
+        killu: { label: 'Killu', img: '/ranks/rank-killu.png' },
+        founder: { label: 'Fundador', img: '/ranks/rank-fundador.png' },
+        admin: { label: 'Admin', img: '/ranks/admin.png' },
+        helper: { label: 'Helper', img: '/ranks/helper.png' },
+        donor: { label: 'Donador', img: '/ranks/rank-donador.png' },
+        user: { label: 'Usuario', img: '/ranks/user.png' }
+    }
+    const current = roles[role] || roles.user
+
+    if(current.img) {
+        return <img src={current.img} alt={role} />
+    }
+
+    return (
+        <span style={{
+            background: current.color || '#333',
+            color: '#fff',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            fontSize: '0.75rem',
+            fontWeight: 'bold',
+            textTransform: 'uppercase'
+        }}>
+            {current.icon} {current.label}
+        </span>
     )
 }

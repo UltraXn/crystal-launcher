@@ -1,4 +1,5 @@
 const ticketService = require('../services/ticketService');
+const logService = require('../services/logService');
 
 // Admin: Get all tickets
 const getAllTickets = async (req, res) => {
@@ -20,6 +21,16 @@ const createTicket = async (req, res) => {
         }
 
         const ticket = await ticketService.createTicket(user_id, { subject, description, priority });
+        
+        // Log
+        logService.createLog({
+            user_id,
+            username: 'User', // TODO: Fetch real username
+            action: 'CREATE_TICKET',
+            details: `Ticket #${ticket.id}: ${subject}`,
+            source: 'web'
+        }).catch(console.error);
+
         res.status(201).json(ticket);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -33,6 +44,14 @@ const updateStatus = async (req, res) => {
         const { status } = req.body;
 
         const ticket = await ticketService.updateTicketStatus(id, status);
+        
+        logService.createLog({
+            username: 'Staff', // TODO: Get from auth middleware
+            action: 'UPDATE_STATUS',
+            details: `Ticket #${id} status changed to ${status}`,
+            source: 'web'
+        }).catch(console.error);
+
         res.json(ticket);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -87,6 +106,13 @@ const banUser = async (req, res) => {
         const result = await minecraftService.sendCommand(cmd);
 
         if (result.success) {
+            logService.createLog({
+                username: 'Staff',
+                action: 'BAN_USER',
+                details: `Banned user ${username}. Reason: ${reason || 'N/A'}`,
+                source: 'web'
+            }).catch(console.error);
+
             res.json({ message: `User ${username} banned successfully` });
         } else {
             res.status(500).json({ error: result.error });
@@ -100,6 +126,14 @@ const deleteTicket = async (req, res) => {
     try {
         const { id } = req.params;
         await ticketService.deleteTicket(id);
+
+        logService.createLog({
+            username: 'Staff',
+            action: 'DELETE_TICKET',
+            details: `Deleted ticket #${id}`,
+            source: 'web'
+        }).catch(console.error);
+
         res.json({ message: "Ticket deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });

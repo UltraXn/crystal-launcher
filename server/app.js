@@ -23,6 +23,12 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/news', newsRoutes);
 app.use('/api/minecraft', minecraftRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/logs', require('./routes/logRoutes'));
+app.use('/api/donations', require('./routes/donationRoutes'));
+app.use('/api/suggestions', require('./routes/suggestionRoutes'));
+app.use('/api/polls', require('./routes/pollRoutes'));
+app.use('/api/forum', require('./routes/forumRoutes'));
 
 // Base route
 app.get('/', (req, res) => {

@@ -241,6 +241,32 @@ button,
     transform: translateX(3px);
 }
 
+.admin-link {
+    color: #f59e0b; /* Amber/Orange */
+    font-weight: 700;
+}
+
+.admin-link:hover {
+    color: #fff;
+    background: rgba(245, 158, 11, 0.2);
+}
+
+.logout-link {
+    width: 100%; /* Full width */
+    text-align: left;
+    background: rgba(239, 68, 68, 0.1); /* Red tint */
+    color: #ef4444; /* Red Text */
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    justify-content: center; /* Center content if needed, or flex-start */
+    font-weight: 600;
+}
+
+.logout-link:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+}
+
 /* Forms */
 .form-group {
     margin-bottom: 1.5rem;
@@ -662,4 +688,30 @@ button,
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
     border-bottom: 6px solid rgba(0, 0, 0, 0.2);
+}
+
+/* User Dropdown Header (Role) */
+.dropdown-header {
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: flex-end; /* Align role to right */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.dropdown-role {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--accent);
+    letter-spacing: 1px;
+    background: rgba(109, 165, 192, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0.5rem 0;
 }

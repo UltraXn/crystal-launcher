@@ -269,8 +269,16 @@
 .nav-right-section {
     display: flex;
     align-items: center;
-    margin-left: auto;
     gap: 1.5rem;
+    position: relative;
+    /* Ensure no collapsing */
+    flex-shrink: 0; 
+    margin-left: auto;
+}
+
+.user-dropdown-container {
+    position: relative; /* Context for absolute dropdown */
+    display: inline-block;
 }
 
 .language-selector {
@@ -318,6 +326,23 @@
     margin: 0;
 }
 
+
 .nav-right-section .nav-auth {
     margin-left: 0;
+}
+
+/* User Avatar & Dropdown fixes */
+.user-mini-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px; /* Estilo Minecraft */
+    object-fit: cover;
+}
+
+.nav-auth .nav-btn.primary {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
 }

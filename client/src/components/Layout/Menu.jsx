@@ -110,9 +110,11 @@ export default function Menu() {
 
                 <Link to="/#rules" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.rules')}</Link>
                 <Link to="/#donors" className="menu-item" style={{ color: 'var(--accent)', fontWeight: 'bold' }} onClick={closeMenu} ref={addToRefs}>{t('navbar.donors')} 💎</Link>
+                <div className="dropdown-divider"></div>
                 <Link to="/#contests" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.contests')}</Link>
                 <Link to="/#news" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.news')}</Link>
                 <Link to="/#stories" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.stories')}</Link>
+                <div className="dropdown-divider"></div>
                 <Link to="/#suggestions" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.suggestions')}</Link>
                 <Link to="/forum" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.forum')} 💬</Link>
                 <Link to="/map" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('footer.online_map')} 🗺️</Link>

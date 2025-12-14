@@ -21,6 +21,9 @@
 /* 7. Page Specific Styles */
 @import './styles/pages.css';
 
+/* 8. Admin Panel Styles */
+@import './styles/admin.css';
+
 /* Compatibility: Import legacy styles-patch if absolutely needed,
    but ideally everything should be moved to modules above.
    For now, we assume modules cover patch content.

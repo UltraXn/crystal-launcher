@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom"
 import LazyWrapper from "@/components/Utils/LazyWrapper"
 
 import Navbar from "@/components/Layout/Navbar"
@@ -22,6 +22,7 @@ import Stories from "@/pages/Stories"
 import Forum from "@/pages/Forum"
 import ForumCategory from "@/pages/ForumCategory"
 import ForumThread from "@/pages/ForumThread"
+import CreateThread from "@/pages/CreateThread"
 
 import Footer from "@/components/Layout/Footer"
 import AdminPanel from "@/pages/AdminPanel"
@@ -78,13 +79,21 @@ export default function App() {
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/forum" element={<Forum />} />
+        <Route path="/forum/create" element={<CreateThread />} />
         <Route path="/forum/:id" element={<ForumCategory />} />
-        <Route path="/forum/thread/:id" element={<ForumThread />} />
+        <Route path="/forum/thread/:type/:id" element={<ForumThread />} />
         <Route path="/map" element={<Map />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
-      <Footer />
+      <FooterWrapper />
     </BrowserRouter>
   )
+}
+
+function FooterWrapper() {
+  const location = useLocation()
+  // No mostrar footer en rutas de admin
+  if (location.pathname.startsWith('/admin')) return null
+  return <Footer />
 }
