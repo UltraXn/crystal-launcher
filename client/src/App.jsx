@@ -29,7 +29,25 @@ import AdminPanel from "@/pages/AdminPanel"
 
 
 
+import { useEffect } from "react"
+
 export default function App() {
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_API_URL
+    fetch(`${API_URL}/settings`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.theme && data.theme !== 'default') {
+                document.body.classList.add(`theme-${data.theme}`)
+            }
+            if(data.announcement) {
+                // Podríamos inyectar una barra, pero simplifiquemos por ahora
+                console.log("Anuncio activo:", data.announcement)
+            }
+        })
+        .catch(console.error)
+  }, [])
+
   return (
     <BrowserRouter>
       <ScrollToHash />
@@ -60,6 +78,7 @@ export default function App() {
                 <Blog />
               </LazyWrapper>
             </div>
+
             <div id="stories">
               <LazyWrapper minHeight="80vh">
                 <Stories />

@@ -1,5 +1,6 @@
 const supabase = require('../services/supabaseService');
-const { sendDiscordNotification } = require('../services/discordService');
+// const { sendDiscordNotification } = require('../services/discordService'); // Removed
+const logService = require('../services/logService');
 
 // Canal de anuncios de Discord (Debería estar en .env idealmente, aquí hardcodeado o pasado por config)
 const DISCORD_ANNOUNCEMENTS_CHANNEL_ID = process.env.DISCORD_ANNOUNCEMENTS_CHANNEL_ID;
@@ -8,12 +9,18 @@ const getAllNews = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('news')
-            .select('*')
+            .select('*, comments(count)')
             .order('created_at', { ascending: false });
 
         if (error) throw error;
 
-        res.status(200).json(data);
+        const newsWithCounts = data.map(n => ({
+            ...n,
+            replies: n.comments ? n.comments[0].count : 0,
+            comments: undefined
+        }));
+
+        res.status(200).json(newsWithCounts);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -90,7 +97,7 @@ const createComment = async (req, res) => {
 
 const createNews = async (req, res) => {
     try {
-        const { title, category, content, image, status, author_id } = req.body;
+        const { title, category, content, image, status, author_id, username } = req.body;
 
         const { data, error } = await supabase
             .from('news')
@@ -99,15 +106,24 @@ const createNews = async (req, res) => {
 
         if (error) throw error;
 
+        // Log action
+        logService.createLog({
+            user_id: author_id,
+            username: username || 'Admin', 
+            action: 'CREATE_NEWS',
+            details: `Created news: ${title}`,
+            source: 'web'
+        }).catch(console.error);
+
         // Si se publica directamente, notificar a Discord
-        if (status === 'Published' && DISCORD_ANNOUNCEMENTS_CHANNEL_ID) {
+        /* if (status === 'Published' && DISCORD_ANNOUNCEMENTS_CHANNEL_ID) {
             await sendDiscordNotification(
                 DISCORD_ANNOUNCEMENTS_CHANNEL_ID,
                 `📢 Nueva Noticia: ${title}`,
                 `${content.substring(0, 150)}...\n\nLeer más en la web.`,
                 '#0F969C'
             );
-        }
+        } */
 
         res.status(201).json(data[0]);
     } catch (error) {
@@ -118,7 +134,7 @@ const createNews = async (req, res) => {
 const updateNews = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, category, content, image, status } = req.body;
+        const { title, category, content, image, status, username, user_id } = req.body;
 
         const { data, error } = await supabase
             .from('news')
@@ -127,6 +143,15 @@ const updateNews = async (req, res) => {
             .select();
 
         if (error) throw error;
+
+        // Log action
+        logService.createLog({
+            user_id: user_id || null,
+            username: username || 'Admin',
+            action: 'UPDATE_NEWS',
+            details: `Updated news #${id}: ${title} (${status})`,
+            source: 'web'
+        }).catch(console.error);
 
         res.status(200).json(data[0]);
     } catch (error) {
@@ -137,6 +162,7 @@ const updateNews = async (req, res) => {
 const deleteNews = async (req, res) => {
     try {
         const { id } = req.params;
+        const { userId, username } = req.query;
 
         const { error } = await supabase
             .from('news')
@@ -144,6 +170,15 @@ const deleteNews = async (req, res) => {
             .eq('id', id);
 
         if (error) throw error;
+
+        // Log action
+        logService.createLog({
+            user_id: userId || null,
+            username: username || 'Admin',
+            action: 'DELETE_NEWS',
+            details: `Deleted news #${id}`,
+            source: 'web'
+        }).catch(console.error);
 
         res.status(200).json({ message: 'Noticia eliminada correctamente' });
     } catch (error) {

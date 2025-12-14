@@ -29,6 +29,8 @@ export default function PollsManager() {
 
     useEffect(() => { fetchActive() }, [])
 
+    const [buttonSuccess, setButtonSuccess] = useState(false)
+
     // Create Handler
     const handleCreate = async (e) => {
         e.preventDefault()
@@ -59,7 +61,9 @@ export default function PollsManager() {
                 setQuestion('')
                 setOptions(['', ''])
                 fetchActive()
-                alert("Encuesta creada con éxito")
+                // alert("Encuesta lanzada!") // Removing alert to use button feedback
+                setButtonSuccess(true)
+                setTimeout(() => setButtonSuccess(false), 3000)
             } else {
                 alert("Error al crear encuesta")
             }
@@ -184,8 +188,10 @@ export default function PollsManager() {
                     <div style={{marginTop:'2rem', paddingTop:'1rem', borderTop:'1px solid #333'}}>
                         {activePoll && <p style={{color:'#facc15', fontSize:'0.9rem', marginBottom:'1rem'}}>⚠️ Al crear una nueva encuesta, la actual se cerrará automáticamente.</p>}
                         
-                        <button type="submit" className="btn-primary" style={{width:'100%'}} disabled={creating}>
-                            {creating ? <FaSpinner className="spin" /> : 'Lanzar Encuesta'}
+                        <button type="submit" className="btn-primary" style={{width:'100%', background: buttonSuccess ? '#22c55e' : '', borderColor: buttonSuccess ? '#22c55e' : ''}} disabled={creating || buttonSuccess}>
+                            {creating ? <FaSpinner className="spin" /> : buttonSuccess ? (
+                                <><FaCheck /> ¡Encuesta lanzada!</>
+                            ) : 'Lanzar Encuesta'}
                         </button>
                     </div>
                 </form>

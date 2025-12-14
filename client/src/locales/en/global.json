@@ -236,5 +236,74 @@
         "closes_in": "Closes in",
         "suggest_poll": "Suggest Poll",
         "other_idea": "Have another idea for a poll?"
+    },
+    "account": {
+        "avatar": {
+            "error_select": "You must select an image to upload.",
+            "error_update": "Error updating avatar: ",
+            "change_photo": "Change photo"
+        },
+        "name": {
+            "error_update": "Error updating name"
+        },
+        "roles": {
+            "admin": "Administrator",
+            "user": "Adventurer"
+        },
+        "nav": {
+            "overview": "Overview",
+            "posts": "My Posts",
+            "achievements": "Achievements",
+            "minecraft": "Minecraft Account",
+            "connections": "Connections",
+            "logout": "Logout"
+        },
+        "overview": {
+            "stats_title": "Global Statistics",
+            "rank": "Rank",
+            "coins": "Coins",
+            "playtime": "Playtime",
+            "news_title": "Latest News",
+            "no_news": "There are no recent notifications for you."
+        },
+        "posts": {
+            "title": "My Posts",
+            "loading": "Loading posts...",
+            "empty": "You haven't posted anything yet.",
+            "views": "views",
+            "replies": "replies"
+        },
+        "achievements": {
+            "title": "Unlocked Achievements",
+            "items": {
+                "welcome": "Welcome",
+                "first_post": "First Post",
+                "veteran": "Veteran",
+                "donor": "Donor",
+                "hunter": "Hunter"
+            }
+        },
+        "minecraft": {
+            "title": "Link Minecraft",
+            "not_linked": "Not linked",
+            "current_user": "Current user: ",
+            "link_button": "Link Account",
+            "instruction_1": "Use ",
+            "instruction_2": " on the server to link."
+        },
+        "connections": {
+            "title": "Linked Accounts",
+            "link_discord": "Link Discord",
+            "link_twitch": "Link Twitch",
+            "linked": "Linked",
+            "not_linked": "Not linked",
+            "connect": "Connect",
+            "disconnect": "Disconnect",
+            "unlink_confirm_title": "Unlink account?",
+            "unlink_confirm_message": "Are you sure you want to unlink this account? You will have to reconnect it to use it in the future.",
+            "confirm_unlink": "Yes, unlink",
+            "cancel": "Cancel"
+        },
+        "admin_panel": "Admin Panel"
     }
 }

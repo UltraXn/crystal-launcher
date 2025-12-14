@@ -29,7 +29,7 @@ export default function ForumCategory() {
                         id: n.id,
                         title: n.title,
                         author: "Staff",
-                        replies: 0,
+                        replies: n.replies || 0,
                         views: n.views || 0,
                         lastActivity: new Date(n.created_at).toLocaleDateString(),
                         pinned: true,
@@ -51,7 +51,7 @@ export default function ForumCategory() {
                          id: t.id,
                          title: t.title,
                          author: t.author_name || "Anónimo",
-                         replies: 0, // TODO: Count replies
+                         replies: t.reply_count || 0,
                          views: t.views || 0,
                          lastActivity: new Date(t.created_at).toLocaleDateString(),
                          pinned: t.pinned || false,

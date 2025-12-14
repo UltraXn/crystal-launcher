@@ -29,6 +29,8 @@ app.use('/api/donations', require('./routes/donationRoutes'));
 app.use('/api/suggestions', require('./routes/suggestionRoutes'));
 app.use('/api/polls', require('./routes/pollRoutes'));
 app.use('/api/forum', require('./routes/forumRoutes'));
+app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 // Base route
 app.get('/', (req, res) => {

@@ -97,7 +97,16 @@
                 "title": "Off-Topic",
                 "desc": "Zona libre para hablar de otros juegos o temas variados."
             }
-        }
+        },
+        "official_poll_section": "Encuesta Oficial",
+        "active_voting": "Votación Activa",
+        "hot": "Hot",
+        "view_full": "Ver completa",
+        "no_active_poll": "No hay encuestas activas en este momento.",
+        "news_section": "Noticias y Anuncios",
+        "new_badge": "NUEVO",
+        "loading_news": "Cargando noticias...",
+        "view_all_news": "Ver todas"
     },
     "hero": {
         "welcome": "Bienvenido a",
@@ -236,5 +245,74 @@
         "closes_in": "Cierra en",
         "suggest_poll": "Sugerir Encuesta",
         "other_idea": "¿Tienes otra idea para encuesta?"
+    },
+    "account": {
+        "avatar": {
+            "error_select": "Debes seleccionar una imagen para subir.",
+            "error_update": "Error actualizando avatar: ",
+            "change_photo": "Cambiar foto"
+        },
+        "name": {
+            "error_update": "Error al actualizar nombre"
+        },
+        "roles": {
+            "admin": "Administrador",
+            "user": "Aventurero"
+        },
+        "nav": {
+            "overview": "Resumen",
+            "posts": "Mis Publicaciones",
+            "achievements": "Logros",
+            "minecraft": "Cuenta Minecraft",
+            "connections": "Conexiones",
+            "logout": "Cerrar Sesión"
+        },
+        "overview": {
+            "stats_title": "Estadísticas Globales",
+            "rank": "Rango",
+            "coins": "Monedas",
+            "playtime": "Tiempo Jugado",
+            "news_title": "Últimas Novedades",
+            "no_news": "No hay notificaciones recientes para ti."
+        },
+        "posts": {
+            "title": "Mis Publicaciones",
+            "loading": "Cargando publicaciones...",
+            "empty": "No has publicado nada aún.",
+            "views": "vistas",
+            "replies": "respuestas"
+        },
+        "achievements": {
+            "title": "Logros Desbloqueados",
+            "items": {
+                "welcome": "Bienvenido",
+                "first_post": "Primer Post",
+                "veteran": "Veterano",
+                "donor": "Donador",
+                "hunter": "Cazador"
+            }
+        },
+        "minecraft": {
+            "title": "Vincular Minecraft",
+            "not_linked": "Sin vincular",
+            "current_user": "Usuario actual: ",
+            "link_button": "Vincular Cuenta",
+            "instruction_1": "Usa ",
+            "instruction_2": " en el servidor para vincular."
+        },
+        "connections": {
+            "title": "Cuentas Vinculadas",
+            "link_discord": "Vincular Discord",
+            "link_twitch": "Vincular Twitch",
+            "linked": "Vinculado",
+            "not_linked": "No vinculado",
+            "connect": "Conectar",
+            "disconnect": "Desconectar",
+            "unlink_confirm_title": "¿Desvincular cuenta?",
+            "unlink_confirm_message": "¿Estás seguro de que deseas desvincular esta cuenta? Tendrás que volver a conectarla para usarla en el futuro.",
+            "confirm_unlink": "Sí, desvincular",
+            "cancel": "Cancelar"
+        },
+        "admin_panel": "Panel Admin"
     }
 }

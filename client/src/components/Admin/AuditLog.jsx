@@ -7,7 +7,9 @@ export default function AuditLog() {
     const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(true)
     const [filterSource, setFilterSource] = useState('all') // 'all', 'web', 'game'
-    const [limit] = useState(50)
+    const [page, setPage] = useState(1)
+    const [limit] = useState(10)
+    const [totalPages, setTotalPages] = useState(1)
     
     // CoreProtect placeholder info
     const isGameLogsConnected = false; 
@@ -15,19 +17,41 @@ export default function AuditLog() {
     const fetchLogs = async () => {
         setLoading(true)
         try {
-            let url = `${API_URL}/logs?limit=${limit}`
-            if (filterSource !== 'all') url += `&source=${filterSource}`
+            let url;
+            if (filterSource === 'game') {
+                 url = `${API_URL}/logs/commands?limit=${limit}&page=${page}`
+            } else {
+                 url = `${API_URL}/logs?limit=${limit}&page=${page}`
+                 if (filterSource !== 'all') url += `&source=${filterSource}`
+            }
             
             const res = await fetch(url)
             if (!res.ok) throw new Error("Error fetching logs")
             
             const data = await res.json()
-            // Backend returns { logs: [], total } or directly array if I messed up controller.
-            // Controller: res.json(data); Service: returns { logs, total }
-            // So data.logs is correct.
-            setLogs(data.logs || [])
+            
+            if (filterSource === 'game') {
+                // Normalize CoreProtect data
+                const normalizedLogs = (data.data || []).map((log, index) => ({
+                    id: `cp-${index}-${Date.now()}`, // Temporary ID
+                    created_at: log.time * 1000, 
+                    username: log.user,
+                    action: 'COMMAND',
+                    details: log.message,
+                    source: 'game'
+                }));
+                 setLogs(normalizedLogs);
+            } else {
+                 setLogs(data.logs || [])
+            }
+            
+            // Calculate total pages
+            const total = data.total || 0;
+            setTotalPages(Math.ceil(total / limit))
         } catch (err) {
             console.error("Failed to load logs", err)
+            // If game logs fail (e.g. not configured), show empty
+             if (filterSource === 'game') setLogs([])
         } finally {
             setLoading(false)
         }
@@ -35,6 +59,11 @@ export default function AuditLog() {
 
     useEffect(() => {
         fetchLogs()
+    }, [filterSource, page]) // Re-fetch on filter or page change
+
+    // Reset to page 1 when filter changes
+    useEffect(() => {
+        setPage(1)
     }, [filterSource])
 
     return (
@@ -75,65 +104,103 @@ export default function AuditLog() {
                 </div>
             ) : logs.length === 0 ? (
                 <div style={{ padding: '3rem', textAlign: 'center', color: '#666', border: '1px dashed #333', borderRadius: '8px' }}>
-                    {filterSource === 'game' && !isGameLogsConnected ? (
-                        <>
-                            <FaGamepad size={32} style={{marginBottom: '1rem', opacity: 0.5}}/>
-                            <p>Conexión con CoreProtect (Logs del Juego) pendiente.</p>
-                            <span style={{fontSize: '0.8rem', color: '#555'}}>Próximamente verás aquí comandos y bloques rotos.</span>
-                        </>
-                    ) : (
-                        <p>No hay registros encontrados.</p>
-                    )}
+                    <p>No hay registros encontrados.</p>
                 </div>
             ) : (
-                <div className="admin-table-container">
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th style={{width: '140px'}}>Fecha</th>
-                                <th style={{width: '120px'}}>Usuario / Staff</th>
-                                <th style={{width: '150px'}}>Acción</th>
-                                <th>Detalles</th>
-                                <th style={{width: '80px', textAlign:'center'}}>Fuente</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {logs.map(log => (
-                                <tr key={log.id}>
-                                    <td style={{ color: '#888', fontSize: '0.85rem' }}>
-                                        {new Date(log.created_at).toLocaleString()}
-                                    </td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <FaUser size={10} color="#666" />
-                                            <span style={{color: log.username === 'Staff' ? 'var(--accent)' : '#ccc', fontWeight: log.username === 'Staff' ? 'bold' : 'normal'}}>
-                                                {log.username || 'System'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span className="audit-badge" style={{
-                                            background: getActionColor(log.action),
-                                            padding: '2px 8px',
-                                            borderRadius: '4px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 'bold',
-                                            color: '#000'
-                                        }}>
-                                            {log.action}
-                                        </span>
-                                    </td>
-                                    <td style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                                        {log.details}
-                                    </td>
-                                    <td style={{ textAlign: 'center' }}>
-                                        {log.source === 'web' ? <FaGlobe color="#3b82f6" title="Web Panel" /> : <FaGamepad color="#22c55e" title="Minecraft Server" />}
-                                    </td>
+                <>
+                    <div className="admin-table-container">
+                        <table className="admin-table">
+                            <thead>
+                                <tr>
+                                    <th style={{width: '140px'}}>Fecha</th>
+                                    <th style={{width: '120px'}}>Usuario / Staff</th>
+                                    <th style={{width: '150px'}}>Acción</th>
+                                    <th>Detalles</th>
+                                    <th style={{width: '80px', textAlign:'center'}}>Fuente</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {logs.map(log => (
+                                    <tr key={log.id}>
+                                        <td style={{ color: '#888', fontSize: '0.85rem' }}>
+                                            {new Date(log.created_at).toLocaleString()}
+                                        </td>
+                                        <td>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <FaUser size={10} color="#666" />
+                                                <span style={{color: log.username === 'Staff' ? 'var(--accent)' : '#ccc', fontWeight: log.username === 'Staff' ? 'bold' : 'normal'}}>
+                                                    {log.username || 'System'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="audit-badge" style={{
+                                                background: getActionColor(log.action),
+                                                padding: '2px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 'bold',
+                                                color: '#000'
+                                            }}>
+                                                {log.action}
+                                            </span>
+                                        </td>
+                                        <td style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                            {log.details}
+                                        </td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            {log.source === 'web' ? <FaGlobe color="#3b82f6" title="Web Panel" /> : <FaGamepad color="#22c55e" title="Minecraft Server" />}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '1.5rem' }}>
+                            <button 
+                                className="btn-secondary" 
+                                disabled={page === 1}
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', opacity: page === 1 ? 0.5 : 1 }}
+                            >
+                                Anterior
+                            </button>
+                            
+                            <div style={{ display: 'flex', gap: '0.2rem' }}>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                                    <button
+                                        key={p}
+                                        onClick={() => setPage(p)}
+                                        style={{
+                                            background: page === p ? 'var(--accent)' : '#333',
+                                            color: page === p ? '#000' : '#fff',
+                                            border: 'none',
+                                            width: '30px',
+                                            height: '30px',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        {p}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button 
+                                className="btn-secondary" 
+                                disabled={page === totalPages}
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem', opacity: page === totalPages ? 0.5 : 1 }}
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     )
@@ -145,5 +212,6 @@ function getActionColor(action) {
     if (action.includes('CREATE')) return '#4ade80'; // Green
     if (action.includes('UPDATE')) return '#facc15'; // Yellow
     if (action.includes('RESOLVE')) return '#60a5fa'; // Blue
+    if (action === 'COMMAND') return '#d946ef'; // Magenta for game commands
     return '#ccc'; // Gray
 }

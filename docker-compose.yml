@@ -25,3 +25,4 @@ services:
     env_file:
       - ./server/.env # Load environment variables from this file
     restart: always
+

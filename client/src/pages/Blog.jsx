@@ -37,6 +37,8 @@ export default function Blog() {
     const [news, setNews] = useState([])
     const API_URL = import.meta.env.VITE_API_URL
 
+    const [loading, setLoading] = useState(true)
+
     useEffect(() => {
         if (!API_URL) return
 
@@ -50,16 +52,54 @@ export default function Blog() {
                 }
             })
             .catch(err => console.error("Error cargando noticias home:", err))
+            .finally(() => setLoading(false))
     }, [])
 
     return (
         <Section title={t('blog.title')}>
             <Section>
-                <div className="news-grid">
-                    {news.length > 0 ? news.map(article => (
-                        <NewsCard key={article.id} article={article} />
-                    )) : (
-                        <p style={{ textAlign: "center", color: "#666", width: "100%" }}>{t('blog.loading')}</p>
+                <div className="news-grid" style={{ minHeight: '200px' }}>
+                    {loading ? (
+                         <div style={{ 
+                            gridColumn: '1 / -1', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: '1rem',
+                            padding: '3rem',
+                            background: 'rgba(255,255,255,0.02)',
+                            borderRadius: '12px',
+                            border: '1px dashed rgba(255,255,255,0.1)'
+                        }}>
+                             <div className="loader" style={{width:'30px', height:'30px', border:'3px solid rgba(255,255,255,0.1)', borderTopColor:'var(--accent)', borderRadius:'50%', animation:'spin 1s linear infinite'}}></div>
+                             <p style={{ color: "var(--muted)" }}>{t('blog.loading')}</p>
+                         </div>
+                    ) : news.length > 0 ? (
+                        news.map(article => (
+                            <NewsCard key={article.id} article={article} />
+                        ))
+                    ) : (
+                         <div style={{ 
+                            gridColumn: '1 / -1', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: '1rem',
+                            padding: '3rem',
+                            background: 'rgba(22, 27, 34, 0.5)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                            backdropFilter: 'blur(10px)'
+                        }}>
+                            <img src="/images/ui/barrier.png" alt="No News" style={{ width: '64px', opacity: 0.5, marginBottom: '0.5rem' }} 
+                                onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='block'}} />
+                            <FaTag size={40} style={{ display: 'none', color: '#6b7280', marginBottom: '1rem' }} /> {/* Fallback Icon */}
+                            
+                            <h3 style={{ color: '#fff', fontSize: '1.2rem' }}>No hay anuncios recientes</h3>
+                            <p style={{ color: 'var(--muted)' }}>Mantente atento a próximas actualizaciones.</p>
+                        </div>
                     )}
                 </div>
 

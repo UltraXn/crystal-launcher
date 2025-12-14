@@ -11,6 +11,8 @@ import AuditLog from "@/components/Admin/AuditLog"
 import AdminNews from "@/components/Admin/AdminNews"
 import SuggestionsManager from "@/components/Admin/SuggestionsManager"
 import PollsManager from "@/components/Admin/PollsManager"
+import EventsManager from "@/components/Admin/EventsManager"
+import SiteConfig from "@/components/Admin/SiteConfig"
 
 export default function AdminPanel() {
     const { user, loading } = useAuth()
@@ -55,7 +57,7 @@ export default function AdminPanel() {
             <div className="admin-top-bar">
                 <div className="admin-brand-top">
                     <h3 style={{ color: 'var(--accent)', textTransform: 'uppercase', margin: 0, letterSpacing: '2px' }}>Crystal Panel</h3>
-                    <span className="version-badge">v1.1.0 Beta</span>
+                    <span className="version-badge">v1.2.0 Beta</span>
                 </div>
 
                 <div className="admin-user-profile">
@@ -72,6 +74,7 @@ export default function AdminPanel() {
                 <AdminTab active={activeTab === 'users'} onClick={() => setActiveTab('users')} label="Usuarios" />
                 <AdminTab active={activeTab === 'suggestions'} onClick={() => setActiveTab('suggestions')} label="Sugerencias" />
                 <AdminTab active={activeTab === 'polls'} onClick={() => setActiveTab('polls')} label="Encuestas" />
+                <AdminTab active={activeTab === 'events'} onClick={() => setActiveTab('events')} label="Eventos" />
                 <AdminTab active={activeTab === 'news'} onClick={() => setActiveTab('news')} label="Noticias" />
                 <AdminTab active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} label="Logs" />
                 <AdminTab active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="Config" />
@@ -86,6 +89,7 @@ export default function AdminPanel() {
                         {activeTab === 'users' && 'Gestión de Usuarios'}
                         {activeTab === 'suggestions' && 'Buzón de Sugerencias'}
                         {activeTab === 'polls' && 'Gestor de Encuestas'}
+                        {activeTab === 'events' && 'Gestor de Eventos'}
                         {activeTab === 'news' && 'Editor de Noticias'}
                         {activeTab === 'logs' && 'Registro de Auditoría'}
                         {activeTab === 'settings' && 'Configuración del Sitio'}
@@ -98,9 +102,10 @@ export default function AdminPanel() {
                 {activeTab === 'users' && <UsersManager />}
                 {activeTab === 'suggestions' && <SuggestionsManager />}
                 {activeTab === 'polls' && <PollsManager />}
+                {activeTab === 'events' && <EventsManager />}
                 {activeTab === 'news' && <AdminNews user={user} />}
                 {activeTab === 'logs' && <AuditLog />}
-                {activeTab === 'settings' && <div className="admin-card">Configuraciones globales del sitio (Mantenimiento, Textos, etc) - Próximamente</div>}
+                {activeTab === 'settings' && <SiteConfig />}
             </main>
         </div>
     )

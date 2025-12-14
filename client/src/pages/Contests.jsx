@@ -1,53 +1,189 @@
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
 import Section from "@/components/Layout/Section"
-import { FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning } from "react-icons/fa"
+import { FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaSignInAlt } from "react-icons/fa"
 import anime from "animejs"
 import { useTranslation } from 'react-i18next'
+import { useAuth } from "../context/AuthContext"
+import { useNavigate } from "react-router-dom"
+import confetti from "canvas-confetti"
 
-const CONTEST_CONFIG = [
-    { id: 1, icon: <FaHammer />, status: "active" },
-    { id: 2, icon: <FaDiceD20 />, status: "soon" },
-    { id: 3, icon: <FaMapMarkedAlt />, status: "finished" },
-    { id: 4, icon: <FaRunning />, status: "finished" }
-]
+const iconMap = {
+    'hammer': <FaHammer />,
+    'dice': <FaDiceD20 />,
+    'map': <FaMapMarkedAlt />,
+    'running': <FaRunning />
+}
 
-const ContestCard = ({ config }) => {
+const ContestCard = ({ event, onRegister, registering, isRegistered }) => {
     const { t } = useTranslation()
-    const { id, icon, status } = config
-
-    const title = t(`contests.items.${id}.title`)
-    const desc = t(`contests.items.${id}.desc`)
-    const statusText = t(`contests.status.${status}`)
+    const { id, title, description, type, status } = event
+    
+    // Fallback status text
+    const statusText = status === 'active' ? t('contests.status.active') :
+                       status === 'soon' ? t('contests.status.soon') :
+                       t('contests.status.finished');
 
     const statusClass = `status-${status}`
 
     return (
-        <div className="contest-card" style={{ opacity: 0, transform: 'translateY(20px)' }}>
-            <div className={`contest-status ${statusClass}`}>
-                {statusText}
+        <div className="contest-card">
+            <div className="contest-bg-icon">{iconMap[type] || <FaHammer />}</div>
+            
+            <div className="contest-card-header">
+                <div className={`contest-status-badge ${status}`}>
+                    {status === 'active' && <FaCheckCircle size={12} />}
+                    {status === 'soon' && <FaHourglassStart size={12} />}
+                    {status === 'finished' && <FaFlagCheckered size={12} />}
+                    <span>{statusText}</span>
+                </div>
             </div>
-            <div className="contest-icon-wrapper">
-                {icon}
+
+            <div className="contest-card-body">
+                <div className="contest-main-icon">
+                    {iconMap[type] || <FaHammer />}
+                </div>
+                <h3 className="contest-title">{title}</h3>
+                <p className="contest-desc">{description}</p>
             </div>
-            <h3 className="contest-title">{title}</h3>
-            <p className="contest-desc">{desc}</p>
+            
+            <div className="contest-card-footer">
+                {status === 'active' || status === 'soon' ? (
+                     <button 
+                        className={`contest-action-btn ${registering || isRegistered ? 'disabled' : ''} ${isRegistered ? 'registered' : ''}`} 
+                        onClick={() => !isRegistered && onRegister(id)}
+                        disabled={registering || isRegistered}
+                    >
+                        {registering ? 'Procesando...' : isRegistered ? (
+                            <>
+                                <FaCheckCircle /> ¡Ya estás dentro!
+                            </>
+                        ) : (
+                            <>
+                                <FaSignInAlt /> Inscribirme Ahora
+                            </>
+                        )}
+                    </button>
+                ) : (
+                    <button className="contest-action-btn disabled" disabled>
+                        Evento Finalizado
+                    </button>
+                )}
+            </div>
         </div>
     )
 }
 
 export default function Contests() {
     const { t } = useTranslation()
+    const { user } = useAuth()
+    const navigate = useNavigate()
+    const [events, setEvents] = useState([])
+    const [myRegistrations, setMyRegistrations] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [registering, setRegistering] = useState(null) // ID of event being registered for
+
+    const API_URL = import.meta.env.VITE_API_URL
 
     useEffect(() => {
-        anime({
-            targets: '.contest-card',
-            opacity: [0, 1],
-            translateY: [20, 0],
-            delay: anime.stagger(150, { start: 300 }),
-            easing: 'spring(1, 80, 10, 0)',
-            duration: 800
-        })
-    }, [])
+        if (!API_URL) return
+
+        const fetchData = async () => {
+             try {
+                // 1. Fetch Events
+                const eventsRes = await fetch(`${API_URL}/events`)
+                const eventsData = await eventsRes.json()
+                if (Array.isArray(eventsData)) {
+                    setEvents(eventsData)
+                }
+
+                // 2. Fetch User Registrations (if logged in)
+                if (user) {
+                     const regRes = await fetch(`${API_URL}/events/my-registrations?userId=${user.id}`)
+                     const regData = await regRes.json()
+                     if (Array.isArray(regData)) {
+                         setMyRegistrations(regData)
+                     }
+                }
+
+             } catch (error) {
+                 console.error("Error fetching data:", error)
+             } finally {
+                 setLoading(false)
+                 setTimeout(() => {
+                    anime({
+                        targets: '.contest-card',
+                        opacity: [0, 1],
+                        translateY: [20, 0],
+                        delay: anime.stagger(150, { start: 100 }),
+                        easing: 'spring(1, 80, 10, 0)',
+                        duration: 800
+                    })
+                }, 100)
+             }
+        }
+
+        fetchData()
+    }, [user]) // Re-run if user logs in/out
+
+    const handleRegister = async (eventId) => {
+        if (!user) {
+            if(window.confirm("Debes iniciar sesión para inscribirte. ¿Ir al login?")) {
+                navigate('/login')
+            }
+            return
+        }
+
+        setRegistering(eventId)
+        try {
+            const res = await fetch(`${API_URL}/events/${eventId}/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+            })
+            
+            const data = await res.json()
+
+            if (!res.ok) {
+                if (data.error && data.error.includes("Ya estás inscrito")) {
+                    alert("¡Ya estás inscrito en este evento!")
+                } else {
+                    throw new Error(data.error || "Error al inscribirse")
+                }
+            } else {
+                // Success!
+                triggerConfetti()
+                setMyRegistrations(prev => [...prev, eventId])
+                // alert("¡Inscripción exitosa! Te esperamos.") // Optional: remove alert if button change is enough
+            }
+        } catch (error) {
+            console.error("Registration error:", error)
+            alert(error.message)
+        } finally {
+            setRegistering(null)
+        }
+    }
+
+    const triggerConfetti = () => {
+        var duration = 3 * 1000;
+        var animationEnd = Date.now() + duration;
+        var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+        var randomInRange = function(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+
+        var interval = setInterval(function() {
+          var timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          var particleCount = 50 * (timeLeft / duration);
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        }, 250);
+    }
 
     return (
         <Section title={t('contests.title')}>
@@ -58,9 +194,23 @@ export default function Contests() {
             </Section>
 
             <div className="contests-grid">
-                {CONTEST_CONFIG.map(config => (
-                    <ContestCard key={config.id} config={config} />
-                ))}
+                {loading ? (
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#666' }}>Cargando eventos...</div>
+                ) : events.length > 0 ? (
+                    events.map(event => (
+                        <ContestCard 
+                            key={event.id} 
+                            event={event} 
+                            onRegister={handleRegister} 
+                            registering={registering === event.id}
+                            isRegistered={myRegistrations.includes(event.id)}
+                        />
+                    ))
+                ) : (
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#666', border: '1px dashed #333', padding: '2rem', borderRadius: '8px' }}>
+                        No hay eventos activos por el momento.
+                    </div>
+                )}
             </div>
         </Section>
     )

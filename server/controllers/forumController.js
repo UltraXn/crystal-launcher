@@ -11,6 +11,16 @@ const getThreads = async (req, res) => {
     }
 };
 
+const getUserThreads = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const data = await forumService.getUserThreads(userId);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const getThread = async (req, res) => {
     try {
         const { id } = req.params;
@@ -51,4 +61,4 @@ const getStats = async (req, res) => {
     } catch (e) { res.status(500).json({error:e.message}); }
 };
 
-module.exports = { getThreads, getThread, createThread, getPosts, createPost, getStats };
+module.exports = { getThreads, getUserThreads, getThread, createThread, getPosts, createPost, getStats };

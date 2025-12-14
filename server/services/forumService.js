@@ -2,15 +2,38 @@ const supabase = require('./supabaseService');
 const pollService = require('./pollService');
 
 const getThreads = async (categoryId) => {
+    // Select * and the count of related posts
     const { data, error } = await supabase
         .from('forum_threads')
-        .select('*')
+        .select('*, forum_posts(count)')
         .eq('category_id', categoryId)
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false });
         
     if(error) throw error;
-    return data; // Returns list of threads
+    
+    // Flatten structure: forum_posts: [{count: 3}] -> reply_count: 3
+    return data.map(t => ({
+        ...t,
+        reply_count: t.forum_posts ? t.forum_posts[0].count : 0,
+        forum_posts: undefined // Remove the array
+    }));
+};
+
+const getUserThreads = async (userId) => {
+    const { data, error } = await supabase
+        .from('forum_threads')
+        .select('*, forum_posts(count)')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+    if(error) throw error;
+
+    return data.map(t => ({
+        ...t,
+        reply_count: t.forum_posts ? t.forum_posts[0].count : 0,
+        forum_posts: undefined
+    }));
 };
 
 const getThread = async (id) => {
@@ -95,32 +118,95 @@ const getCategoryStats = async () => {
 
     // News (Cat 1)
     const { count: newsCount } = await supabase.from('news').select('*', { count: 'exact', head: true }).eq('status', 'Published');
+    
+    // News "Last Post" - assuming we just check the latest news item
+    const { data: latestNews } = await supabase.from('news').select('author, created_at').eq('status', 'Published').order('created_at', {ascending:false}).limit(1).maybeSingle();
+    let newsLastPost = { user: "Staff", date: "-" };
+    if (latestNews) {
+        newsLastPost = { user: latestNews.author || "Staff", date: new Date(latestNews.created_at).toLocaleDateString() };
+    }
+
     stats.push({
         id: 1,
         topics: newsCount || 0,
         posts: newsCount || 0,
-        lastPost: { user: "Staff", date: "Reciente" }
+        lastPost: newsLastPost
     });
 
     // Forum Cats
     for (const catId of categories) {
-        const { count } = await supabase.from('forum_threads').select('*', { count: 'exact', head: true }).eq('category_id', catId);
+        // 1. Count Topics (Threads)
+        const { count: threadCount } = await supabase
+            .from('forum_threads')
+            .select('*', { count: 'exact', head: true })
+            .eq('category_id', catId);
         
-        const { data: lastThread } = await supabase.from('forum_threads').select('author_name, created_at').eq('category_id', catId).order('created_at', {ascending:false}).limit(1).single();
-        
-        let lastPostData = { user: "Nadie", date: "-" };
-        if (lastThread) {
-             lastPostData = { user: lastThread.author_name, date: new Date(lastThread.created_at).toLocaleDateString() };
-        }
+        // 2. Count Posts (Replies) and determine Last Activity
+        let postCount = 0;
+        let lastPostData = { user: "-", date: "-" }; // Default if empty
 
+        // Fetch thread IDs to query related posts
+        const { data: threads } = await supabase
+            .from('forum_threads')
+            .select('id')
+            .eq('category_id', catId);
+        
+        if (threads && threads.length > 0) {
+            const threadIds = threads.map(t => t.id);
+
+            // Count replies
+            const { count: replyCount } = await supabase
+                .from('forum_posts')
+                .select('*', { count: 'exact', head: true })
+                .in('thread_id', threadIds);
+            
+            postCount = replyCount || 0;
+
+            // Find latest activity
+            // A. Latest Thread Creation
+            const { data: latestThread } = await supabase
+                .from('forum_threads')
+                .select('author_name, created_at')
+                .eq('category_id', catId)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            // B. Latest Reply
+            const { data: latestReply } = await supabase
+                .from('forum_posts')
+                .select('author_name, created_at')
+                .in('thread_id', threadIds)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            // Compare dates
+            let lastActivity = null;
+            if (latestThread && latestReply) {
+                lastActivity = new Date(latestThread.created_at) > new Date(latestReply.created_at) ? latestThread : latestReply;
+            } else if (latestThread) {
+                lastActivity = latestThread;
+            } else if (latestReply) {
+                lastActivity = latestReply;
+            }
+
+            if (lastActivity) {
+                lastPostData = { 
+                    user: lastActivity.author_name, 
+                    date: new Date(lastActivity.created_at).toLocaleDateString() 
+                };
+            }
+        }
+        
         stats.push({
             id: catId,
-            topics: count || 0,
-            posts: count || 0, 
+            topics: threadCount || 0,
+            posts: postCount, 
             lastPost: lastPostData
         });
     }
     return stats;
 }
 
-module.exports = { getThreads, getThread, createThread, getPosts, createPost, getCategoryStats };
+module.exports = { getThreads, getUserThreads, getThread, createThread, getPosts, createPost, getCategoryStats };

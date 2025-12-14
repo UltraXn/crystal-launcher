@@ -159,7 +159,7 @@ export default function Navbar() {
                             className={`lang-btn ${i18n.resolvedLanguage === 'en' ? 'active' : ''}`}
                         >
                             <img src="/images/flags/us.svg" alt="English" width="20" height="15" />
-                            US
+                            EN
                         </button>
                     </div>
 
@@ -190,7 +190,7 @@ export default function Navbar() {
                                     }}
                                 >
                                     <div className="dropdown-header" ref={addToUserRefs}>
-                                         <div className="dropdown-role" style={{ display:'flex', justifyContent:'center', marginBottom: '0.5rem' }}>
+                                         <div style={{ display:'flex', justifyContent:'center', marginBottom: '0.5rem' }}>
                                              <UserRoleDisplay role={user.user_metadata?.role || 'user'} />
                                          </div>
                                      </div>
