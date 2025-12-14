@@ -14,6 +14,24 @@
     --speed: 0.25s ease;
 }
 
+/* Themes */
+body.theme-christmas {
+    --bg: #1a0b0b;
+    --bg-alt: #991b1b;
+    --bg-soft: #dc2626;
+    --accent: #22c55e;
+    --accent-soft: rgba(34, 197, 94, 0.15);
+}
+
+body.theme-halloween {
+    --bg: #0f0a1a;
+    --bg-alt: #7c2d12;
+    --bg-soft: #ea580c;
+    --accent: #f97316;
+    --accent-soft: rgba(249, 115, 22, 0.15);
+    --text: #fef3c7;
+}
+
 /* Reset y Base */
 * {
     margin: 0;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FaTree, FaGhost, FaWater, FaSnowflake, FaSave, FaCheck, FaExclamationTriangle, FaBullhorn } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
+import ConfirmationModal from '../UI/ConfirmationModal'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -12,7 +13,10 @@ export default function SiteConfig() {
         announcement: ''
     })
     const [loading, setLoading] = useState(true)
-    const [saving, setSaving] = useState(null) // key being saved
+    const [saving, setSaving] = useState(null)
+    const [showMaintenanceModal, setShowMaintenanceModal] = useState(false)
+    const [maintenanceTarget, setMaintenanceTarget] = useState(false)
+ // key being saved
 
     // Fetch initial settings
     useEffect(() => {
@@ -44,7 +48,19 @@ export default function SiteConfig() {
             })
 
             if(res.ok) {
-                setSettings(prev => ({ ...prev, [key]: String(value) }))
+                const newValue = String(value)
+                setSettings(prev => ({ ...prev, [key]: newValue }))
+                
+                // Dispatch event for App.jsx to react immediately
+                if(key === 'theme') {
+                    window.dispatchEvent(new CustomEvent('themeChanged', { detail: newValue }));
+                }
+                if(key === 'announcement') {
+                    window.dispatchEvent(new CustomEvent('announcementChanged', { detail: newValue }));
+                }
+                if(key === 'maintenance_mode') {
+                    window.dispatchEvent(new CustomEvent('maintenanceChanged', { detail: newValue }));
+                }
             } else {
                 alert("Error al guardar configuración")
             }
@@ -146,13 +162,34 @@ export default function SiteConfig() {
                         <input 
                             type="checkbox" 
                             checked={settings.maintenance_mode === 'true'} 
-                            onChange={(e) => handleUpdate('maintenance_mode', e.target.checked ? 'true' : 'false')}
+                            onChange={() => {}} // Controlled manually via onClick
+                            onClick={(e) => {
+                                e.preventDefault();
+                                const nextState = !(settings.maintenance_mode === 'true');
+                                setMaintenanceTarget(nextState);
+                                setShowMaintenanceModal(true);
+                            }}
                         />
                         <span className="slider round"></span>
                     </label>
                 </div>
             </div>
 
+            <ConfirmationModal 
+                isOpen={showMaintenanceModal}
+                onClose={() => setShowMaintenanceModal(false)}
+                onConfirm={() => {
+                    handleUpdate('maintenance_mode', String(maintenanceTarget));
+                    setShowMaintenanceModal(false);
+                }}
+                title={maintenanceTarget ? "⚠️ ACTIVAR Mantenimiento" : "Desactivar Mantenimiento"}
+                message={maintenanceTarget 
+                    ? "Si activas esto, solo los administradores podrán acceder al sitio. ¿Seguro?" 
+                    : "El sitio volverá a ser público para todos."}
+                confirmText={maintenanceTarget ? "Sí, cerrar sitio" : "Abrir sitio"}
+                cancelText="Uy... mejor no"
+                isDanger={maintenanceTarget}
+            />
         </div>
     )
 }

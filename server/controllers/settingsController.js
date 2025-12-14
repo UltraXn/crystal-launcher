@@ -30,12 +30,12 @@ const updateSetting = async (req, res) => {
 
         const { data, error } = await supabase
             .from('site_settings')
-            .update({ 
+            .upsert({ 
+                key,
                 value, 
                 updated_at: new Date(),
                 updated_by: userId || null 
             })
-            .eq('key', key)
             .select();
 
         if (error) throw error;
