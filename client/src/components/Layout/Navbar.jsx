@@ -45,6 +45,10 @@ export default function Navbar() {
     const userDropdownRef = useRef(null)
     const userItemsRef = useRef([])
 
+    const changeLanguage = (lng) => {
+        i18n.changeLanguage(lng)
+    }
+
     const closeUserDropdown = () => setDropdownOpen(false)
 
     // Helper to add refs
