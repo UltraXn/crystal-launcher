@@ -30,6 +30,96 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
 
+    const userDropdownRef = useRef(null)
+    const userItemsRef = useRef([])
+
+    const closeUserDropdown = () => setDropdownOpen(false)
+
+    // Helper to add refs
+    const addToUserRefs = (el) => {
+        if (el && !userItemsRef.current.includes(el)) {
+            userItemsRef.current.push(el);
+        }
+    };
+
+    // ANIMATION LOGIC FOR USER DROPDOWN (Copied from Menu.jsx)
+    useEffect(() => {
+        // Reset refs on render to avoid duplication
+        userItemsRef.current = [];
+
+        if (dropdownOpen) {
+            // OPEN ANIMATION
+            if (userDropdownRef.current) {
+                anime.remove(userDropdownRef.current);
+                anime.set(userDropdownRef.current, { visibility: 'visible', opacity: 1 });
+
+                anime({
+                    targets: userDropdownRef.current,
+                    scale: [0.9, 1],
+                    opacity: [0, 1],
+                    translateY: [10, 0],
+                    easing: 'spring(1, 80, 10, 0)',
+                    duration: 600
+                });
+            }
+
+            if (userItemsRef.current.length > 0) {
+                anime.remove(userItemsRef.current);
+                anime({
+                    targets: userItemsRef.current,
+                    translateX: [20, 0],
+                    opacity: [0, 1],
+                    delay: anime.stagger(50, { start: 100 }), // Faster stagger for smaller menu
+                    easing: 'easeOutExpo'
+                });
+            }
+        } else {
+            // CLOSE ANIMATION
+            if (userDropdownRef.current) {
+                anime.remove(userDropdownRef.current);
+                anime.remove(userItemsRef.current);
+
+                anime({
+                    targets: userDropdownRef.current,
+                    opacity: 0,
+                    translateY: 10,
+                    duration: 200,
+                    easing: 'easeInQuad',
+                    complete: () => {
+                        if (!dropdownOpen && userDropdownRef.current) {
+                            anime.set(userDropdownRef.current, { visibility: 'hidden' });
+                        }
+                    }
+                });
+            }
+        }
+    }, [dropdownOpen]);
+
+    const handleLogoHover = () => {
+        if (animationRef.current) animationRef.current.pause()
+
+        animationRef.current = anime({
+            targets: logoRef.current,
+            translateY: [
+                { value: -10, duration: 200, easing: 'easeOutQuad' },
+                { value: 0, duration: 200, easing: 'easeInQuad' },
+                { value: -5, duration: 200, easing: 'easeOutQuad' },
+                { value: 0, duration: 200, easing: 'easeInQuad' }
+            ],
+            duration: 800
+        });
+    }
+
+    const handleLogout = async () => {
+        await logout()
+        setDropdownOpen(false)
+        navigate('/')
+    }
+
+    // Check if admin (Allowed roles: admin, neroferno, killu, helper)
+    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper']
+    const isAdmin = allowedRoles.includes(user?.user_metadata?.role)
+
     return (
         <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
             <div className="navbar-brand">
