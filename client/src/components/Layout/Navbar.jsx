@@ -134,23 +134,27 @@ export default function Navbar() {
 
     return (
         <header className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-            <div className="navbar-brand">
-                <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none' }}>
-                    <img
-                        ref={logoRef}
-                        src="/images/ui/logo.webp"
-                        alt="Crystal Tides SMP Logo"
-                        className="navbar-logo"
-                        onMouseEnter={handleLogoHover}
-                        width="40"
-                        height="40"
-                    />
-                    <h2 className="navbar-title">Crystal Tides</h2>
-                </Link>
+            <div className="navbar-left-section" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+                <div className="navbar-brand">
+                    <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '1rem', textDecoration: 'none' }}>
+                        <img
+                            ref={logoRef}
+                            src="/images/ui/logo.webp"
+                            alt="Crystal Tides SMP Logo"
+                            className="navbar-logo"
+                            onMouseEnter={handleLogoHover}
+                            width="40"
+                            height="40"
+                        />
+                    </Link>
+                </div>
+                <div className="nav-links">
+                    <Menu />
+                </div>
             </div>
 
-            <div className="nav-links">
-                <Menu />
+            <div className="navbar-center-title">
+                <h2>Crystal Tides SMP</h2>
             </div>
 
             <div className="nav-right-section">

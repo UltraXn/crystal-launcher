@@ -32,30 +32,35 @@
     text-transform: uppercase;
 }
 
-.navbar-title {
+/* Title Centered Logic */
+.navbar-center-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     opacity: 0;
-    transform: translateX(-20px);
-    transition: all 0.5s ease;
-    white-space: nowrap;
     visibility: hidden;
+    transition: all 0.5s ease;
+    pointer-events: none; /* Prevent blocking clicks */
 }
 
-.navbar.scrolled .navbar-title {
+.navbar-center-title h2 {
+    font-size: 1.5rem;
+    margin: 0;
+    white-space: nowrap;
+    /* Gradient inheritance from .navbar h2 rule above */
+}
+
+.navbar.scrolled .navbar-center-title {
     opacity: 1;
-    transform: translateX(0);
     visibility: visible;
-}
-
-.navbar-brand:hover h2,
-.footer-section:hover h3 {
-    animation: glow-pulse 1.5s infinite alternate;
+    transform: translateX(-50%);
 }
 
 .navbar-brand {
     display: flex;
     align-items: center;
     gap: 1rem;
-    flex: 1; /* For equal weighting */
+    /* Flex grow removed to keep it compact */
 }
 
 .navbar-logo {
@@ -66,16 +71,16 @@
 
 .nav-links {
     display: flex;
-    gap: 2.5rem; /* Increased spacing */
-    flex-grow: 1; /* Reset flex grow to center properly if using auto margins */
+    gap: 2rem;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    margin-left: 1rem; /* Spacing from logo */
 }
 
 .nav-links a {
-    color: rgba(255, 255, 255, 0.8); /* Brighter text for hero contrast */
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Shadow for readability on hero */
-    font-size: 0.95rem; /* Slightly larger */
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: var(--speed);
