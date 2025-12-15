@@ -5,6 +5,9 @@ import { useAuth } from "@/context/AuthContext"
 import Navbar from "@/components/Layout/Navbar"
 import SocialSidebar from "@/components/Layout/SocialSidebar"
 import ScrollToHash from "@/components/Utils/ScrollToHash"
+import TypingBubbles from "@/components/Effects/TypingBubbles"
+import SectionDivider from "@/components/Layout/SectionDivider"
+import AmbientBubbles from "@/components/Effects/AmbientBubbles"
 
 import Home from "@/pages/Home"
 import Blog from "@/pages/Blog"
@@ -25,6 +28,8 @@ import Forum from "@/pages/Forum"
 import ForumCategory from "@/pages/ForumCategory"
 import ForumThread from "@/pages/ForumThread"
 import CreateThread from "@/pages/CreateThread"
+import Support from "@/pages/Support"
+import TicketDetail from "@/pages/TicketDetail"
 
 import Footer from "@/components/Layout/Footer"
 import AdminPanel from "@/pages/AdminPanel"
@@ -132,30 +137,35 @@ export default function App() {
             <div id="home">
               <Home />
             </div>
+            <SectionDivider />
             <div id="rules">
               <Rules />
             </div>
+            <SectionDivider />
             <div id="donors">
               <LazyWrapper minHeight="60vh" rootMargin="600px 0px">
                 <Donors />
               </LazyWrapper>
             </div>
+            <SectionDivider />
             <div id="contests">
               <LazyWrapper minHeight="50vh">
                 <Contests />
               </LazyWrapper>
             </div>
+            <SectionDivider />
             <div id="news">
               <LazyWrapper minHeight="50vh">
                 <Blog />
               </LazyWrapper>
             </div>
-
+            <SectionDivider />
             <div id="stories">
               <LazyWrapper minHeight="80vh">
                 <Stories />
               </LazyWrapper>
             </div>
+            <SectionDivider />
             <div id="suggestions">
               <LazyWrapper minHeight="50vh">
                 <Suggestions />
@@ -174,15 +184,31 @@ export default function App() {
         <Route path="/forum/:id" element={<ForumCategory />} />
         <Route path="/forum/thread/:type/:id" element={<ForumThread />} />
         <Route path="/map" element={<Map />} />
+        
+        <Route path="/support" element={<LazyWrapper><Support /></LazyWrapper>} />
+        <Route path="/support/:id" element={<LazyWrapper><TicketDetail /></LazyWrapper>} />
+
         <Route path="/maintenance" element={<Maintenance />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
 
       <FooterWrapper />
+      <EffectsWrapper />
     </BrowserRouter>
   )
 }
 
+function EffectsWrapper() {
+  const location = useLocation()
+  // Disable bubbles on Account page to keep it clean
+  if (location.pathname === '/account') return null
+  return (
+    <>
+      <TypingBubbles />
+      <AmbientBubbles />
+    </>
+  )
+}
 
 function HeaderWrapper({ announcement }) {
   const location = useLocation()
@@ -219,7 +245,7 @@ function HeaderWrapper({ announcement }) {
 
 function FooterWrapper() {
   const location = useLocation()
-  // No mostrar footer en rutas de admin o mantenimiento
-  if (location.pathname.startsWith('/admin') || location.pathname === '/maintenance') return null
+  // No mostrar footer en rutas de admin, mantenimiento o cuenta
+  if (location.pathname.startsWith('/admin') || location.pathname === '/maintenance' || location.pathname === '/account') return null
   return <Footer />
 }

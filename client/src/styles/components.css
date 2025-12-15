@@ -851,7 +851,7 @@ button,
 .contest-action-btn {
     width: 100%;
     border: none;
-    background: linear-gradient(90deg, var(--accent) 0%, #0c7075 100%);
+    background: linear-gradient(90deg, var(--accent) 0%, #0C5952 100%);
     color: #000;
     font-weight: 700;
     text-transform: uppercase;

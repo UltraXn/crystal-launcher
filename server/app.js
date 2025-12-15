@@ -31,6 +31,8 @@ app.use('/api/polls', require('./routes/pollRoutes'));
 app.use('/api/forum', require('./routes/forumRoutes'));
 app.use('/api/events', require('./routes/eventRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
+app.use('/api/player-stats', require('./routes/playerStats'));
+app.use('/api/server', require('./routes/serverRoutes'));
 
 // Base route
 app.get('/', (req, res) => {

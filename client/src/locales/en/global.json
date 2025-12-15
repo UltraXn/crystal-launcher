@@ -337,6 +337,20 @@
             "news_title": "Latest News",
             "no_news": "There are no recent notifications for you."
         },
+        "stats": {
+            "title": "Combat Statistics",
+            "loading": "Loading data...",
+            "error": "Could not load statistics.",
+            "kills": "Kills",
+            "deaths": "Deaths",
+            "kdr": "K/D Ratio",
+            "health": "Current Health",
+            "job": "Job",
+            "mined": "Blocks Mined",
+            "placed": "Blocks Placed",
+            "mob_kills": "Mobs Killed",
+            "member_since": "Member Since"
+        },
         "posts": {
             "title": "My Posts",
             "loading": "Loading posts...",
@@ -418,7 +432,13 @@
                 "pending_tickets": "Pending Tickets",
                 "high_priority": "High Priority",
                 "revenue": "Monthly Revenue",
-                "vs_prev_month": "vs prev. month"
+                "vs_prev_month": "vs prev. month",
+                "total_players": "Total Players",
+                "new_players": "New (24h)",
+                "total_playtime": "Total Playtime",
+                "all_time": "All Time",
+                "last_24h": "Last 24 Hours",
+                "accumulated": "Accumulated Hours"
             },
             "resources": {
                 "title": "System Resources",
@@ -674,5 +694,19 @@
             "error_save": "Error saving event",
             "error_delete": "Error deleting"
         }
+    },
+    "support": {
+        "title": "Support Center",
+        "subtitle": "Having issues? Open a ticket and we will help you.",
+        "create_ticket": "New Ticket",
+        "no_tickets": "No open tickets",
+        "create_first": "Create a new one to contact Staff.",
+        "new_ticket_title": "Create New Ticket",
+        "category": "Category",
+        "subject": "Subject",
+        "subject_placeholder": "Ex: Rank issue...",
+        "message": "Message",
+        "message_placeholder": "Describe your issue in detail...",
+        "type_message": "Type a message..."
     }
 }

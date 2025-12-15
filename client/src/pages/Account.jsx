@@ -9,6 +9,7 @@ import '@/dashboard.css'
 import Loader from "@/components/UI/Loader"
 import RoleBadge from "@/components/User/RoleBadge"
 import ConfirmationModal from "@/components/UI/ConfirmationModal"
+import PlayerStats from "@/components/Widgets/PlayerStats"
 
 const SkinViewer = lazy(() => import('@/components/Widgets/AccountSkinViewer'))
 
@@ -95,9 +96,12 @@ export default function Account() {
     const handleNameUpdate = async () => {
         if (!newName.trim()) return setIsEditingName(false)
         try {
-            await updateUser({ full_name: newName.trim() })
+            await updateUser({ 
+                full_name: newName.trim(), 
+                username: newName.trim() // Also update username for MC stats
+            })
             setIsEditingName(false)
-        } catch (error) {
+        } catch {
             alert(t('account.name.error_update'))
         }
     }
@@ -146,18 +150,43 @@ export default function Account() {
         }
     }
 
-    if (loading || !user) return <div style={{height:'100vh', display:'flex', alignItems:'center', justifyContent:'center'}}><Loader /></div>
+    // Fetch Player Stats - Hooks must be unconditional
+    const [statsData, setStatsData] = useState(null)
+    const [loadingStats, setLoadingStats] = useState(false)
+    const [statsError, setStatsError] = useState(false)
 
-    const userStats = {
-        playtime: "0h",
-        coins: 0,
-        rank: user.user_metadata?.role === 'admin' ? t('account.roles.admin') : t('account.roles.user'),
-        joined: new Date(user.created_at).toLocaleDateString()
-    }
-
-    const mcUsername = user.user_metadata?.username || t('account.minecraft.not_linked')
-    const isAdmin = user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'owner'
+    // Derived values - safely accessed
+    const mcUsername = user?.user_metadata?.username || t('account.minecraft.not_linked')
+    const isAdmin = user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'owner'
     
+    // Check connected providers - safety check needed if user is null (though effect handles redirect)
+    const identities = user?.identities || []
+    const discordIdentity = identities.find(id => id.provider === 'discord')
+    const twitchIdentity = identities.find(id => id.provider === 'twitch')
+
+    useEffect(() => {
+        if (activeTab === 'overview' && mcUsername && mcUsername !== t('account.minecraft.not_linked')) {
+            setLoadingStats(true)
+            fetch(`${API_URL}/player-stats/${mcUsername}`)
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to fetch stats")
+                    return res.json()
+                })
+                .then(data => {
+                    if (data.money) {
+                        data.money = parseInt(data.money)
+                    }
+                    setStatsData(data)
+                    setStatsError(false)
+                })
+                .catch(err => {
+                    console.error(err)
+                    setStatsError(true)
+                })
+                .finally(() => setLoadingStats(false))
+        }
+    }, [activeTab, mcUsername, API_URL, t])
+
     useEffect(() => {
         const fetchSkin = async () => {
             if (mcUsername && mcUsername !== t('account.minecraft.not_linked')) {
@@ -179,11 +208,8 @@ export default function Account() {
         }
         fetchSkin()
     }, [mcUsername, API_URL, t])
-    
-    // Check connected providers
-    const identities = user.identities || []
-    const discordIdentity = identities.find(id => id.provider === 'discord')
-    const twitchIdentity = identities.find(id => id.provider === 'twitch')
+
+    if (loading || !user) return <div style={{height:'100vh', display:'flex', alignItems:'center', justifyContent:'center'}}><Loader /></div>
 
     return (
         <div className="account-page" style={{ paddingTop: '6rem', minHeight: '100vh', paddingBottom: '4rem', background: '#080808' }}>
@@ -244,11 +270,17 @@ export default function Account() {
                     {activeTab === 'overview' && (
                         <div className="fade-in">
                             <h2 style={{ color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>{t('account.overview.stats_title')}</h2>
-                            <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-                                <StatBox icon={<FaMedal color="#f1c40f" />} value={<RoleBadge role={user.user_metadata?.role} username={user.user_metadata?.username} />} label={t('account.overview.rank')} />
-                                <StatBox icon={<FaCoins color="#f1c40f" />} value={userStats.coins} label={t('account.overview.coins')} />
-                                <StatBox icon={<FaClock color="#3498db" />} value={userStats.playtime} label={t('account.overview.playtime')} />
-                            </div>
+                            
+
+
+                            <PlayerStats 
+                                username={mcUsername} 
+                                statsData={statsData} 
+                                loading={loadingStats} 
+                                error={statsError} 
+                            />
+                            
+                            <div style={{ marginBottom: '2rem' }}></div>
 
                             <div className="dashboard-card" style={{ background: 'rgba(30,30,35,0.6)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                 <h3 style={{ marginBottom: '1rem', color: '#fff' }}>{t('account.overview.news_title')}</h3>

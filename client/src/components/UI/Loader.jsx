@@ -18,7 +18,7 @@ export default function Loader({ text = "Cargando contenido..." }) {
                 .spinner-circle {
                     width: 50px; height: 50px;
                     border: 3px solid rgba(255, 255, 255, 0.1);
-                    border-top: 3px solid var(--accent, #0F969C);
+                    border-top: 3px solid var(--accent, #168C80);
                     border-radius: 50%;
                     animation: spin 1s linear infinite;
                 }

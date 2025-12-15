@@ -45,7 +45,7 @@
 
 .account-header h2 {
     font-size: 2rem;
-    background: linear-gradient(to right, #6DA5C0, #0F969C, #0F969C);
+    background: linear-gradient(to right, #89D9D1, #168C80, #168C80);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -61,7 +61,7 @@
 
 .btn-submit {
     width: 100%;
-    background: linear-gradient(135deg, #0C7075 0%, #0F969C 100%);
+    background: linear-gradient(135deg, #0C5952 0%, #168C80 100%);
     border: none;
     padding: 1rem;
     border-radius: 8px;
@@ -81,7 +81,7 @@
 
 .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(12, 112, 117, 0.3);
+    box-shadow: 0 10px 20px rgba(12, 89, 82, 0.3);
     filter: brightness(1.1);
 }
 

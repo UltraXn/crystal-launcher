@@ -188,26 +188,22 @@
                 "desc": "Si vives en una aldea, deja un letrero o muralla VISIBLE para que otros sepan que está ocupada y no la saqueen ni dañen a los aldeanos."
             },
             "4": {
-                "title": "Granjas Automatizadas",
-                "desc": "Prohibidas construcciones 100% automáticas y granjas de aldeanos/hierro. Excepción: Granjas semi-automáticas con activación manual."
-            },
-            "5": {
                 "title": "No Mega Construcciones",
                 "desc": "No se permiten castillos gigantes que abarquen demasiados CHUNKS. Construye aldeas grandes, pero evita estructuras masivas individuales."
             },
-            "6": {
+            "5": {
                 "title": "Limpieza del Bioma",
                 "desc": "Deben deshacer construcciones temporales que aféen el paisaje (pilares de tierra, puentes cobble, etc)."
             },
-            "7": {
+            "6": {
                 "title": "Estética",
                 "desc": "Las construcciones deben ser estéticamente atractivas. Evita hacer cosas 'a medias' o sin esfuerzo."
             },
-            "8": {
+            "7": {
                 "title": "Streaming y Comunidad",
                 "desc": "Libres de hacer stream dando crédito a Killu y Neroferno. Inviten amigos siempre que respeten las reglas y se unan al Discord."
             },
-            "9": {
+            "8": {
                 "title": "Reportes y Seguridad",
                 "desc": "Usen /co inspect para revisar robos. Contactar a Killu para reclamos. No tomen la justicia por su propia mano."
             }
@@ -337,6 +333,20 @@
             "news_title": "Últimas Novedades",
             "no_news": "No hay notificaciones recientes para ti."
         },
+        "stats": {
+            "title": "Estadísticas de Combate",
+            "loading": "Cargando datos...",
+            "error": "No se pudieron cargar las estadísticas.",
+            "kills": "Kills",
+            "deaths": "Muertes",
+            "kdr": "Ratio K/D",
+            "health": "Vida Actual",
+            "job": "Trabajo",
+            "mined": "Bloques Minados",
+            "placed": "Bloques Colocados",
+            "mob_kills": "Mobs Eliminados",
+            "member_since": "Miembro Desde"
+        },
         "posts": {
             "title": "Mis Publicaciones",
             "loading": "Cargando publicaciones...",
@@ -410,15 +420,20 @@
         "dashboard": {
             "stats": {
                 "server_status": "Estado del Servidor",
-                "online": "ONLINE",
-                "offline": "OFFLINE",
-                "no_connection": "Sin conexión",
+                "running_smooth": "Todo en orden ✨",
+                "check_console": "Revisa la consola ⚠️",
                 "players": "Jugadores Simultáneos",
                 "capacity": "Capacidad",
                 "pending_tickets": "Tickets Pendientes",
                 "high_priority": "de Alta Prioridad",
                 "revenue": "Ingresos del Mes",
-                "vs_prev_month": "vs mes ant."
+                "vs_prev_month": "vs mes ant.",
+                "total_players": "Jugadores Totales",
+                "new_players": "Nuevos (24h)",
+                "total_playtime": "Tiempo Total",
+                "all_time": "Histórico Global",
+                "last_24h": "Últimas 24h",
+                "accumulated": "Horas Acumuladas"
             },
             "resources": {
                 "title": "Recursos del Sistema",
@@ -428,7 +443,8 @@
             },
             "staff": {
                 "title": "Staff Online",
-                "offline_msg": "Servidor Offline - Sin actividad"
+                "offline_msg": "Servidor Offline - Sin actividad",
+                "coming_soon": "Próximamente: Lista de staff en tiempo real"
             }
         },
         "tickets": {
@@ -674,5 +690,19 @@
             "error_save": "Error al guardar evento",
             "error_delete": "Error al eliminar"
         }
+    },
+    "support": {
+        "title": "Soporte Técnico",
+        "subtitle": "¿Tienes algún problema? Abre un ticket y te ayudaremos.",
+        "create_ticket": "Nuevo Ticket",
+        "no_tickets": "No tienes tickets abiertos",
+        "create_first": "Crea uno nuevo para contactar al Staff.",
+        "new_ticket_title": "Crear Nuevo Ticket",
+        "category": "Categoría",
+        "subject": "Asunto",
+        "subject_placeholder": "Ej: Problema con rango...",
+        "message": "Mensaje",
+        "message_placeholder": "Describe tu problema en detalle...",
+        "type_message": "Escribe un mensaje..."
     }
 }

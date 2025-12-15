@@ -3,7 +3,7 @@ import anime from 'animejs';
 
 const KoFiWidget = ({
     kofiId = "G2G03Y8FL",
-    color = "#0C7075",
+    color = "#0C5952",
     text = "¡Dona por Ko-Fi!",
     overlay = false
 }) => {

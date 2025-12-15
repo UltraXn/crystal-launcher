@@ -38,20 +38,20 @@ export default function SuccessModal({ isOpen, onClose, title, message, buttonTe
                         width: '90%',
                         textAlign: 'center',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(109, 165, 192, 0.1)'
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(137, 217, 209, 0.1)'
                     }}
                 >
                     <div style={{ marginBottom: '1.5rem', position: 'relative', display: 'inline-block' }}>
                         <img
                             src="/images/ui/logo.webp"
                             alt="CrystalTides"
-                            style={{ width: '80px', height: 'auto', filter: 'drop-shadow(0 0 10px rgba(109, 165, 192, 0.5))' }}
+                            style={{ width: '80px', height: 'auto', filter: 'drop-shadow(0 0 10px rgba(137, 217, 209, 0.5))' }}
                         />
                         <div style={{
                             position: 'absolute',
                             bottom: '-5px',
                             right: '-5px',
-                            background: '#0F969C',
+                            background: '#168C80',
                             borderRadius: '50%',
                             padding: '5px',
                             display: 'flex',
@@ -66,7 +66,7 @@ export default function SuccessModal({ isOpen, onClose, title, message, buttonTe
                     <h2 style={{
                         fontSize: '1.8rem',
                         marginBottom: '1rem',
-                        background: 'linear-gradient(to right, #fff, #6DA5C0)',
+                        background: 'linear-gradient(to right, #fff, #89D9D1)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         fontWeight: '800'

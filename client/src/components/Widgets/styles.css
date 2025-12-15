@@ -22,15 +22,15 @@ button,
 /* Animations */
 @keyframes glow-pulse {
     0% {
-        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 4px rgba(109, 165, 192, 0.3));
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 4px rgba(137, 217, 209, 0.3));
     }
 
     50% {
-        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 10px rgba(15, 150, 156, 0.6));
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 10px rgba(22, 140, 128, 0.6));
     }
 
     100% {
-        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 4px rgba(109, 165, 192, 0.3));
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 4px rgba(137, 217, 209, 0.3));
     }
 }
 
@@ -62,7 +62,7 @@ button,
 
 .navbar h2 {
     font-size: 1.3rem;
-    background: linear-gradient(to right, #6DA5C0, #0F969C, #0C7075, #0F969C, #072E33, #0F969C #6DA5C0);
+    background: linear-gradient(to right, #89D9D1, #168C80, #0C5952, #168C80, #0B0C10, #168C80 #89D9D1);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -343,7 +343,7 @@ button,
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(109, 165, 192, 0.15);
+    background: rgba(137, 217, 209, 0.15);
     /* Slight background to help contrast */
     border: 1px solid var(--accent);
     color: #fff;
@@ -592,7 +592,7 @@ button,
     justify-content: center;
     align-items: center;
     gap: 1rem;
-    background: linear-gradient(to right, #6DA5C0, #0F969C, #0C7075, #0F969C);
+    background: linear-gradient(to right, #89D9D1, #168C80, #0C5952, #168C80);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -731,7 +731,7 @@ button,
     background: transparent;
     color: var(--accent);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(109, 165, 192, 0.2);
+    box-shadow: 0 5px 15px rgba(137, 217, 209, 0.2);
 }
 
 /* Donor Cards */
@@ -999,7 +999,7 @@ button,
 
 .account-header h2 {
     font-size: 2rem;
-    background: linear-gradient(to right, #6DA5C0, #0F969C, #0F969C);
+    background: linear-gradient(to right, #89D9D1, #168C80, #168C80);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -1044,12 +1044,12 @@ button,
     outline: none;
     border-color: var(--accent);
     background: rgba(0, 0, 0, 0.5);
-    box-shadow: 0 0 15px rgba(15, 150, 156, 0.1);
+    box-shadow: 0 0 15px rgba(22, 140, 128, 0.1);
 }
 
 .btn-submit {
     width: 100%;
-    background: linear-gradient(135deg, #0C7075 0%, #0F969C 100%);
+    background: linear-gradient(135deg, #0C5952 0%, #168C80 100%);
     border: none;
     padding: 1rem;
     border-radius: 8px;
@@ -1069,7 +1069,7 @@ button,
 
 .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(12, 112, 117, 0.3);
+    box-shadow: 0 10px 20px rgba(12, 89, 82, 0.3);
     filter: brightness(1.1);
 }
 
@@ -1182,7 +1182,7 @@ button,
 .rule-icon {
     font-size: 1.5rem;
     color: var(--accent);
-    background: rgba(15, 150, 156, 0.1);
+    background: rgba(22, 140, 128, 0.1);
     padding: 0.8rem;
     border-radius: 50%;
     display: flex;
@@ -1247,7 +1247,7 @@ button,
     width: 80px;
     height: 80px;
     border-radius: 50%;
-    background: rgba(15, 150, 156, 0.1);
+    background: rgba(22, 140, 128, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1503,7 +1503,7 @@ button,
 
 .story-article:hover {
     transform: translateY(-5px);
-    border-color: rgba(15, 150, 156, 0.3);
+    border-color: rgba(22, 140, 128, 0.3);
 }
 
 .story-article-cover {

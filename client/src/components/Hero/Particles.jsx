@@ -10,7 +10,7 @@ export default function HeroParticles() {
 
         // Configuration
         const numParticles = 30
-        const colors = ['#6DA5C0', '#0F969C', '#0C7075', '#ffffff']
+        const colors = ['#89D9D1', '#168C80', '#0C5952', '#ffffff']
 
         // Create particles
         const particles = []

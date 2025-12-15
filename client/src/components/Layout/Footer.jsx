@@ -1,9 +1,20 @@
 import { FaArrowUp } from "react-icons/fa"
 import { Link } from "react-router-dom"
 import { useTranslation } from 'react-i18next'
+import { useState, useEffect } from 'react'
 
 export default function Footer() {
     const { t } = useTranslation()
+    const [showScrollBtn, setShowScrollBtn] = useState(false)
+
+    useEffect(() => {
+        const handleScroll = () => {
+             // Show when scrolled > 300px
+             setShowScrollBtn(window.scrollY > 300);
+        }
+        window.addEventListener('scroll', handleScroll)
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
 
     const scrollToTop = () => {
         window.scrollTo({
@@ -46,7 +57,7 @@ export default function Footer() {
                 </div>
             </div>
 
-            <button className="scroll-top-btn" onClick={scrollToTop} aria-label="Volver arriba">
+            <button className={`scroll-top-btn ${showScrollBtn ? 'visible' : ''}`} onClick={scrollToTop} aria-label="Volver arriba">
                 <FaArrowUp />
             </button>
 

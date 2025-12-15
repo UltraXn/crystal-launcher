@@ -6,4 +6,7 @@ const minecraftController = require('../controllers/minecraftController');
 router.get('/status', minecraftController.getStatus);
 router.get('/skin/:username', minecraftController.getSkin);
 
+// POST /api/minecraft/link
+router.post('/link', minecraftController.verifyLinkCode);
+
 module.exports = router;

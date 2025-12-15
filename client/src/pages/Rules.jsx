@@ -8,12 +8,11 @@ const RULE_ICONS = {
     1: <FaHandshake />,
     2: <FaUserShield />,
     3: <FaCity />,
-    4: <FaIndustry />,
-    5: <FaHammer />,
-    6: <FaLeaf />,
-    7: <FaPaintBrush />,
-    8: <FaVideo />,
-    9: <FaShieldAlt />
+    4: <FaHammer />,
+    5: <FaLeaf />,
+    6: <FaPaintBrush />,
+    7: <FaVideo />,
+    8: <FaShieldAlt />
 }
 
 const RuleCard = ({ id, icon }) => {
