@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { FaGlobe, FaGamepad, FaFilter, FaSpinner, FaUser, FaClock, FaServer } from "react-icons/fa"
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -12,54 +12,82 @@ export default function AuditLog() {
     const [totalPages, setTotalPages] = useState(1)
     
     // CoreProtect placeholder info
-    const isGameLogsConnected = false; 
 
-    const fetchLogs = async () => {
+
+    const fetchLogs = useCallback(async () => {
         setLoading(true)
         try {
-            let url;
-            if (filterSource === 'game') {
-                 url = `${API_URL}/logs/commands?limit=${limit}&page=${page}`
-            } else {
-                 url = `${API_URL}/logs?limit=${limit}&page=${page}`
-                 if (filterSource !== 'all') url += `&source=${filterSource}`
-            }
-            
-            const res = await fetch(url)
-            if (!res.ok) throw new Error("Error fetching logs")
-            
-            const data = await res.json()
-            
-            if (filterSource === 'game') {
-                // Normalize CoreProtect data
-                const normalizedLogs = (data.data || []).map((log, index) => ({
-                    id: `cp-${index}-${Date.now()}`, // Temporary ID
+            let fetchedLogs = [];
+            let total = 0;
+
+            if (filterSource === 'all') {
+                // Fetch both in parallel
+                const [resWeb, resGame] = await Promise.all([
+                    fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=web`),
+                    fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}`)
+                ]);
+
+                const dataWeb = resWeb.ok ? await resWeb.json() : { logs: [], total: 0 };
+                const dataGame = resGame.ok ? await resGame.json() : { data: [], total: 0 };
+
+                // Normalize Game Logs
+                const gameLogs = (dataGame.data || []).map((log, index) => ({
+                    id: `cp-${index}-${Date.now()}`,
                     created_at: log.time * 1000, 
                     username: log.user,
                     action: 'COMMAND',
                     details: log.message,
                     source: 'game'
                 }));
-                 setLogs(normalizedLogs);
+
+                // Normalize Web Logs (ensure source is set)
+                const webLogs = (dataWeb.logs || []).map(l => ({ ...l, source: 'web' }));
+
+                // Merge and Sort by Date DESC
+                fetchedLogs = [...webLogs, ...gameLogs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                // Pagination Strategy: approximate by taking the larger total
+                // (Since we are fetching page 1 of both, we show the top N recent combined)
+                total = Math.max(dataWeb.total || 0, dataGame.total || 0); 
+
+            } else if (filterSource === 'game') {
+                const res = await fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}`);
+                if (!res.ok) throw new Error("Error fetching game logs");
+                const data = await res.json();
+                
+                fetchedLogs = (data.data || []).map((log, index) => ({
+                    id: `cp-${index}-${Date.now()}`,
+                    created_at: log.time * 1000, 
+                    username: log.user,
+                    action: 'COMMAND',
+                    details: log.message,
+                    source: 'game'
+                }));
+                total = data.total || 0;
+
             } else {
-                 setLogs(data.logs || [])
+                // Web only
+                const res = await fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=${filterSource}`);
+                if (!res.ok) throw new Error("Error fetching web logs");
+                const data = await res.json();
+                fetchedLogs = (data.logs || []).map(l => ({ ...l, source: 'web' }));
+                total = data.total || 0;
             }
-            
-            // Calculate total pages
-            const total = data.total || 0;
-            setTotalPages(Math.ceil(total / limit))
+
+            setLogs(fetchedLogs);
+            setTotalPages(Math.ceil(total / limit));
+
         } catch (err) {
             console.error("Failed to load logs", err)
-            // If game logs fail (e.g. not configured), show empty
-             if (filterSource === 'game') setLogs([])
+            setLogs([])
         } finally {
             setLoading(false)
         }
-    }
+    }, [filterSource, page, limit])
 
     useEffect(() => {
         fetchLogs()
-    }, [filterSource, page]) // Re-fetch on filter or page change
+    }, [fetchLogs])
 
     // Reset to page 1 when filter changes
     useEffect(() => {

@@ -31,7 +31,7 @@ const getCommandLogs = async ({ page = 1, limit = 50, search = '' }) => {
                 cmd.message, 
                 u.user 
             FROM co_command cmd
-            JOIN co_user u ON cmd.user = u.row_id
+            JOIN co_user u ON cmd.user = u.rowid
             WHERE (${commandFilters})
         `;
         
@@ -51,7 +51,7 @@ const getCommandLogs = async ({ page = 1, limit = 50, search = '' }) => {
         let countQuery = `
             SELECT COUNT(*) as total 
             FROM co_command cmd
-            JOIN co_user u ON cmd.user = u.row_id
+            JOIN co_user u ON cmd.user = u.rowid
             WHERE (${commandFilters})
         `;
         const countParams = suspiciousCommands.map(cmd => `${cmd}%`);

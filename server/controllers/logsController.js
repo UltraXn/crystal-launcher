@@ -10,7 +10,8 @@ const getCommandLogs = async (req, res) => {
         
         res.json(logs);
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch command logs' });
+        console.error('CoreProtect Error:', error);
+        res.status(500).json({ error: 'Failed to fetch command logs', details: error.message });
     }
 };
 

@@ -23,27 +23,32 @@ export default function DashboardOverview() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 1. Fetch Resources + Global Stats (Consolidated Endpoint)
-                const resRes = await fetch(`${API_URL}/server/resources`);
-                const dataRes = resRes.ok ? await resRes.json() : null;
+                // 1. Fetch Resources (Pterodactyl/Plan) AND Live Status (Query)
+                const [resRes, resLive] = await Promise.all([
+                    fetch(`${API_URL}/server/resources`),
+                    fetch(`${API_URL}/server/status/live`)
+                ]);
 
-                if (dataRes) {
+                const dataRes = resRes.ok ? await resRes.json() : null;
+                const dataLive = resLive.ok ? await resLive.json() : null;
+
+                if (dataRes || dataLive) {
                     setServerStats({
-                        online: dataRes.status === 'running',
-                        status: dataRes.status || 'offline',
+                        online: dataLive?.online ?? (dataRes?.status === 'running'),
+                        status: dataRes?.status || (dataLive?.online ? 'running' : 'offline'),
                         memory: { 
-                            current: dataRes.memory?.current || 0, 
-                            limit: dataRes.memory?.limit || 24576 
+                            current: dataRes?.memory?.current || 0, 
+                            limit: dataRes?.memory?.limit || 24576 
                         },
-                        cpu: dataRes.cpu || 0,
+                        cpu: dataRes?.cpu || 0,
                         players: { 
-                            online: dataRes.online || 0, 
-                            max: 100 
+                            online: dataLive?.players?.online ?? (dataRes?.online || 0), 
+                            max: dataLive?.players?.max ?? 100 
                         },
                         global: {
-                            total: dataRes.total_players || 0,
-                            new: dataRes.new_players || 0,
-                            playtime: dataRes.total_playtime_hours || 0
+                            total: dataRes?.total_players || 0,
+                            new: dataRes?.new_players || 0,
+                            playtime: dataRes?.total_playtime_hours || 0
                         }
                     });
                 } else {
