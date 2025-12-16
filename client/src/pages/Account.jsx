@@ -327,7 +327,7 @@ export default function Account() {
     }
 
     useEffect(() => {
-        if (activeTab === 'overview' && isLinked) {
+        if ((activeTab === 'overview' || activeTab === 'connections') && isLinked) {
             setLoadingStats(true)
             fetch(`${API_URL}/player-stats/${statsQueryParam}`)
                 .then(res => {
@@ -359,7 +359,7 @@ export default function Account() {
                             {uploading ? (
                                 <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#333' }}>...</div>
                             ) : (
-                                <img src={user.user_metadata?.avatar_url || (isLinked ? `https://mc-heads.net/avatar/${mcUUID}/100` : "https://ui-avatars.com/api/?name=" + (user.user_metadata?.full_name || "User"))} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={user.user_metadata?.avatar_url || (isLinked ? `https://mc-heads.net/avatar/${statsData?.skin_name || mcUUID}/100` : "https://ui-avatars.com/api/?name=" + (user.user_metadata?.full_name || "User"))} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             )}
                             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', background: 'rgba(0,0,0,0.6)', fontSize: '0.7rem', padding: '2px 0' }}><FaCamera /></div>
                         </div>
@@ -535,101 +535,167 @@ export default function Account() {
                         <div key="connections" className="fade-in">
                             <h2 style={{ color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>{t('account.connections.title')}</h2>
                             
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                                 {/* Minecraft Card */}
-                                <div className="connection-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                                        <div style={{ background: '#44bd32', padding: '10px', borderRadius: '50%', color: '#fff' }}><FaGamepad /></div>
-                                        <div>
-                                            <h3 style={{ margin: 0, color: '#fff' }}>Minecraft</h3>
-                                            <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>{isLinked ? 'Vinculado' : 'No vinculado'}</p>
+                                <div className="connection-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        {/* Logo Left */}
+                                        <div style={{ background: '#44bd32', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
+                                            <FaGamepad />
                                         </div>
+                                        
+                                        {/* Text Middle */}
+                                        <div style={{ flex: 1 }}>
+                                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Minecraft</h3>
+                                            <p style={{ margin: '4px 0 0', color: '#888', fontSize: '0.85rem' }}>{isLinked ? 'Vinculado' : 'No vinculado'}</p>
+                                        </div>
+
+                                        {/* Avatar Right */}
+                                        {isLinked && (
+                                            <div style={{ width: '48px', height: '48px', flexShrink: 0 }}>
+                                                <img 
+                                                    src={`https://mc-heads.net/avatar/${statsData?.skin_name || mcUUID}`} 
+                                                    alt={mcUsername} 
+                                                    style={{ width: '100%', height: '100%', borderRadius: '8px', objectFit: 'contain', background: 'rgba(0,0,0,0.2)' }} 
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {isLinked ? (
-                                        <div style={{ background: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', padding: '1rem', borderRadius: '8px', textAlign: 'center', fontWeight: 'bold' }}>
-                                            ✓ {mcUsername}
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                                                Vincula tu cuenta de Minecraft para acceder a estadísticas y sincronizar tu rango.
-                                            </p>
-                                            
-                                            {!linkCode ? (
-                                                <button 
-                                                    onClick={handleGenerateCode} 
-                                                    disabled={linkLoading}
-                                                    style={{ width: '100%', background: 'var(--accent)', border: 'none', padding: '10px', borderRadius: '6px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', opacity: linkLoading ? 0.7 : 1 }}
-                                                >
-                                                    {linkLoading ? 'Generando...' : 'Obtener Código de Vinculación'}
-                                                </button>
-                                            ) : (
-                                                <div className="link-code-box animate-pop" style={{ background: '#222', border: '2px dashed var(--accent)', padding: '1.5rem', borderRadius: '8px', textAlign: 'center' }}>
-                                                    <p style={{ color: '#ccc', marginBottom: '0.5rem' }}>Entra al servidor y escribe:</p>
-                                                    <code style={{ display: 'block', background: '#000', color: 'var(--accent)', padding: '0.8rem', borderRadius: '4px', fontSize: '1.2rem', fontWeight: 'bold', letterSpacing: '2px', marginBottom: '1rem' }}>/link {linkCode}</code>
-                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                                        <Loader size="small" />
-                                                        <span style={{ fontSize: '0.8rem', color: '#888' }}>Esperando confirmación...</span>
+                                    <div style={{ marginTop: 'auto' }}>
+                                        {isLinked ? (
+                                            <div style={{ background: 'rgba(76, 175, 80, 0.1)', color: '#4CAF50', padding: '0.8rem', borderRadius: '8px', textAlign: 'center', fontWeight: '600' }}>
+                                                ✓ {mcUsername}
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '1rem', lineHeight: '1.4' }}>
+                                                    Vincula tu cuenta para sincronizar rango y stats.
+                                                </p>
+                                                
+                                                {!linkCode ? (
+                                                    <button 
+                                                        onClick={handleGenerateCode} 
+                                                        disabled={linkLoading}
+                                                        style={{ width: '100%', background: 'var(--accent)', border: 'none', padding: '10px', borderRadius: '6px', color: '#1a1a1a', fontWeight: 'bold', cursor: 'pointer', transition: 'opacity 0.2s', opacity: linkLoading ? 0.7 : 1 }}
+                                                    >
+                                                        {linkLoading ? 'Generando...' : 'Obtener Código'}
+                                                    </button>
+                                                ) : (
+                                                    <div className="link-code-box animate-pop" style={{ background: '#222', border: '1px dashed var(--accent)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
+                                                        <p style={{ color: '#ccc', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Escribe en el servidor:</p>
+                                                        <code style={{ display: 'block', background: '#000', color: 'var(--accent)', padding: '0.6rem', borderRadius: '4px', fontSize: '1.1rem', fontWeight: 'bold', letterSpacing: '1px', marginBottom: '0.8rem' }}>/link {linkCode}</code>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                                            <Loader size="small" />
+                                                            <span style={{ fontSize: '0.75rem', color: '#888' }}>Esperando...</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Discord Card */}
-                                <div className="connection-card" style={{ background: 'rgba(88, 101, 242, 0.1)', border: '1px solid rgba(88, 101, 242, 0.3)', borderRadius: '12px', padding: '1.5rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                                        <div style={{ background: '#5865F2', padding: '10px', borderRadius: '50%', color: '#fff' }}><FaDiscord /></div>
-                                        <div>
-                                            <h3 style={{ margin: 0, color: '#fff' }}>Discord</h3>
-                                            <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>{discordIdentity ? 'Conectado' : 'Desconectado'}</p>
+                                <div className="connection-card" style={{ background: 'rgba(88, 101, 242, 0.1)', border: '1px solid rgba(88, 101, 242, 0.2)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        {/* Logo Left */}
+                                        <div style={{ background: '#5865F2', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
+                                            <FaDiscord />
                                         </div>
+
+                                        {/* Text Middle */}
+                                        <div style={{ flex: 1 }}>
+                                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Discord</h3>
+                                            <p style={{ margin: '4px 0 0', color: '#888', fontSize: '0.85rem' }}>
+                                                {discordIdentity 
+                                                    ? (discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.user_name || 'Conectado') 
+                                                    : 'Desconectado'}
+                                            </p>
+                                        </div>
+
+                                        {/* Avatar Right */}
+                                        {discordIdentity?.identity_data?.avatar_url && (
+                                            <div style={{ width: '48px', height: '48px', flexShrink: 0 }}>
+                                                <img 
+                                                    src={discordIdentity.identity_data.avatar_url} 
+                                                    alt="Discord Avatar" 
+                                                    style={{ width: '100%', height: '100%', borderRadius: '50%' }} 
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {discordIdentity ? (
-                                        <button 
-                                            onClick={() => handleUnlinkProvider(discordIdentity.id)}
-                                            style={{ width: '100%', background: 'rgba(231, 76, 60, 0.2)', border: '1px solid rgba(231, 76, 60, 0.5)', color: '#ff6b6b', padding: '8px', borderRadius: '6px', cursor: 'pointer' }}
-                                        >
-                                            Desvincular
-                                        </button>
-                                    ) : (
-                                        <button 
-                                            onClick={() => handleLinkProvider('discord')}
-                                            style={{ width: '100%', background: '#5865F2', border: 'none', color: '#fff', padding: '8px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-                                        >
-                                            Conectar Discord
-                                        </button>
-                                    )}
+                                    <div style={{ marginTop: 'auto' }}>
+                                        {discordIdentity ? (
+                                            <button 
+                                                onClick={() => handleUnlinkProvider(discordIdentity.id)}
+                                                style={{ width: '100%', background: 'rgba(231, 76, 60, 0.15)', border: '1px solid rgba(231, 76, 60, 0.3)', color: '#ff6b6b', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background 0.2s' }}
+                                                onMouseOver={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.25)'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.15)'}
+                                            >
+                                                Desvincular
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => handleLinkProvider('discord')}
+                                                style={{ width: '100%', background: '#5865F2', border: 'none', color: '#fff', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px rgba(88, 101, 242, 0.3)' }}
+                                            >
+                                                Conectar Discord
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Twitch Card */}
-                                <div className="connection-card" style={{ background: 'rgba(145, 70, 255, 0.1)', border: '1px solid rgba(145, 70, 255, 0.3)', borderRadius: '12px', padding: '1.5rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                                        <div style={{ background: '#9146FF', padding: '10px', borderRadius: '50%', color: '#fff' }}><FaTwitch /></div>
-                                        <div>
-                                            <h3 style={{ margin: 0, color: '#fff' }}>Twitch</h3>
-                                            <p style={{ margin: 0, color: '#888', fontSize: '0.9rem' }}>{twitchIdentity ? 'Conectado' : 'Desconectado'}</p>
+                                <div className="connection-card" style={{ background: 'rgba(145, 70, 255, 0.1)', border: '1px solid rgba(145, 70, 255, 0.2)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        {/* Logo Left */}
+                                        <div style={{ background: '#9146FF', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
+                                            <FaTwitch />
                                         </div>
+
+                                        {/* Text Middle */}
+                                        <div style={{ flex: 1 }}>
+                                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Twitch</h3>
+                                            <p style={{ margin: '4px 0 0', color: '#888', fontSize: '0.85rem' }}>
+                                                {twitchIdentity 
+                                                    ? (twitchIdentity.identity_data?.full_name || twitchIdentity.identity_data?.name || twitchIdentity.identity_data?.login || 'Conectado') 
+                                                    : 'Desconectado'}
+                                            </p>
+                                        </div>
+
+                                        {/* Avatar Right */}
+                                        {twitchIdentity?.identity_data?.avatar_url && (
+                                            <div style={{ width: '48px', height: '48px', flexShrink: 0 }}>
+                                                <img 
+                                                    src={twitchIdentity.identity_data.avatar_url} 
+                                                    alt="Twitch Avatar" 
+                                                    style={{ width: '100%', height: '100%', borderRadius: '50%' }} 
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {twitchIdentity ? (
-                                        <button 
-                                            onClick={() => handleUnlinkProvider(twitchIdentity.id)}
-                                            style={{ width: '100%', background: 'rgba(231, 76, 60, 0.2)', border: '1px solid rgba(231, 76, 60, 0.5)', color: '#ff6b6b', padding: '8px', borderRadius: '6px', cursor: 'pointer' }}
-                                        >
-                                            Desvincular
-                                        </button>
-                                    ) : (
-                                        <button 
-                                            onClick={() => handleLinkProvider('twitch')}
-                                            style={{ width: '100%', background: '#9146FF', border: 'none', color: '#fff', padding: '8px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-                                        >
-                                            Conectar Twitch
-                                        </button>
-                                    )}
+                                    <div style={{ marginTop: 'auto' }}>
+                                        {twitchIdentity ? (
+                                            <button 
+                                                onClick={() => handleUnlinkProvider(twitchIdentity.id)}
+                                                style={{ width: '100%', background: 'rgba(231, 76, 60, 0.15)', border: '1px solid rgba(231, 76, 60, 0.3)', color: '#ff6b6b', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background 0.2s' }}
+                                                onMouseOver={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.25)'}
+                                                onMouseOut={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.15)'}
+                                            >
+                                                Desvincular
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                onClick={() => handleLinkProvider('twitch')}
+                                                style={{ width: '100%', background: '#9146FF', border: 'none', color: '#fff', padding: '10px', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 15px rgba(145, 70, 255, 0.3)' }}
+                                            >
+                                                Conectar Twitch
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -648,10 +714,10 @@ export default function Account() {
                                             <p style={{ color: '#fff', margin: 0 }}>{t('account.settings.public_stats', 'Mostrar estadísticas públicas')}</p>
                                             <p style={{ color: '#888', fontSize: '0.8rem', margin: 0 }}>{t('account.settings.public_stats_desc', 'Otros usuarios podrán ver tu perfil.')}</p>
                                         </div>
-                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px' }}>
+                                        <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '50px', height: '26px', flexShrink: 0 }}>
                                             <input type="checkbox" checked={publicStats} onChange={handlePrivacyToggle} style={{ opacity: 0, width: 0, height: 0 }} />
                                             <span className="slider round" style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: publicStats ? 'var(--accent)' : '#ccc', transition: '.4s', borderRadius: '34px' }}>
-                                                <span style={{ position: 'absolute', content: '""', height: '18px', width: '18px', left: publicStats ? '26px' : '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%' }}></span>
+                                                <span style={{ position: 'absolute', height: '18px', width: '18px', left: publicStats ? '28px' : '4px', bottom: '4px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%' }}></span>
                                             </span>
                                         </label>
                                     </div>

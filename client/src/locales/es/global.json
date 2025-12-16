@@ -367,7 +367,8 @@
         "minecraft": {
             "title": "Vincular Minecraft",
             "not_linked": "Sin vincular",
-            "current_user": "Usuario actual: ",
+            "current_user": "Usuario actual: "
+        },
         "connections": {
             "title": "Cuentas Conectadas",
             "success_link": "¡Cuenta vinculada exitosamente!",
@@ -382,8 +383,7 @@
             "confirm_unlink": "Sí, desvincular",
             "cancel": "Cancelar"
         },
-        "admin_panel": "Panel Admin"
-    },
+        "admin_panel": "Panel Admin",
     "settings": {
         "title": "Configuración",
         "security": "Seguridad",

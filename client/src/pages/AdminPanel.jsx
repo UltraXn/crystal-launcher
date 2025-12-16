@@ -78,7 +78,7 @@ export default function AdminPanel() {
                 <AdminTab active={activeTab === 'polls'} onClick={() => setActiveTab('polls')} label={t('admin.tabs.polls')} />
                 <AdminTab active={activeTab === 'events'} onClick={() => setActiveTab('events')} label={t('admin.tabs.events')} />
                 <AdminTab active={activeTab === 'news'} onClick={() => setActiveTab('news')} label={t('admin.tabs.news')} />
-                <AdminTab active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} label={t('admin.tabs.logs')} />
+                <AdminTab active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} label="Registro de Auditoría" />
                 <AdminTab active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label={t('admin.tabs.settings')} />
             </div>
 

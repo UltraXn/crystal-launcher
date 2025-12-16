@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 import { FaDiscord, FaTwitter, FaTwitch } from 'react-icons/fa';
 
+import { useLocation } from 'react-router-dom';
+
 export default function SocialSidebar() {
     const [isVisible, setIsVisible] = useState(false);
+    const location = useLocation();
 
     useEffect(() => {
         const toggleVisibility = () => {
+             // Show always on pages other than Home (like Forum)
+             if (location.pathname !== '/') {
+                 setIsVisible(true);
+                 return;
+             }
+
              // Show when scrolled > 300px
              // Hide when near bottom (optional, but requested "hidden at footer")
              /* 
@@ -20,9 +29,12 @@ export default function SocialSidebar() {
              setIsVisible(scrolled && !nearBottom);
         };
 
+        // Initial check
+        toggleVisibility();
+
         window.addEventListener('scroll', toggleVisibility);
         return () => window.removeEventListener('scroll', toggleVisibility);
-    }, []);
+    }, [location.pathname]);
 
     return (
         <div className={`social-sidebar ${isVisible ? 'visible' : ''}`}>

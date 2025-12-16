@@ -16,6 +16,7 @@ export default function DashboardOverview() {
     
     const API_URL = import.meta.env.VITE_API_URL
 
+    const [staffOnline, setStaffOnline] = useState([])
     const [ticketStats, setTicketStats] = useState({ open: 0, urgent: 0 })
     const [donationStats, setDonationStats] = useState({ currentMonth: "0.00", percentChange: 0 })
 
@@ -47,6 +48,13 @@ export default function DashboardOverview() {
                     });
                 } else {
                      setServerStats(prev => ({ ...prev, online: false, status: 'error' }));
+                }
+
+                // Fetch Staff Online
+                const resStaff = await fetch(`${API_URL}/server/staff`)
+                if (resStaff.ok) {
+                    const dataStaff = await resStaff.json()
+                    setStaffOnline(dataStaff)
                 }
 
                 // Fetch Ticket Stats
@@ -144,13 +152,51 @@ export default function DashboardOverview() {
                     </div>
                 </div>
 
-                {/* Staff Activity (Mock removed for now, or just placeholder until Staff API is built) */}
+                {/* Staff Activity */}
                 <div className="admin-card">
-                    <h3 style={{ marginBottom: '1rem' }}>{t('admin.dashboard.staff.title')}</h3>
+                    <h3 style={{ marginBottom: '1rem' }}>Staff Online</h3>
                     {serverStats.online ? (
-                        <p style={{ color: 'var(--muted)', fontStyle: 'italic' }}>
-                            {t('admin.dashboard.staff.coming_soon')}
-                        </p>
+                        <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                            {staffOnline.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                    {staffOnline.map((staff, idx) => (
+                                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <img src={staff.avatar} alt={staff.username} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+                                            <div>
+                                                <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{staff.username}</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                                                    {staff.role_image ? (
+                                                        <img src={staff.role_image} alt={staff.role} style={{ height: 'auto', maxHeight: '32px', display: 'block' }} />
+                                                    ) : (
+                                                        <span style={{ fontSize: '0.8rem', color: '#aaa', textTransform: 'capitalize' }}>{staff.role}</span>
+                                                    )}
+                                                    
+                                                    {staff.login_time && (
+                                                        <span style={{ fontSize: '0.75rem', color: '#888', display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>
+                                                            <FaClock size={10} style={{ marginRight: '4px' }} />
+                                                            {(() => {
+                                                                const diff = Date.now() - staff.login_time;
+                                                                const hours = Math.floor(diff / 3600000);
+                                                                const mins = Math.floor((diff % 3600000) / 60000);
+                                                                return `${hours}h ${mins}m`;
+                                                            })()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80', boxShadow: '0 0 5px #4ade80' }}></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--muted)', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                    <FaUsers size={24} style={{ marginBottom: '0.5rem', opacity: 0.7 }} />
+                                    <p style={{ margin: 0, fontStyle: 'italic' }}>
+                                        No hay staff conectado
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     ) : (
                         <p style={{ color: 'var(--muted)', textAlign: 'center', marginTop: '2rem' }}>{t('admin.dashboard.staff.offline_msg')}</p>
                     )}

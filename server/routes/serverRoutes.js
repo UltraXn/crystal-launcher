@@ -1,3 +1,4 @@
+const util = require('minecraft-server-util');
 const express = require('express');
 const router = express.Router();
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
@@ -121,6 +122,167 @@ router.get('/resources', async (req, res) => {
     } catch (error) {
         console.error("Server Status Route Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
+        if (connection) await connection.end();
+    }
+});
+
+// Route: Get Online Staff
+// (util imported at top)
+
+// Route: Get Online Staff (Real-time via RCON)
+router.get('/staff', async (req, res) => {
+    let connection = null;
+    const rconOptions = {
+        timeout: 1000 * 5 // 5s timeout
+    };
+    
+    try {
+        // 1. Fetch Online Players via RCON
+        const rconHost = process.env.RCON_HOST || process.env.MC_SERVER_HOST || 'localhost';
+        const rconPort = parseInt(process.env.RCON_PORT) || 25575;
+        const rconPass = process.env.RCON_PASSWORD;
+
+        if (!rconPass) {
+             throw new Error("RCON password not configured");
+        }
+
+        const client = new util.RCON();
+        await client.connect(rconHost, rconPort);
+        await client.login(rconPass);
+        
+        // Command: list
+        // Output format typically: "There are 2/100 players online: User1, User2"
+        const response = await client.execute('list');
+        await client.close();
+        
+        // Parse Output
+        // Remove color codes if any (Section sign + char)
+        const cleanResponse = response.replace(/§./g, '');
+        
+        if (!cleanResponse.includes(':')) {
+            // No players or empty list "There are 0/100 players online: " or just "There are 0/100..."
+            return res.json([]);
+        }
+        
+        const playerPart = cleanResponse.split(':')[1];
+        if (!playerPart || playerPart.trim().length === 0) {
+             return res.json([]);
+        }
+
+        // List of online usernames
+        const onlineUsernames = playerPart.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+        if (onlineUsernames.length === 0) {
+            return res.json([]);
+        }
+
+        // 2. Resolve Ranks for these players via DB
+        connection = await mysql.createConnection(dbConfig);
+        
+        // Prepare placeholders
+        const placeholders = onlineUsernames.map(() => '?').join(',');
+        
+        // Query LP
+        const [rows] = await connection.execute(`
+            SELECT username, primary_group, uuid
+            FROM luckperms_players
+            WHERE username IN (${placeholders})
+            AND (
+                primary_group IN ('developer', 'killuwu', 'neroferno', 'killu', 'fundador', 'admin', 'owner', '§f§r')
+                OR username = 'UltraXn'
+            )
+        `, onlineUsernames);
+
+        // Query Skins from SkinRestorer (sr_players uses 'uuid' column type varchar? or binary? Assume varchar from previous debug)
+        // Previous debug in playerStats.js confirmed table sr_players, column skin_identifier, uuid.
+        
+        // Fetch skins for these UUIDs
+        let skinMap = {};
+        if (rows.length > 0) {
+            try {
+                const uuids = rows.map(r => r.uuid);
+                const skinPlaceholders = uuids.map(() => '?').join(',');
+                
+                const [skinRows] = await connection.execute(`
+                    SELECT uuid, skin_identifier 
+                    FROM sr_players 
+                    WHERE uuid IN (${skinPlaceholders})
+                `, uuids);
+                
+                skinRows.forEach(sr => {
+                    skinMap[sr.uuid] = sr.skin_identifier;
+                });
+            } catch (err) {
+                console.error("Error fetching skins for staff:", err.message);
+            }
+        }
+
+        // Fetch Session Start Times (for uptime)
+        let sessionMap = {};
+        if (rows.length > 0) {
+            try {
+                const uuids = rows.map(r => r.uuid);
+                const sessionPlaceholders = uuids.map(() => '?').join(',');
+                
+                // Get active sessions (Latest session start)
+                const [sessionRows] = await connection.execute(`
+                    SELECT pu.uuid, MAX(ps.session_start) as session_start 
+                    FROM plan_sessions ps 
+                    JOIN plan_users pu ON ps.user_id = pu.id 
+                    WHERE pu.uuid IN (${sessionPlaceholders})
+                    GROUP BY pu.uuid
+                `, uuids);
+                
+                sessionRows.forEach(s => {
+                    sessionMap[s.uuid] = s.session_start;
+                });
+            } catch (err) {
+                console.error("Error fetching sessions for staff:", err.message);
+            }
+        }
+
+        // Map structure
+        const staff = rows.map(row => {
+            let role = row.primary_group;
+            let roleImage = null;
+
+            // Normalize Role & Image
+            if (row.username === 'UltraXn' && row.primary_group === 'default') {
+                role = 'Founder';
+                roleImage = '/ranks/rank-neroferno.png';
+            }
+            
+            if (row.primary_group === '§f§r') {
+               role = 'Founder';
+               roleImage = '/ranks/rank-neroferno.png';
+            }
+
+            if (row.primary_group === 'neroferno') {
+                roleImage = '/ranks/rank-neroferno.png';
+            }
+
+            // Determine Avatar (Custom Skin > UUID)
+            const skinName = skinMap[row.uuid];
+            const avatarUrl = skinName 
+                ? `https://mc-heads.net/avatar/${skinName}/100` 
+                : `https://mc-heads.net/avatar/${row.uuid}/100`;
+
+            return {
+                username: row.username,
+                role: role,
+                role_image: roleImage,
+                uuid: row.uuid,
+                avatar: avatarUrl,
+                login_time: sessionMap[row.uuid] || Date.now()
+            }
+        });
+
+        res.json(staff);
+
+    } catch (error) {
+        console.error("Staff Online Route Error:", error);
+        res.json([]);
+    } finally {
         if (connection) await connection.end();
     }
 });
