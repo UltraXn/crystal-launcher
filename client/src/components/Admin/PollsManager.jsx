@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { FaPoll, FaPlus, FaTimes, FaCheck, FaCheckCircle, FaSpinner, FaStopCircle, FaTrash } from 'react-icons/fa'
+import { useState, useEffect, useCallback } from 'react'
+import { FaPoll, FaPlus, FaTimes, FaCheck, FaCheckCircle, FaSpinner, FaStopCircle, FaTrash, FaHistory, FaEye } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 
 const API_URL = import.meta.env.VITE_API_URL
@@ -8,6 +8,13 @@ export default function PollsManager() {
     const { t } = useTranslation()
     const [activePoll, setActivePoll] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [tab, setTab] = useState('active') // 'active', 'history'
+
+    // History State
+    const [historyPolls, setHistoryPolls] = useState([])
+    const [historyLoading, setHistoryLoading] = useState(false)
+    const [page, setPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
 
     // Form
     const [title, setTitle] = useState('')
@@ -15,9 +22,11 @@ export default function PollsManager() {
     const [options, setOptions] = useState(['', ''])
     const [creating, setCreating] = useState(false)
     const [daysDuration, setDaysDuration] = useState(7)
+    const [buttonSuccess, setButtonSuccess] = useState(false)
+    const [showModal, setShowModal] = useState(false)
 
     // Fetch Active
-    const fetchActive = async () => {
+    const fetchActive = useCallback(async () => {
         setLoading(true)
         try {
             const res = await fetch(`${API_URL}/polls/active`)
@@ -27,11 +36,26 @@ export default function PollsManager() {
             }
         } catch(err) { console.error(err) }
         finally { setLoading(false) }
-    }
+    }, [])
 
-    useEffect(() => { fetchActive() }, [])
+    // Fetch History
+    const fetchHistory = useCallback(async () => {
+        setHistoryLoading(true)
+        try {
+            const res = await fetch(`${API_URL}/polls?page=${page}&limit=10`)
+            if(res.ok) {
+                const data = await res.json()
+                setHistoryPolls(data.data || [])
+                setTotalPages(data.totalPages || 1)
+            }
+        } catch (err) { console.error(err) }
+        finally { setHistoryLoading(false) }
+    }, [page])
 
-    const [buttonSuccess, setButtonSuccess] = useState(false)
+    useEffect(() => { 
+        if(tab === 'active') fetchActive()
+        if(tab === 'history') fetchHistory()
+    }, [tab, page, fetchActive, fetchHistory])
 
     // Create Handler
     const handleCreate = async (e) => {
@@ -63,9 +87,11 @@ export default function PollsManager() {
                 setQuestion('')
                 setOptions(['', ''])
                 fetchActive()
-                // alert("Encuesta lanzada!") // Removing alert to use button feedback
                 setButtonSuccess(true)
-                setTimeout(() => setButtonSuccess(false), 3000)
+                setTimeout(() => {
+                    setButtonSuccess(false)
+                    setShowModal(false)
+                }, 1500)
             } else {
                 alert(t('admin.polls.form.error_create'))
             }
@@ -81,6 +107,7 @@ export default function PollsManager() {
         try {
             await fetch(`${API_URL}/polls/close/${activePoll.id}`, { method: 'POST' })
             fetchActive()
+            if(tab === 'history') fetchHistory()
         } catch(err) { console.error(err) }
     }
 
@@ -95,15 +122,26 @@ export default function PollsManager() {
         setOptions(newOpts)
     }
 
-    const [showModal, setShowModal] = useState(false)
-
-    // ... existing handlers ...
-
     return (
         <div style={{ position: 'relative' }}>
             
-            {/* HEADER ACTIONS */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+            {/* HEADER */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <button 
+                        onClick={() => setTab('active')}
+                        className={`admin-tab-btn ${tab === 'active' ? 'active' : ''}`}
+                    >
+                        <FaPoll /> Activa
+                    </button>
+                    <button 
+                        onClick={() => setTab('history')}
+                        className={`admin-tab-btn ${tab === 'history' ? 'active' : ''}`}
+                    >
+                        <FaHistory /> Historial
+                    </button>
+                </div>
+
                 <button 
                     onClick={() => setShowModal(true)} 
                     className="btn-primary" 
@@ -113,63 +151,118 @@ export default function PollsManager() {
                 </button>
             </div>
 
-            {/* ACTIVE POLL CARD (FULL WIDTH) */}
-            <div className="admin-card">
-                 <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    <FaPoll /> {t('admin.polls.active_title')}
-                </h3>
+            {/* CONTENT */}
+            {tab === 'active' ? (
+                <div className="admin-card">
+                     <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                        <FaPoll /> {t('admin.polls.active_title')}
+                    </h3>
 
-                {loading ? <div style={{textAlign:'center'}}><FaSpinner className="spin" /></div> : (
-                    activePoll ? (
-                        <div>
-                            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'1rem' }}>
-                                <span className="badge" style={{background:'#22c55e', color:'#000'}}>{t('admin.polls.status_active')}</span>
-                                <span style={{fontSize:'0.8rem', color:'#aaa'}}>{t('admin.polls.ends_in')} {activePoll.closesIn}</span>
-                            </div>
-                            
-                            <h4 style={{marginBottom:'0.5rem', color:'var(--accent)', fontSize: '1.5rem'}}>{activePoll.title}</h4>
-                            <p style={{marginBottom:'2rem', fontSize:'1.2rem', color: '#ddd'}}>{activePoll.question}</p>
-
-                            <div style={{display:'flex', flexDirection:'column', gap:'0.8rem', marginBottom:'2rem'}}>
-                                {activePoll.options.map(opt => (
-                                    <div key={opt.id} style={{
-                                        background:'rgba(255,255,255,0.03)', 
-                                        padding:'1rem', 
-                                        borderRadius:'4px', 
-                                        display:'flex', 
-                                        justifyContent:'space-between',
-                                        border: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
-                                        <span style={{ fontSize: '1.1rem' }}>{opt.label}</span>
-                                        <span style={{fontWeight:'bold', color: 'var(--accent)'}}>{opt.percent}% ({opt.votes} {t('admin.polls.votes')})</span>
-                                    </div>
-                                ))}
-                                <div style={{marginTop:'0.5rem', textAlign:'right', color:'#888', fontSize:'0.9rem'}}>
-                                    {t('admin.polls.total_votes', {count: activePoll.totalVotes})}
+                    {loading ? <div style={{textAlign:'center'}}><FaSpinner className="spin" /></div> : (
+                        activePoll ? (
+                            <div>
+                                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'1rem' }}>
+                                    <span className="badge" style={{background:'#22c55e', color:'#000'}}>{t('admin.polls.status_active')}</span>
+                                    <span style={{fontSize:'0.8rem', color:'#aaa'}}>{t('admin.polls.ends_in')} {activePoll.closesIn}</span>
                                 </div>
-                            </div>
+                                
+                                <h4 style={{marginBottom:'0.5rem', color:'var(--accent)', fontSize: '1.5rem'}}>{activePoll.title}</h4>
+                                <p style={{marginBottom:'2rem', fontSize:'1.2rem', color: '#ddd'}}>{activePoll.question}</p>
 
-                            <button onClick={handleClose} className="btn-secondary" style={{borderColor:'#ef4444', color:'#ef4444', padding: '0.8rem 2rem'}}>
-                                <FaStopCircle /> {t('admin.polls.close_btn')}
-                            </button>
-                        </div>
+                                <div style={{display:'flex', flexDirection:'column', gap:'0.8rem', marginBottom:'2rem'}}>
+                                    {activePoll.options.map(opt => (
+                                        <div key={opt.id} style={{
+                                            background:'rgba(255,255,255,0.03)', 
+                                            padding:'1rem', 
+                                            borderRadius:'4px', 
+                                            display:'flex', 
+                                            justifyContent:'space-between',
+                                            border: '1px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            <span style={{ fontSize: '1.1rem' }}>{opt.label}</span>
+                                            <span style={{fontWeight:'bold', color: 'var(--accent)'}}>{opt.percent}% ({opt.votes} {t('admin.polls.votes')})</span>
+                                        </div>
+                                    ))}
+                                    <div style={{marginTop:'0.5rem', textAlign:'right', color:'#888', fontSize:'0.9rem'}}>
+                                        {t('admin.polls.total_votes', {count: activePoll.totalVotes})}
+                                    </div>
+                                </div>
+
+                                <button onClick={handleClose} className="btn-secondary" style={{borderColor:'#ef4444', color:'#ef4444', padding: '0.8rem 2rem'}}>
+                                    <FaStopCircle /> {t('admin.polls.close_btn')}
+                                </button>
+                            </div>
+                        ) : (
+                            <div style={{textAlign:'center', padding:'5rem 2rem', color:'#666', border:'2px dashed #333', borderRadius:'8px'}}>
+                                <FaPoll size={48} style={{marginBottom:'1rem', opacity: 0.5}}/>
+                                <p style={{ fontSize: '1.2rem' }}>{t('admin.polls.no_active')}</p>
+                                <button onClick={() => setShowModal(true)} className="btn-primary" style={{ marginTop: '1rem' }}>
+                                    Crear una encuesta ahora
+                                </button>
+                            </div>
+                        )
+                    )}
+                </div>
+            ) : (
+                <div className="admin-card">
+                    <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                        <FaHistory /> Historial de Encuestas
+                    </h3>
+                    
+                    {historyLoading ? (
+                        <div style={{textAlign:'center', padding:'3rem'}}><FaSpinner className="spin" size={24}/></div>
                     ) : (
-                        <div style={{textAlign:'center', padding:'5rem 2rem', color:'#666', border:'2px dashed #333', borderRadius:'8px'}}>
-                            <FaPoll size={48} style={{marginBottom:'1rem', opacity: 0.5}}/>
-                            <p style={{ fontSize: '1.2rem' }}>{t('admin.polls.no_active')}</p>
-                            <button onClick={() => setShowModal(true)} className="btn-primary" style={{ marginTop: '1rem' }}>
-                                Crear una encuesta ahora
-                            </button>
+                        <div className="admin-table-container">
+                            <table className="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Fecha</th>
+                                        <th>Votos</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {historyPolls.map(poll => (
+                                        <tr key={poll.id}>
+                                            <td style={{fontWeight: '500'}}>{poll.title}</td>
+                                            <td style={{color:'#888'}}>{new Date(poll.created_at).toLocaleDateString()}</td>
+                                            <td>{poll.totalVotes}</td>
+                                            <td>
+                                                <span className={`status-chip ${poll.is_active ? 'active' : 'inactive'}`} style={{
+                                                    background: poll.is_active ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                                                    color: poll.is_active ? '#22c55e' : '#aaa',
+                                                    padding: '2px 8px', borderRadius:'4px', fontSize:'0.75rem', fontWeight:'bold'
+                                                }}>
+                                                    {poll.is_active ? 'ACTIVA' : 'CERRADA'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {historyPolls.length === 0 && (
+                                        <tr><td colSpan="4" style={{textAlign:'center', padding:'2rem'}}>No hay historial</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem', padding: '1rem 0' }}>
+                                    <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="admin-tab-btn">&lt;</button>
+                                    <span style={{ display: 'flex', alignItems: 'center', color: '#888' }}>Pág. {page} de {totalPages}</span>
+                                    <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="admin-tab-btn">&gt;</button>
+                                </div>
+                            )}
                         </div>
-                    )
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             {/* MODAL: CREATE NEW */}
             {showModal && (
                 <div className="modal-overlay">
-                    <div className="modal-content" style={{ maxWidth: '600px' }}>
-                        <div style={{ padding: '1.5rem', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="admin-card modal-content" style={{ maxWidth: '600px', width: '90%' }}>
+                        <div style={{ paddingBottom: '1rem', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <FaCheckCircle /> {t('admin.polls.create_title')}
                             </h3>
@@ -178,8 +271,8 @@ export default function PollsManager() {
                             </button>
                         </div>
                         
-                        <div style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '70vh' }}>
-                            <form onSubmit={(e) => { handleCreate(e); if(!buttonSuccess) setShowModal(false); }}>
+                        <div style={{ overflowY: 'auto', maxHeight: '70vh' }}>
+                            <form onSubmit={(e) => { handleCreate(e); }}>
                                 <div className="form-group">
                                     <label className="admin-label">{t('admin.polls.form.title')}</label>
                                     <input className="admin-input" value={title} onChange={e => setTitle(e.target.value)} placeholder={t('admin.polls.form.title_ph')} required />

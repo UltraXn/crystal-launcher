@@ -50,3 +50,65 @@ const getMonthlyStats = async () => {
 };
 
 module.exports = { getMonthlyStats };
+
+const getDonations = async ({ page = 1, limit = 20, search = '' }) => {
+    const offset = (page - 1) * limit;
+    
+    let query = supabase
+        .from('donations')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+    if (search) {
+            query = query.or(`from_name.ilike.%${search}%,message.ilike.%${search}%`);
+    }
+
+    const { data, count, error } = await query;
+    if (error) throw error;
+
+    return { 
+        data, 
+        total: count, 
+        page, 
+        totalPages: Math.ceil((count || 0) / limit) 
+    };
+};
+
+const createDonation = async (donationData) => {
+    const { data, error } = await supabase
+        .from('donations')
+        .insert([donationData])
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+};
+
+const updateDonation = async (id, updates) => {
+    const { data, error } = await supabase
+        .from('donations')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+    if (error) throw error;
+    return data;
+};
+
+const deleteDonation = async (id) => {
+    const { error } = await supabase
+        .from('donations')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+    return true;
+};
+
+module.exports = { 
+    getMonthlyStats,
+    getDonations,
+    createDonation,
+    updateDonation,
+    deleteDonation
+};

@@ -43,4 +43,15 @@ const close = async (req, res) => {
     }
 };
 
-module.exports = { getActivePoll, vote, create, close };
+const getPolls = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const result = await pollService.getPolls({ page, limit });
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { getActivePoll, vote, create, close, getPolls };

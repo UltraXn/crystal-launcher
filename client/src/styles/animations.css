@@ -33,6 +33,12 @@
     }
 }
 
+/* Helper Class for Spin */
+.spin {
+    animation: spin 1s linear infinite;
+    display: inline-block; /* Required for transform to work on spans/icons sometimes */
+}
+
 /* Fade In */
 @keyframes fadeIn {
     from {

@@ -1,45 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { createClient } = require('@supabase/supabase-js');
+const ticketController = require('../controllers/ticketController');
 
-// Initialize Supabase Admin Client (Service Role) for backend operations
-const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+// Ticket Routes
+router.get('/', ticketController.getAllTickets);
+router.post('/', ticketController.createTicket);
+router.get('/stats', ticketController.getStats);
 
-let supabase;
-if (supabaseUrl && supabaseKey) {
-    supabase = createClient(supabaseUrl, supabaseKey);
-} else {
-    console.warn("⚠️ [Tickets] Supabase URL or Key missing. Support routes will return errors.");
-}
+// Ticket Operations
+router.patch('/:id/status', ticketController.updateStatus);
+router.delete('/:id', ticketController.deleteTicket);
 
-// GET /tickets/stats - Admin Dashboard Stats
-router.get('/stats', async (req, res) => {
-    if (!supabase) return res.status(503).json({ open: 0, urgent: 0, error: "Service unconfigured" });
+// Messages
+router.get('/:id/messages', ticketController.getMessages);
+router.post('/:id/messages', ticketController.addMessage);
 
-    try {
-        // Count open tickets
-        const { count: openCount, error: openError } = await supabase
-            .from('tickets')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'open');
-
-        // Count urgent tickets
-        const { count: urgentCount, error: urgentError } = await supabase
-            .from('tickets')
-            .select('*', { count: 'exact', head: true })
-            .eq('priority', 'high');
-
-        if (openError) throw openError;
-
-        res.json({
-            open: openCount || 0,
-            urgent: urgentCount || 0
-        });
-    } catch (error) {
-        console.error('Error fetching ticket stats:', error.message);
-        res.status(500).json({ open: 0, urgent: 0 });
-    }
-});
+// Ban User (Admin Action)
+router.post('/ban', ticketController.banUser);
 
 module.exports = router;

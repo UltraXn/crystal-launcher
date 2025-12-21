@@ -11,28 +11,45 @@ const IMAGES = [
     '/images/backgrounds/hero-bg-5.webp'
 ]
 
-const HeroBackgroundCarousel = () => {
+const HeroBackgroundCarousel = ({ slides = [] }) => {
     const [emblaRef] = useEmblaCarousel(
         { loop: true, watchDrag: false },
         [
-            Autoplay({ delay: 2000, stopOnInteraction: false }),
+            Autoplay({ delay: 5000, stopOnInteraction: false }),
             Fade()
         ]
     )
 
+    // Fallback to default images if no dynamic slides
+    const hasDynamicSlides = slides && slides.length > 0;
+    const items = hasDynamicSlides ? slides : IMAGES.map(src => ({ image: src }));
+
     return (
         <div className="hero-bg-carousel" ref={emblaRef}>
             <div className="hero-bg-container">
-                {IMAGES.map((src, index) => (
+                {items.map((slide, index) => (
                     <div className="hero-bg-slide" key={index}>
                         <img
-                            src={src}
-                            alt={`Background ${index + 1}`}
+                            src={slide.image || slide}
+                            alt={`Slide ${index + 1}`}
                             className="hero-bg-image"
                             fetchPriority={index === 0 ? "high" : "auto"}
                             loading={index === 0 ? "eager" : "lazy"}
                         />
-                        <div className="hero-bg-overlay"></div>
+                        <div className="hero-bg-overlay" style={{ background: hasDynamicSlides ? 'rgba(0,0,0,0.6)' : undefined }}></div>
+                        
+                        {/* Render Dynamic Text Overlay if available */}
+                        {hasDynamicSlides && (slide.title || slide.text) && (
+                            <div className="hero-slide-content">
+                                {slide.title && <h2>{slide.title}</h2>}
+                                {slide.text && <p>{slide.text}</p>}
+                                {slide.buttonText && (
+                                    <a href={slide.link || '#'} className="btn-primary" style={{ marginTop: '1rem', display: 'inline-block' }}>
+                                        {slide.buttonText}
+                                    </a>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

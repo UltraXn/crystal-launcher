@@ -13,4 +13,50 @@ const getStats = async (req, res) => {
     }
 };
 
-module.exports = { getStats };
+const getDonations = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 20;
+        const search = req.query.search || '';
+        
+        const result = await donationService.getDonations({ page, limit, search });
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const createDonation = async (req, res) => {
+    try {
+        const result = await donationService.createDonation(req.body);
+        res.status(201).json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const updateDonation = async (req, res) => {
+    try {
+        const result = await donationService.updateDonation(req.params.id, req.body);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const deleteDonation = async (req, res) => {
+    try {
+        await donationService.deleteDonation(req.params.id);
+        res.json({ message: 'Donation deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = { 
+    getStats,
+    getDonations,
+    createDonation,
+    updateDonation,
+    deleteDonation
+};

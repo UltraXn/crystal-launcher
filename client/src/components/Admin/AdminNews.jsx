@@ -9,6 +9,7 @@ export default function AdminNews({ user }) {
     const [isEditing, setIsEditing] = useState(false)
     const [currentPost, setCurrentPost] = useState(null)
     const [deleteConfirm, setDeleteConfirm] = useState(null) // ID of news to delete
+    const [searchTerm, setSearchTerm] = useState('')
 
     const API_URL = import.meta.env.VITE_API_URL
 
@@ -94,6 +95,11 @@ export default function AdminNews({ user }) {
             alert(t('admin.news.error_save'))
         }
     }
+
+    const filteredNews = news.filter(post => 
+        post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        post.category.toLowerCase().includes(searchTerm.toLowerCase())
+    )
 
     if (loading) return <div className="admin-card">{t('admin.news.loading')}</div>
 
@@ -186,7 +192,13 @@ export default function AdminNews({ user }) {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div style={{ position: 'relative', width: '300px' }}>
                     <FaSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
-                    <input type="text" placeholder={t('admin.news.search_ph')} style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+                    <input 
+                        type="text" 
+                        placeholder={t('admin.news.search_ph')} 
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} 
+                    />
                 </div>
                 <button className="btn-primary" onClick={handleNew} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <FaPlus size={12} /> {t('admin.news.write_btn')}
@@ -205,9 +217,9 @@ export default function AdminNews({ user }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {news.length === 0 ? (
+                        {filteredNews.length === 0 ? (
                             <tr><td colSpan="5" style={{ textAlign: "center", padding: "2rem", color: "#666" }}>{t('admin.news.no_news')}</td></tr>
-                        ) : news.map(post => (
+                        ) : filteredNews.map(post => (
                             <tr key={post.id}>
                                 <td style={{ fontWeight: "500", color: "#fff" }}>{post.title}</td>
                                 <td><span className="badge">{post.category}</span></td>

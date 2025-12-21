@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react"
-import { FaPlus, FaEdit, FaTrash, FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaExclamationTriangle } from "react-icons/fa"
+import { FaPlus, FaEdit, FaTrash, FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaExclamationTriangle, FaUsers, FaUser } from "react-icons/fa"
 import { useTranslation } from "react-i18next"
 
 export default function EventsManager() {
@@ -9,6 +9,7 @@ export default function EventsManager() {
     const [isEditing, setIsEditing] = useState(false)
     const [currentEvent, setCurrentEvent] = useState(null)
     const [deleteConfirm, setDeleteConfirm] = useState(null) // ID of event to delete
+    const [showRegistrationsModal, setShowRegistrationsModal] = useState(null) // ID of event to show registrations
 
     // Icon mapping for display and selection
     const iconMap = {
@@ -217,6 +218,13 @@ export default function EventsManager() {
                                 </td>
                                 <td style={{ textAlign: "right" }}>
                                     <button
+                                        onClick={() => setShowRegistrationsModal(event.id)}
+                                        style={{ background: "none", border: "none", color: "#3b82f6", cursor: "pointer", marginRight: "1rem" }}
+                                        title="Ver Inscripciones"
+                                    >
+                                        <FaUsers />
+                                    </button>
+                                    <button
                                         onClick={() => handleEdit(event)}
                                         style={{ background: "none", border: "none", color: "var(--accent)", cursor: "pointer", marginRight: "1rem" }}
                                         title={t('admin.events.edit_title')}
@@ -304,6 +312,63 @@ export default function EventsManager() {
                     </div>
                 </div>
             )}
+
+            {/* Registrations Modal */}
+            {showRegistrationsModal && (
+                <RegistrationsModal 
+                    eventId={showRegistrationsModal} 
+                    onClose={() => setShowRegistrationsModal(null)} 
+                    API_URL={API_URL}
+                />
+            )}
+        </div>
+    )
+}
+
+function RegistrationsModal({ eventId, onClose, API_URL }) {
+    const [registrations, setRegistrations] = useState([])
+    const [loading, setLoading] = useState(true)
+    
+    useEffect(() => {
+        const fetchReg = async () => {
+            try {
+                const res = await fetch(`${API_URL}/events/${eventId}/registrations`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setRegistrations(data)
+                }
+            } catch (e) { console.error(e) } 
+            finally { setLoading(false) }
+        }
+        fetchReg()
+    }, [eventId, API_URL])
+
+    return (
+        <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }} onClick={onClose}>
+            <div className="admin-card modal-content" style={{ width: '500px', maxWidth: '90%', maxHeight: '80vh', display:'flex', flexDirection:'column' }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
+                    <h3 style={{ margin: 0 }}>Inscripciones ({registrations.length})</h3>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
+                </div>
+
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {loading ? <div style={{textAlign:'center', padding:'2rem'}}>Cargando...</div> : (
+                        registrations.length === 0 ? <div style={{textAlign:'center', padding:'2rem', color:'#666'}}>No hay inscripciones aún.</div> : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {registrations.map(reg => (
+                                    <div key={reg.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                                        <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#333', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
+                                            {reg.profiles?.avatar_url ? <img src={reg.profiles.avatar_url} style={{width:'100%', height:'100%'}}/> : <div style={{color:'#aaa', fontSize:'0.8rem'}}>?</div>}
+                                        </div>
+                                        <div style={{ fontWeight: 'bold' }}>{reg.profiles?.username || "Usuario desconocido"}</div>
+                                        <div style={{ marginLeft: 'auto', fontSize: '0.8rem', color: '#666' }}>{new Date(reg.assigned_at).toLocaleDateString()}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
+                    )}
+                </div>
+            </div>
         </div>
     )
 }

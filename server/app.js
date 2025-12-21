@@ -35,6 +35,10 @@ app.use('/api/player-stats', require('./routes/playerStats'));
 app.use('/api/server', require('./routes/serverRoutes'));
 app.use('/api/server/status', require('./routes/serverStatus'));
 
+// Staff Hub Routes
+app.use('/api/staff/tasks', require('./routes/taskRoutes'));
+app.use('/api/staff/notes', require('./routes/noteRoutes'));
+
 // Base route
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to CrystalTides API' });

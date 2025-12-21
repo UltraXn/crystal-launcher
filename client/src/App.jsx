@@ -7,6 +7,9 @@ import SocialSidebar from "@/components/Layout/SocialSidebar"
 import ScrollToHash from "@/components/Utils/ScrollToHash"
 import TypingBubbles from "@/components/Effects/TypingBubbles"
 import AmbientBubbles from "@/components/Effects/AmbientBubbles"
+import BroadcastAlert from "@/components/UI/BroadcastAlert"
+import CommandPalette from "@/components/UI/CommandPalette"
+import Tutorial from "@/components/UI/Tutorial"
 
 import Home from "@/pages/Home"
 import Account from "@/pages/Account"
@@ -17,6 +20,8 @@ import Map from "@/pages/Map"
 import NotFound from "@/pages/NotFound"
 import Maintenance from "@/pages/Maintenance"
 import Verify from "@/pages/Verify"
+import Staff from "@/pages/Staff"
+import PublicProfile from "@/pages/PublicProfile"
 
 import Forum from "@/pages/Forum"
 import ForumCategory from "@/pages/ForumCategory"
@@ -64,7 +69,6 @@ function StatusHandler({ maintenanceActive }) {
 
 export default function App() {
 
-  const [announcement, setAnnouncement] = useState(null)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
 
   useEffect(() => {
@@ -77,8 +81,6 @@ export default function App() {
         if(data.theme && data.theme !== 'default') {
             document.body.classList.add(`theme-${data.theme}`)
         }
-        // Announcement
-        setAnnouncement(data.announcement || null)
         // Maintenance
         setMaintenanceMode(data.maintenance_mode === 'true')
     }
@@ -98,24 +100,15 @@ export default function App() {
         }
     }
 
-    const handleAnnouncement = (e) => {
-        setAnnouncement(e.detail || null);
-    }
-
-    // We can also listen for maintenance changes if we add dispatch in Admin Panel
-    // But currently we only fetch on load. 
-    // Ideally Admin Panel should dispatch 'maintenanceChanged' too.
     const handleMaintenanceEvent = (e) => {
         setMaintenanceMode(e.detail === 'true');
     }
     
     window.addEventListener('themeChanged', handleTheme);
-    window.addEventListener('announcementChanged', handleAnnouncement);
     window.addEventListener('maintenanceChanged', handleMaintenanceEvent);
 
     return () => {
         window.removeEventListener('themeChanged', handleTheme);
-        window.removeEventListener('announcementChanged', handleAnnouncement);
         window.removeEventListener('maintenanceChanged', handleMaintenanceEvent);
     }
   }, [])
@@ -124,18 +117,19 @@ export default function App() {
     <BrowserRouter>
       <StatusHandler maintenanceActive={maintenanceMode} setMaintenanceActive={setMaintenanceMode} />
       <ScrollToHash />
-      <HeaderWrapper announcement={announcement} />
+      <HeaderWrapper />
 
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', width: '100%' }}>
         <Routes>
             <Route path="/" element={<Home />} />
             
-
-
+            <Route path="/staff" element={<LazyWrapper><Staff /></LazyWrapper>} />
+            <Route path="/u/:username" element={<LazyWrapper><PublicProfile /></LazyWrapper>} />
             <Route path="/account" element={<Account />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/gacha" element={<LazyWrapper><Gacha /></LazyWrapper>} />
             <Route path="/admin" element={<AdminPanel />} />
 
             <Route path="/forum" element={<Forum />} />
@@ -156,6 +150,8 @@ export default function App() {
 
       <FooterWrapper />
       <EffectsWrapper />
+      <CommandPalette />
+      <Tutorial />
     </BrowserRouter>
   )
 }
@@ -172,33 +168,14 @@ function EffectsWrapper() {
   )
 }
 
-function HeaderWrapper({ announcement }) {
+function HeaderWrapper() {
   const location = useLocation()
   // Hide header on maintenance page
   if (location.pathname === '/maintenance') return null
   
   return (
     <>
-      {announcement && (
-        <div style={{
-            background: 'var(--accent)',
-            color: '#1a1a1a',
-            padding: '0.4rem 1rem',
-            textAlign: 'center',
-            fontWeight: '600',
-            fontSize: '0.9rem',
-            position: 'sticky',
-            top: 0,
-            zIndex: 9999,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '0.5rem',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
-        }}>
-            <span>📢</span> {announcement}
-        </div>
-      )}
+      <BroadcastAlert />
       <Navbar />
       {!location.pathname.startsWith('/admin') && <SocialSidebar />}
     </>

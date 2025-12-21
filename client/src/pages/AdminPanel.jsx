@@ -14,6 +14,10 @@ import SuggestionsManager from "@/components/Admin/SuggestionsManager"
 import PollsManager from "@/components/Admin/PollsManager"
 import EventsManager from "@/components/Admin/EventsManager"
 import StaffWorkspace from "@/components/Admin/StaffHub/StaffWorkspace"
+import SiteConfig from "@/components/Admin/SiteConfig"
+import DonationsManager from "@/components/Admin/DonationsManager"
+import GamificationManager from "@/components/Admin/GamificationManager"
+import StaffCardsManager from "@/components/Admin/StaffCardsManager"
 
 export default function AdminPanel() {
     const { t } = useTranslation()
@@ -78,15 +82,16 @@ export default function AdminPanel() {
                 <AdminTab active={activeTab === 'polls'} onClick={() => setActiveTab('polls')} label={t('admin.tabs.polls')} />
                 <AdminTab active={activeTab === 'events'} onClick={() => setActiveTab('events')} label={t('admin.tabs.events')} />
                 <AdminTab active={activeTab === 'news'} onClick={() => setActiveTab('news')} label={t('admin.tabs.news')} />
+                <AdminTab active={activeTab === 'gamification'} onClick={() => setActiveTab('gamification')} label={t('admin.tabs.gamification', 'Gamificación')} />
+                <AdminTab active={activeTab === 'team'} onClick={() => setActiveTab('team')} label={t('admin.tabs.team', 'Equipo')} />
                 <AdminTab active={activeTab === 'staff_hub'} onClick={() => setActiveTab('staff_hub')} label="Staff Hub" />
+                <AdminTab active={activeTab === 'donations'} onClick={() => setActiveTab('donations')} label="Donaciones" />
                 <AdminTab active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} label={t('admin.tabs.logs')} />
                 <AdminTab active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label={t('admin.tabs.settings')} />
             </div>
 
             {/* Main Content */}
             <main className="admin-content-full">
-
-
                 {activeTab === 'overview' && <DashboardOverview />}
                 {activeTab === 'tickets' && <TicketsManager />}
                 {activeTab === 'users' && <UsersManager />}
@@ -94,7 +99,10 @@ export default function AdminPanel() {
                 {activeTab === 'polls' && <PollsManager />}
                 {activeTab === 'events' && <EventsManager />}
                 {activeTab === 'news' && <AdminNews user={user} />}
+                {activeTab === 'gamification' && <GamificationManager />}
+                {activeTab === 'team' && <StaffCardsManager />}
                 {activeTab === 'staff_hub' && <StaffWorkspace />}
+                {activeTab === 'donations' && <DonationsManager />}
                 {activeTab === 'logs' && <AuditLog />}
                 {activeTab === 'settings' && <SiteConfig />}
             </main>

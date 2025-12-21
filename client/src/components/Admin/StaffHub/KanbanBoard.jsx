@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import KanbanColumn from './KanbanColumn';
 import { FaPlus } from 'react-icons/fa';
 
-const MOCK_DATA = [
-    { id: 't1', title: 'Review Whitelist App #402', priority: 'High', type: 'Whitelist', assignee: 'Killu', columnId: 'pending', date: 'Oct 24' },
-    { id: 't2', title: 'Fix Spawn Holo Glitch', priority: 'Medium', type: 'Bug', assignee: 'Nero', columnId: 'in_progress', date: 'Oct 25' },
-    { id: 't3', title: 'Plan Xmas Event', priority: 'Low', type: 'Event', assignee: 'Staff', columnId: 'idea', date: 'Nov 01' },
-    { id: 't4', title: 'Ban Appeal: xX_Gamer_Xx', priority: 'High', type: 'Appeal', assignee: 'ModTeam', columnId: 'done', date: 'Oct 20' },
-];
+const API_URL = import.meta.env.VITE_API_URL;
 
 const COLUMNS = [
     { id: 'idea', title: 'Ideas / Backlog', color: '#a855f7' },
@@ -18,46 +13,93 @@ const COLUMNS = [
 ];
 
 export default function KanbanBoard() {
-    // Load from local storage or mock
-    const [tasks, setTasks] = useState(() => {
-        const saved = localStorage.getItem('crystal_kanban_tasks');
-        return saved ? JSON.parse(saved) : MOCK_DATA;
-    });
+    const [tasks, setTasks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        localStorage.setItem('crystal_kanban_tasks', JSON.stringify(tasks));
-    }, [tasks]);
+        fetchTasks();
+    }, []);
+
+    const fetchTasks = async () => {
+        try {
+            const res = await fetch(`${API_URL}/staff/tasks`);
+            if (res.ok) {
+                const data = await res.json();
+                // Map database fields to frontend fields if necessary
+                const mappedData = data.map(task => ({
+                    ...task,
+                    columnId: task.column_id // database uses column_id
+                }));
+                setTasks(mappedData);
+            }
+        } catch (error) {
+            console.error("Error fetching tasks:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const onDragStart = (e, cardId) => {
         e.dataTransfer.setData("cardId", cardId);
     };
 
-    const onDrop = (e, columnId) => {
+    const onDrop = async (e, columnId) => {
         const cardId = e.dataTransfer.getData("cardId");
         
+        // Optimistic UI update
+        const taskToUpdate = tasks.find(t => t.id === Number(cardId));
+        if (!taskToUpdate || taskToUpdate.columnId === columnId) return;
+
+        const previousTasks = [...tasks];
         setTasks(prev => prev.map(task => {
-            if (task.id === cardId) {
+            if (task.id === Number(cardId)) {
                 return { ...task, columnId };
             }
             return task;
         }));
+
+        try {
+            await fetch(`${API_URL}/staff/tasks/${cardId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ column_id: columnId }) // Send database field name
+            });
+        } catch (error) {
+            console.error("Error updating task:", error);
+            setTasks(previousTasks); // Revert on error
+        }
     };
 
-    const addNewTask = () => {
+    const addNewTask = async () => {
         const title = prompt("Nueva Tarea:");
-        if(!title) return;
+        if (!title) return;
         
         const newTask = {
-            id: `t-${Date.now()}`,
             title,
             priority: 'Medium',
             type: 'General',
             assignee: 'Unassigned',
-            columnId: 'idea',
+            column_id: 'idea',
             date: new Date().toLocaleDateString()
         };
-        setTasks([...tasks, newTask]);
+
+        try {
+            const res = await fetch(`${API_URL}/staff/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTask)
+            });
+
+            if (res.ok) {
+                const savedTask = await res.json();
+                setTasks(prev => [...prev, { ...savedTask, columnId: savedTask.column_id }]);
+            }
+        } catch (error) {
+            console.error("Error creating task:", error);
+        }
     };
+
+    if (loading) return <div style={{ color: '#aaa', textAlign: 'center', marginTop: '2rem' }}>Cargando tablero...</div>;
 
     return (
         <div className="kanban-board-container" style={{ 

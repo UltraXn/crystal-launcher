@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
-import { FaTree, FaGhost, FaWater, FaSnowflake, FaSave, FaCheck, FaExclamationTriangle, FaBullhorn } from 'react-icons/fa'
+import { FaWater, FaGhost, FaTree, FaCheck, FaUsers, FaSave } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import ConfirmationModal from '../UI/ConfirmationModal'
 import { useTranslation } from 'react-i18next'
+import BroadcastManager from './Config/BroadcastManager'
+import HeroBannerManager from './Config/HeroBannerManager'
+import RulesEditor from './Config/RulesEditor'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -12,13 +15,13 @@ export default function SiteConfig() {
     const [settings, setSettings] = useState({
         theme: 'default',
         maintenance_mode: 'false',
-        announcement: ''
+        broadcast_config: '', // JSON String
+        hero_slides: '' // JSON String
     })
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(null)
     const [showMaintenanceModal, setShowMaintenanceModal] = useState(false)
     const [maintenanceTarget, setMaintenanceTarget] = useState(false)
- // key being saved
 
     // Fetch initial settings
     useEffect(() => {
@@ -57,8 +60,8 @@ export default function SiteConfig() {
                 if(key === 'theme') {
                     window.dispatchEvent(new CustomEvent('themeChanged', { detail: newValue }));
                 }
-                if(key === 'announcement') {
-                    window.dispatchEvent(new CustomEvent('announcementChanged', { detail: newValue }));
+                if(key === 'broadcast_config') {
+                    window.dispatchEvent(new CustomEvent('broadcastChanged', { detail: newValue }));
                 }
                 if(key === 'maintenance_mode') {
                     window.dispatchEvent(new CustomEvent('maintenanceChanged', { detail: newValue }));
@@ -76,15 +79,18 @@ export default function SiteConfig() {
     if (loading) return <div>{t('admin.settings.loading')}</div>
 
     return (
-        <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', 
-            gap: '1.5rem',
-            alignItems: 'start' /* Evita que se estiren innecesariamente */
-        }}>
+        <div className="admin-config-grid">
+            <style>{`
+                .admin-config-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+                    gap: 1.5rem;
+                    align-items: start;
+                }
+            `}</style>
             
             {/* 1. SELECCIÓN DE TEMA + MANTENIMIENTO */}
-            <div className="admin-card" style={{ height: '100%' }}>
+            <div className="admin-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                     <div>
                         <h3 style={{ marginBottom: '0.4rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
@@ -128,7 +134,6 @@ export default function SiteConfig() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
-                    {/* El grid de temas ahora es 2 columnas interno para ahorrar altura */}
                     <ThemeCard 
                         active={settings.theme === 'default'} 
                         onClick={() => handleUpdate('theme', 'default')}
@@ -156,63 +161,74 @@ export default function SiteConfig() {
                 </div>
             </div>
 
-            {/* 2. ANUNCIOS GLOBALES (LATERAL AHORA) */}
-            <div className="admin-card" style={{ height: '100%' }}>
+            {/* 1.5 RECRUITMENT CONFIG */}
+            <div className="admin-card">
                 <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    <FaBullhorn /> {t('admin.settings.announcement.title')}
+                    <FaUsers /> {t('admin.settings.recruitment.title', 'Reclutamiento')}
                 </h3>
                 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
+                        <div>
+                            <span style={{ display: 'block', fontWeight: 'bold', color: settings.recruitment_status === 'true' ? '#4CAF50' : '#ef4444' }}>
+                                {settings.recruitment_status === 'true' ? 'ABIERTO' : 'CERRADO'}
+                            </span>
+                            <span style={{ fontSize: '0.8rem', color: '#888' }}>Estado de postulaciones</span>
+                        </div>
+                        <label className="switch">
+                            <input 
+                                type="checkbox" 
+                                checked={settings.recruitment_status === 'true'} 
+                                onChange={(e) => handleUpdate('recruitment_status', String(e.target.checked))} 
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </div>
+
                     <div>
-                        <label className="admin-label">{t('admin.settings.announcement.placeholder')}</label>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <label style={{ display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#aaa' }}>Enlace al Formulario</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
                             <input 
                                 className="admin-input" 
-                                placeholder="Ej: Mantenimiento programado hoy a las 20:00..." 
-                                value={settings.announcement || ''}
-                                onChange={(e) => setSettings(prev => ({...prev, announcement: e.target.value}))}
+                                value={settings.recruitment_link || ''} 
+                                onChange={(e) => setSettings({...settings, recruitment_link: e.target.value})}
+                                placeholder="https://forms.google.com/..." 
                             />
                             <button 
                                 className="btn-primary" 
-                                style={{ whiteSpace: 'nowrap' }}
-                                onClick={() => handleUpdate('announcement', settings.announcement)}
-                                disabled={saving === 'announcement'}
+                                disabled={saving === 'recruitment_link'}
+                                onClick={() => handleUpdate('recruitment_link', settings.recruitment_link)}
                             >
-                                {saving === 'announcement' ? '...' : <FaSave />}
+                                <FaSave />
                             </button>
                         </div>
                     </div>
-                    
-                    <div style={{ 
-                        padding: '1rem', 
-                        background: 'rgba(255,255,255,0.03)', 
-                        border: '1px solid #333',
-                        borderRadius: '4px'
-                    }}>
-                        <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#aaa', textTransform: 'uppercase' }}>Vista Previa</h4>
-                        {settings.announcement ? (
-                            <div style={{
-                                background: 'var(--accent)',
-                                color: '#1a1a1a',
-                                padding: '0.4rem 1rem',
-                                textAlign: 'center',
-                                fontWeight: '600',
-                                fontSize: '0.9rem',
-                                borderRadius: '4px',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}>
-                                <span>📢</span> {settings.announcement}
-                            </div>
-                        ) : (
-                            <p style={{ fontStyle: 'italic', color: '#666', fontSize: '0.9rem', textAlign: 'center', margin: 0 }}>
-                                La barra de anuncios está desactivada.
-                            </p>
-                        )}
-                    </div>
                 </div>
+            </div>
+
+            {/* 2. BROADCAST MANAGER (Alertas Globales) */}
+            <BroadcastManager 
+                settings={settings} 
+                onUpdate={handleUpdate} 
+                saving={saving}
+            />
+
+            {/* 3. HERO BANNER MANAGER (Carrusel) */}
+            <div style={{ gridColumn: '1 / -1' }}>
+                <HeroBannerManager 
+                    settings={settings} 
+                    onUpdate={handleUpdate} 
+                    saving={saving}
+                />
+            </div>
+
+            {/* 4. RULES EDITOR */}
+            <div style={{ gridColumn: '1 / -1' }}>
+                <RulesEditor
+                    settings={settings}
+                    onUpdate={handleUpdate}
+                    saving={saving}
+                />
             </div>
 
             <ConfirmationModal 

@@ -20,7 +20,27 @@ export default function Hero() {
     // State for player count
     const [playerCount, setPlayerCount] = useState(0)
     const [isOnline, setIsOnline] = useState(null) // null = loading
+    const [slides, setSlides] = useState([])
     const API_URL = import.meta.env.VITE_API_URL
+
+    useEffect(() => {
+        // Fetch hero slides
+        fetch(`${API_URL}/settings`)
+            .then(res => res.json())
+            .then(data => {
+                if(data.hero_slides) {
+                    try {
+                        const parsed = typeof data.hero_slides === 'string' 
+                            ? JSON.parse(data.hero_slides) 
+                            : data.hero_slides;
+                        setSlides(parsed || []);
+                    } catch (e) {
+                         console.error("Error parsing hero slides", e);
+                    }
+                }
+            })
+            .catch(err => console.error("Error fetching settings for hero", err));
+    }, [API_URL]);
 
     useEffect(() => {
         // Timeline for organized animation
@@ -129,30 +149,40 @@ export default function Hero() {
 
     return (
         <section className="hero">
-            <HeroBackgroundCarousel />
+            <HeroBackgroundCarousel slides={slides} />
             <HeroParticles />
             <div className="hero-content">
-                <h1>
-                    <span
-                        ref={welcomeRef}
-                        style={{ display: 'inline-block', color: 'var(--text)' }}
-                    >
-                        {t('hero.welcome')}
-                    </span>
-                    {" "}
-                    <span className="brand-wrapper" style={{ display: 'inline-block', maxWidth: '100%', wordBreak: 'break-word' }}>
-                        {renderBrandText()}
-                    </span>
-                </h1>
+                {slides.length === 0 && (
+                    <>
+                        <h1>
+                            <span
+                                ref={welcomeRef}
+                                style={{ display: 'inline-block', color: 'var(--text)' }}
+                            >
+                                {t('hero.welcome')}
+                            </span>
+                            {" "}
+                            <span className="brand-wrapper" style={{ display: 'inline-block', maxWidth: '100%', wordBreak: 'break-word' }}>
+                                {renderBrandText()}
+                            </span>
+                        </h1>
 
-                <p ref={descRef}>
-                    {t('hero.description')}
-                </p>
+                        <p ref={descRef}>
+                            {t('hero.description')}
+                        </p>
+                    </>
+                )}
 
                 <div
                     className="server-connect-container"
                     ref={containerRef}
-                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                    style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center',
+                        marginTop: slides.length > 0 ? 'auto' : 'initial',
+                        marginBottom: slides.length > 0 ? '4rem' : 'initial'
+                    }}
                 >
                     <div className="server-status-pill">
                         {isOnline === false ? (

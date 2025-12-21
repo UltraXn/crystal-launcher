@@ -1,41 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 
-const COLORS = ['#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7', '#f3f4f6']; // Yellow, Blue, Pink, Green, Gray (Light tones for paper effect)
+const API_URL = import.meta.env.VITE_API_URL;
+const COLORS = ['#fef3c7', '#dbeafe', '#fce7f3', '#dcfce7', '#f3f4f6']; // Yellow, Blue, Pink, Green, Gray
 
 export default function StaffNotes() {
-    const [notes, setNotes] = useState(() => {
-        const saved = localStorage.getItem('crystal_staff_notes');
-        return saved ? JSON.parse(saved) : [
-            { id: 1, text: 'Recordar reiniciar el servidor mañana a las 3:00 AM para el mantenimiento semanal.', color: '#fef3c7', date: '24/10' },
-            { id: 2, text: 'Revisar logs de xGamer123 por posible X-Ray.', color: '#dbeafe', date: '25/10' }
-        ];
-    });
+    const [notes, setNotes] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        localStorage.setItem('crystal_staff_notes', JSON.stringify(notes));
-    }, [notes]);
+        fetchNotes();
+    }, []);
 
-    const addNote = () => {
+    const fetchNotes = async () => {
+        try {
+            const res = await fetch(`${API_URL}/staff/notes`);
+            if (res.ok) {
+                const data = await res.json();
+                setNotes(data);
+            }
+        } catch (error) {
+            console.error("Error fetching notes:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const addNote = async () => {
         const text = prompt("Nueva Nota:");
         if (!text) return;
         
         const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
-        const newNote = {
-            id: Date.now(),
+        const newNoteData = {
             text,
             color: randomColor,
-            date: new Date().toLocaleDateString(),
-            rotation: Math.random() * 2 - 1 // Calc once
+            rotation: Math.random() * 2 - 1
         };
-        setNotes([newNote, ...notes]);
-    };
 
-    const deleteNote = (id) => {
-        if(window.confirm('¿Borrar nota?')) {
-            setNotes(notes.filter(n => n.id !== id));
+        try {
+            const res = await fetch(`${API_URL}/staff/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newNoteData)
+            });
+
+            if (res.ok) {
+                const savedNote = await res.json();
+                setNotes(prev => [savedNote, ...prev]);
+            }
+        } catch (error) {
+            console.error("Error creating note:", error);
         }
     };
+
+    const deleteNote = async (id) => {
+        if (!window.confirm('¿Borrar nota?')) return;
+
+        // Optimistic update
+        const previousNotes = [...notes];
+        setNotes(notes.filter(n => n.id !== id));
+
+        try {
+            const res = await fetch(`${API_URL}/staff/notes/${id}`, {
+                method: 'DELETE'
+            });
+            if (!res.ok) throw new Error('Failed to delete');
+        } catch (error) {
+            console.error("Error deleting note:", error);
+            setNotes(previousNotes); // Revert on error
+        }
+    };
+
+    if (loading) return <div style={{ color: '#aaa', textAlign: 'center', marginTop: '2rem' }}>Cargando notas...</div>;
 
     return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>

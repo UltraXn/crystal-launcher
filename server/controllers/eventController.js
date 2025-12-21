@@ -94,11 +94,21 @@ const getUserRegistrations = async (req, res) => {
     }
 };
 
+const getEventRegistrations = async (req, res) => {
+    try {
+        const registrations = await eventService.getRegistrations(req.params.id);
+        res.json(registrations);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getAllEvents,
     createEvent,
     updateEvent,
     deleteEvent,
     registerForEvent,
-    getUserRegistrations
+    getUserRegistrations,
+    getEventRegistrations
 };

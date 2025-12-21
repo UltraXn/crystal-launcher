@@ -11,6 +11,8 @@ import Loader from "@/components/UI/Loader"
 import RoleBadge from "@/components/User/RoleBadge"
 import ConfirmationModal from "@/components/UI/ConfirmationModal"
 import PlayerStats from "@/components/Widgets/PlayerStats"
+import { ICONS } from "@/components/Admin/GamificationManager"
+
 
 // Achievement Card Component
 const AchievementCard = ({ title, description, icon, unlocked, criteria }) => (
@@ -65,7 +67,6 @@ const AchievementCard = ({ title, description, icon, unlocked, criteria }) => (
 )
 
 // Nav Button Component
-// Nav Button Component
 const NavButton = ({ active, onClick, icon, label }) => (
     <button 
         onClick={onClick}
@@ -117,6 +118,25 @@ export default function Account() {
             navigate('/login')
         }
     }, [user, loading, navigate])
+
+    // Fetch Medal Definitions
+    const [medalDefinitions, setMedalDefinitions] = useState([])
+    useEffect(() => {
+        fetch(`${API_URL}/settings`)
+            .then(res => {
+                if(!res.ok) throw new Error("Failed to fetch settings");
+                return res.json();
+            })
+            .then(data => {
+                if(data.medal_definitions) {
+                    try {
+                        const parsed = typeof data.medal_definitions === 'string' ? JSON.parse(data.medal_definitions) : data.medal_definitions;
+                        setMedalDefinitions(Array.isArray(parsed) ? parsed : []);
+                    } catch { setMedalDefinitions([]); }
+                }
+            })
+            .catch(err => console.warn("Medal fetch error:", err)); // warn instead of error to reduce noise
+    }, [API_URL]);
 
     // Fetch Threads
     useEffect(() => {
@@ -376,6 +396,7 @@ export default function Account() {
                     <nav className="sidebar-nav" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                         <NavButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<FaServer />} label={t('account.nav.overview')} />
                         <NavButton active={activeTab === 'posts'} onClick={() => setActiveTab('posts')} icon={<FaComment />} label={t('account.nav.posts')} />
+                        <NavButton active={activeTab === 'medals'} onClick={() => setActiveTab('medals')} icon={<FaMedal />} label="Medallas" />
                         <NavButton active={activeTab === 'achievements'} onClick={() => setActiveTab('achievements')} icon={<FaTrophy />} label={t('account.nav.achievements')} />
                         <NavButton active={activeTab === 'connections'} onClick={() => setActiveTab('connections')} icon={<FaLink />} label={t('account.nav.connections')} />
                         <NavButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={<FaCog />} label={t('account.settings.title', 'Configuración')} />
@@ -451,6 +472,51 @@ export default function Account() {
                                             </Link>
                                         ))
                                     )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'medals' && (
+                        <div key="medals" className="fade-in">
+                            <h2 style={{ color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>Mis Medallas</h2>
+                            {(!user.user_metadata?.medals || user.user_metadata.medals.length === 0) ? (
+                                <div style={{ textAlign: 'center', padding: '3rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                                    <FaMedal size={48} style={{ color: '#333', marginBottom: '1rem' }} />
+                                    <p style={{ color: '#888' }}>Aún no tienes medallas especiales.</p>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                                    {user.user_metadata.medals.map(medalId => {
+                                        const def = medalDefinitions.find(m => m.id === medalId);
+                                        if (!def) return null;
+                                        const Icon = ICONS[def.icon] || FaMedal;
+                                        return (
+                                            <div key={medalId} className="medal-card animate-pop" style={{ 
+                                                background: `linear-gradient(145deg, ${def.color}10, rgba(0,0,0,0.4))`,
+                                                border: `1px solid ${def.color}40`,
+                                                borderRadius: '12px',
+                                                padding: '1.5rem',
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                textAlign: 'center',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <div style={{ 
+                                                    fontSize: '2.5rem', 
+                                                    color: def.color, 
+                                                    marginBottom: '1rem',
+                                                    filter: `drop-shadow(0 0 10px ${def.color}60)`
+                                                }}>
+                                                    <Icon /> 
+                                                </div>
+                                                <h3 style={{ color: '#fff', fontSize: '1.1rem', marginBottom: '0.5rem' }}>{def.name}</h3>
+                                                <p style={{ color: '#ccc', fontSize: '0.85rem' }}>{def.description}</p>
+                                            </div>
+                                        )
+                                    })}
                                 </div>
                             )}
                         </div>

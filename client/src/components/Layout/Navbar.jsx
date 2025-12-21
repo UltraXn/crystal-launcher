@@ -1,4 +1,5 @@
 import Menu from "./Menu"
+import NotificationCenter from "@/components/UI/NotificationCenter"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
 import { FaUserCircle, FaTrophy, FaEdit, FaShieldAlt, FaSignOutAlt, FaCog, FaServer, FaLink } from "react-icons/fa"
@@ -198,7 +199,9 @@ export default function Navbar() {
 
                 <div className="nav-auth">
                     {user ? (
-                        <div className="user-dropdown-container" ref={dropdownRef}>
+                        <>
+                            <NotificationCenter />
+                            <div className="user-dropdown-container" ref={dropdownRef}>
                             <button
                                 className="nav-btn primary"
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem' }}
@@ -258,6 +261,7 @@ export default function Navbar() {
                                 </button>
                             </div>
                         </div>
+                        </>
                     ) : (
                         <>
                             <Link to="/login" className="nav-btn">{t('navbar.login')}</Link>

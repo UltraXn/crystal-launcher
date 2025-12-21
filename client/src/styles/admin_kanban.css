@@ -1,0 +1,91 @@
+/* =========================================
+   KANBAN & NOTES STYLES
+   ========================================= */
+
+/* Kanban specific styles */
+.kanban-board-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.kanban-board-container::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+.kanban-board-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.kanban-column {
+    display: flex;
+    flex-direction: column;
+    min-width: 280px;
+    max-width: 320px;
+    background: #1a1a1a;
+    border-radius: 6px;
+    border: 1px solid #333;
+    height: 100%;
+    /* Subtle glassmorphism if desired, but solid is safer for busy dashboards */
+}
+
+.kanban-cards-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.kanban-card {
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border-color: #555;
+}
+
+.kanban-card:active {
+    cursor: grabbing;
+}
+
+/* Notes specific styles */
+.staff-note-card {
+    background: #fef3c7; /* Default yellow post-it */
+    color: #1a1a1a;
+    padding: 1rem;
+    border-radius: 2px;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.staff-note-card:hover {
+    z-index: 10;
+    transform: scale(1.02) rotate(0deg) !important; /* Normalize rotation on hover */
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.3);
+}
+
+.note-text {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; /* Handwritten feel */
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+}
+
+/* Custom scrollbars for these internal containers */
+.staff-notes-grid::-webkit-scrollbar {
+    width: 6px;
+}
+.staff-notes-grid::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+}

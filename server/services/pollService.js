@@ -155,4 +155,42 @@ const deletePoll = async (id) => {
     return { success: true };
 };
 
-module.exports = { getActivePoll, votePoll, createPoll, closePoll, getPollById, deletePoll };
+const getPolls = async ({ page = 1, limit = 10 }) => {
+    const offset = (page - 1) * limit;
+    
+    // Fetch polls
+    const { data: polls, count, error } = await supabase
+        .from('polls')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+    if (error) throw error;
+
+    // Fetch options for these polls to calculate total votes
+    if (!polls || polls.length === 0) {
+        return { data: [], total: 0, page, totalPages: 0 };
+    }
+
+    const pollIds = polls.map(p => p.id);
+    const { data: options } = await supabase
+        .from('poll_options')
+        .select('poll_id, votes')
+        .in('poll_id', pollIds);
+
+    // enrich polls
+    const enrichedPolls = polls.map(p => {
+        const pOptions = options.filter(o => o.poll_id === p.id);
+        const totalVotes = pOptions.reduce((acc, curr) => acc + (curr.votes || 0), 0);
+        return { ...p, totalVotes };
+    });
+
+    return {
+        data: enrichedPolls,
+        total: count,
+        page,
+        totalPages: Math.ceil((count || 0) / limit)
+    };
+};
+
+module.exports = { getActivePoll, votePoll, createPoll, closePoll, getPollById, deletePoll, getPolls };

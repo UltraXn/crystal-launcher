@@ -9,6 +9,8 @@ export default function SuggestionsManager() {
     const [suggestions, setSuggestions] = useState([])
     const [loading, setLoading] = useState(true)
 
+    const [filterType, setFilterType] = useState('All')
+
     const fetchSuggestions = async () => {
         setLoading(true)
         try {
@@ -36,11 +38,33 @@ export default function SuggestionsManager() {
         } catch(err) { console.error(err) }
     }
 
+    const filteredSuggestions = suggestions.filter(s => 
+        filterType === 'All' ? true : s.type.toLowerCase() === filterType.toLowerCase()
+    )
+
     return (
         <div className="admin-card">
-            <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                <FaInbox /> {t('admin.suggestions.title')}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                    <FaInbox /> {t('admin.suggestions.title')}
+                </h3>
+                
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <FaFilter color="#666" />
+                    <select 
+                        value={filterType} 
+                        onChange={e => setFilterType(e.target.value)}
+                        className="admin-input" 
+                        style={{ width: '150px', marginBottom: 0 }}
+                    >
+                        <option value="All">Todos</option>
+                        <option value="Bug">Bug</option>
+                        <option value="Feature">Feature</option>
+                        <option value="Mod">Mod</option>
+                        <option value="Other">Otro</option>
+                    </select>
+                </div>
+            </div>
             
             {loading ? (
                 <div style={{padding:'2rem', textAlign:'center'}}><FaSpinner className="spin" size={24}/> {t('admin.suggestions.loading')}</div>
@@ -57,7 +81,7 @@ export default function SuggestionsManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {suggestions.map(s => (
+                            {filteredSuggestions.map(s => (
                                 <tr key={s.id}>
                                     <td style={{fontSize:'0.85rem', color:'#aaa'}}>{new Date(s.created_at).toLocaleDateString()}</td>
                                     <td>
