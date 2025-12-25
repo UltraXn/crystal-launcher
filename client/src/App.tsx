@@ -1,3 +1,4 @@
+import { lazy, useEffect, useState, Suspense } from "react"
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom"
 import LazyWrapper from "./components/Utils/LazyWrapper"
 import { useAuth } from "./context/AuthContext"
@@ -8,33 +9,41 @@ import ScrollToHash from "./components/Utils/ScrollToHash"
 import TypingBubbles from "./components/Effects/TypingBubbles"
 import AmbientBubbles from "./components/Effects/AmbientBubbles"
 import BroadcastAlert from "./components/UI/BroadcastAlert"
-import CommandPalette from "./components/UI/CommandPalette"
-import Tutorial from "./components/UI/Tutorial"
-
+import TentacleCursor from "./components/Effects/TentacleCursor"
+// Static Pages
 import Home from "./pages/Home"
-import Account from "./pages/Account"
-import Login from "./pages/Login"
-import Register from "./pages/Register"
-import ForgotPassword from "./pages/ForgotPassword"
-import Map from "./pages/Map"
-import NotFound from "./pages/NotFound"
-import Maintenance from "./pages/Maintenance"
-import Verify from "./pages/Verify"
-import Staff from "./pages/Staff"
-import PublicProfile from "./pages/PublicProfile"
-import Gacha from "./pages/Gacha"
 
-import Forum from "./pages/Forum"
-import ForumCategory from "./pages/ForumCategory"
-import ForumThread from "./pages/ForumThread"
-import CreateThread from "./pages/CreateThread"
-import Support from "./pages/Support"
-import TicketDetail from "./pages/TicketDetail"
+// Lazy Pages
+const Login = lazy(() => import("./pages/Login"))
+const Register = lazy(() => import("./pages/Register"))
+const RegisterSuccess = lazy(() => import("./pages/RegisterSuccess"))
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"))
+const Verify = lazy(() => import("./pages/Verify"))
+const Maintenance = lazy(() => import("./pages/Maintenance"))
+const NotFound = lazy(() => import("./pages/NotFound"))
+const Tutorial = lazy(() => import("./components/UI/Tutorial"))
+const CommandPalette = lazy(() => import("./components/UI/CommandPalette"))
+
+// Lazy Pages
+const Staff = lazy(() => import("./pages/Staff"))
+const PublicProfile = lazy(() => import("./pages/PublicProfile"))
+const Account = lazy(() => import("./pages/Account"))
+const Gacha = lazy(() => import("./pages/Gacha"))
+const AdminPanel = lazy(() => import("./pages/AdminPanel"))
+const Map = lazy(() => import("./pages/Map"))
+const Status = lazy(() => import("./pages/Status"))
+
+// Forum Lazy
+const Forum = lazy(() => import("./pages/Forum"))
+const ForumCategory = lazy(() => import("./pages/ForumCategory"))
+const ForumThread = lazy(() => import("./pages/ForumThread"))
+const CreateThread = lazy(() => import("./pages/CreateThread"))
+
+// Support Lazy
+const Support = lazy(() => import("./pages/Support"))
+const TicketDetail = lazy(() => import("./pages/TicketDetail"))
 
 import Footer from "./components/Layout/Footer"
-import AdminPanel from "./pages/AdminPanel"
-
-import { useEffect, useState } from "react"
 
 function StatusHandler({ maintenanceActive }: { maintenanceActive: boolean }) {
     const { user, loading } = useAuth()
@@ -117,6 +126,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <StatusHandler maintenanceActive={maintenanceMode} />
+      <TentacleCursor />
       <ScrollToHash />
       <HeaderWrapper />
 
@@ -124,43 +134,47 @@ export default function App() {
         <Routes>
             <Route path="/" element={<Home />} />
             
-            <Route path="/staff" element={<LazyWrapper><Staff /></LazyWrapper>} />
+            <Route path="/staff" element={<LazyWrapper minHeight="80vh"><Staff /></LazyWrapper>} />
             <Route path="/u/:username" element={<LazyWrapper><PublicProfile /></LazyWrapper>} />
-            <Route path="/account" element={<Account />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/account" element={<LazyWrapper minHeight="80vh"><Account /></LazyWrapper>} />
+            <Route path="/login" element={<LazyWrapper><Login /></LazyWrapper>} />
+            <Route path="/forgot-password" element={<LazyWrapper><ForgotPassword /></LazyWrapper>} />
+            <Route path="/register" element={<LazyWrapper><Register /></LazyWrapper>} />
             <Route path="/gacha" element={<LazyWrapper><Gacha /></LazyWrapper>} />
-            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin" element={<LazyWrapper minHeight="80vh"><AdminPanel /></LazyWrapper>} />
 
-            <Route path="/forum" element={<Forum />} />
-            <Route path="/forum/create" element={<CreateThread />} />
-            <Route path="/forum/:id" element={<ForumCategory />} />
-            <Route path="/forum/thread/:type/:id" element={<ForumThread />} />
-            <Route path="/map" element={<Map />} />
+            <Route path="/forum" element={<LazyWrapper><Forum /></LazyWrapper>} />
+            <Route path="/forum/create" element={<LazyWrapper><CreateThread /></LazyWrapper>} />
+            <Route path="/forum/:id" element={<LazyWrapper><ForumCategory /></LazyWrapper>} />
+            <Route path="/forum/thread/:type/:id" element={<LazyWrapper><ForumThread /></LazyWrapper>} />
+            <Route path="/map" element={<LazyWrapper><Map /></LazyWrapper>} />
+            <Route path="/status" element={<LazyWrapper><Status /></LazyWrapper>} />
             
             <Route path="/support" element={<LazyWrapper><Support /></LazyWrapper>} />
             <Route path="/support/:id" element={<LazyWrapper><TicketDetail /></LazyWrapper>} />
 
-            <Route path="/verify" element={<Verify />} />
+            <Route path="/verify" element={<LazyWrapper><Verify /></LazyWrapper>} />
+            <Route path="/register/success" element={<LazyWrapper><RegisterSuccess /></LazyWrapper>} />
 
-            <Route path="/maintenance" element={<Maintenance />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/maintenance" element={<LazyWrapper><Maintenance /></LazyWrapper>} />
+            <Route path="*" element={<LazyWrapper><NotFound /></LazyWrapper>} />
         </Routes>
       </main>
 
       <FooterWrapper />
       <EffectsWrapper />
-      <CommandPalette />
-      <Tutorial />
+      <Suspense fallback={null}>
+        <CommandPalette />
+        <Tutorial />
+      </Suspense>
     </BrowserRouter>
   )
 }
 
 function EffectsWrapper() {
   const location = useLocation()
-  // Disable bubbles on Account page to keep it clean
-  if (location.pathname === '/account') return null
+  // Disable bubbles on Account and Admin pages to keep it clean
+  if (location.pathname.startsWith('/account') || location.pathname.startsWith('/admin')) return null
   return (
     <>
       <TypingBubbles />
@@ -171,14 +185,14 @@ function EffectsWrapper() {
 
 function HeaderWrapper() {
   const location = useLocation()
-  // Hide header on maintenance page
-  if (location.pathname === '/maintenance') return null
+  // Hide header on maintenance page and admin panel
+  if (location.pathname === '/maintenance' || location.pathname.startsWith('/admin')) return null
   
   return (
     <>
       <BroadcastAlert />
       <Navbar />
-      {!location.pathname.startsWith('/admin') && <SocialSidebar />}
+      {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/account') && !location.pathname.startsWith('/staff') && location.pathname !== '/status' && <SocialSidebar />}
     </>
   )
 }

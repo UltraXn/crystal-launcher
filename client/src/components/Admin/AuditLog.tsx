@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
-import { FaGlobe, FaGamepad, FaSpinner, FaUser } from "react-icons/fa"
+import { FaGlobe, FaGamepad, FaUser } from "react-icons/fa"
+import Loader from "../UI/Loader"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -145,115 +146,120 @@ export default function AuditLog() {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
+            
+            {/* CONTROLS HEADER (Search & Filters) */}
+            <div className="admin-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
+                    <input 
+                        type="text" 
+                        placeholder="Buscar usuario, comando..." 
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="admin-input"
+                        style={{ 
+                            width: '100%',
+                            padding: '0.6rem 1rem', // Bigger touch target
+                            fontSize: '0.9rem', 
+                            borderRadius: '8px',
+                            border: '1px solid #444',
+                            background: '#222'
+                        }}
+                    />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span style={{ color: '#aaa', fontSize: '0.85rem', fontWeight: 'bold', marginRight: '5px' }}>FUENTE:</span>
+                    
+                    <button 
+                        onClick={() => setFilterSource('all')}
+                        style={{
+                            padding: '0.5rem 1rem', 
+                            borderRadius: '6px',
+                            border: filterSource === 'all' ? '1px solid #fff' : '1px solid #444',
+                            background: filterSource === 'all' ? '#fff' : '#222',
+                            color: filterSource === 'all' ? '#000' : '#888',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '0.85rem',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        TODOS
+                    </button>
+
+                    <button 
+                        onClick={() => setFilterSource('web')}
+                        style={{
+                            padding: '0.5rem 1rem', 
+                            borderRadius: '6px',
+                            border: filterSource === 'web' ? '1px solid #3b82f6' : '1px solid #444',
+                            background: filterSource === 'web' ? '#3b82f6' : '#222',
+                            color: filterSource === 'web' ? '#fff' : '#888',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '0.85rem',
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <FaGlobe /> WEB
+                    </button>
+
+                    <button 
+                        onClick={() => setFilterSource('game')}
+                        style={{
+                            padding: '0.5rem 1rem', 
+                            borderRadius: '6px',
+                            border: filterSource === 'game' ? '1px solid #22c55e' : '1px solid #444',
+                            background: filterSource === 'game' ? '#22c55e' : '#222',
+                            color: filterSource === 'game' ? '#000' : '#888',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            fontSize: '0.85rem',
+                            display: 'flex', alignItems: 'center', gap: '6px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <FaGamepad /> JUEGO
+                    </button>
+                </div>
+            </div>
             
             {/* TABLE CONTAINER (FLEX GROW TO FILL) */}
             <div className="admin-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden', border: 'none', height: 'calc(100vh - 200px)' }}>
                 {loading ? (
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#666' }}>
-                        <FaSpinner className="spin" size={32} style={{ marginBottom: '1rem' }} /> 
-                        <span>Cargando registros...</span>
-                    </div>
+                    <Loader 
+                        text="Cargando registros..."
+                        style={{ height: 'auto', minHeight: '200px', flex: 1 }} 
+                    />
                 ) : logs.length === 0 ? (
                     <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#666' }}>
                         <p>No hay registros encontrados.</p>
                     </div>
                 ) : (
                     <>
-                        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+                        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
                             <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
-                                <thead style={{ position: 'sticky', top: 0, background: '#111', zIndex: 10, borderBottom: '1px solid #333' }}>
+                                    <thead style={{ position: 'sticky', top: 0, background: '#111', zIndex: 10, borderBottom: '1px solid #333' }}>
                                     <tr>
-                                        <th style={{width: '160px', padding: '1rem', color: '#888', fontSize:'0.85rem', fontWeight:'600', letterSpacing:'0.5px'}}>FECHA</th>
-                                        <th style={{width: '160px', padding: '1rem', color: '#888', fontSize:'0.85rem', fontWeight:'600', letterSpacing:'0.5px'}}>USUARIO / STAFF</th>
-                                        <th style={{width: '180px', padding: '1rem', color: '#888', fontSize:'0.85rem', fontWeight:'600', letterSpacing:'0.5px'}}>ACCIÓN</th>
-                                        <th style={{padding: '1rem', color: '#888', fontSize:'0.85rem', fontWeight:'600', letterSpacing:'0.5px'}}>DETALLES</th>
-                                        
-                                        {/* MERGED HEADER: FUENTE LABEL + FILTERS */}
-                                        <th style={{width: 'auto', padding: '0.8rem 1rem', textAlign:'right'}}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem' }}>
-                                                {/* Search Box */}
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Buscar usuario, comando..." 
-                                                    value={search}
-                                                    onChange={(e) => setSearch(e.target.value)}
-                                                    className="admin-input"
-                                                    style={{ 
-                                                        padding: '0.3rem 0.8rem', 
-                                                        fontSize: '0.8rem', 
-                                                        width: '200px',
-                                                        borderRadius: '20px',
-                                                        border: '1px solid #444',
-                                                        background: '#222'
-                                                    }}
-                                                />
-
-                                                <span style={{ color: '#888', fontSize:'0.85rem', fontWeight:'600', letterSpacing:'0.5px' }}>FUENTE</span>
-                                                
-                                                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                                    <button 
-                                                         onClick={() => setFilterSource('all')}
-                                                         className={`admin-tab-btn ${filterSource === 'all' ? 'active' : ''}`} 
-                                                         style={{
-                                                             fontSize: '0.75rem', 
-                                                             padding: '0.3rem 0.8rem', 
-                                                             borderRadius: '20px',
-                                                             border: filterSource === 'all' ? 'none' : '1px solid #444',
-                                                             background: filterSource === 'all' ? 'var(--accent)' : '#222',
-                                                             color: filterSource === 'all' ? '#000' : '#ccc',
-                                                             cursor: 'pointer'
-                                                         }}
-                                                    >
-                                                        Todos
-                                                    </button>
-                                                    <button 
-                                                         onClick={() => setFilterSource('web')}
-                                                         className={`admin-tab-btn ${filterSource === 'web' ? 'active' : ''}`} 
-                                                         style={{
-                                                             fontSize: '0.75rem', 
-                                                             padding: '0.3rem 0.8rem', 
-                                                             borderRadius: '20px',
-                                                             display:'flex', alignItems:'center', gap:'4px',
-                                                             border: filterSource === 'web' ? 'none' : '1px solid #444',
-                                                             background: filterSource === 'web' ? '#3b82f6' : '#222',
-                                                             color: filterSource === 'web' ? '#fff' : '#ccc',
-                                                             cursor: 'pointer'
-                                                         }}
-                                                    >
-                                                        {filterSource === 'web' && <FaGlobe />} Web
-                                                    </button>
-                                                    <button 
-                                                         onClick={() => setFilterSource('game')}
-                                                         className={`admin-tab-btn ${filterSource === 'game' ? 'active' : ''}`} 
-                                                         style={{
-                                                             fontSize: '0.75rem', 
-                                                             padding: '0.3rem 0.8rem', 
-                                                             borderRadius: '20px',
-                                                             display:'flex', alignItems:'center', gap:'4px',
-                                                             border: filterSource === 'game' ? 'none' : '1px solid #444',
-                                                             background: filterSource === 'game' ? '#22c55e' : '#222',
-                                                             color: filterSource === 'game' ? '#000' : '#ccc',
-                                                             cursor: 'pointer'
-                                                         }}
-                                                    >
-                                                        {filterSource === 'game' && <FaGamepad />} Juego
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </th>
+                                        <th className="th-mobile-hide" style={{width: '140px', padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>FECHA</th>
+                                        <th style={{padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>USUARIO</th>
+                                        <th style={{padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>ACCIÓN</th>
+                                        <th className="th-mobile-hide" style={{padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>DETALLES</th>
+                                        <th style={{width: '50px', padding: '1rem', textAlign: 'center'}}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {logs.map((log, index) => (
                                         <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
-                                            <td style={{ color: '#888', fontSize: '0.85rem', padding: '0.8rem 1rem' }}>
+                                            <td className="th-mobile-hide" style={{ color: '#888', fontSize: '0.85rem', padding: '0.8rem 1rem' }}>
                                                 {new Date(log.created_at).toLocaleString()}
                                             </td>
                                             <td style={{ padding: '0.8rem 1rem' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <FaUser size={10} color="#666" />
-                                                    <span style={{color: log.username === 'Staff' ? 'var(--accent)' : '#ccc', fontWeight: log.username === 'Staff' ? 'bold' : 'normal'}}>
+                                                    <span style={{color: log.username === 'Staff' ? 'var(--accent)' : '#ccc', fontWeight: log.username === 'Staff' ? 'bold' : 'normal', wordBreak: 'break-word'}}>
                                                         {log.username || 'System'}
                                                     </span>
                                                 </div>
@@ -267,13 +273,17 @@ export default function AuditLog() {
                                                     fontWeight: 'bold',
                                                     color: '#000',
                                                     display: 'inline-block',
-                                                    minWidth: '80px',
-                                                    textAlign: 'center'
+                                                    width: '100%', // Full width in cell
+                                                    maxWidth: '120px',
+                                                    textAlign: 'center',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
                                                 }}>
                                                     {log.action}
                                                 </span>
                                             </td>
-                                            <td style={{ color: '#bbb', fontSize: '0.9rem', padding: '0.8rem 1rem' }}>
+                                            <td className="th-mobile-hide" style={{ color: '#bbb', fontSize: '0.9rem', padding: '0.8rem 1rem' }}>
                                                 {log.details}
                                             </td>
                                             <td style={{ textAlign: 'center', padding: '0.8rem 1rem' }}>
@@ -293,14 +303,16 @@ export default function AuditLog() {
                             display: 'flex',
                             justifyContent: 'space-between', 
                             alignItems: 'center',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            flexWrap: 'wrap',
+                            gap: '1rem'
                         }}>
                              <span style={{ fontSize: '0.9rem', color: '#888' }}>
                                 Página <strong style={{color:'#fff'}}>{page}</strong> de <strong style={{color:'#fff'}}>{totalPages}</strong>
                             </span>
 
-                             {totalPages >= 1 && (
-                                <div style={{ display: 'flex', gap: '5px' }}>
+                            {totalPages >= 1 && (
+                                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
                                     <button 
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}

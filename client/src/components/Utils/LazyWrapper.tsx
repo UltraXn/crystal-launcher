@@ -1,4 +1,6 @@
+import { Suspense } from 'react'
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver'
+import Loader from '../UI/Loader'
 
 interface LazyWrapperProps {
     children: React.ReactNode;
@@ -14,7 +16,11 @@ export default function LazyWrapper({ children, minHeight = "200px", rootMargin 
 
     return (
         <div ref={ref} style={{ minHeight }}>
-            {isVisible ? children : null}
+            {isVisible ? (
+                <Suspense fallback={<Loader />}>
+                    {children}
+                </Suspense>
+            ) : null}
         </div>
     )
 }

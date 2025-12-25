@@ -1,77 +1,90 @@
-# CrystalTides SMP - Web
+# 🌊 CrystalTides SMP - Web Ecosystem
 
-Bienvenido al repositorio oficial del sitio web de **CrystalTides SMP**.
-Esta aplicación web sirve como el portal principal para la comunidad de nuestro servidor de Minecraft, permitiendo a los usuarios ver noticias, rankings, donaciones y gestionar su cuenta.
+Bienvenido al repositorio oficial del ecosistema web de **CrystalTides SMP**.
+Esta plataforma integral sirve como el corazón digital de nuestra comunidad, conectando el juego (Minecraft) con la web a través de herramientas avanzadas de gestión, socialización y administración.
 
-## 🚀 Tecnologías
+## 🏗️ Arquitectura Monorepo
 
-Este proyecto está construido con un stack moderno y eficiente:
+Este proyecto opera bajo una arquitectura de **Monorepo** moderna, gestionando múltiples paquetes y servicios en un solo lugar para máxima consistencia y eficiencia.
 
-*   **Frontend:** [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
-*   **Backend:** [Node.js](https://nodejs.org/) + [Express](https://expressjs.com/)
-*   **Base de Datos & Auth:** [Supabase](https://supabase.com/) (PostgreSQL)
-*   **Estilos:** CSS Modules / Vanilla CSS personalizado
-*   **Gestión de Paquetes:** npm
+| Directorio             | Descripción                          | Tecnologías                   |
+| :--------------------- | :----------------------------------- | :---------------------------- |
+| **`client/`**          | Portal Web y Panel de Administración | React, Vite, TSX, CSS Modules |
+| **`server/`**          | API RESTful y Webhooks               | Node.js, Express, TypeScript  |
+| **`packages/shared/`** | Librería de Tipos compartida         | TypeScript Interfaces & Types |
+| **`CrystalCore/`**     | Plugin de Servidor (Minecraft)       | Java 21, Paper API            |
 
-## 🛠️ Instalación y Configuración
+---
 
-Sigue estos pasos para levantar el proyecto en tu entorno local:
+## ✨ Características Principales
+
+### 🖥️ Web Pública (Jugadores)
+
+- **Perfiles Interactivos (`/u/usuario`)**: Visualización de usuario con renderizado de **Skin 3D en tiempo real**, vitrina de medallas y estadísticas del juego.
+- **Comunidad y Foros**: Sistema completo de foros con categorías, creación de temas (Markdown/Imágenes), comentarios y encuestas integradas.
+- **Gamificación**: Sistema de "Staff Cards" coleccionables, medallas y minijuegos como "KilluCoin Gacha".
+- **Utilidades**: Paleta de comandos (`Ctrl + K`) para navegación rápida, tutorial interactivo para nuevos usuarios y notificaciones en tiempo real.
+- **Soporte**: Módulo de Tickets y sección de Reglas interactivas.
+
+### 🛡️ Panel de Administración (Staff Hub)
+
+Un centro de control potente para la gestión del servidor y la comunidad:
+
+- **Staff Hub (Gestión Interna)**:
+  - **Tablero Kanban**: Gestión de tareas del equipo con Drag & Drop, etiquetas y asignaciones.
+  - **Notas Rápidas**: Muro de notas adhesivas para comunicación asíncrona.
+- **Configuración del Sitio (`SiteConfig`)**:
+  - Gestor visual de **Broadcasts** (Alertas globales).
+  - Editor del **Hero Banner** y carrusel de inicio.
+  - **Gestor de Donadores**: Administración visual del muro de fama.
+- **Moderación**: Herramientas para gestionar usuarios, reportes de foros y logs de auditoría.
+- **Contenido**: CRUDs para Noticias, Eventos, Encuestas y Cartas del Staff.
+
+### 🔗 Integraciones (Bridge)
+
+- **Secure Command Bridge**: Sistema de ejecución segura de comandos RCON mediante arquitectura _Pull_, eliminando la necesidad de exponer puertos RCON.
+- **Sincronización Bidireccional**: Webhooks para eventos de Minecraft -> Web y notificaciones de Foro -> Discord.
+- **Autenticación Unificada**: Login seguro vinculado a cuentas del juego.
+
+---
+
+## 🚀 Tecnologías y Stack
+
+- **Frontend**: [React 18](https://reactjs.org/), [Vite](https://vitejs.dev/), [Framer Motion](https://www.framer.com/motion/) (Animaciones), [Recharts](https://recharts.org/) (Estadísticas).
+- **Backend**: [Node.js](https://nodejs.org/), [Express](https://expressjs.com/), [Supabase](https://supabase.com/).
+- **Base de Datos**: MySQL (Datos del juego/Plugin) + Supabase (Web data).
+- **Minecraft**: Java 21 + Paper API.
+
+---
+
+## 🛠️ Instalación y Desarrollo
 
 ### 1. Prerrequisitos
-*   Node.js (v18 o superior)
-*   Git
 
-### 2. Clonar el repositorio
+- Node.js (v18+)
+- Java JDK 21 (Para CrystalCore)
+- Base de datos MySQL activa
+
+### 2. Configuración Inicial
+
+Desde la raíz del proyecto, instala todas las dependencias del monorepo:
+
 ```bash
-git clone https://github.com/UltraXn/CrystalTidesSMP-Web.git
-cd CrystalTidesSMP-Web
+npm install
 ```
 
-### 3. Instalar Dependencias
-Hemos creado un comando útil para instalar todo de una vez (raíz, cliente y servidor):
-```bash
-npm run install:all
-```
+### 3. Variables de Entorno
 
-### 4. Configurar Variables de Entorno
-Necesitas crear archivos `.env` en las carpetas `client` y `server`.
+Crea los archivos `.env` en `client/` y `server/` basándote en los `.env.example` proporcionados. Asegúrate de configurar correctamente las claves de API y la conexión a la base de datos.
 
-**En `client/.env`:**
-```env
-VITE_SUPABASE_URL=tu_url_de_supabase
-VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
-```
+### 4. Ejecución en Desarrollo
 
-**En `server/.env`:**
-```env
-PORT=3000
-SUPABASE_URL=tu_url_de_supabase
-SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_de_supabase
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=crystaltides
-```
+Para levantar simultáneamente el cliente y el servidor:
 
-### 5. Iniciar la Aplicación
-Para correr tanto el cliente como el servidor al mismo tiempo:
 ```bash
 npm start
 ```
-*   Frontend: `http://localhost:5173`
-*   Backend: `http://localhost:3000`
-
-## 📁 Estructura del Proyecto
-
-*   `/client`: Código fuente del Frontend (React).
-*   `/server`: API REST y lógica del Backend (Express).
-*   `/server/seed_donations.js`: Script para poblar la base de datos de donaciones.
-
-## ✨ Características Principales
-*   **Sistema de Cuentas:** Registro e inicio de sesión seguro.
-*   **Muro de Donadores:** Carrusel y feed de últimas donaciones (integración Ko-Fi).
-*   **Noticias y Blog:** Sistema para mantener informada a la comunidad.
-*   **Diseño Responsivo:** Adaptado para móviles y escritorio.
 
 ---
-Desarrollado con 💜 por **Neroferno Ultranix** para CrystalTides SMP.
+
+Desarrollado con 💜 y **código de alto nivel** por **Neroferno Ultranix** para la comunidad de CrystalTides SMP.

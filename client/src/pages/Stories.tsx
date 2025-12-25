@@ -24,8 +24,8 @@ const PLACES_CONFIG: PlaceConfig[] = [
         coords: "0, 100, 0",
         image: "/images/backgrounds/hero-bg-1.webp",
         authors: [
-            { name: "Killaradian", role: "Arquitecto" },
-            { name: "UltraXn", role: "Co-Creador" }
+            { name: "Killaradian", role: 'architect' },
+            { name: "UltraXn", role: 'co_founder' }
         ]
     },
     {
@@ -33,14 +33,14 @@ const PLACES_CONFIG: PlaceConfig[] = [
         coords: "???",
         image: null,
         isComingSoon: true,
-        authors: [{ name: "Admin", role: "Staff" }]
+        authors: [{ name: "Admin", role: 'staff' }]
     },
     {
         id: 3,
         coords: "???",
         image: null,
         isComingSoon: true,
-        authors: [{ name: "Staff", role: "Team" }]
+        authors: [{ name: "Staff", role: 'team' }]
     }
 ]
 
@@ -182,7 +182,7 @@ export default function Stories() {
                                                     style={{ width: "32px", height: "32px", borderRadius: "50%" }}
                                                 />
                                                 <div>
-                                                    <div style={{ fontSize: "0.6rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: "bold" }}>{auth.role}</div>
+                                                    <div style={{ fontSize: "0.6rem", color: "var(--muted)", textTransform: "uppercase", fontWeight: "bold" }}>{t(`stories.roles.${auth.role}`)}</div>
                                                     <div style={{ fontWeight: "bold", color: "#fff", fontSize: "0.9rem" }}>{auth.name}</div>
                                                 </div>
                                             </div>

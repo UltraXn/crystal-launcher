@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SkinViewer, IdleAnimation, WalkingAnimation } from 'skinview3d';
 
 interface SkinViewerProps {
@@ -8,23 +8,45 @@ interface SkinViewerProps {
 }
 
 const SkinViewerComponent = ({ skinUrl, width = 300, height = 400 }: SkinViewerProps) => {
+    const [isVisible, setIsVisible] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const viewerRef = useRef<any>(null);
 
+    // 1. Observer for visibility
     useEffect(() => {
-        if (!canvasRef.current) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setIsVisible(entry.isIntersecting);
+            },
+            { rootMargin: '100px 0px' } // Pre-load slightly before appearing
+        );
 
-        // Initialize the viewer
+        if (containerRef.current) {
+            observer.observe(containerRef.current);
+        }
+
+        return () => {
+             observer.disconnect();
+        };
+    }, []);
+
+    // 2. Initialize Viewer when visible
+    useEffect(() => {
+        if (!isVisible || !canvasRef.current) return;
+
+        let viewer: any = null;
+
+        // Initialize
         try {
-            const viewer = new SkinViewer({
+            viewer = new SkinViewer({
                 canvas: canvasRef.current,
                 width: width,
                 height: height,
                 skin: skinUrl,
             });
 
-            // Set animation if available, otherwise just render
-            // Use WalkingAnimation paused as a fallback for a natural pose if Idle is missing
+            // Animation
             if (typeof IdleAnimation !== 'undefined') {
                 viewer.animation = new IdleAnimation();
                 viewer.animation.paused = true;
@@ -33,29 +55,30 @@ const SkinViewerComponent = ({ skinUrl, width = 300, height = 400 }: SkinViewerP
                 viewer.animation.paused = true;
             }
 
-            // Adjust controls - disable zoom if desired
-            viewer.controls.enableZoom = true; // Fixed zoom level
-            viewer.camera.position.z = 60; // Closer zoom (default is usually ~60-70)
-            // Shift the camera target UP so the model appears LOWER in the frame
-            viewer.controls.target.y = 5; // Slight adjustment based on feedback
+            // Controls
+            viewer.controls.enableZoom = true;
+            viewer.camera.position.z = 60;
+            viewer.controls.target.y = 5;
 
             viewerRef.current = viewer;
         } catch (error) {
             console.error("Failed to initialize SkinViewer", error);
         }
 
-        // Cleanup
+        // Cleanup function
         return () => {
-            if (viewerRef.current) {
-                viewerRef.current.dispose();
+            if (viewer) {
+                viewer.dispose();
                 viewerRef.current = null;
             }
         };
-    }, [skinUrl, width, height]);
+    }, [isVisible, skinUrl, width, height]);
 
     return (
-        <div className="skin-viewer-container" style={{ width: width, height: height, position: 'relative', zIndex: 2 }}>
-            <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+        <div ref={containerRef} className="skin-viewer-container" style={{ width: width, height: height, position: 'relative', zIndex: 2 }}>
+            {isVisible && (
+                <canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+            )}
         </div>
     );
 };

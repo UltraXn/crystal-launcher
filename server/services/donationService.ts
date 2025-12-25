@@ -1,4 +1,5 @@
 import supabase from './supabaseService.js';
+import { translateText } from './translationService.js';
 
 export const getMonthlyStats = async () => {
     const now = new Date();
@@ -74,9 +75,14 @@ export const getDonations = async ({ page = 1, limit = 20, search = '' }: any) =
 };
 
 export const createDonation = async (donationData: any) => {
+    const messageEn = donationData.message ? await translateText(donationData.message, 'en') : null;
+
     const { data, error } = await supabase
         .from('donations')
-        .insert([donationData])
+        .insert([{
+            ...donationData,
+            message_en: messageEn
+        }])
         .select()
         .single();
     if (error) throw error;

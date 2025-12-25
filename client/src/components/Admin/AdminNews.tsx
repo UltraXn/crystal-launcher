@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react"
-import { FaPlus, FaEdit, FaTrash, FaImage, FaSearch, FaExclamationTriangle } from "react-icons/fa"
+import { FaPlus, FaEdit, FaTrash, FaImage, FaSearch, FaExclamationTriangle, FaLanguage, FaSpinner } from "react-icons/fa"
 import { useTranslation } from "react-i18next"
+import Loader from "../UI/Loader"
+import { supabase } from "../../services/supabaseClient"
+import { useRef } from "react"
 
 interface NewsPost {
     id?: number;
@@ -13,6 +16,8 @@ interface NewsPost {
     author_id?: string;
     username?: string;
     user_id?: string;
+    title_en?: string;
+    content_en?: string;
 }
 
 interface AdminNewsProps {
@@ -27,8 +32,11 @@ export default function AdminNews({ user }: AdminNewsProps) {
     const [currentPost, setCurrentPost] = useState<NewsPost | null>(null)
     const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null) // ID of news to delete
     const [searchTerm, setSearchTerm] = useState('')
+    const [uploading, setUploading] = useState(false)
+    const [uploadError, setUploadError] = useState<string | null>(null)
+    const contentFileInputRef = useRef<HTMLInputElement>(null)
 
-    const API_URL = import.meta.env.VITE_API_URL as string
+    const API_URL = '/api'; // import.meta.env.VITE_API_URL as string
 
     const fetchNews = useCallback(async () => {
         try {
@@ -47,13 +55,117 @@ export default function AdminNews({ user }: AdminNewsProps) {
         fetchNews()
     }, [fetchNews])
 
+    const convertFileToWebP = (file: File): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = (e) => {
+                const img = new Image()
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    canvas.width = img.width
+                    canvas.height = img.height
+                    const ctx = canvas.getContext('2d')
+                    if (!ctx) {
+                        reject(new Error('No canvas context'))
+                        return
+                    }
+                    ctx.drawImage(img, 0, 0)
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve(blob)
+                        else reject(new Error('Conversion failed'))
+                    }, 'image/webp', 0.8)
+                }
+                img.onerror = reject
+                img.src = e.target?.result as string
+            }
+            reader.onerror = reject
+            reader.readAsDataURL(file)
+        })
+    }
+
+    const uploadImage = async (file: File): Promise<string | null> => {
+        try {
+            setUploading(true)
+            setUploadError(null)
+            
+            // Convert to WebP
+            const webpBlob = await convertFileToWebP(file)
+            const fileName = `news/${Date.now()}.webp`
+            
+            const { error: uploadError } = await supabase.storage
+                .from('forum-uploads')
+                .upload(fileName, webpBlob, {
+                     contentType: 'image/webp'
+                })
+
+            if (uploadError) {
+                console.error("Supabase Upload Error:", uploadError)
+                if (uploadError.message.includes("Bucket not found")) {
+                     throw new Error(t('admin.news.upload_error_bucket'))
+                }
+                throw uploadError
+            }
+
+            const { data } = supabase.storage.from('forum-uploads').getPublicUrl(fileName)
+            return data.publicUrl
+        } catch (error: any) {
+            console.error('Error uploading image:', error)
+            setUploadError(error.message || t('admin.news.upload_error_unknown'))
+            return null
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return
+        const file = e.target.files[0]
+        const url = await uploadImage(file)
+        if (url) {
+            setCurrentPost(prev => prev ? { ...prev, image: url } : null)
+        }
+    }
+
+    const handleContentImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return
+        const file = e.target.files[0]
+        const url = await uploadImage(file)
+        if (url && currentPost) {
+            const imageMarkdown = `\n![Imagen](${url})\n`
+            setCurrentPost(prev => prev ? { ...prev, content: prev.content + imageMarkdown } : null)
+        }
+        // Reset input
+        if (contentFileInputRef.current) contentFileInputRef.current.value = ''
+    }
+
     const handleEdit = (post: NewsPost) => {
         setCurrentPost(post)
         setIsEditing(true)
     }
 
+    const [translating, setTranslating] = useState(false)
+    const handleTranslate = async (text: string, toLang: 'es' | 'en', field: 'title' | 'content' | 'title_en' | 'content_en') => {
+        if (!text) return
+        setTranslating(true)
+        try {
+            const res = await fetch(`${API_URL}/translation`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, targetLang: toLang })
+            })
+            const data = await res.json()
+            if (data.success) {
+                setCurrentPost(prev => prev ? { ...prev, [field]: data.translatedText } : null)
+            }
+        } catch (error) {
+            console.error("Translation fail", error)
+        } finally {
+            setTranslating(false)
+        }
+    }
+
     const handleNew = () => {
-        setCurrentPost({ title: "", category: "General", content: "", status: "Draft" })
+        setCurrentPost({ title: "", title_en: "", category: "General", content: "", content_en: "", status: "Draft" })
         setIsEditing(true)
     }
 
@@ -118,7 +230,12 @@ export default function AdminNews({ user }: AdminNewsProps) {
         post.category.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
-    if (loading) return <div className="admin-card">{t('admin.news.loading')}</div>
+    if (loading) return (
+        <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1.5rem' }}>
+            <Loader style={{ height: 'auto', minHeight: '120px' }} />
+            <p style={{ color: '#aaa' }}>{t('admin.news.loading')}</p>
+        </div>
+    )
 
     if (isEditing && currentPost) {
         return (
@@ -138,6 +255,39 @@ export default function AdminNews({ user }: AdminNewsProps) {
                             onChange={e => setCurrentPost(prev => prev ? { ...prev, title: e.target.value } : null)}
                             required
                         />
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                             <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={() => handleTranslate(currentPost.title, 'en', 'title_en')}
+                                disabled={translating || !currentPost.title}
+                            >
+                                {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_en_title')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">{t('admin.news.form.title')} {t('admin.news.english_suffix')}</label>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={currentPost.title_en || ''}
+                            onChange={e => setCurrentPost(prev => prev ? { ...prev, title_en: e.target.value } : null)}
+                            placeholder={t('admin.news.english_placeholder')}
+                        />
+                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                             <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={() => handleTranslate(currentPost.title_en || '', 'es', 'title')}
+                                disabled={translating || !currentPost.title_en}
+                            >
+                                {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_es_title')}
+                            </button>
+                        </div>
                     </div>
 
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
@@ -170,28 +320,103 @@ export default function AdminNews({ user }: AdminNewsProps) {
 
                     <div className="form-group">
                         <label className="form-label">{t('admin.news.form.image')}</label>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                            <div style={{ background: "#333", width: "40px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px" }}>
-                                <FaImage color="#888" />
+                        <div style={{ display: "flex", gap: "0.5rem", flexDirection: 'column' }}>
+                            <div style={{ display: "flex", gap: "0.5rem" }}>
+                                <div style={{ background: "#333", width: "40px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px" }}>
+                                    <FaImage color="#888" />
+                                </div>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="https://..."
+                                    value={currentPost.image || ""}
+                                    onChange={e => setCurrentPost(prev => prev ? { ...prev, image: e.target.value } : null)}
+                                />
                             </div>
-                            <input
-                                type="text"
-                                className="form-input"
-                                placeholder="https://..."
-                                value={currentPost.image || ""}
-                                onChange={e => setCurrentPost(prev => prev ? { ...prev, image: e.target.value } : null)}
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleImageUpload} 
+                                style={{color: '#aaa', fontSize: '0.9rem'}}
+                                disabled={uploading}
                             />
+                            {uploading && <span style={{fontSize: '0.8rem', color: 'var(--accent)'}}>{t('admin.news.uploading')}</span>}
+                            {uploadError && (
+                                <div style={{ 
+                                    background: 'rgba(239, 68, 68, 0.1)', 
+                                    color: '#ef4444', 
+                                    padding: '0.5rem', 
+                                    borderRadius: '4px',
+                                    fontSize: '0.8rem',
+                                    marginTop: '0.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem'
+                                }}>
+                                    <FaExclamationTriangle /> {uploadError}
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">{t('admin.news.form.content')}</label>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <label className="form-label">{t('admin.news.form.content')}</label>
+                            <button 
+                                type="button" 
+                                onClick={() => contentFileInputRef.current?.click()} 
+                                className="btn-secondary" 
+                                style={{fontSize: '0.8rem', padding: '0.2rem 0.5rem'}}
+                                disabled={uploading}
+                            >
+                                <FaImage style={{marginRight: '5px'}}/> {t('admin.news.insert_image')}
+                            </button>
+                            <input 
+                                type="file" 
+                                ref={contentFileInputRef} 
+                                style={{display: 'none'}} 
+                                accept="image/*" 
+                                onChange={handleContentImageUpload}
+                            />
+                        </div>
                         <textarea
                             className="form-textarea"
                             rows={10}
                             value={currentPost.content}
                             onChange={e => setCurrentPost(prev => prev ? { ...prev, content: e.target.value } : null)}
                         ></textarea>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                             <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={() => handleTranslate(currentPost.content, 'en', 'content_en')}
+                                disabled={translating || !currentPost.content}
+                            >
+                                {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_en_content')}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label">{t('admin.news.form.content')} {t('admin.news.english_suffix')}</label>
+                        <textarea
+                            className="form-textarea"
+                            rows={10}
+                            value={currentPost.content_en || ''}
+                            onChange={e => setCurrentPost(prev => prev ? { ...prev, content_en: e.target.value } : null)}
+                        ></textarea>
+                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                             <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                                onClick={() => handleTranslate(currentPost.content_en || '', 'es', 'content')}
+                                disabled={translating || !currentPost.content_en}
+                            >
+                                {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_es_content')}
+                            </button>
+                        </div>
                     </div>
 
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
@@ -207,7 +432,7 @@ export default function AdminNews({ user }: AdminNewsProps) {
     return (
         <div className="admin-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ position: 'relative', width: '300px' }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
                     <FaSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
                     <input 
                         type="text" 
@@ -222,7 +447,7 @@ export default function AdminNews({ user }: AdminNewsProps) {
                 </button>
             </div>
 
-            <div className="admin-table-container">
+            <div className="admin-table-container" style={{ overflow: 'auto' }}>
                 <table className="admin-table">
                     <thead>
                         <tr>
@@ -263,7 +488,7 @@ export default function AdminNews({ user }: AdminNewsProps) {
                                     <button
                                         onClick={() => post.id && confirmDelete(post.id)}
                                         style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}
-                                        title="Eliminar"
+                                        title={t('admin.news.delete_tooltip')}
                                     >
                                         <FaTrash />
                                     </button>

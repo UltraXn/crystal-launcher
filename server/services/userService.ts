@@ -1,4 +1,88 @@
 import supabase from './supabaseService.js';
+import db from '../config/database.js';
+
+/**
+ * Get Staff Users from Database (LuckPerms + Web Users)
+ * Queries LP tables for specific groups and merges with web profiles.
+ */
+export const getStaffUsers = async () => {
+    try {
+        const targetGroups = ['neroferno', 'killuwu', 'killu', 'owner', 'developer', 'admin', 'moderator', 'helper']; 
+        
+        // 1. Fetch UUIDs from LuckPerms Players (Primary Group)
+        const groupsPlaceholder = targetGroups.map(() => '?').join(',');
+        const [lpPlayers]: any = await db.query(`
+            SELECT uuid, username, primary_group as role FROM luckperms_players 
+            WHERE primary_group IN (${groupsPlaceholder})
+        `, targetGroups);
+
+        // 2. Fetch UUIDs from Permissions (Secondary Groups)
+        const groupPerms = targetGroups.map(g => `group.${g}`);
+        const permsPlaceholder = groupPerms.map(() => '?').join(',');
+        const [lpPermissions]: any = await db.query(`
+            SELECT uuid, permission FROM luckperms_user_permissions 
+            WHERE permission IN (${permsPlaceholder})
+        `, groupPerms);
+        
+        // Merge results (Map UUID -> Role)
+        const staffMap = new Map<string, { role: string, name?: string }>();
+        
+        lpPlayers.forEach((row: any) => {
+            staffMap.set(row.uuid, { role: row.role, name: row.username });
+        });
+        
+        lpPermissions.forEach((row: any) => {
+            if (!staffMap.has(row.uuid)) {
+                staffMap.set(row.uuid, { role: row.permission.replace('group.', ''), name: undefined });
+            }
+        });
+        
+        const uuids = Array.from(staffMap.keys());
+        if (uuids.length === 0) return [];
+
+        // 3. Resolve Names (if missing) from PLAN
+        const missingNameUUIDs = uuids.filter(uuid => !staffMap.get(uuid)?.name);
+        
+        if (missingNameUUIDs.length > 0) {
+            const [planUsers]: any = await db.query(`
+                SELECT uuid, name FROM plan_users WHERE uuid IN (${missingNameUUIDs.map(() => '?').join(',')})
+            `, missingNameUUIDs);
+            
+            planUsers.forEach((u: any) => {
+                const manual = staffMap.get(u.uuid);
+                if (manual) manual.name = u.name;
+            });
+        }
+        
+        // 4. Fetch Supabase Users for Web Socials
+        const sbUsers = await getAllUsers('');
+        
+        // 5. Build Final List
+        const finalStaff = [];
+        for (const [uuid, data] of staffMap.entries()) {
+            if (!data.name) continue; // Skip if name unresolved
+            
+            // Match Supabase User
+            const sbMatch = sbUsers.find((sb: any) => sb.username.toLowerCase() === data.name!.toLowerCase());
+            
+            finalStaff.push({
+                uuid: uuid, // Minecraft UUID
+                username: data.name,
+                role: data.role.charAt(0).toUpperCase() + data.role.slice(1), // Capitalize
+                avatar_url: sbMatch?.avatar_url, // Web Avatar
+                discord: sbMatch?.discord,
+                twitch: sbMatch?.twitch,
+                web_id: sbMatch?.id
+            });
+        }
+        
+        return finalStaff;
+
+    } catch (error) {
+        console.error("Error fetching staff from LP:", error);
+        throw new Error("Failed to fetch staff users");
+    }
+};
 
 /**
  * Get all users from Supabase Auth (Requires Service Role)
@@ -16,18 +100,38 @@ export const getAllUsers = async (query = '') => {
     
     let filtered = users;
     if(query) {
-        filtered = users.filter((u: any) => u.email && u.email.toLowerCase().includes(query.toLowerCase()));
+        filtered = users.filter((u: any) => 
+            (u.email && u.email.toLowerCase().includes(query.toLowerCase())) ||
+            (u.user_metadata?.username && u.user_metadata.username.toLowerCase().includes(query.toLowerCase())) ||
+            (u.user_metadata?.full_name && u.user_metadata.full_name.toLowerCase().includes(query.toLowerCase()))
+        );
     }
 
     // Map to a friendlier format
-    return filtered.map((u: any) => ({
-        id: u.id,
-        email: u.email,
-        role: u.user_metadata?.role || 'user', // Read from metadata
-        medals: u.user_metadata?.medals || [], // Start empty if none
-        created_at: u.created_at,
-        last_sign_in: u.last_sign_in_at
-    }));
+    return filtered.map((u: any) => {
+        const discordIdentity = u.identities?.find((i: any) => i.provider === 'discord');
+        const twitchIdentity = u.identities?.find((i: any) => i.provider === 'twitch');
+
+        return {
+            id: u.id,
+            email: u.email,
+            username: u.user_metadata?.username || u.user_metadata?.full_name || 'Sin Nick',
+            role: u.user_metadata?.role || 'user', // Read from metadata
+            medals: u.user_metadata?.medals || [], // Start empty if none
+            avatar_url: u.user_metadata?.avatar_url,
+            // Connected Accounts
+            discord: discordIdentity ? {
+                id: discordIdentity.id,
+                username: discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.custom_claims?.global_name
+            } : null,
+            twitch: twitchIdentity ? {
+                id: twitchIdentity.id,
+                username: twitchIdentity.identity_data?.full_name || twitchIdentity.identity_data?.name || twitchIdentity.identity_data?.preferred_username
+            } : null,
+            created_at: u.created_at,
+            last_sign_in: u.last_sign_in_at
+        };
+    });
 };
 
 /**

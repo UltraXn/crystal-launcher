@@ -21,7 +21,6 @@ button,
     transition: var(--speed);
     text-decoration: none;
     font-size: 1rem;
-    cursor: pointer;
 }
 
 .btn:hover {
@@ -44,7 +43,6 @@ button,
     color: rgba(255, 255, 255, 0.7);
     text-shadow: none;
     background: transparent;
-    cursor: pointer;
     box-shadow: none;
     border: 1px solid rgba(255, 255, 255, 0.5);
     transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, text-shadow 0.2s ease; /* Transición específica para evitar saltos */
@@ -92,7 +90,8 @@ button,
 
 /* Estado activo/primary */
 .nav-btn.primary {
-    color: #ffffff;
+    color: #000;
+    font-weight: 700;
     border-color: transparent; /* El primary usa el pseudo siempre visible o estilo propio */
     /* Para primary, usamos el background directo pues siempre está lleno, 
        pero para consistencia de glow usamos el pseudo o redefinimos */
@@ -109,6 +108,7 @@ button,
 }
 
 .nav-btn.primary:hover {
+    color: #000;
     box-shadow: none; /* Controlado por pseudo */
 }
 
@@ -126,7 +126,6 @@ button,
     text-transform: uppercase;
     letter-spacing: 1px;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
@@ -150,7 +149,6 @@ button,
     text-transform: uppercase;
     letter-spacing: 1px;
     border-radius: 6px;
-    cursor: pointer;
     transition: all 0.3s ease;
 }
 
@@ -171,7 +169,6 @@ button,
     font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    cursor: pointer;
     transition: var(--speed);
 }
 
@@ -945,4 +942,30 @@ button,
     color: rgba(255, 255, 255, 0.3);
     cursor: not-allowed;
     box-shadow: none;
+}
+
+/* Danger Button Standard */
+.btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 0.8rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-danger:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }

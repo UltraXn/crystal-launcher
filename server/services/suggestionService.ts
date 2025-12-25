@@ -1,4 +1,5 @@
 import supabase from './supabaseService.js';
+import { translateText } from './translationService.js';
 
 export const createSuggestion = async (data: any) => {
     // data: { nickname, type, message, user_id (opt) }
@@ -8,6 +9,7 @@ export const createSuggestion = async (data: any) => {
             nickname: data.nickname || 'Anónimo',
             type: data.type || 'General',
             message: data.message,
+            message_en: await translateText(data.message, 'en'),
             user_id: data.user_id || null,
             status: 'pending'
         }])

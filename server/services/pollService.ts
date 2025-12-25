@@ -1,4 +1,5 @@
 import supabase from './supabaseService.js';
+import { translateText } from './translationService.js';
 
 export const getActivePoll = async () => {
     // 1. Fetch active poll
@@ -102,17 +103,22 @@ export const votePoll = async (pollId: number, optionId: number) => {
     return { success: true, votes: newVotes };
 };
 
-export const createPoll = async ({ title, question, options, closes_at, thread_id, discord_link }: any) => {
+export const createPoll = async ({ title, title_en, question, question_en, options, closes_at, thread_id, discord_link }: any) => {
     // Deactivate others ONLY if Global (no thread_id)
     if (!thread_id) {
         await supabase.from('polls').update({ is_active: false }).is('thread_id', null).neq('id', -1); 
     }
+
+    const finalTitleEn = title_en ? title_en : await translateText(title, 'en');
+    const finalQuestionEn = question_en ? question_en : await translateText(question, 'en');
 
     const { data: poll, error } = await supabase
         .from('polls')
         .insert([{ 
             title, 
             question, 
+            title_en: finalTitleEn,
+            question_en: finalQuestionEn,
             is_active: true, 
             closes_at,
             thread_id: thread_id || null,
@@ -124,10 +130,25 @@ export const createPoll = async ({ title, question, options, closes_at, thread_i
     if (error) throw error;
 
     if (options && options.length > 0) {
-        const optionsData = options.map((label: string) => ({
-            poll_id: poll.id,
-            label,
-            votes: 0
+        // Options can be string[] or { label, label_en }[]
+        const optionsData = await Promise.all(options.map(async (opt: any) => {
+            let label = '';
+            let label_en = '';
+
+            if (typeof opt === 'string') {
+                label = opt;
+                label_en = await translateText(opt, 'en');
+            } else {
+                label = opt.label;
+                label_en = opt.label_en ? opt.label_en : await translateText(opt.label, 'en');
+            }
+
+            return {
+                poll_id: poll.id,
+                label,
+                label_en,
+                votes: 0
+            };
         }));
         
         const { error: optError } = await supabase.from('poll_options').insert(optionsData);

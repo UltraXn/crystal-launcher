@@ -3,13 +3,16 @@ import { useState, useEffect } from 'react'
 import { useAuth } from "../../context/AuthContext"
 
 import { useTranslation } from 'react-i18next'
+import { supabase } from '../../services/supabaseClient'
 
 const API_URL = import.meta.env.VITE_API_URL
 import { FaSearch, FaMedal, FaTimes, FaCheck } from 'react-icons/fa'
+import Loader from "../UI/Loader"
 
 interface UserDefinition {
     id: string;
     email: string;
+    username?: string;
     role?: string;
     medals?: number[]; // Assuming medal IDs are optional strings or needed? Code uses strings or numbers?
     created_at: string;
@@ -28,15 +31,18 @@ export default function UsersManager() {
     const { t } = useTranslation()
     const [users, setUsers] = useState<UserDefinition[]>([])
     const [loading, setLoading] = useState(false)
-    const [emailQuery, setEmailQuery] = useState('')
+    const [searchQuery, setSearchQuery] = useState('')
     const [hasSearched, setHasSearched] = useState(false)
     
     // Medal Management State
     const [availableMedals, setAvailableMedals] = useState<MedalDefinition[]>([])
-    const [editingUser, setEditingUser] = useState<UserDefinition | null>(null) // User being edited in modal
+    const [editingUser, setEditingUser] = useState<UserDefinition | null>(null)
     const [savingMedals, setSavingMedals] = useState(false)
 
-    const { user, logout } = useAuth() as { user: UserDefinition | null; logout: () => Promise<void> } 
+    // Role Change Modal State
+    const [roleChangeModal, setRoleChangeModal] = useState<{ userId: string, newRole: string } | null>(null)
+
+    const { user } = useAuth() as { user: UserDefinition | null } 
 
     // Fetch available medals on load
     useEffect(() => {
@@ -58,15 +64,25 @@ export default function UsersManager() {
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!emailQuery.trim()) return
+        if (!searchQuery.trim()) return
 
         try {
             setLoading(true)
             setHasSearched(true)
-            const res = await fetch(`${API_URL}/users?email=${encodeURIComponent(emailQuery)}`)
+            // Changed query param to 'search' to allow backend to handle email OR username searching
+            const res = await fetch(`${API_URL}/users?search=${encodeURIComponent(searchQuery)}`)
             if(res.ok) {
-                const data = await res.json()
-                setUsers(data)
+                const response = await res.json()
+                if (Array.isArray(response)) {
+                    setUsers(response)
+                } else if (response.data && Array.isArray(response.data)) {
+                     // Handle wrapped response { success: true, data: [...] }
+                    setUsers(response.data);
+                } else {
+                    console.error("Unexpected users response format:", response);
+                    setUsers([]);
+                    if (response.error || response.message) alert(response.error || response.message);
+                }
             }
         } catch (error) {
             console.error("Error fetching users", error)
@@ -75,8 +91,14 @@ export default function UsersManager() {
         }
     }
 
-    const handleRoleChange = async (userId: string, newRole: string) => {
-        if(!confirm(`${t('admin.users.confirm_role')} ${newRole}?`)) return
+    const handleRoleChange = (userId: string, newRole: string) => {
+        setRoleChangeModal({ userId, newRole });
+    }
+
+    const confirmRoleChange = async () => {
+        if (!roleChangeModal) return;
+        const { userId, newRole } = roleChangeModal;
+
         try {
             const res = await fetch(`${API_URL}/users/${userId}/role`, {
                 method: 'PATCH',
@@ -86,9 +108,11 @@ export default function UsersManager() {
             if(res.ok) {
                 setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
                 if (user && user.id === userId) {
-                    await logout()
-                    window.location.href = '/login'
+                    // Refresh session instead of logout to update UI reactively
+                    await supabase.auth.refreshSession();
+                    window.location.reload(); // Reload to ensure all components re-render with new permissions
                 }
+                setRoleChangeModal(null); // Close modal
             } else {
                 alert(t('admin.users.error_role'))
             }
@@ -113,7 +137,7 @@ export default function UsersManager() {
                 setUsers(users.map(u => u.id === editingUser.id ? { ...u, medals: editingUser.medals } : u));
                 setEditingUser(null); // Close modal
             } else {
-                alert('Error al guardar medallas');
+                alert(t('admin.users.error_medals'));
             }
         } catch (error) {
             console.error(error);
@@ -142,13 +166,13 @@ export default function UsersManager() {
             <h3 style={{ marginBottom: '1rem' }}>{t('admin.users.title')}</h3>
             
             {/* Search Bar */}
-            <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+            <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 <input 
                     type="text" 
-                    placeholder={t('admin.users.search_placeholder')} 
+                    placeholder={t('admin.users.search_placeholder', 'Buscar por Nickname...')} 
                     className="admin-input" 
-                    value={emailQuery}
-                    onChange={(e) => setEmailQuery(e.target.value)}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     style={{ flex: 1 }}
                 />
                 <button type="submit" className="btn-action close" style={{ background: 'var(--accent)', color: '#000' }}>
@@ -156,14 +180,14 @@ export default function UsersManager() {
                 </button>
             </form>
 
-            <div className="admin-table-container">
+            <div className="admin-table-container" style={{ overflow: 'auto' }}>
                 <table className="admin-table">
                     <thead>
                         <tr>
                             <th>{t('admin.users.table.user')}</th>
-                            <th>{t('admin.users.table.id')}</th>
+                            <th className="th-mobile-hide">{t('admin.users.table.id')}</th>
                             <th>{t('admin.users.table.role')}</th>
-                            <th>Gamificación</th>
+                            <th className="th-mobile-hide">{t('admin.users.gamification')}</th>
                             {canManageRoles && <th>{t('admin.users.table.change_role')}</th>}
                         </tr>
                     </thead>
@@ -171,14 +195,15 @@ export default function UsersManager() {
                         {users.map(u => (
                             <tr key={u.id}>
                                 <td>
-                                    <div style={{fontWeight:'bold', color:'#fff'}}>{u.email}</div>
+                                    <div style={{fontWeight:'bold', color:'#fff'}}>{u.username || u.email}</div>
+                                    <div style={{fontSize:'0.7rem', color:'#888', marginBottom: '4px'}}>{u.email}</div>
                                     <div style={{fontSize:'0.8rem', color:'#666'}}>{t('admin.users.registered')}: {new Date(u.created_at).toLocaleDateString()}</div>
                                 </td>
-                                <td style={{fontFamily:'monospace', fontSize:'0.8rem', color:'#555'}}>{u.id.substring(0,8)}...</td>
+                                <td className="th-mobile-hide" style={{fontFamily:'monospace', fontSize:'0.8rem', color:'#555'}}>{u.id.substring(0,8)}...</td>
                                 <td>
                                     <RoleBadge role={u.role || 'user'} />
                                 </td>
-                                <td>
+                                <td className="th-mobile-hide">
                                     <button 
                                         onClick={() => setEditingUser(u)}
                                         style={{ 
@@ -194,24 +219,35 @@ export default function UsersManager() {
                                             fontSize: '0.8rem'
                                         }}
                                     >
-                                        <FaMedal /> {u.medals?.length || 0} Medallas
+                                        <FaMedal /> {u.medals?.length || 0} {t('admin.users.medals')}
                                     </button>
                                 </td>
                                 {canManageRoles && (
-                                    <td>
+                                    <td style={{ minWidth: '130px' }}>
                                         <select 
                                             className="admin-input" 
-                                            style={{padding:'0.3rem', width:'auto', background:'#222', color:'#fff', border:'1px solid #444', borderRadius:'4px'}}
+                                            style={{
+                                                padding:'0.4rem 0.6rem', 
+                                                width:'100%', 
+                                                minWidth: '120px',
+                                                background:'#222', 
+                                                color:'#fff', 
+                                                border:'1px solid #444', 
+                                                borderRadius:'4px', 
+                                                cursor:'pointer',
+                                                fontSize: '0.85rem'
+                                            }}
                                             value={u.role || 'user'}
                                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
                                         >
-                                            <option value="user">{t('account.roles.user')}</option>
-                                            <option value="donor">{t('account.roles.donor')}</option>
-                                            <option value="founder">{t('account.roles.founder')}</option>
-                                            <option value="admin">{t('account.roles.admin')}</option>
-                                            <option value="helper">{t('account.roles.helper')}</option>
                                             <option value="neroferno">{t('account.roles.neroferno')}</option>
                                             <option value="killu">{t('account.roles.killu')}</option>
+                                            <option value="founder">{t('account.roles.founder')}</option>
+                                            <option value="developer">{t('account.roles.developer')}</option>
+                                            <option value="admin">{t('account.roles.admin')}</option>
+                                            <option value="helper">{t('account.roles.helper')}</option>
+                                            <option value="donor">{t('account.roles.donor')}</option>
+                                            <option value="user">{t('account.roles.user')}</option>
                                         </select>
                                     </td>
                                 )}
@@ -226,19 +262,19 @@ export default function UsersManager() {
                 {users.length === 0 && !hasSearched && (
                     <div style={{ padding: '2rem', textAlign: 'center', color: '#666' }}>{t('admin.users.initial_msg')}</div>
                 )}
-                {loading && <div style={{ padding: '2rem', textAlign: 'center', color: '#aaa' }}>{t('admin.users.searching')}</div>}
+                {loading && (
+                    <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
+                        <Loader style={{ height: 'auto', minHeight: '100px' }} />
+                    </div>
+                )}
             </div>
 
             {/* Medals Modal */}
             {editingUser && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', zIndex: 1000,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                    <div className="admin-card" style={{ width: '500px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid #444' }}>
+                <div className="modal-overlay">
+                    <div className="admin-card" style={{ width: '500px', maxHeight: '80vh', overflowY: 'auto', border: '1px solid #444', animation: 'fadeIn 0.2s' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                            <h3 style={{ margin: 0 }}>Medallas de {editingUser.email.split('@')[0]}</h3>
+                            <h3 style={{ margin: 0 }}>{t('admin.users.medals_of')} {editingUser.username || editingUser.email.split('@')[0]}</h3>
                             <button onClick={() => setEditingUser(null)} style={{ background: 'transparent', border: 'none', color: '#fff', cursor: 'pointer' }}><FaTimes /></button>
                         </div>
 
@@ -261,7 +297,6 @@ export default function UsersManager() {
                                         }}
                                     >
                                         <div style={{ color: medal.color, fontSize: '1.5rem', marginBottom: '0.2rem' }}>
-                                            {/* We can't use renderIcon here easily without ICONS map, using generic medal for now or importing logic */}
                                             <FaMedal /> 
                                         </div>
                                         <div style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{medal.name}</div>
@@ -269,18 +304,75 @@ export default function UsersManager() {
                                     </div>
                                 )
                             })}
-                            {availableMedals.length === 0 && <p style={{ color: '#666', gridColumn: '1/-1' }}>No hay medallas creadas en el sistema.</p>}
+                            {availableMedals.length === 0 && <p style={{ color: '#666', gridColumn: '1/-1' }}>{t('admin.users.no_medals')}</p>}
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-                            <button className="btn-secondary" onClick={() => setEditingUser(null)}>Cancelar</button>
+                            <button className="btn-secondary" onClick={() => setEditingUser(null)}>{t('admin.users.role_modal.cancel')}</button>
                             <button className="btn-primary" onClick={handleSaveMedals} disabled={savingMedals}>
-                                {savingMedals ? 'Guardando...' : 'Guardar Cambios'}
+                                {savingMedals ? t('admin.users.saving') : t('admin.users.save_medals')}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Role Change Confirmation Modal */}
+            {roleChangeModal && (
+                <div className="modal-overlay">
+                    <div className="admin-card" style={{ width: '450px', maxWidth: '95%', border: '1px solid #444', animation: 'fadeIn 0.2s', textAlign: 'center', padding: '2rem' }}>
+                        <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '1rem', borderRadius: '50%' }}>
+                                <FaCheck size={30} color="var(--accent)" />
+                            </div>
+                        </div>
+                        
+                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.4rem' }}>{t('admin.users.role_modal.title')}</h3>
+                        
+                        <p style={{ color: '#ccc', marginBottom: '2rem', lineHeight: '1.6' }}>
+                            {t('admin.users.role_modal.desc')}<br/>
+                            <strong style={{ color: '#fff' }}>{users.find(u => u.id === roleChangeModal.userId)?.username || users.find(u => u.id === roleChangeModal.userId)?.email}</strong><br/>
+                            {t('admin.users.role_modal.to')} <strong style={{ color: 'var(--accent)', textTransform: 'uppercase' }}>{roleChangeModal.newRole}</strong>.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                            <button 
+                                className="btn-secondary" 
+                                onClick={() => setRoleChangeModal(null)}
+                                style={{
+                                    border: '1px solid #444',
+                                    color: '#ccc',
+                                    padding: '0.8rem 1.5rem',
+                                    borderRadius: '8px',
+                                    background: 'transparent',
+                                    cursor: 'pointer',
+                                    fontWeight: '600',
+                                    flex: 1
+                                }}
+                            >
+                                {t('admin.users.role_modal.cancel')}
+                            </button>
+                            <button 
+                                className="btn-primary" 
+                                onClick={confirmRoleChange}
+                                style={{
+                                    background: 'var(--accent)',
+                                    color: '#000',
+                                    border: 'none',
+                                    padding: '0.8rem 1.5rem',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    flex: 1
+                                }}
+                            >
+                                {t('admin.users.role_modal.confirm')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     )
 }
@@ -297,7 +389,8 @@ function RoleBadge({ role }: { role: string }) {
         admin: { label: t('account.roles.admin'), img: '/ranks/admin.png' },
         helper: { label: t('account.roles.helper'), img: '/ranks/helper.png' },
         donor: { label: t('account.roles.donor'), img: '/ranks/rank-donador.png' },
-        user: { label: t('account.roles.user'), img: '/ranks/user.png' }
+        user: { label: t('account.roles.user'), img: '/ranks/user.png' },
+        developer: { label: t('account.roles.developer'), img: '/ranks/developer.png' }
     }
     const current = roles[role] || roles.user
 

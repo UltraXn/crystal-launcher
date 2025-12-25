@@ -76,7 +76,7 @@
     "home": {
         "title": "Sobre el Servidor",
         "description": "CrystalTides no es solo un territorio, es el legado vivo de cuatro entidades primordiales. Fue forjado por la unión de un Soberano Acuático, dueño de las profundidades; una Presencia Abismal e insondable, dueña de la mente y los secretos, que no responde a leyes ni bandos, sino a su propia voluntad; un Viajero de las Estrellas, portador de la visión cósmica y la estrategia bélica inigualables; y una Fuerza Terrenal, enraizada en los misterios antiguos de estas tierras.\n\nHoy, CrystalTides es un crisol de maravillas, un mundo mágico moldeado por esta alianza divina donde cada rincón respira la esencia de sus fundadores: la marea, el abismo, el cosmos y la tierra.",
-        "join_us_twitch": "Si queréis ver en qué gasta su tiempo una criatura acuática hiperactiva, id a ver a Killubysmali en Twitch. Lo mismo te dibuja una obra de arte, que te da una MASTER class of English o se pone a jugar Repo como si le fuera la vida en ello.",
+        "join_us_twitch": "Si queréis ver en qué gasta su tiempo una criatura acuática hiperactiva, id a ver a Killubysmali en Twitch. Lo mismo te dibuja una obra de arte, que te da una English MASTER class o se pone a jugar Repo como si le fuera la vida en ello.",
         "join_us_discord": "¿Te quedaste con ganas de más locura? Únete a La Pecerita de killu en Discord. Pero cuidado: en esas aguas profundas acecha la temible Killujaiba, se entonan himnos al Hombre Océano (me coge de la mano y me lleva a un lugar~ 🎵) y todavía hay un trauma colectivo por la Cucharita de killu (que se le perdió...).",
         "stats": {
             "discord": "Miembros en Discord",
@@ -84,6 +84,11 @@
             "years": "Años Online",
             "staff": "Staff Activo",
             "year_suffix": " Año"
+        },
+        "social": {
+            "discord_btn": "¡Entra a la pecerita de killu!",
+            "twitch_btn": "¡Sigue los directos de Killubysmali!",
+            "twitter_btn": "¡Sigue los tweets de Killubysmali!"
         }
     },
     "footer": {
@@ -92,7 +97,7 @@
         "online_map": "Mapa Online",
         "donate": "Donar",
         "events": "Eventos",
-        "slogan": "¡La mejor opción es diversión en Crystal Tides SMP!",
+        "slogan": "¡La mejor opción es diversión en CrystalTides SMP!",
         "rights": "Todos los derechos reservados.",
         "rules": "Reglas",
         "suggestions": "Sugerencias",
@@ -133,7 +138,7 @@
         "back_home": "Volver al inicio",
         "passwords_do_not_match": "Las contraseñas no coinciden",
         "success_title": "¡Te has registrado!",
-        "success_msg": "Bienvenido a Crystal Tides SMP. Hemos enviado un enlace de confirmación a tu correo electrónico.",
+        "success_msg": "Bienvenido a CrystalTides SMP. Hemos enviado un enlace de confirmación a tu correo electrónico.",
         "go_to_login": "Ir al Login"
     },
     "forum_page": {
@@ -235,7 +240,21 @@
             "zeta": "¡Un usuario realmente perseverante ante las adversidades!",
             "sendples": "The Paideidad. The Goat. The DONATOR",
             "zen": "Un Tryhard. ¡DEJA LOS BOSSES! (gracias por apoyar a la comunidad✨)",
-            "churly": "Boop Bip Boop! 🤖"
+            "churly": "Boop Bip Boop! 🤖",
+            "nana": "She is just a girl~~~! 💕"
+        },
+        "loading_donations": "Cargando donaciones...",
+        "no_donations": "Aún no hay donaciones recientes. ¡Sé el primero en apoyar!",
+        "ranks": {
+            "donador": "Donador",
+            "fundador": "Fundador",
+            "killu": "Rango Killu",
+            "neroferno": "Rango Neroferno",
+            "developer": "Desarrollador",
+            "admin": "Administrador",
+            "mod": "Moderador",
+            "helper": "Ayudante",
+            "staff": "Staff"
         }
     },
     "contests": {
@@ -263,7 +282,13 @@
                 "title": "Parkour Challenge",
                 "desc": "Saltos imposibles y cronómetros al límite. Completa el circuito infernal creado por Neroferno."
             }
-        }
+        },
+        "register_btn": "Inscribirse",
+        "registered_btn": "Inscrito",
+        "login_required": "Debes iniciar sesión para inscribirte. ¿Ir al login?",
+        "already_registered": "¡Ya estás inscrito en este evento!",
+        "registration_error": "Error al inscribirse",
+        "no_events": "No hay eventos activos por el momento."
     },
     "blog": {
         "title": "Noticias y Anuncios",
@@ -277,6 +302,12 @@
     "stories": {
         "title": "Lugares y Lore",
         "intro": "Descubre los puntos de interés de nuestro mundo. Haz clic en las tarjetas para ver los detalles.",
+        "roles": {
+            "architect": "Arquitecto",
+            "co_founder": "Co-Creador",
+            "staff": "Staff",
+            "team": "Equipo"
+        },
         "items": {
             "1": {
                 "title": "Santuario del Spawn",
@@ -298,10 +329,22 @@
     "suggestions": {
         "title": "Sugerencias y Encuestas",
         "form_title": "Envía tu Propuesta",
+        "poll_title": "Votación Activa",
+        "no_active_poll": "No hay encuestas activas en este momento.",
+        "total_votes": "Votos totales",
+        "loading_poll": "Cargando encuesta...",
+        "thanks_vote": "¡Gracias por tu voto!",
         "form": {
             "nick": "Tu Nick / Correo",
             "nick_placeholder": "Ej: Steve o steve@mail.com",
             "type": "Tipo",
+            "options": {
+                "general": "General",
+                "bug": "Reporte de Bug",
+                "mod": "Mod/Plugin",
+                "complaint": "Queja",
+                "poll": "Sugerencia de Encuesta"
+            },
             "msg": "Mensaje",
             "msg_placeholder": "Descríbenos tu idea...",
             "submit": "Enviar Propuesta",
@@ -309,19 +352,8 @@
             "received": "¡Recibido!",
             "success_msg": "Tu sugerencia ha sido enviada al staff y a nuestro Discord.",
             "send_another": "Enviar otra",
-            "options": {
-                "general": "Sugerencia General",
-                "bug": "Reporte de Bug",
-                "mod": "Solicitud de Mod/Plugin",
-                "complaint": "Queja"
-            }
-        },
-        "poll_title": "Votación Activa",
-        "total_votes": "Total de votos",
-        "closes_in": "Cierra en",
-        "suggest_poll": "Sugerir Encuesta",
-        "other_idea": "¿Tienes otra idea para encuesta?",
-        "no_active_poll": "No hay encuestas activas en este momento."
+            "error_msg": "Error enviando sugerencia."
+        }
     },
     "account": {
         "avatar": {
@@ -334,12 +366,13 @@
         },
         "roles": {
             "admin": "Administrador",
-            "user": "Aventurero",
+            "user": "Usuario",
             "founder": "Fundador",
             "helper": "Ayudante",
             "donor": "Donador",
             "neroferno": "Neroferno",
-            "killu": "Killu"
+            "killu": "Killu",
+            "developer": "Developer"
         },
         "nav": {
             "overview": "Resumen",
@@ -358,7 +391,7 @@
             "no_news": "No hay notificaciones recientes para ti."
         },
         "stats": {
-            "title": "Estadísticas de Combate",
+            "title": "Estadísticas",
             "loading": "Cargando datos...",
             "error": "No se pudieron cargar las estadísticas.",
             "kills": "Kills",
@@ -460,7 +493,11 @@
             "events": "Eventos",
             "news": "Noticias",
             "logs": "Logs",
-            "settings": "Config"
+            "settings": "Config",
+            "gamification": "Gamificación",
+            "team": "Equipo",
+            "staff_hub": "Staff Hub",
+            "docs": "Documentación"
         },
         "headers": {
             "general": "Dashboard General",
@@ -471,7 +508,11 @@
             "events": "Gestor de Eventos",
             "news": "Editor de Noticias",
             "logs": "Registro de Auditoría",
-            "settings": "Configuración del Sitio"
+            "settings": "Configuración del Sitio",
+            "gamification": "Sistema de Gamificación",
+            "team": "Gestión del Equipo",
+            "staff_hub": "Espacio de Trabajo Staff",
+            "docs": "Documentación Interna"
         },
         "dashboard": {
             "stats": {
@@ -500,7 +541,9 @@
             "staff": {
                 "title": "Staff Online",
                 "offline_msg": "Servidor Offline - Sin actividad",
-                "coming_soon": "Próximamente: Lista de staff en tiempo real"
+                "coming_soon": "Próximamente: Lista de staff en tiempo real",
+                "no_staff": "No hay staff conectado",
+                "active_badge": "Activos"
             }
         },
         "tickets": {
@@ -548,6 +591,9 @@
                 "closed_msg": "Este ticket está cerrado. Reábrelo para responder.",
                 "delete_confirm": "¿Estás seguro de que quieres eliminar este ticket? Esta acción no se puede deshacer."
             },
+            "view_details_tooltip": "Ver Detalles",
+            "subject_ph": "Ej: No puedo entrar al server",
+            "staff_label": "STAFF",
             "actions": {
                 "ban": "Banear User",
                 "resolve": "Marcar Resuelto",
@@ -557,6 +603,7 @@
             },
             "ban_modal": {
                 "title": "Sancionar Usuario",
+                "nick_ph": "Ej: Steve",
                 "nickname": "Nickname de Minecraft",
                 "nick_hint": "Confirma el nombre exacto del jugador en el servidor.",
                 "type": "Tipo de Sanción",
@@ -565,6 +612,7 @@
                 "amount": "Cantidad",
                 "unit": "Unidad",
                 "reason": "Razón / Motivo",
+                "reason_ph": "Ej: Uso de hacks (KillAura)",
                 "submit": "Aplicar Sanción",
                 "error_nick": "Escribe el Nickname del jugador",
                 "success": "Usuario baneado correctamente"
@@ -574,6 +622,177 @@
                 "h": "Horas",
                 "d": "Días",
                 "mo": "Meses"
+            }
+        },
+        "staff": {
+            "manager_title": "Gestor de Staff",
+            "sync_btn": "Sincronizar Staff",
+            "syncing": "Sincronizando...",
+            "add_member": "Añadir Miembro",
+            "add_manual": "Añadir Manualmente",
+            "empty": "No hay miembros de equipo configurados.",
+            "drag_tooltip": "Arrastrar para mover",
+            "edit_btn": "EDITAR",
+            "delete_tooltip": "Eliminar",
+            "no_desc": "Sin descripción",
+            "no_socials": "Sin redes sociales",
+            "linked_account": "Cuenta Enlazada",
+            "confirm_modal": {
+                "title": "Confirmar Equipo",
+                "detected_msg": "Se han detectado <1>{{count}}</1> miembros del staff activos.",
+                "warning": "Esta acción reemplazará la lista actual.",
+                "cancel": "Cancelar",
+                "save": "Guardar Staff"
+            },
+            "form": {
+                "new_title": "Nuevo Perfil",
+                "edit_title": "Editar Perfil",
+                "name_label": "Nombre (Nick de Minecraft)",
+                "name_ph": "Ej: Notch",
+                "role_label": "Rol",
+                "custom_role_ph": "Nombre del Rol Personalizado",
+                "color_label": "Color del Rol",
+                "avatar_label": "Avatar Personalizado (Opcional)",
+                "avatar_ph": "Deja vacío para usar la cabeza de Minecraft del nick",
+                "bio_label": "Descripción / Bio",
+                "bio_ph": "Breve descripción del miembro del staff...",
+                "cancel": "Cancelar",
+                "save_changes": "Guardar Cambios",
+                "preview_name": "Nombre",
+                "preview_role": "Rol"
+            },
+            "roles": {
+                "admin": "Admin",
+                "moderator": "Moderador",
+                "helper": "Ayudante",
+                "user": "Usuario",
+                "developer": "Desarrollador",
+                "custom": "Personalizado"
+            }
+        },
+        "donations": {
+            "title": "Gestión de Donaciones",
+            "search_ph": "Buscar por usuario...",
+            "new_btn": "Nueva Donación",
+            "edit_title": "Editar Donación",
+            "empty": "No hay donaciones registradas.",
+            "anonymous": "Anónimo",
+            "no_msg": "Sin mensaje",
+            "public": "Público",
+            "private": "Privado",
+            "form": {
+                "donor_name": "Nombre del Donante",
+                "name_ph": "Ej: John Doe",
+                "email_label": "Email (Privado)",
+                "amount": "Monto",
+                "currency": "Moneda",
+                "message": "Mensaje",
+                "is_public": "Hacer pública la donación",
+                "cancel": "Cancelar",
+                "save": "Guardar"
+            },
+            "delete_confirm": {
+                "title": "Confirmar Eliminación",
+                "msg": "¿Estás seguro de que quieres eliminar esta donación? Esta acción no se puede deshacer.",
+                "btn": "Eliminar"
+            }
+        },
+        "donors": {
+            "manager_title": "Gestor de Donadores",
+            "add_btn": "Añadir Donador",
+            "empty_msg": "La lista está vacía. Se usarán los donadores predeterminados en la página pública.",
+            "import_btn": "Importar Donadores Originales",
+            "new_title": "Nuevo Donador",
+            "edit_title": "Editar Donador",
+            "form": {
+                "nick": "Nickname (Minecraft)",
+                "nick_ph": "Ej: Notch",
+                "is_premium": "Es usuario Premium (Auto Skin)",
+                "skin_url": "Skin URL",
+                "skin_ph": "/skins/miskin.png o https://...",
+                "skin_hint": "Si subiste la skin manualmente a /skins/, escribe la ruta relativa.",
+                "desc": "Frase / Descripción",
+                "desc_ph": "Mensaje personalizado...",
+                "desc_en": "Frase / Descripción (Inglés)",
+                "desc_en_ph": "Mensaje personalizado en inglés...",
+                "translate_en": "Traducir a Inglés",
+                "translate_es": "Traducir a Español",
+                "ranks": "Rangos Seleccionados",
+                "cancel": "Cancelar",
+                "save": "Guardar"
+            },
+            "delete_confirm": {
+                "title": "¿Eliminar Donador?",
+                "msg": "Esta acción eliminará al donador de la lista permanentemente.",
+                "btn": "Sí, Eliminar"
+            },
+            "import_confirm": {
+                "title": "¿Importar Predeterminados?",
+                "msg": "¿Estás seguro? Esto reemplazará tu lista actual con los donadores originales del servidor.",
+                "btn": "Importar"
+            },
+            "validation": {
+                "name_req": "El nombre es requerido",
+                "skin_req": "La URL de la skin es requerida para no premium",
+                "desc_req": "La descripción es requerida",
+                "save_error": "Error al guardar los cambios",
+                "translate_error": "Error al traducir"
+            },
+            "profiles": {
+                "killu": "Administradora, Constructora y Diseñadora de Interfaces.",
+                "neroferno": "Dueño, Programador y Creador de Contenido.",
+                "law": "Fundadora y Administradora de la comunidad.",
+                "pixie": "Fundadora y Constructora experta.",
+                "zeta": "Fundador y Moderador veterano.",
+                "sendples": "Fundador y soporte técnico.",
+                "zen": "Donador destacado y miembro activo.",
+                "churly": "Developer Full Stack y colaborador.",
+                "nana": "Donadora y miembro VIP."
+            }
+        },
+        "news": {
+            "upload_error_bucket": "Bucket no encontrado",
+            "upload_error_unknown": "Error desconocido al subir imagen",
+            "error_delete": "Error al eliminar la noticia",
+            "error_save": "Error al guardar la noticia",
+            "edit_title": "Editar Noticia",
+            "create_title": "Escribir Noticia",
+            "cancel": "Cancelar",
+            "form": {
+                "title": "Título",
+                "category": "Categoría",
+                "status": "Estado",
+                "draft": "Borrador",
+                "published": "Publicado",
+                "image": "Imagen Principal",
+                "content": "Contenido (Markdown)",
+                "publish": "Publicar",
+                "save": "Guardar Cambios"
+            },
+            "translate_to_en_title": "Traducir Título a Inglés",
+            "translate_to_es_title": "Traducir Título a Español",
+            "translate_to_en_content": "Traducir Contenido a Inglés",
+            "translate_to_es_content": "Traducir Contenido a Español",
+            "english_suffix": "(Inglés)",
+            "english_placeholder": "Título en inglés...",
+            "uploading": "Subiendo...",
+            "insert_image": "Insertar Imagen",
+            "search_ph": "Buscar noticias...",
+            "write_btn": "Escribir Noticia",
+            "no_news": "No se encontraron noticias.",
+            "table": {
+                "title": "Título",
+                "category": "Categoría",
+                "status": "Estado",
+                "date": "Fecha",
+                "actions": "Acciones"
+            },
+            "delete_tooltip": "Eliminar",
+            "delete_modal": {
+                "title": "¿Eliminar Noticia?",
+                "desc": "Esta acción no se puede deshacer. La noticia será eliminada permanentemente.",
+                "cancel": "Cancelar",
+                "confirm": "Sí, Eliminar"
             }
         },
         "alerts": {
@@ -598,7 +817,34 @@
             "initial_msg": "Usa el buscador para encontrar usuarios.",
             "searching": "Buscando...",
             "confirm_role": "¿Cambiar rol a ",
-            "error_role": "Error actualizando rol"
+                "error_role": "Error actualizando rol",
+                "gamification": "Gamificación",
+                "medals": "Medallas",
+                "medals_of": "Medallas de",
+                "no_medals": "No hay medallas creadas en el sistema.",
+                "save_medals": "Guardar Cambios",
+                "saving": "Guardando...",
+                "error_medals": "Error al guardar medallas",
+                "role_modal": {
+                    "title": "¿Confirmar Cambio de Rol?",
+                    "desc": "Estás a punto de cambiar el rol del usuario",
+                    "to": "a",
+                    "confirm": "Confirmar Cambio",
+                    "cancel": "Cancelar"
+                }
+        },
+        "gamification": {
+            "medals": {
+                "title": "Gestión de Medallas",
+                "new_medal_default": "Nueva Medalla",
+                "desc_default": "Descripción de la medalla...",
+                "delete_confirm": "¿Borrar esta medalla?",
+                "saving": "Guardando...",
+                "save": "Guardar Cambios",
+                "name_placeholder": "Nombre Medalla",
+                "desc_placeholder": "Descripción...",
+                "create_btn": "Crear Nueva Medalla"
+            }
         },
         "settings": {
             "loading": "Cargando configuración...",
@@ -629,6 +875,70 @@
                 "confirm_on": "Sí, cerrar sitio",
                 "confirm_off": "Abrir sitio",
                 "cancel": "Uy... mejor no"
+            },
+            "sections": {
+                "general": "Configuración General",
+                "broadcast": "Difusión y Alertas",
+                "hero": "Banner Principal (Inicio)",
+                "rules": "Editor de Reglas",
+                "donors": "Gestor de Donadores (Carrusel)",
+                "donations": "Historial de Donaciones",
+                "console": "Consola Segura (RCON)"
+            },
+            "maintenance_label": "MANTENIMIENTO",
+            "recruitment": {
+                "title": "Reclutamiento",
+                "status_open": "ABIERTO",
+                "status_closed": "CERRADO",
+                "status_label": "Estado de postulaciones",
+                "link_label": "Enlace al Formulario",
+                "link_ph": "https://forms.google.com/..."
+            },
+            "broadcast": {
+                "title": "Alertas Globales",
+                "status_label": "Estado de la Alerta",
+                "active": "Visible en toda la web",
+                "inactive": "Oculta para los usuarios",
+                "message_label": "Mensaje del Anuncio",
+                "placeholder": "Ej: Mantenimiento programado para el Sábado a las 20:00",
+                "type_label": "Tipo de Alerta",
+                "preview": "Vista Previa",
+                "empty_msg": "(Mensaje vacío)",
+                "disabled_msg": "(La alerta está desactivada)",
+                "save_btn": "Guardar Configuración"
+            },
+            "hero": {
+                "title": "Banners Home",
+                "edit_slide": "Editar Slide",
+                "new_slide": "Nuevo Slide",
+                "image_url": "URL de la Imagen (Fondo)",
+                "title_label": "Título Principal",
+                "subtitle_label": "Subtítulo / Descripción",
+                "btn_text": "Texto del Botón",
+                "btn_link": "Enlace del Botón",
+                "save_btn": "Guardar Cambios",
+                "cancel_btn": "Cancelar",
+                "no_slides": "No hay banners activos.",
+                "delete_confirm": "¿Borrar este slide?"
+            },
+            "rules": {
+                "title": "Reglamento del Servidor",
+                "export_tooltip": "Exportar Reglas (JSON)",
+                "save_btn": "Guardar Cambios",
+                "saving": "Guardando...",
+                "title_ph": "Título de la Regla",
+                "desc_ph": "Descripción detallada...",
+                "add_btn": "Añadir Nueva Regla",
+                "delete_title": "¿Borrar Regla?",
+                "delete_msg": "Esta acción eliminará la regla permanentemente.",
+                "delete_confirm": "Sí, Borrar"
+            },
+            "console": {
+                "title": "Secure Command Bridge",
+                "desc": "Envía comandos al servidor de Minecraft de forma segura a través del CrystalBridge Plugin. Los comandos se ejecutan con privilegios de consola.",
+                "logs_ph": "Los logs de comandos aparecerán aquí...",
+                "cmd_ph": "say Hola mundo (o cualquier comando sin /)",
+                "send_btn": "Enviar"
             }
         },
         "suggestions": {
@@ -642,6 +952,19 @@
                 "user": "Usuario",
                 "message": "Mensaje",
                 "action": "Acción"
+            },
+            "filter_all": "Todos",
+            "filter_bug": "Bug",
+            "filter_feature": "Feature",
+            "filter_mod": "Mod",
+            "filter_other": "Otro",
+            "actions_disciplinaries": "Acciones Disciplinarias",
+            "delete_tooltip": "Eliminar",
+            "delete_modal": {
+                "title": "¿Estás seguro?",
+                "desc": "Esta acción eliminará la sugerencia permanentemente.",
+                "cancel": "Cancelar",
+                "confirm": "Eliminar"
             }
         },
         "polls": {
@@ -668,43 +991,40 @@
                 "error_options": "Necesitas al menos 2 opciones",
                 "error_create": "Error al crear encuesta"
             },
-            "confirm_close": "¿Estás seguro de finalizar la encuesta activa?"
-        },
-        "news": {
-            "loading": "Cargando noticias...",
-            "edit_title": "Editar Noticia",
-            "create_title": "Nueva Noticia",
-            "cancel": "Cancelar",
-            "form": {
-                "title": "Título",
-                "category": "Categoría",
-                "status": "Estado",
-                "draft": "Borrador",
-                "published": "Publicado",
-                "image": "Imagen de Portada (URL)",
-                "content": "Contenido",
-                "save": "Guardar Cambios",
-                "publish": "Publicar Noticia"
+            "confirm_close": "¿Estás seguro de finalizar la encuesta activa?",
+            "tabs": {
+                "active": "Activa",
+                "history": "Historial"
             },
-            "search_ph": "Buscar noticia...",
-            "write_btn": "Redactar Noticia",
+            "new_btn": "NUEVA ENCUESTA",
+            "create_now_btn": "Crear una encuesta ahora",
+            "history_title": "Historial de Encuestas",
+            "loading_history": "Cargando historial...",
             "table": {
                 "title": "Título",
-                "category": "Categoría",
-                "status": "Estado",
                 "date": "Fecha",
-                "actions": "Acciones"
+                "votes": "Votos",
+                "status": "Estado"
             },
-            "no_news": "No hay noticias aún.",
-            "delete_modal": {
-                "title": "¿Eliminar Noticia?",
-                "desc": "Esta acción no se puede deshacer. La noticia será eliminada permanentemente.",
-                "confirm": "Sí, Eliminar",
+            "status_chip": {
+                "active": "ACTIVA",
+                "closed": "CERRADA"
+            },
+            "no_history": "No hay historial",
+            "pagination": "Pág. {{page}} de {{total}}",
+            "form_extras": {
+                "title_es": "Título (Español)",
+                "title_en": "Título (Inglés)",
+                "question_es": "Pregunta (Español)",
+                "question_en": "Pregunta (Inglés)",
+                "option_es": "Opción (ES)",
+                "option_en": "Opción (EN)",
+                "translate": "Traducir",
+                "delete_option": "Eliminar opción",
                 "cancel": "Cancelar"
-            },
-            "error_save": "Error al guardar la noticia",
-            "error_delete": "Error al eliminar"
+            }
         },
+
         "events": {
             "title": "Gestión de Eventos y Concursos",
             "loading": "Cargando eventos...",
@@ -744,7 +1064,22 @@
                 "cancel": "Cancelar"
             },
             "error_save": "Error al guardar evento",
-            "error_delete": "Error al eliminar"
+            "error_delete": "Error al eliminar",
+            "delete_tooltip": "Eliminar",
+            "registrations": {
+                 "title": "Inscripciones",
+                 "empty": "No hay inscripciones aún.",
+                 "loading": "Cargando...",
+                 "unknown_user": "Usuario desconocido",
+                 "view_tooltip": "Ver Inscripciones"
+            },
+            "form_extras": {
+                "title_es": "Título (Español)",
+                "title_en": "Título (Inglés)",
+                "desc_es": "Descripción (Español)",
+                "desc_en": "Descripción (Inglés)",
+                "translate_btn": "Traducir"
+            }
         }
     },
     "support": {
@@ -759,6 +1094,69 @@
         "subject_placeholder": "Ej: Problema con rango...",
         "message": "Mensaje",
         "message_placeholder": "Describe tu problema en detalle...",
-        "type_message": "Escribe un mensaje..."
+        "type_message": "Escribe un mensaje...",
+        "ticket_closed": "Este ticket está cerrado.",
+        "categories": {
+            "general": "General",
+            "bug": "🐛 Reporte de Bug",
+            "player": "🚫 Reporte de Jugador",
+            "billing": "💰 Facturación/Tienda",
+            "unban": "🔓 Solicitud de Unban"
+        }
+    },
+    "tutorial": {
+        "step1_title": "¡Bienvenido a CrystalTides!",
+        "step1_content": "Descubre la nueva experiencia web de tu servidor favorito. Hemos renovado todo para ti.",
+        "step1_action": "Comenzar Tour",
+        "step2_title": "Navegación Rápida",
+        "step2_content": "Usa nuestra nueva Paleta de Comandos presionando Ctrl + K (o Cmd + K) para ir a cualquier lugar al instante.",
+        "step2_action": "Siguiente",
+        "step3_title": "Tus Logros",
+        "step3_content": "Visita tu perfil para ver tus estadísticas, skins y las medallas que has ganado jugando.",
+        "step3_action": "Siguiente",
+        "step4_title": "Mantente Informado",
+        "step4_content": "El nuevo Centro de Notificaciones te avisará de eventos, recompensas y noticias importantes.",
+        "step4_action": "Entendido",
+        "step5_title": "¡Todo Listo!",
+        "step5_content": "Explora la web, únete al servidor y diviértete. ¡Nos vemos en CrystalTides!",
+        "step5_action": "Finalizar",
+        "back": "Atrás"
+    },
+    "common": {
+        "loading_content": "Cargando contenido...",
+        "loading": "Cargando...",
+        "processing": "Procesando...",
+        "copy": "COPIAR",
+        "copied": "COPIADO"
+    },
+    "staff": {
+        "title": "Nuestro Equipo",
+        "subtitle": "Conoce a las personas que hacen posible CrystalTides.",
+        "hiring_title": "¡Estamos contratando!",
+        "hiring_action": "Postúlate aquí",
+        "loading": "Cargando equipo..."
+    },
+    "not_found_page": {
+        "title": "404 ¡Te caíste al vacío!",
+        "description": "Parece que este chunk no se generó correctamente o te teletransportaste a unas coordenadas que no existen.",
+        "button": "RESPAWNEAR EN EL INICIO"
+    },
+    "status": {
+        "title": "Estado del Servidor",
+        "subtitle": "Revisa la disponibilidad, jugadores y rendimiento de CrystalTides en vivo.",
+        "version": "Versión",
+        "players": "Jugadores",
+        "online": "OPERATIVO",
+        "offline": "OFFLINE",
+        "online_players": "Jugadores Conectados",
+        "tech_info": "Información Técnica",
+        "more": "más",
+        "no_players": "No hay jugadores en línea.",
+        "list_unavailable": "Lista de jugadores no disponible.",
+        "latency": "Latencia estimada",
+        "mode": "Modo",
+        "platform": "Plataforma",
+        "offline_title": "Servidor No Disponible",
+        "offline_desc": "El servidor parece estar apagado o en mantenimiento. Por favor revisa nuestro Discord para más información."
     }
 }

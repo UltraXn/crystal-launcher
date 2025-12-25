@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next';
 
 const TwitchButton = () => {
+    const { t } = useTranslation();
+
     return (
       <div className="flex flex-col gap-6 max-w-sm mx-auto relative z-10 mt-8">
-        <a href="https://www.twitch.tv/killubysmali" target="_blank" rel="noopener noreferrer" className="block w-full"> 
+        <a href="https://www.twitch.tv/killubysmalivt" target="_blank" rel="noopener noreferrer" className="block w-full"> 
           <button className="group relative w-full p-4 rounded-2xl backdrop-blur-xl border-2 border-purple-500/30 bg-gradient-to-br from-purple-900/90 to-[#0B0C10] shadow-2xl hover:shadow-purple-500/30 hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1 active:scale-95 transition-all duration-500 ease-out cursor-pointer hover:border-purple-400/60 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/10 via-purple-400/20 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -18,7 +21,7 @@ const TwitchButton = () => {
                   Twitch
                   </p>
                   <p className="text-purple-300/60 text-sm group-hover:text-purple-200/80 transition-colors duration-300">
-                  ¡Sigue los directos de Killubysmali!
+                  {t('home.social.twitch_btn')}
                   </p>
               </div>
               <div className="opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">

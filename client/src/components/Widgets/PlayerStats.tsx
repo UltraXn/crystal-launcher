@@ -22,6 +22,8 @@ interface PlayerStatsProps {
     error: any;
 }
 
+import Loader from '../UI/Loader'
+
 export default function PlayerStats({ statsData, loading, error }: PlayerStatsProps) {
     const { t } = useTranslation()
 
@@ -35,9 +37,8 @@ export default function PlayerStats({ statsData, loading, error }: PlayerStatsPr
 
     if (loading || !statsData) {
         return (
-            <div className="player-stats-loading">
-                <div className="minecraft-loader"></div>
-                <p>{t('account.stats.loading')}</p>
+            <div className="player-stats-loading" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader text={t('account.stats.loading')} />
             </div>
         )
     }

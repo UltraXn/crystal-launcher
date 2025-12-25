@@ -1,14 +1,15 @@
 import * as userService from '../services/userService.js';
 import * as logService from '../services/logService.js';
 import { Request, Response } from 'express';
+import { sendSuccess, sendError } from '../utils/responseHandler.js';
 
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
-        const { email } = req.query;
-        const users = await userService.getAllUsers(email as string);
-        res.json(users);
+        const { search } = req.query;
+        const users = await userService.getAllUsers(search as string);
+        return sendSuccess(res, users, 'Users listed successfully');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -17,7 +18,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { role } = req.body;
         
-        if (!role) return res.status(400).json({ error: 'Role is required' });
+        if (!role) return sendError(res, 'Role is required', 'MISSING_FIELD', 400);
 
         const updatedUser = await userService.updateUserRole(id, role);
 
@@ -28,9 +29,9 @@ export const updateUserRole = async (req: Request, res: Response) => {
             source: 'web'
         }).catch(console.error);
 
-        res.json(updatedUser);
+        return sendSuccess(res, updatedUser, 'User role updated');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -39,7 +40,7 @@ export const updateUserMetadata = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { metadata } = req.body;
         
-        if (!metadata) return res.status(400).json({ error: 'Metadata object is required' });
+        if (!metadata) return sendError(res, 'Metadata object is required', 'MISSING_FIELD', 400);
 
         const updatedUser = await userService.updateUserMetadata(id, metadata);
 
@@ -50,9 +51,9 @@ export const updateUserMetadata = async (req: Request, res: Response) => {
             source: 'web'
         }).catch(console.error);
 
-        res.json(updatedUser);
+        return sendSuccess(res, updatedUser, 'User metadata updated');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -60,9 +61,17 @@ export const getPublicProfile = async (req: Request, res: Response) => {
     try {
         const { username } = req.params;
         const profile = await userService.getPublicProfile(username);
-        if (!profile) return res.status(404).json({ error: 'User not found' });
-        res.json(profile);
+        if (!profile) return sendError(res, 'User not found', 'USER_NOT_FOUND', 404);
+        return sendSuccess(res, profile);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
+    }
+};
+export const getStaffUsers = async (req: Request, res: Response) => {
+    try {
+        const staff = await userService.getStaffUsers();
+        return sendSuccess(res, staff, 'Staff users fetched successfully');
+    } catch (error: any) {
+        return sendError(res, error.message);
     }
 };

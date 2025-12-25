@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from "react"
-import { FaSearch, FaSpinner, FaDonate, FaBoxOpen, FaUser, FaClock, FaEdit, FaTrash, FaPlus, FaSave, FaExclamationTriangle } from "react-icons/fa"
+import { FaSearch, FaSpinner, FaDonate, FaBoxOpen, FaUser, FaClock, FaEdit, FaTrash, FaPlus, FaSave } from "react-icons/fa"
+import Loader from "../UI/Loader"
+import { useTranslation } from "react-i18next"
+import ConfirmationModal from "../UI/ConfirmationModal"
 
-const API_URL = import.meta.env.VITE_API_URL as string
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 interface Donation {
     id?: number;
@@ -15,7 +18,7 @@ interface Donation {
 }
 
 export default function DonationsManager() {
-    // const { t } = useTranslation() 
+    const { t } = useTranslation() 
     const [donations, setDonations] = useState<Donation[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
@@ -33,9 +36,10 @@ export default function DonationsManager() {
         try {
             const res = await fetch(`${API_URL}/donations?page=${page}&limit=20&search=${search}`)
             if(res.ok) {
-                const data = await res.json()
-                setDonations(data.data || [])
-                setTotalPages(data.totalPages || 1)
+                const rawData = await res.json()
+                const payload = rawData.success ? rawData.data : rawData
+                setDonations(payload.data || [])
+                setTotalPages(payload.totalPages || 1)
             }
         } catch (error) {
             console.error(error)
@@ -125,34 +129,34 @@ export default function DonationsManager() {
         <div className="admin-card" style={{ height: 'calc(100vh - 180px)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                    <FaDonate color="var(--accent)" /> Gestión de Donaciones
+                    <FaDonate color="var(--accent)" /> {t('admin.donations.title')}
                 </h3>
                 
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <div style={{ position: 'relative' }}>
                         <input 
                             type="text" 
-                            placeholder="Buscar por usuario..." 
+                            placeholder={t('admin.donations.search_ph')} 
                             className="admin-input" 
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            style={{ paddingLeft: '2.5rem', width: '250px', marginBottom: 0 }}
+                            style={{ paddingLeft: '2.5rem', width: '100%', maxWidth: '250px', marginBottom: 0 }}
                         />
                         <FaSearch style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
                     </div>
                     <button className="btn-primary" onClick={handleNew} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <FaPlus size={12} /> Nueva Donación
+                        <FaPlus size={12} /> {t('admin.donations.new_btn')}
                     </button>
                 </div>
             </div>
 
             {loading && donations.length === 0 ? (
                 <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <FaSpinner className="spin" size={30} />
+                    <Loader style={{ height: 'auto', minHeight: '120px' }} />
                 </div>
             ) : (
                 <>
-                    <div className="admin-table-container" style={{ flex: 1, overflowY: 'auto' }}>
+                    <div className="admin-table-container" style={{ flex: 1, overflow: 'auto' }}>
                         <table className="admin-table">
                             <thead>
                                 <tr>
@@ -168,23 +172,23 @@ export default function DonationsManager() {
                                 {donations.length === 0 ? (
                                     <tr>
                                         <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
-                                            No hay donaciones registradas.
+                                            {t('admin.donations.empty')}
                                         </td>
                                     </tr>
                                 ) : (
-                                    donations.map(donation => (
+                                    Array.isArray(donations) && donations.map(donation => (
                                         <tr key={donation.id}>
                                             <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#333', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                                         <FaUser size={12} color="#aaa" />
                                                     </div>
-                                                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{donation.from_name || 'Anónimo'}</span>
+                                                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{donation.from_name || t('admin.donations.anonymous')}</span>
                                                 </div>
                                             </td>
                                             <td>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ccc', maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                    <FaBoxOpen size={12} /> {donation.message || 'Sin mensaje'}
+                                                    <FaBoxOpen size={12} /> {donation.message || t('admin.donations.no_msg')}
                                                 </div>
                                             </td>
                                             <td>
@@ -202,26 +206,54 @@ export default function DonationsManager() {
                                                     background: donation.is_public ? '#4ade80' : '#64748b',
                                                     color: '#000' 
                                                 }}>
-                                                    {donation.is_public ? 'Público' : 'Privado'}
+                                                    {donation.is_public ? t('admin.donations.public') : t('admin.donations.private')}
                                                 </span>
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button
-                                                    onClick={() => handleEdit(donation)}
-                                                    className="btn-icon"
-                                                    title="Editar"
-                                                    style={{ color: 'var(--accent)', marginRight: '0.5rem' }}
-                                                >
-                                                    <FaEdit />
-                                                </button>
-                                                <button
-                                                    onClick={() => donation.id && handleDelete(donation.id)}
-                                                    className="btn-icon"
-                                                    title="Eliminar"
-                                                    style={{ color: '#ef4444' }}
-                                                >
-                                                    <FaTrash />
-                                                </button>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.8rem' }}>
+                                                    <button
+                                                        onClick={() => handleEdit(donation)}
+                                                        style={{ 
+                                                            border: 'none', 
+                                                            background: 'rgba(59, 130, 246, 0.1)', 
+                                                            color: '#3b82f6',
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: '8px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        title={t('admin.staff.edit_btn')}
+                                                        onMouseOver={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)'}
+                                                        onMouseOut={e => e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)'}
+                                                    >
+                                                        <FaEdit size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => donation.id && handleDelete(donation.id)}
+                                                        style={{ 
+                                                            border: 'none', 
+                                                            background: 'rgba(239, 68, 68, 0.1)', 
+                                                            color: '#ef4444',
+                                                            width: '36px',
+                                                            height: '36px',
+                                                            borderRadius: '8px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                        title={t('admin.donations.delete_confirm.btn')}
+                                                        onMouseOver={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                                                        onMouseOut={e => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                                                    >
+                                                        <FaTrash size={14} />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -260,23 +292,23 @@ export default function DonationsManager() {
                 <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)', zIndex: 1000 }}>
                     <div className="admin-card modal-content" style={{ width: '500px', maxWidth: '90%', maxHeight: '90vh', overflowY: 'auto' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
-                            <h3 style={{ margin: 0 }}>{currentDonation?.id ? "Editar Donación" : "Nueva Donación"}</h3>
+                            <h3 style={{ margin: 0 }}>{currentDonation?.id ? t('admin.donations.edit_title') : t('admin.donations.new_btn')}</h3>
                             <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
                         </div>
 
                         <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <div className="form-group">
-                                <label className="form-label">Nombre del Donante</label>
+                                <label className="form-label">{t('admin.donations.form.donor_name')}</label>
                                 <input 
                                     className="form-input" 
                                     value={currentDonation?.from_name || ''} 
                                     onChange={e => setCurrentDonation(prev => prev ? {...prev, from_name: e.target.value} : null)}
-                                    placeholder="Ej: John Doe"
+                                    placeholder={t('admin.donations.form.name_ph')}
                                 />
                             </div>
 
                              <div className="form-group">
-                                <label className="form-label">Email (Privado)</label>
+                                <label className="form-label">{t('admin.donations.form.email_label')}</label>
                                 <input 
                                     className="form-input" 
                                     value={currentDonation?.email || ''} 
@@ -287,7 +319,7 @@ export default function DonationsManager() {
 
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <div className="form-group" style={{ flex: 1 }}>
-                                    <label className="form-label">Monto</label>
+                                    <label className="form-label">{t('admin.donations.form.amount')}</label>
                                     <input 
                                         type="number" 
                                         step="0.01"
@@ -298,7 +330,7 @@ export default function DonationsManager() {
                                     />
                                 </div>
                                 <div className="form-group" style={{ flex: 1 }}>
-                                    <label className="form-label">Moneda</label>
+                                    <label className="form-label">{t('admin.donations.form.currency')}</label>
                                     <select 
                                         className="form-input" 
                                         value={currentDonation?.currency || 'USD'} 
@@ -312,7 +344,7 @@ export default function DonationsManager() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Mensaje</label>
+                                <label className="form-label">{t('admin.donations.form.message')}</label>
                                 <textarea 
                                     className="form-textarea" 
                                     rows={3}
@@ -329,13 +361,13 @@ export default function DonationsManager() {
                                     onChange={e => setCurrentDonation(prev => prev ? {...prev, is_public: e.target.checked} : null)}
                                     style={{ width: 'auto' }}
                                 />
-                                <label htmlFor="isPublic" style={{ cursor: 'pointer', userSelect: 'none' }}>Hacer pública la donación</label>
+                                <label htmlFor="isPublic" style={{ cursor: 'pointer', userSelect: 'none' }}>{t('admin.donations.form.is_public')}</label>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
-                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">Cancelar</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">{t('admin.donations.form.cancel')}</button>
                                 <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                                    {isSubmitting ? <FaSpinner className="spin" /> : <><FaSave /> Guardar</>}
+                                    {isSubmitting ? <FaSpinner className="spin" /> : <><FaSave /> {t('admin.donations.form.save')}</>}
                                 </button>
                             </div>
                         </form>
@@ -344,72 +376,15 @@ export default function DonationsManager() {
             )}
 
             {/* Delete Confirmation Modal */}
-            {deleteConfirm && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0, 
-                    left: 0,
-                    width: '100vw',
-                    height: '100vh',
-                    background: 'rgba(0, 0, 0, 0.7)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 10001,
-                    backdropFilter: 'blur(5px)'
-                }} onClick={() => setDeleteConfirm(null)}>
-                    <div style={{
-                        background: '#1e1e24',
-                        padding: '2rem',
-                        borderRadius: '12px',
-                        border: '1px solid #ef4444',
-                        maxWidth: '400px',
-                        width: '90%',
-                        textAlign: 'center',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
-                    }} onClick={e => e.stopPropagation()}>
-                        <div style={{ 
-                            width: '60px', 
-                            height: '60px', 
-                            borderRadius: '50%', 
-                            background: 'rgba(239, 68, 68, 0.1)', 
-                            color: '#ef4444',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            margin: '0 auto 1.5rem',
-                            fontSize: '2rem'
-                        }}>
-                            <FaExclamationTriangle />
-                        </div>
-                        <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.4rem' }}>Confirmar Eliminación</h3>
-                        <p style={{ color: '#aaa', marginBottom: '2rem' }}>
-                            ¿Estás seguro de que quieres eliminar esta donación? Esta acción no se puede deshacer.
-                        </p>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                            <button 
-                                className="btn-secondary" 
-                                onClick={() => setDeleteConfirm(null)}
-                                style={{ flex: 1 }}
-                            >
-                                Cancelar
-                            </button>
-                            <button 
-                                className="btn-primary" 
-                                onClick={executeDelete}
-                                style={{ 
-                                    flex: 1, 
-                                    background: '#ef4444', 
-                                    borderColor: '#ef4444', 
-                                    color: '#fff' 
-                                }}
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmationModal 
+                isOpen={!!deleteConfirm}
+                onClose={() => setDeleteConfirm(null)}
+                onConfirm={executeDelete}
+                title={t('admin.donations.delete_confirm.title')}
+                message={t('admin.donations.delete_confirm.msg')}
+                confirmText={t('admin.donations.delete_confirm.btn')}
+                isDanger={true}
+            />
         </div>
     )
 }

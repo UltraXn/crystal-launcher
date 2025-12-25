@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { FaUser, FaMedal, FaGamepad, FaTrophy } from "react-icons/fa"
+import { FaUser, FaMedal, FaGamepad, FaTrophy, FaSkull, FaClock, FaCoins, FaHammer, FaDraftingCompass, FaTwitter, FaDiscord, FaTwitch, FaYoutube } from "react-icons/fa"
 import RoleBadge from "../components/User/RoleBadge"
 import Loader from "../components/UI/Loader"
 import { MEDAL_ICONS } from "../utils/MedalIcons"
+import MarkdownRenderer from "../components/UI/MarkdownRenderer"
 
 interface MedalDefinition {
     id: string | number;
@@ -21,9 +22,25 @@ interface Profile {
     created_at: string;
     medals?: (string | number)[];
     public_stats: boolean;
+    bio?: string;
+    social_discord?: string;
+    social_twitter?: string;
+    social_twitch?: string;
+    social_youtube?: string;
+}
+
+interface PlayerStats {
+    playtime: string;
+    kills: number;
+    mob_kills: number;
+    deaths: number;
+    money: string;
+    blocks_mined: string;
+    blocks_placed: string;
 }
 
 const API_URL = import.meta.env.VITE_API_URL
+
 
 export default function PublicProfile() {
     const { username } = useParams()
@@ -34,6 +51,8 @@ export default function PublicProfile() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [medalDefinitions, setMedalDefinitions] = useState<MedalDefinition[]>([])
+    const [playerStats, setPlayerStats] = useState<PlayerStats | null>(null)
+    const [statsLoading, setStatsLoading] = useState(false)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -65,6 +84,22 @@ export default function PublicProfile() {
                             }
                         }
                     }
+                }
+
+                if (userData.public_stats) {
+                    setStatsLoading(true)
+                    try {
+                        const resStats = await fetch(`${API_URL}/player-stats/${username}`)
+                        if (resStats.ok) {
+                            const response = await resStats.json()
+                            if (response.success && response.data) {
+                                setPlayerStats(response.data)
+                            } else {
+                                setPlayerStats(response)
+                            }
+                        }
+                    } catch (e) { console.warn("Failed to fetch stats", e) }
+                    finally { setStatsLoading(false) }
                 }
             } catch (err) {
                 console.error(err)
@@ -216,7 +251,51 @@ export default function PublicProfile() {
                         </p>
                     </div>
 
-                    {/* Social / Connections could go here */}
+                    {/* Bio & Social Sidebar Item */}
+                    {(profile.bio || profile.social_discord || profile.social_twitter || profile.social_twitch || profile.social_youtube) && (
+                        <div className="profile-card" style={{ marginTop: '1rem', textAlign: 'left' }}>
+                            {profile.bio && (
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h4 style={{ color: '#fff', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.8rem', opacity: 0.7 }}>Sobre mí</h4>
+                                    <div style={{ color: '#ccc', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                                        <MarkdownRenderer content={profile.bio} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {(profile.social_discord || profile.social_twitter || profile.social_twitch || profile.social_youtube) && (
+                                <div>
+                                    <h4 style={{ color: '#fff', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.8rem', opacity: 0.7 }}>Redes</h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                                        {profile.social_discord && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc' }}>
+                                                <FaDiscord style={{ color: '#5865F2' }} />
+                                                <span style={{ fontSize: '0.9rem' }}>{profile.social_discord}</span>
+                                            </div>
+                                        )}
+                                        {profile.social_twitter && (
+                                            <a href={`https://twitter.com/${profile.social_twitter.replace('@','')}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc', textDecoration: 'none' }}>
+                                                <FaTwitter style={{ color: '#1d9bf0' }} />
+                                                <span style={{ fontSize: '0.9rem' }}>{profile.social_twitter}</span>
+                                            </a>
+                                        )}
+                                        {profile.social_twitch && (
+                                            <a href={`https://twitch.tv/${profile.social_twitch}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc', textDecoration: 'none' }}>
+                                                <FaTwitch style={{ color: '#9146FF' }} />
+                                                <span style={{ fontSize: '0.9rem' }}>{profile.social_twitch}</span>
+                                            </a>
+                                        )}
+                                        {profile.social_youtube && (
+                                            <a href={profile.social_youtube.startsWith('http') ? profile.social_youtube : `https://youtube.com/${profile.social_youtube}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc', textDecoration: 'none' }}>
+                                                <FaYoutube style={{ color: '#ff0000' }} />
+                                                <span style={{ fontSize: '0.9rem' }}>YouTube</span>
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Right Column: Content */}
@@ -270,23 +349,43 @@ export default function PublicProfile() {
                         
                         {profile.public_stats ? (
                              <div className="stat-grid">
-                                {/* Placeholder stats - in real implementation we fetch from /api/player-stats needs adjustment to accept username */}
-                                <div className="stat-box">
-                                     <div className="stat-value">?</div>
-                                     <div className="stat-label">Tiempo Jugeado</div>
-                                </div>
-                                <div className="stat-box">
-                                     <div className="stat-value">?</div>
-                                     <div className="stat-label">Muertes</div>
-                                </div>
-                                {/* 
-                                    Since PlayerStats.jsx relies on linking account, 
-                                    we need to know if this profile is linked.
-                                    For now, we just show message.
-                                */}
-                                <div style={{width:'100%', gridColumn:'1/-1', padding:'2rem', color:'#888'}}>
-                                    Las estadísticas en vivo no están disponibles en este perfil todavía.
-                                </div>
+                                {statsLoading ? (
+                                    <div style={{ gridColumn: '1/-1', padding: '2rem', textAlign: 'center' }}>
+                                        <Loader text="Cargando estadísticas..." />
+                                    </div>
+                                ) : playerStats ? (
+                                    <>
+                                        <div className="stat-box">
+                                            <div style={{ color: 'var(--accent)', marginBottom: '0.5rem' }}><FaClock size={20} /></div>
+                                            <div className="stat-value" style={{ fontSize: '1.4rem' }}>{playerStats.playtime}</div>
+                                            <div className="stat-label">Tiempo</div>
+                                        </div>
+                                        <div className="stat-box">
+                                            <div style={{ color: '#ef4444', marginBottom: '0.5rem' }}><FaSkull size={20} /></div>
+                                            <div className="stat-value" style={{ fontSize: '1.4rem' }}>{playerStats.deaths}</div>
+                                            <div className="stat-label">Muertes</div>
+                                        </div>
+                                        <div className="stat-box">
+                                            <div style={{ color: '#fbbf24', marginBottom: '0.5rem' }}><FaCoins size={20} /></div>
+                                            <div className="stat-value" style={{ fontSize: '1.4rem' }}>{playerStats.money}</div>
+                                            <div className="stat-label">Killucoins</div>
+                                        </div>
+                                        <div className="stat-box">
+                                            <div style={{ color: '#4ade80', marginBottom: '0.5rem' }}><FaHammer size={20} /></div>
+                                            <div className="stat-value" style={{ fontSize: '1.4rem' }}>{playerStats.blocks_mined}</div>
+                                            <div className="stat-label">Minados</div>
+                                        </div>
+                                        <div className="stat-box">
+                                            <div style={{ color: '#60a5fa', marginBottom: '0.5rem' }}><FaDraftingCompass size={20} /></div>
+                                            <div className="stat-value" style={{ fontSize: '1.4rem' }}>{playerStats.blocks_placed}</div>
+                                            <div className="stat-label">Colocados</div>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div style={{ width: '100%', gridColumn: '1/-1', padding: '2rem', color: '#888', textAlign: 'center' }}>
+                                        No se pudieron obtener las estadísticas de juego.
+                                    </div>
+                                )}
                              </div>
                         ) : (
                             <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', borderRadius:'8px' }}>

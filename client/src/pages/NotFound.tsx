@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import anime from "animejs"
+import { useTranslation } from "react-i18next"
 
 export default function NotFound() {
+    const { t } = useTranslation()
     const titleRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
     const logoRef = useRef<HTMLImageElement>(null)
@@ -59,22 +61,22 @@ export default function NotFound() {
                 <img
                     ref={logoRef}
                     src="/images/ui/logo.webp"
-                    alt="Crystal Tides Logo"
+                    alt="CrystalTides Logo"
                     className="not-found-logo"
                     onMouseEnter={handleLogoHover}
                     style={{ width: '120px', height: 'auto', marginBottom: '1rem', filter: 'drop-shadow(0 0 10px rgba(15, 150, 156, 0.5))', cursor: 'pointer' }}
                 />
                 <h1 style={{ fontSize: '4rem', fontWeight: '800', lineHeight: 1, marginBottom: '0.5rem' }}>404</h1>
-                <h2 style={{ fontSize: '2rem', color: 'var(--muted)' }}>¡Te caíste al vacío!</h2>
+                <h2 style={{ fontSize: '2rem', color: 'var(--muted)' }}>{t('not_found_page.title')}</h2>
             </div>
 
             <p style={{ maxWidth: '500px', color: 'var(--muted)', marginBottom: '3rem', fontSize: '1.1rem' }}>
-                Parece que este chunk no se generó correctamente o te teletransportaste a unas coordenadas que no existen.
+                {t('not_found_page.description')}
             </p>
 
             <div ref={buttonRef} style={{ opacity: 0 }}>
                 <Link to="/" className="btn-donate-hero">
-                    Respawnear en el Inicio
+                    {t('not_found_page.button')}
                 </Link>
             </div>
         </div>

@@ -1,5 +1,8 @@
+import { useTranslation } from 'react-i18next';
 
 const DiscordButton = () => {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-6 max-w-sm mx-auto relative z-10 mt-8">
       <a href="https://discord.com/invite/TDmwYNnvyT" target="_blank" rel="noopener noreferrer" className="block w-full"> 
@@ -17,7 +20,7 @@ const DiscordButton = () => {
                 Discord
                 </p>
                 <p className="text-indigo-300/60 text-sm group-hover:text-indigo-200/80 transition-colors duration-300">
-                ¡Entra a la pecerita de killu!
+                {t('home.social.discord_btn')}
                 </p>
             </div>
             <div className="opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">

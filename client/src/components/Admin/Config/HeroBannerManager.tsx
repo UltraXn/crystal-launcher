@@ -48,6 +48,7 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
     
     // Form State
     const [formData, setFormData] = useState<HeroSlide>({
+        id: 0,
         image: '',
         title: '',
         text: '',
@@ -63,10 +64,10 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
         if (slidesStr) {
             try {
                 const parsed = JSON.parse(slidesStr);
-                setSlides(Array.isArray(parsed) ? parsed : DEFAULT_SLIDES);
-            } catch { setSlides(DEFAULT_SLIDES); }
+                setSlides(Array.isArray(parsed) ? (parsed as HeroSlide[]) : (DEFAULT_SLIDES as HeroSlide[]));
+            } catch { setSlides(DEFAULT_SLIDES as HeroSlide[]); }
         } else {
-            setSlides(DEFAULT_SLIDES);
+            setSlides(DEFAULT_SLIDES as HeroSlide[]);
         }
     }
 
@@ -78,12 +79,12 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
 
     const handleCreate = () => {
         setActiveEditIndex(null);
-        setFormData({ image: '', title: '', text: '', buttonText: '', link: '' });
+        setFormData({ id: 0, image: '', title: '', text: '', buttonText: '', link: '' });
         setIsEditing(true);
     };
 
     const handleDelete = (index: number) => {
-        if(!window.confirm('¿Borrar este slide?')) return;
+        if(!window.confirm(t('admin.settings.hero.delete_confirm'))) return;
         const newSlides = slides.filter((_, i) => i !== index);
         saveSlides(newSlides);
     };
@@ -108,40 +109,40 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
         return (
             <div className="admin-card">
                  <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    {activeEditIndex !== null ? 'Editar Slide' : 'Nuevo Slide'}
+                    {activeEditIndex !== null ? t('admin.settings.hero.edit_slide') : t('admin.settings.hero.new_slide')}
                 </h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
-                        <label className="admin-label">URL de la Imagen (Fondo)</label>
+                        <label className="admin-label">{t('admin.settings.hero.image_url')}</label>
                         <input className="admin-input" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="https://..." />
                         {formData.image && <img src={formData.image} alt="Preview" style={{ width: '100%', height: '150px', objectFit: 'cover', marginTop: '0.5rem', borderRadius: '4px', opacity: 0.7 }} />}
                     </div>
                     <div>
-                        <label className="admin-label">Título Principal</label>
+                        <label className="admin-label">{t('admin.settings.hero.title_label')}</label>
                         <input className="admin-input" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Ej: Nueva Temporada" />
                     </div>
                     <div>
-                        <label className="admin-label">Subtítulo / Descripción</label>
+                        <label className="admin-label">{t('admin.settings.hero.subtitle_label')}</label>
                         <input className="admin-input" value={formData.text} onChange={e => setFormData({...formData, text: e.target.value})} placeholder="Descripción corta..." />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
                         <div>
-                            <label className="admin-label">Texto del Botón</label>
+                            <label className="admin-label">{t('admin.settings.hero.btn_text')}</label>
                             <input className="admin-input" value={formData.buttonText} onChange={e => setFormData({...formData, buttonText: e.target.value})} placeholder="Ej: Jugar Ahora" />
                         </div>
                         <div>
-                            <label className="admin-label">Enlace del Botón</label>
+                            <label className="admin-label">{t('admin.settings.hero.btn_link')}</label>
                             <input className="admin-input" value={formData.link} onChange={e => setFormData({...formData, link: e.target.value})} placeholder="/tienda o https://..." />
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
                         <button className="btn-primary" onClick={handleFormSave} disabled={saving === 'hero_slides'}>
-                           <FaCheck /> {saving === 'hero_slides' ? 'Guardando...' : 'Guardar Cambios'}
+                           <FaCheck /> {saving === 'hero_slides' ? t('admin.settings.saving') : t('admin.settings.hero.save_btn')}
                         </button>
                         <button className="btn-secondary" onClick={() => setIsEditing(false)} style={{ background: 'transparent', border: '1px solid #444' }}>
-                           Cancelar
+                           {t('admin.settings.hero.cancel_btn')}
                         </button>
                     </div>
                 </div>
@@ -151,12 +152,12 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
 
     return (
         <div className="admin-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    <FaImage /> {t('admin.settings.banner.title', 'Banners Home')}
+                    <FaImage /> {t('admin.settings.hero.title')}
                 </h3>
                 <button onClick={handleCreate} className="btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
-                    <FaPlus /> Nuevo Slide
+                    <FaPlus /> {t('admin.settings.hero.new_slide')}
                 </button>
             </div>
 
@@ -200,7 +201,7 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
                 
                 {slides.length === 0 && (
                      <div style={{ textAlign: 'center', padding: '2rem', color: '#666', border: '1px dashed #444', borderRadius: '8px' }}>
-                        No hay banners activos.
+                        {t('admin.settings.hero.no_slides')}
                     </div>
                 )}
             </div>

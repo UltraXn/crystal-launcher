@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaSave, FaPlus, FaTrash, FaTrophy } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import Loader from "../UI/Loader";
 import { MEDAL_ICONS } from '../../utils/MedalIcons';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -19,13 +20,15 @@ export default function GamificationManager() {
     const [saving, setSaving] = useState<string | null>(null);
     const [medals, setMedals] = useState<Medal[]>([]);
     const [prevMedalsStr, setPrevMedalsStr] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     // Fetch settings on mount
     useEffect(() => {
         fetch(`${API_URL}/settings`)
             .then(res => res.json())
             .then(data => setSettings(data))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, []);
 
     const onUpdate = async (key: string, newValue: string) => {
@@ -62,15 +65,15 @@ export default function GamificationManager() {
     const handleAdd = () => {
         setMedals([...medals, { 
             id: Date.now(), 
-            name: 'Nueva Medalla', 
-            description: 'Descripción de la medalla...', 
+            name: t('admin.gamification.medals.new_medal_default'), 
+            description: t('admin.gamification.medals.desc_default'), 
             icon: 'FaMedal', 
             color: '#fbbf24' 
         }]);
     };
 
     const handleDelete = (id: number) => {
-        if(!confirm('¿Borrar esta medalla?')) return;
+        if(!confirm(t('admin.gamification.medals.delete_confirm'))) return;
         setMedals(medals.filter(m => m.id !== id));
     };
 
@@ -88,18 +91,26 @@ export default function GamificationManager() {
         return <Icon />;
     };
 
+    if (loading) {
+        return (
+            <div className="admin-card" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5rem' }}>
+                <Loader style={{ height: 'auto', minHeight: '150px' }} />
+            </div>
+        );
+    }
+
     return (
         <div className="admin-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    <FaTrophy style={{ color: '#fbbf24' }} /> {t('admin.gamification.medals.title', 'Gestión de Medallas')}
+                    <FaTrophy style={{ color: '#fbbf24' }} /> {t('admin.gamification.medals.title')}
                 </h3>
                 <button onClick={handleSave} className="btn-primary" disabled={saving === 'medal_definitions'}>
-                    <FaSave /> {saving === 'medal_definitions' ? 'Guardando...' : 'Guardar Cambios'}
+                    <FaSave /> {saving === 'medal_definitions' ? t('admin.gamification.medals.saving') : t('admin.gamification.medals.save')}
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
                 {medals.map((medal) => (
                     <div key={medal.id} style={{ 
                         background: 'rgba(255,255,255,0.03)', 
@@ -146,14 +157,14 @@ export default function GamificationManager() {
                                     className="admin-input" 
                                     value={medal.name} 
                                     onChange={(e) => handleChange(medal.id, 'name', e.target.value)}
-                                    placeholder="Nombre Medalla"
+                                    placeholder={t('admin.gamification.medals.name_placeholder')}
                                     style={{ fontWeight: 'bold' }}
                                 />
                                 <textarea 
                                     className="admin-input" 
                                     value={medal.description} 
                                     onChange={(e) => handleChange(medal.id, 'description', e.target.value)}
-                                    placeholder="Descripción..."
+                                    placeholder={t('admin.gamification.medals.desc_placeholder')}
                                     rows={2}
                                     style={{ fontSize: '0.85rem' }}
                                 />
@@ -207,7 +218,7 @@ export default function GamificationManager() {
                     onMouseLeave={(e) => e.currentTarget.style.borderColor = '#444'}
                 >
                     <FaPlus size={32} />
-                    <span style={{ marginTop: '1rem', fontWeight: 'bold' }}>Crear Nueva Medalla</span>
+                    <span style={{ marginTop: '1rem', fontWeight: 'bold' }}>{t('admin.gamification.medals.create_btn')}</span>
                 </div>
             </div>
         </div>

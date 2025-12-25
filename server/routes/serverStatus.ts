@@ -26,7 +26,8 @@ router.get('/live', async (req: Request, res: Response) => {
                 max: result.players.max,
                 sample: result.players.sample || [] // List of names if provided
             },
-            icon: result.favicon // Base64 icon
+            icon: result.favicon, // Base64 icon
+            latency: result.roundTripLatency
         });
 
     } catch (error: any) {

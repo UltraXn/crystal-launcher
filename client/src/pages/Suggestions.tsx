@@ -26,6 +26,7 @@ export default function Suggestions() {
     const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
     const [formData, setFormData] = useState({ nickname: '', type: 'General', message: '' })
     
+
     // Poll State
     const [poll, setPoll] = useState<Poll | null>(null)
     const [loadingPoll, setLoadingPoll] = useState(true)
@@ -39,7 +40,7 @@ export default function Suggestions() {
                 if (res.ok) {
                     const data = await res.json()
                     // Si data es null (200 OK but null body handled in controller), setPoll(null)
-                    if(data) setPoll(data)
+                    if(data && data.success) setPoll(data.data)
                 }
             } catch (error) {
                 console.error("Error fetching poll", error)
@@ -65,7 +66,7 @@ export default function Suggestions() {
                 // Refetch updated stats
                 const refresh = await fetch(`${API_URL}/polls/active`)
                 const data = await refresh.json()
-                setPoll(data)
+                setPoll(data.data)
             }
         } catch(err) {
             console.error(err)
@@ -135,10 +136,11 @@ export default function Suggestions() {
                                         value={formData.type}
                                         onChange={e => setFormData({...formData, type: e.target.value})}
                                     >
-                                        <option>{t('suggestions.form.options.general')}</option>
-                                        <option>{t('suggestions.form.options.bug')}</option>
-                                        <option>{t('suggestions.form.options.mod')}</option>
-                                        <option>{t('suggestions.form.options.complaint')}</option>
+                                        <option value="General">{t('suggestions.form.options.general')}</option>
+                                        <option value="Bug">{t('suggestions.form.options.bug')}</option>
+                                        <option value="Mod">{t('suggestions.form.options.mod')}</option>
+                                        <option value="Complaint">{t('suggestions.form.options.complaint')}</option>
+                                        <option value="Poll">{t('suggestions.form.options.poll')}</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
@@ -158,7 +160,7 @@ export default function Suggestions() {
                                         </span>
                                     ) : t('suggestions.form.submit')}
                                 </button>
-                                {formStatus === 'error' && <p style={{color: '#ef4444', textAlign: 'center', marginTop: '1rem'}}>Error enviando sugerencia.</p>}
+                                {formStatus === 'error' && <p style={{color: '#ef4444', textAlign: 'center', marginTop: '1rem'}}>{t('suggestions.form.error_msg')}</p>}
                             </form>
                         )}
                     </div>
@@ -172,7 +174,7 @@ export default function Suggestions() {
                         {loadingPoll ? (
                             <div className="poll-card" style={{ textAlign: 'center', padding: '3rem' }}>
                                 <FaSpinner className="spin" size={24} style={{ marginBottom: '1rem' }} />
-                                <p>Cargando encuesta...</p>
+                                <p>{t('suggestions.loading_poll')}</p>
                             </div>
                         ) : !poll ? (
                             <div className="poll-card" style={{ textAlign: 'center', padding: '3rem', opacity: 0.7 }}>
@@ -189,7 +191,7 @@ export default function Suggestions() {
                                 </h4>
 
                                 <div className="poll-options">
-                                    {poll.options.map((option) => (
+                                    {(poll.options || []).map((option) => (
                                         <div 
                                             key={option.id} 
                                             className={`poll-option ${voted ? 'voted' : ''}`} 
@@ -208,14 +210,11 @@ export default function Suggestions() {
                                 <div style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--muted)', textAlign: 'center' }}>
                                     {t('suggestions.total_votes')}: {poll.totalVotes} • {poll.closesIn}
                                 </div>
-                                {voted && <p style={{textAlign:'center', marginTop:'1rem', color:'#4ade80', fontSize:'0.9rem'}}>¡Gracias por tu voto!</p>}
+                                {voted && <p style={{textAlign:'center', marginTop:'1rem', color:'#4ade80', fontSize:'0.9rem'}}>{t('suggestions.thanks_vote')}</p>}
                             </div>
                         )}
 
-                        <div style={{ marginTop: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center' }}>
-                            <p style={{ marginBottom: '1rem', color: '#ccc' }}>{t('suggestions.other_idea')}</p>
-                            <button className="btn-primary" style={{ fontSize: '0.9rem', width: '100%' }}>{t('suggestions.suggest_poll')}</button>
-                        </div>
+
                     </div>
 
                 </div>

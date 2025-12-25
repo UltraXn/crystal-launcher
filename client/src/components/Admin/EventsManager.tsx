@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react"
-import { FaPlus, FaEdit, FaTrash, FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaExclamationTriangle, FaUsers } from "react-icons/fa"
+import { FaPlus, FaEdit, FaTrash, FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaExclamationTriangle, FaUsers, FaLanguage, FaSpinner } from "react-icons/fa"
 import { useTranslation } from "react-i18next"
+import Loader from "../UI/Loader"
 
 interface Event {
     id?: number;
     title: string;
+    title_en?: string;
     description: string;
+    description_en?: string;
     type: string;
     status: string;
     image_url?: string;
@@ -14,7 +17,7 @@ interface Event {
 
 interface Registration {
     id: number;
-    assigned_at: string;
+    created_at: string;
     profiles?: {
         avatar_url?: string;
         username?: string;
@@ -46,7 +49,7 @@ export default function EventsManager() {
         'finished': { label: t('admin.events.form.statuses.finished'), icon: <FaFlagCheckered />, color: '#ef4444' }
     }
 
-    const API_URL = import.meta.env.VITE_API_URL as string
+    const API_URL = import.meta.env.VITE_API_URL || '/api'
 
     const fetchEvents = useCallback(async () => {
         try {
@@ -71,8 +74,12 @@ export default function EventsManager() {
         setIsEditing(true)
     }
 
+    const [translating, setTranslating] = useState<string | null>(null)
+
+    // ... duplicate removed ...
+
     const handleNew = () => {
-        setCurrentEvent({ title: "", description: "", type: "hammer", status: "soon", image_url: "" })
+        setCurrentEvent({ title: "", title_en: "", description: "", description_en: "", type: "hammer", status: "soon", image_url: "" })
         setIsEditing(true)
     }
 
@@ -90,6 +97,30 @@ export default function EventsManager() {
             console.error("Error eliminando evento:", error)
             alert(t('admin.events.error_delete'))
         }
+    }
+
+    const handleTranslate = async (text: string, field: 'title' | 'description') => {
+        if (!text) return
+        setTranslating(field)
+        try {
+             const res = await fetch(`${API_URL}/translation`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, targetLang: 'en' })
+            })
+            if (res.ok) {
+                const data = await res.json()
+                const translated = data.translatedText || ''
+                setCurrentEvent(prev => {
+                    if (!prev) return null
+                    return {
+                        ...prev,
+                        [field === 'title' ? 'title_en' : 'description_en']: translated
+                    }
+                })
+            }
+        } catch (e) { console.error(e) }
+        finally { setTranslating(null) }
     }
 
     const handleSave = async (e: React.FormEvent) => {
@@ -125,7 +156,12 @@ export default function EventsManager() {
         }
     }
 
-    if (loading) return <div className="admin-card">{t('admin.events.loading')}</div>
+    if (loading) return (
+        <div className="admin-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem', gap: '1.5rem' }}>
+            <Loader text="" style={{ height: 'auto', minHeight: '120px' }} />
+            <span style={{ color: '#666' }}>{t('admin.events.loading')}</span>
+        </div>
+    )
 
     if (isEditing && currentEvent) {
         return (
@@ -136,8 +172,9 @@ export default function EventsManager() {
                 </div>
 
                 <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {/* TITLE */}
                     <div className="form-group">
-                        <label className="form-label">{t('admin.events.form.title')}</label>
+                        <label className="form-label">{t('admin.events.form_extras.title_es')}</label>
                         <input
                             type="text"
                             className="form-input"
@@ -146,14 +183,45 @@ export default function EventsManager() {
                             required
                         />
                     </div>
-
                     <div className="form-group">
-                        <label className="form-label">{t('admin.events.form.desc')}</label>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <label className="form-label">{t('admin.events.form_extras.title_en')}</label>
+                            <button type="button" className="btn-secondary" style={{fontSize:'0.8rem', padding:'0.2rem 0.5rem'}} onClick={() => handleTranslate(currentEvent.title, 'title')} disabled={translating === 'title'}>
+                                {translating === 'title' ? <FaSpinner className="spin"/> : <><FaLanguage /> {t('admin.events.form_extras.translate_btn')}</>}
+                            </button>
+                        </div>
+                        <input
+                            type="text"
+                            className="form-input"
+                            value={currentEvent.title_en || ''}
+                            onChange={e => setCurrentEvent(prev => prev ? { ...prev, title_en: e.target.value } : null)}
+                            placeholder="Event Title"
+                        />
+                    </div>
+
+                    {/* DESCRIPTION */}
+                    <div className="form-group">
+                        <label className="form-label">{t('admin.events.form_extras.desc_es')}</label>
                          <textarea
                             className="form-textarea"
                             rows={4}
                             value={currentEvent.description}
                             onChange={e => setCurrentEvent(prev => prev ? { ...prev, description: e.target.value } : null)}
+                        ></textarea>
+                    </div>
+                    <div className="form-group">
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <label className="form-label">{t('admin.events.form_extras.desc_en')}</label>
+                            <button type="button" className="btn-secondary" style={{fontSize:'0.8rem', padding:'0.2rem 0.5rem'}} onClick={() => handleTranslate(currentEvent.description, 'description')} disabled={translating === 'description'}>
+                                {translating === 'description' ? <FaSpinner className="spin"/> : <><FaLanguage /> {t('admin.events.form_extras.translate_btn')}</>}
+                            </button>
+                        </div>
+                         <textarea
+                            className="form-textarea"
+                            rows={4}
+                            value={currentEvent.description_en || ''}
+                            onChange={e => setCurrentEvent(prev => prev ? { ...prev, description_en: e.target.value } : null)}
+                            placeholder="Event Description"
                         ></textarea>
                     </div>
 
@@ -204,7 +272,7 @@ export default function EventsManager() {
                 </button>
             </div>
 
-            <div className="admin-table-container">
+            <div className="admin-table-container" style={{ overflow: 'auto' }}>
                 <table className="admin-table">
                     <thead>
                         <tr>
@@ -240,7 +308,7 @@ export default function EventsManager() {
                                     <button
                                         onClick={() => event.id && setShowRegistrationsModal(event.id)}
                                         style={{ background: "none", border: "none", color: "#3b82f6", cursor: "pointer", marginRight: "1rem" }}
-                                        title="Ver Inscripciones"
+                                        title={t('admin.events.registrations.view_tooltip')}
                                     >
                                         <FaUsers />
                                     </button>
@@ -254,7 +322,7 @@ export default function EventsManager() {
                                     <button
                                         onClick={() => event.id && confirmDelete(event.id)}
                                         style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}
-                                        title="Eliminar"
+                                        title={t('admin.events.delete_tooltip')}
                                     >
                                         <FaTrash />
                                     </button>
@@ -352,6 +420,7 @@ interface RegistrationsModalProps {
 }
 
 function RegistrationsModal({ eventId, onClose, API_URL }: RegistrationsModalProps) {
+    const { t } = useTranslation()
     const [registrations, setRegistrations] = useState<Registration[]>([])
     const [loading, setLoading] = useState(true)
     
@@ -373,21 +442,26 @@ function RegistrationsModal({ eventId, onClose, API_URL }: RegistrationsModalPro
         <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }} onClick={onClose}>
             <div className="admin-card modal-content" style={{ width: '500px', maxWidth: '90%', maxHeight: '80vh', display:'flex', flexDirection:'column' }} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
-                    <h3 style={{ margin: 0 }}>Inscripciones ({registrations.length})</h3>
+                    <h3 style={{ margin: 0 }}>{t('admin.events.registrations.title')} ({registrations.length})</h3>
                     <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto' }}>
-                    {loading ? <div style={{textAlign:'center', padding:'2rem'}}>Cargando...</div> : (
-                        registrations.length === 0 ? <div style={{textAlign:'center', padding:'2rem', color:'#666'}}>No hay inscripciones aún.</div> : (
+                    {loading ? (
+                        <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                            <Loader style={{ height: 'auto', minHeight: '60px' }} />
+                            <span style={{ fontSize: '0.85rem', color: '#666' }}>{t('admin.events.registrations.loading')}</span>
+                        </div>
+                    ) : (
+                        registrations.length === 0 ? <div style={{textAlign:'center', padding:'2rem', color:'#666'}}>{t('admin.events.registrations.empty')}</div> : (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 {registrations.map(reg => (
                                     <div key={reg.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.8rem', background: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
                                         <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#333', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden' }}>
                                             {reg.profiles?.avatar_url ? <img src={reg.profiles.avatar_url} style={{width:'100%', height:'100%'}}/> : <div style={{color:'#aaa', fontSize:'0.8rem'}}>?</div>}
                                         </div>
-                                        <div style={{ fontWeight: 'bold' }}>{reg.profiles?.username || "Usuario desconocido"}</div>
-                                        <div style={{ marginLeft: 'auto', fontSize: '0.8rem', color: '#666' }}>{new Date(reg.assigned_at).toLocaleDateString()}</div>
+                                        <div style={{ fontWeight: 'bold' }}>{reg.profiles?.username || t('admin.events.registrations.unknown_user')}</div>
+                                        <div style={{ marginLeft: 'auto', fontSize: '0.8rem', color: '#666' }}>{new Date(reg.created_at).toLocaleDateString()}</div>
                                     </div>
                                 ))}
                             </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { FaSearch, FaPlus, FaTimes, FaSpinner, FaPaperPlane, FaGavel, FaCheckCircle, FaLock, FaEye, FaTicketAlt, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa"
 import { useAuth } from "../../context/AuthContext"
 import { useTranslation } from 'react-i18next'
+import Loader from "../UI/Loader"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -65,7 +66,14 @@ export default function TicketsManager() {
             const res = await fetch(`${API_URL}/tickets`)
             if (!res.ok) throw new Error("Error fetching tickets")
             const data = await res.json()
-            setTickets(data)
+            if (data.success && Array.isArray(data.data)) {
+                setTickets(data.data)
+            } else if (Array.isArray(data)) {
+                setTickets(data)
+            } else {
+                setTickets([])
+                console.error("Unexpected response format:", data)
+            }
         } catch (error) {
             console.error("Failed to load tickets", error)
         } finally {
@@ -115,7 +123,7 @@ export default function TicketsManager() {
         <div className="admin-card">
             {/* CARD HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ position: 'relative', width: '300px', flex: '1 1 auto' }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: '300px', flex: '1 1 auto' }}>
                     <FaSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
                     <input type="text" placeholder={t('admin.tickets.search_placeholder')} style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
                 </div>
@@ -131,11 +139,12 @@ export default function TicketsManager() {
             </div>
 
             {/* TICKETS TABLE */}
-            <div className="admin-table-container">
+            <div className="admin-table-container" style={{ overflow: 'auto' }}>
                 {loading ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#666' }}>
-                        <FaSpinner className="spin" size={24} /> <br /> {t('admin.tickets.loading')}
-                    </div>
+                    <Loader 
+                        text={t('admin.tickets.searching', 'Cargando tickets...')}
+                        style={{ height: 'auto', minHeight: '150px' }} 
+                    />
                 ) : tickets.length === 0 ? (
                     <div style={{ padding: '3rem', textAlign: 'center', color: '#666' }}>
                         <p>{t('admin.tickets.empty')}</p>
@@ -154,20 +163,20 @@ export default function TicketsManager() {
                             </tr>
                         </thead>
                         <tbody>
-                            {tickets.map(t => (
-                                <tr key={t.id} onClick={() => setSelectedTicket(t)} style={{ cursor: 'pointer' }}>
-                                    <td style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>#{t.id}</td>
-                                    <td style={{ color: '#aaa', fontSize: '0.9rem' }}>{t.user_id?.substring(0, 8) || 'Anon'}...</td>
-                                    <td style={{ fontWeight: '500', color: '#fff' }}>{t.subject}</td>
-                                    <td><PriorityBadge priority={t.priority} /></td>
-                                    <td><StatusBadge status={t.status} /></td>
-                                    <td style={{ color: '#888', fontSize: '0.85rem' }}>{new Date(t.created_at).toLocaleDateString()}</td>
+                            {Array.isArray(tickets) && tickets.map(ticketItem => (
+                                <tr key={ticketItem.id} onClick={() => setSelectedTicket(ticketItem)} style={{ cursor: 'pointer' }}>
+                                    <td style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>#{ticketItem.id}</td>
+                                    <td style={{ color: '#aaa', fontSize: '0.9rem' }}>{ticketItem.user_id?.substring(0, 8) || 'Anon'}...</td>
+                                    <td style={{ fontWeight: '500', color: '#fff' }}>{ticketItem.subject}</td>
+                                    <td><PriorityBadge priority={ticketItem.priority} /></td>
+                                    <td><StatusBadge status={ticketItem.status} /></td>
+                                    <td style={{ color: '#888', fontSize: '0.85rem' }}>{new Date(ticketItem.created_at).toLocaleDateString()}</td>
                                     <td>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedTicket(t); }}
+                                            onClick={(e) => { e.stopPropagation(); setSelectedTicket(ticketItem); }}
                                             className="btn-secondary"
                                             style={{ padding: '0.3rem 0.6rem', border: '1px solid #333', background: 'transparent' }}
-                                            title="Ver Detalles"
+                                            title={t('admin.tickets.view_details_tooltip')}
                                         >
                                             <FaEye color="var(--accent)" size={16} />
                                         </button>
@@ -204,7 +213,7 @@ export default function TicketsManager() {
                                     value={newTicket.subject} 
                                     onChange={e => setNewTicket({ ...newTicket, subject: e.target.value })} 
                                     autoFocus 
-                                    placeholder="Ej: No puedo entrar al server" 
+                                    placeholder={t('admin.tickets.subject_ph')} 
 
                                 />
                             </div>
@@ -225,17 +234,16 @@ export default function TicketsManager() {
                                 <label style={{ display: 'block', marginBottom: '0.5rem', color: '#ddd', fontSize: '0.9rem', fontWeight: '600' }}>{t('admin.tickets.table.priority')}</label>
                                 <div style={{ position: 'relative' }}>
                                     <select 
-                                        className="admin-input" 
-                                        value={newTicket.priority} 
-                                        onChange={e => setNewTicket({ ...newTicket, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
-
-                                    >
-                                        <option value="low">🟢 {t('admin.tickets.priority.low')}</option>
-                                        <option value="medium">🟡 {t('admin.tickets.priority.medium')}</option>
-                                        <option value="high">🟠 {t('admin.tickets.priority.high')}</option>
-                                        <option value="urgent">🔴 {t('admin.tickets.priority.urgent')}</option>
-                                    </select>
-
+                                         className="admin-input" 
+                                         style={{ backgroundColor: '#1a1b20', color: 'white', cursor: 'pointer' }}
+                                         value={newTicket.priority} 
+                                         onChange={e => setNewTicket({ ...newTicket, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
+                                     >
+                                         <option value="low">🟢 {t('admin.tickets.priority.low')}</option>
+                                         <option value="medium">🟡 {t('admin.tickets.priority.medium')}</option>
+                                         <option value="high">🟠 {t('admin.tickets.priority.high')}</option>
+                                         <option value="urgent">🔴 {t('admin.tickets.priority.urgent')}</option>
+                                     </select>
                                 </div>
                             </div>
 
@@ -310,7 +318,13 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
             const res = await fetch(`${API_URL}/tickets/${ticket.id}/messages`)
             if (res.ok) {
                 const data = await res.json()
-                setMessages(data)
+                if (data.success && Array.isArray(data.data)) {
+                    setMessages(data.data)
+                } else if (Array.isArray(data)) {
+                    setMessages(data)
+                } else {
+                    setMessages([])
+                }
                 setTimeout(() => {
                     if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: 'smooth' })
                 }, 100)
@@ -446,7 +460,7 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
 
                         {messages.map(msg => (
                             <div key={msg.id} className={`msg-bubble ${msg.is_staff ? 'staff' : 'user'}`}>
-                                <div className="msg-header">{msg.is_staff ? 'STAFF' : t('admin.tickets.table.user').toUpperCase()} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                <div className="msg-header">{msg.is_staff ? t('admin.tickets.staff_label') : t('admin.tickets.table.user').toUpperCase()} • {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                                 <div>{msg.message}</div>
                             </div>
                         ))}
@@ -559,7 +573,7 @@ function BanUserModal({ onClose, onSuccess }: BanUserModalProps) {
                             className="admin-input" 
                             value={nickname} 
                             onChange={e => setNickname(e.target.value)} 
-                            placeholder="Ej: Steve"
+                            placeholder={t('admin.tickets.ban_modal.nick_ph')}
                             autoFocus
                         />
                          <div style={{fontSize: '0.75rem', color: '#666', marginTop: '0.3rem'}}>
@@ -597,7 +611,12 @@ function BanUserModal({ onClose, onSuccess }: BanUserModalProps) {
                             </div>
                             <div style={{flex:1}}>
                                 <label className="admin-label">{t('admin.tickets.ban_modal.unit')}</label>
-                                <select className="admin-input" value={timeUnit} onChange={e => setTimeUnit(e.target.value)}>
+                                <select 
+                                    className="admin-input" 
+                                    style={{ backgroundColor: '#1a1b20', color: 'white', cursor: 'pointer' }}
+                                    value={timeUnit} 
+                                    onChange={e => setTimeUnit(e.target.value)}
+                                >
                                     <option value="m">{t('admin.tickets.units.m')}</option>
                                     <option value="h">{t('admin.tickets.units.h')}</option>
                                     <option value="d">{t('admin.tickets.units.d')}</option>
@@ -614,7 +633,7 @@ function BanUserModal({ onClose, onSuccess }: BanUserModalProps) {
                             rows={3} 
                             value={reason} 
                             onChange={e => setReason(e.target.value)} 
-                            placeholder="Ej: Uso de hacks (KillAura)"
+                            placeholder={t('admin.tickets.ban_modal.reason_ph')}
                         />
                     </div>
 

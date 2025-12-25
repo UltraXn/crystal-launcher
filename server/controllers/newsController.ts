@@ -1,5 +1,6 @@
 import supabase from '../services/supabaseService.js';
 import * as logService from '../services/logService.js';
+import { translateText } from '../services/translationService.js';
 
 // Canal de anuncios de Discord (Debería estar en .env idealmente, aquí hardcodeado o pasado por config)
 const DISCORD_ANNOUNCEMENTS_CHANNEL_ID = process.env.DISCORD_ANNOUNCEMENTS_CHANNEL_ID;
@@ -99,11 +100,24 @@ export const createComment = async (req: any, res: any) => {
 
 export const createNews = async (req: any, res: any) => {
     try {
-        const { title, category, content, image, status, author_id, username } = req.body;
+        const { title, category, content, image, status, author_id, username, title_en, content_en } = req.body;
+
+        // Auto Translation if not provided
+        const finalTitleEn = title_en || await translateText(title, 'en');
+        const finalContentEn = content_en || await translateText(content, 'en');
 
         const { data, error } = await supabase
             .from('news')
-            .insert([{ title, category, content, image, status, author_id }])
+            .insert([{ 
+                title, 
+                category, 
+                content, 
+                image, 
+                status, 
+                author_id,
+                title_en: finalTitleEn, 
+                content_en: finalContentEn 
+            }])
             .select();
 
         if (error) throw error;
@@ -126,11 +140,12 @@ export const createNews = async (req: any, res: any) => {
 export const updateNews = async (req: any, res: any) => {
     try {
         const { id } = req.params;
-        const { title, category, content, image, status, username, user_id } = req.body;
+        console.log(`[UPDATE NEWS] ID: ${id}, Body:`, JSON.stringify(req.body));
+        const { title, category, content, image, status, username, user_id, title_en, content_en } = req.body;
 
         const { data, error } = await supabase
             .from('news')
-            .update({ title, category, content, image, status })
+            .update({ title, category, content, image, status, title_en, content_en })
             .eq('id', id)
             .select();
 

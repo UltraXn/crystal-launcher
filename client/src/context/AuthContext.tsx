@@ -28,8 +28,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // 1. Verificar sesión activa al inicio
         const checkSession = async () => {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                setUser(session?.user ?? null);
+                // Usar getUser() en lugar de getSession() para asegurar datos frescos del servidor (roles actualizados, etc)
+                const { data: { user } } = await supabase.auth.getUser();
+                setUser(user ?? null);
             } catch (error) {
                 console.error("Error verificando sesión:", error);
             } finally {
@@ -48,6 +49,64 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => subscription.unsubscribe();
     }, []);
 
+    // 3. Revalidación Inteligente (Móvil/Tab Focus)
+    // Cuando el usuario vuelve a la pestaña, verificamos si sus permisos cambiaron en el servidor.
+    useEffect(() => {
+        const handleFocus = async () => {
+            if (document.visibilityState === 'visible') {
+                const { data: { user: freshUser } } = await supabase.auth.getUser();
+                if (freshUser) {
+                    setUser(freshUser); 
+                }
+            }
+        };
+
+        window.addEventListener('visibilitychange', handleFocus);
+        window.addEventListener('focus', handleFocus);
+        return () => {
+            window.removeEventListener('visibilitychange', handleFocus);
+            window.removeEventListener('focus', handleFocus);
+        }
+    }, []);
+
+    // 4. Auto-Sync Discord Username if missing or default
+    useEffect(() => {
+        if (!user) return;
+
+        const syncDiscordProfile = async () => {
+            const metadata = user.user_metadata || {};
+            const emailName = user.email?.split('@')[0];
+
+            // Check if username is missing or exactly matches email prefix (default behavior)
+            // We use loose check or specific check. Here we check strict equality or if missing.
+            if (!metadata.username || (emailName && metadata.username === emailName)) {
+                
+                const discordIdentity = user.identities?.find(id => id.provider === 'discord');
+
+                if (discordIdentity && discordIdentity.identity_data) {
+                    const globalName = discordIdentity.identity_data.custom_claims?.global_name;
+                    const discordUser = discordIdentity.identity_data.full_name || discordIdentity.identity_data.name;
+                    const newName = globalName || discordUser;
+
+                    // If we found a valid Discord name and it's different from current
+                    if (newName && newName !== metadata.username) {
+                        console.log("Auto-syncing Discord username:", newName);
+                        // We use supabase client directly to avoid circular dependency issues with 'updateUser'
+                        const { data: { user: updatedUser } } = await supabase.auth.updateUser({
+                            data: { username: newName }
+                        });
+                        
+                        if (updatedUser) {
+                            setUser(updatedUser);
+                        }
+                    }
+                }
+            }
+        };
+
+        syncDiscordProfile();
+    }, [user]);
+
     // Función de Login
     const login = async (email: string, password: string): Promise<AuthResponse['data']> => {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -60,18 +119,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Función de Logout
     const logout = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+        } catch (error) {
+            console.error("Error signing out:", error);
+        } finally {
+            setUser(null);
+        }
     };
 
     // Función extra: Registro (Opcional, pero útil tenerla lista)
     // Función extra: Registro (Opcional, pero útil tenerla lista)
     const register = async (email: string, password: string, metadata: Record<string, any> = {}): Promise<AuthResponse['data']> => {
+        // Ensure we send the correct production URL if we are not on localhost (forcing HTTPS for prod)
+        const productionUrl = 'https://crystaltidessmp.net/login';
+        const redirectUrl = window.location.hostname.includes('localhost') 
+            ? window.location.origin + '/login' 
+            : productionUrl;
+
+        console.log("Registering with Email Redirect:", redirectUrl);
+
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
-                data: metadata
+                data: metadata,
+                emailRedirectTo: redirectUrl
             }
         });
         if (error) throw error;

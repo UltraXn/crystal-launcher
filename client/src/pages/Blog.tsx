@@ -13,6 +13,8 @@ interface Article {
     content?: string;
     excerpt?: string;
     status?: string;
+    title_en?: string;
+    content_en?: string;
 }
 
 interface NewsCardProps {
@@ -20,11 +22,16 @@ interface NewsCardProps {
 }
 
 const NewsCard = ({ article }: NewsCardProps) => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
+    const isEn = i18n.language === 'en'
+
+    const title = (isEn && article.title_en) ? article.title_en : article.title
+    const content = (isEn && article.content_en) ? article.content_en : (article.content || article.excerpt || t('blog.empty'))
+
     return (
         <div className="news-card">
             <div className="news-image">
-                {article.image ? <img src={article.image} alt={article.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
+                {article.image ? <img src={article.image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> :
                     <div style={{ fontSize: '3rem', color: 'rgba(255,255,255,0.2)' }}>
                         {article.category === 'Evento' ? '🐉' : article.category === 'Sistema' ? '⚙️' : '⚔️'}
                     </div>}
@@ -35,9 +42,9 @@ const NewsCard = ({ article }: NewsCardProps) => {
                     <span style={{ margin: '0 0.5rem' }}>•</span>
                     <FaTag /> {article.category}
                 </div>
-                <h3 className="news-title">{article.title}</h3>
+                <h3 className="news-title">{title}</h3>
                 <p className="news-excerpt">
-                    {article.content ? article.content.substring(0, 100) + '...' : article.excerpt || t('blog.empty')}
+                    {content.substring(0, 100) + '...'}
                 </p>
                 <Link to={`/forum/thread/${article.id}`} className="read-more">
                     {t('blog.read_more')} <FaArrowRight />

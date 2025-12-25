@@ -1,16 +1,17 @@
 import * as donationService from '../services/donationService.js';
 import { Request, Response } from 'express';
+import { sendSuccess, sendError } from '../utils/responseHandler.js';
 
 export const getStats = async (req: Request, res: Response) => {
     try {
         const stats = await donationService.getMonthlyStats();
-        res.json(stats);
+        return sendSuccess(res, stats);
     } catch (error: any) {
         // If table doesn't exist, return 0s instead of crashing
         if (error.message && error.message.includes('relation "public.donations" does not exist')) {
-             return res.json({ currentMonth: "0.00", previousMonth: "0.00", percentChange: "0.0" });
+             return sendSuccess(res, { currentMonth: "0.00", previousMonth: "0.00", percentChange: "0.0" }, 'Default stats returned (Table missing)');
         }
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -21,35 +22,35 @@ export const getDonations = async (req: Request, res: Response) => {
         const search = (req.query.search as string) || '';
         
         const result = await donationService.getDonations({ page, limit, search });
-        res.json(result);
+        return sendSuccess(res, result);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
 export const createDonation = async (req: Request, res: Response) => {
     try {
         const result = await donationService.createDonation(req.body);
-        res.status(201).json(result);
+        return sendSuccess(res, result, 'Donation created successfully');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
 export const updateDonation = async (req: Request, res: Response) => {
     try {
         const result = await donationService.updateDonation(parseInt(req.params.id), req.body);
-        res.json(result);
+        return sendSuccess(res, result, 'Donation updated successfully');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
 export const deleteDonation = async (req: Request, res: Response) => {
     try {
         await donationService.deleteDonation(parseInt(req.params.id));
-        res.json({ message: 'Donation deleted successfully' });
+        return sendSuccess(res, null, 'Donation deleted successfully');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };

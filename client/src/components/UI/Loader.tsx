@@ -1,8 +1,15 @@
+import { useTranslation } from "react-i18next";
+
 interface LoaderProps {
     text?: string;
+    style?: React.CSSProperties;
 }
 
-export default function Loader({ text = "Cargando contenido..." }: LoaderProps) {
+export default function Loader({ text, style }: LoaderProps) {
+    const { t } = useTranslation();
+    // If text is explicitly "", allow it to be empty. If undefined, show default.
+    const displayText = text === "" ? null : (text || t('common.loading_content'));
+
     return (
         <div className="loader-container" style={{
             display: 'flex',
@@ -11,8 +18,8 @@ export default function Loader({ text = "Cargando contenido..." }: LoaderProps) 
             justifyContent: 'center',
             padding: '2rem',
             width: '100%',
-            height: '100%',
-            minHeight: '200px'
+            minHeight: '200px',
+            ...style
         }}>
             <style>{`
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -38,7 +45,7 @@ export default function Loader({ text = "Cargando contenido..." }: LoaderProps) 
                     style={{ width: '50px', height: 'auto', display: 'block' }}
                 />
             </div>
-            {text && <p style={{ color: 'var(--muted, #aaa)', fontSize: '1rem', marginTop: '0.5rem' }}>{text}</p>}
+            <p style={{ color: 'var(--muted, #aaa)', fontSize: '1rem', marginTop: '0.5rem' }}>{displayText}</p>
         </div>
     )
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { FaCopy, FaCheck } from "react-icons/fa"
+import { SiKofi } from "react-icons/si"
 import HeroBackgroundCarousel from "./Carousel"
 import HeroParticles from "./Particles"
 import anime from "animejs"
@@ -53,7 +54,7 @@ export default function Hero() {
             targets: welcomeRef.current,
             opacity: [0, 1],
             translateY: [20, 0],
-            duration: 800,
+            duration: 300,
             begin: () => {
                 if (welcomeRef.current) welcomeRef.current.style.opacity = '1';
             }
@@ -63,16 +64,16 @@ export default function Hero() {
                 opacity: [0, 1],
                 translateY: [50, 0],
                 rotateZ: [-5, 0],
-                delay: anime.stagger(40),
-                duration: 1200
-            }, '-=600')
+                delay: anime.stagger(20),
+                duration: 600
+            }, '-=200')
             .add({
                 targets: [descRef.current, containerRef.current],
                 opacity: [0, 1],
                 translateY: [30, 0],
-                delay: anime.stagger(200),
-                duration: 800
-            }, '-=800');
+                delay: anime.stagger(100),
+                duration: 400
+            }, '-=300');
 
         // Player Count Animation Logic
         let countAnimation: anime.AnimeInstance | null = null;
@@ -132,7 +133,7 @@ export default function Hero() {
 
     // Helper to render split text
     const renderBrandText = () => {
-        return "Crystal Tides SMP".split('').map((char, index) => (
+        return "CrystalTides SMP".split('').map((char, index) => (
             <span
                 key={index}
                 className="hero-brand-char"
@@ -184,11 +185,11 @@ export default function Hero() {
                         marginBottom: slides.length > 0 ? '4rem' : 'initial'
                     }}
                 >
-                    <div className="server-status-pill">
+                    <Link to="/status" className="server-status-pill" style={{ textDecoration: 'none' }}>
                         {isOnline === false ? (
                             <>
                                 <span className="status-dot" style={{ background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
-                                OFFLINE
+                                {t('status.offline')}
                             </>
                         ) : (
                             <>
@@ -196,11 +197,11 @@ export default function Hero() {
                                 <span ref={countRef}>{playerCount}</span> {t('hero.players_online')}
                             </>
                         )}
-                    </div>
+                    </Link>
 
                     <div className="ip-container">
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            <span style={{ fontSize: '0.8rem', color: '#89D9D1', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.2rem', fontWeight: '600' }}>
+                        <div className="ip-content-wrapper">
+                            <span className="edition-label">
                                 {t('hero.java_edition')}
                             </span>
                             <span className="ip-text">{ip}</span>
@@ -211,7 +212,15 @@ export default function Hero() {
                         </button>
                     </div>
 
-                    <Link to="/#donors" className="btn-donate-hero">{t('footer.donate')}</Link>
+                    <div className="hero-action-group">
+                        <a href="https://ko-fi.com/G2G03Y8FL" target="_blank" rel="noreferrer" className="action-btn kofi-btn">
+                            <SiKofi size={20} color="#000" />
+                            <span>{t('hero.kofi_btn', 'Ko-Fi')}</span>
+                        </a>
+                        <Link to="/#donors" className="action-btn donors-btn">
+                            <span>{t('navbar.donors')}</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </section>

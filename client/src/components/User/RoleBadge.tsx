@@ -31,6 +31,9 @@ export default function RoleBadge({ role, username }: RoleBadgeProps) {
     if (r === 'donador') {
         return <img src="/ranks/donador.png" alt="DONADOR" style={{ verticalAlign: 'middle' }} />
     }
+    if (r === 'developer') {
+        return <img src="/ranks/developer.png" alt="DEVELOPER" style={{ verticalAlign: 'middle' }} />
+    }
 
     // Default User
     return <img src="/ranks/user.png" alt="USUARIO" style={{ verticalAlign: 'middle' }} />

@@ -72,7 +72,7 @@
     "home": {
         "title": "About the Server",
         "description": "CrystalTides is not merely a territory, it is the living legacy of four primordial entities. It was forged by the union of an Aquatic Sovereign, master of the depths; an Abyssal Presence, unfathomable, owner of the mind and secrets, answering to no laws or factions but its own will; a Traveler of the Stars, bearer of cosmic vision and unmatched strategic warfare; and an Earthly Force, rooted in the ancient mysteries of these lands.\n\nToday, CrystalTides is a crucible of wonders, a magical world shaped by this divine alliance where every corner breathes the essence of its founders: the tide, the abyss, the cosmos, and the earth.",
-        "join_us_twitch": "If you want to see how a hyperactive aquatic creature spends her time, go check out Killubysmali on Twitch. She might draw a masterpiece, give you a MASTER class of English, or play Repo as if her life depended on it.",
+        "join_us_twitch": "If you want to see how a hyperactive aquatic creature spends her time, go check out Killubysmali on Twitch. She might draw a masterpiece, give you a English MASTER class, or play Repo as if her life depended on it.",
         "join_us_discord": "Craving more madness? Join 'La Pecerita de killu' on Discord. But beware: the fearsome Killujaiba lurks in those deep waters, hymns to the Ocean Man are sung (take me by the hand, lead me to the land~ 🎵), and there is still collective trauma over Killu's Little Spoon (which she lost...).",
         "stats": {
             "discord": "Discord Members",
@@ -80,6 +80,11 @@
             "years": "Years Online",
             "staff": "Active Staff",
             "year_suffix": " Year"
+        },
+        "social": {
+            "discord_btn": "Join Killu's fishbowl!",
+            "twitch_btn": "Follow Killubysmali's streams!",
+            "twitter_btn": "Follow Killubysmali's tweets!"
         }
     },
     "footer": {
@@ -88,7 +93,7 @@
         "online_map": "Online Map",
         "donate": "Donate",
         "events": "Events",
-        "slogan": "The best option is fun at Crystal Tides SMP!",
+        "slogan": "The best option is fun at CrystalTides SMP!",
         "rights": "All rights reserved.",
         "rules": "Rules",
         "suggestions": "Suggestions",
@@ -129,7 +134,7 @@
         "back_home": "Back to home",
         "passwords_do_not_match": "Passwords do not match",
         "success_title": "You have registered!",
-        "success_msg": "Welcome to Crystal Tides SMP. We have sent a confirmation link to your email.",
+        "success_msg": "Welcome to CrystalTides SMP. We have sent a confirmation link to your email.",
         "go_to_login": "Go to Login"
     },
     "forum_page": {
@@ -235,7 +240,21 @@
             "zeta": "A truly perseverant user in the face of adversity!",
             "sendples": "The Paideidad. The Goat. The DONATOR",
             "zen": "A Tryhard. LEAVE THE BOSSES ALONE! (thanks for supporting the community✨)",
-            "churly": "Boop Bip Boop! 🤖"
+            "churly": "Boop Bip Boop! 🤖",
+            "nana": "She is just a girl~~~! 💕"
+        },
+        "loading_donations": "Loading donations...",
+        "no_donations": "There are no recent donations yet. Be the first to support!",
+        "ranks": {
+            "donador": "Donator",
+            "fundador": "Founder",
+            "killu": "Killu Rank",
+            "neroferno": "Neroferno Rank",
+            "developer": "Developer",
+            "admin": "Admin",
+            "mod": "Moderator",
+            "helper": "Helper",
+            "staff": "Staff"
         }
     },
     "contests": {
@@ -263,7 +282,13 @@
                 "title": "Parkour Challenge",
                 "desc": "Impossible jumps and timers to the limit. Complete the hellish circuit created by Neroferno."
             }
-        }
+        },
+        "register_btn": "Register",
+        "registered_btn": "Registered",
+        "login_required": "You must be logged in to register. Go to login?",
+        "already_registered": "You are already registered for this event!",
+        "registration_error": "Error during registration",
+        "no_events": "No active events at the moment."
     },
     "blog": {
         "title": "News and Announcements",
@@ -277,6 +302,12 @@
     "stories": {
         "title": "Places and Lore",
         "intro": "Discover the points of interest of our world. Click on the cards to see details.",
+        "roles": {
+            "architect": "Architect",
+            "co_founder": "Co-Founder",
+            "staff": "Staff",
+            "team": "Team"
+        },
         "items": {
             "1": {
                 "title": "Spawn Sanctuary",
@@ -298,10 +329,22 @@
     "suggestions": {
         "title": "Suggestions and Polls",
         "form_title": "Send your Proposal",
+        "poll_title": "Active Poll",
+        "no_active_poll": "No active polls at the moment.",
+        "total_votes": "Total votes",
+        "loading_poll": "Loading poll...",
+        "thanks_vote": "Thanks for your vote!",
         "form": {
             "nick": "Your Nick / Email",
             "nick_placeholder": "Ex: Steve or steve@mail.com",
             "type": "Type",
+            "options": {
+                "general": "General",
+                "bug": "Bug Report",
+                "mod": "Mod/Plugin",
+                "complaint": "Complaint",
+                "poll": "Poll Suggestion"
+            },
             "msg": "Message",
             "msg_placeholder": "Describe your idea...",
             "submit": "Send Proposal",
@@ -309,19 +352,8 @@
             "received": "Received!",
             "success_msg": "Your suggestion has been sent to the staff and our Discord.",
             "send_another": "Send another",
-            "options": {
-                "general": "General Suggestion",
-                "bug": "Bug Report",
-                "mod": "Mod/Plugin Request",
-                "complaint": "Complaint"
-            }
-        },
-        "poll_title": "Active Poll",
-        "total_votes": "Total votes",
-        "closes_in": "Closes in",
-        "suggest_poll": "Suggest Poll",
-        "other_idea": "Have another idea for a poll?",
-        "no_active_poll": "No active polls at the moment."
+            "error_msg": "Error sending suggestion."
+        }
     },
     "account": {
         "avatar": {
@@ -358,7 +390,7 @@
             "no_news": "There are no recent notifications for you."
         },
         "stats": {
-            "title": "Combat Statistics",
+            "title": "Statistics",
             "loading": "Loading data...",
             "error": "Could not load statistics.",
             "kills": "Kills",
@@ -463,7 +495,11 @@
             "events": "Events",
             "news": "News",
             "logs": "Logs",
-            "settings": "Config"
+            "settings": "Config",
+            "gamification": "Gamification",
+            "team": "Team",
+            "staff_hub": "Staff Hub",
+            "docs": "Documentation"
         },
         "headers": {
             "general": "General Dashboard",
@@ -474,7 +510,11 @@
             "events": "Event Manager",
             "news": "News Editor",
             "logs": "Audit Log",
-            "settings": "Site Configuration"
+            "settings": "Site Configuration",
+            "gamification": "Gamification System",
+            "team": "Team Management",
+            "staff_hub": "Staff Workspace",
+            "docs": "Internal Documentation"
         },
         "dashboard": {
             "stats": {
@@ -503,7 +543,9 @@
             },
             "staff": {
                 "title": "Staff Online",
-                "offline_msg": "Server Offline - No activity"
+                "offline_msg": "Server Offline - No activity",
+                "no_staff": "No staff online",
+                "active_badge": "Active"
             }
         },
         "tickets": {
@@ -551,6 +593,9 @@
                 "closed_msg": "This ticket is closed. Reopen it to reply.",
                 "delete_confirm": "Are you sure you want to delete this ticket? This cannot be undone."
             },
+            "view_details_tooltip": "View Details",
+            "subject_ph": "Ex: Cannot join server",
+            "staff_label": "STAFF",
             "actions": {
                 "ban": "Ban User",
                 "resolve": "Mark Resolved",
@@ -560,6 +605,7 @@
             },
             "ban_modal": {
                 "title": "Sanction User",
+                "nick_ph": "Ex: Steve",
                 "nickname": "Minecraft Nickname",
                 "nick_hint": "Confirm the exact player name on the server.",
                 "type": "Sanction Type",
@@ -568,6 +614,7 @@
                 "amount": "Amout",
                 "unit": "Unit",
                 "reason": "Reason",
+                "reason_ph": "Ex: Hacking (KillAura)",
                 "submit": "Apply Sanction",
                 "error_nick": "Enter player nickname",
                 "success": "User banned successfully"
@@ -577,6 +624,177 @@
                 "h": "Hours",
                 "d": "Days",
                 "mo": "Months"
+            }
+        },
+        "staff": {
+            "manager_title": "Staff Manager",
+            "sync_btn": "Sync Staff",
+            "syncing": "Syncing...",
+            "add_member": "Add Member",
+            "add_manual": "Add Manually",
+            "empty": "No staff members configured.",
+            "drag_tooltip": "Drag to move",
+            "edit_btn": "EDIT",
+            "delete_tooltip": "Delete",
+            "no_desc": "No description",
+            "no_socials": "No social media",
+            "linked_account": "Linked Account",
+            "confirm_modal": {
+                "title": "Confirm Team",
+                "detected_msg": "Detected <1>{{count}}</1> active staff members.",
+                "warning": "This action will replace the current list.",
+                "cancel": "Cancel",
+                "save": "Save Staff"
+            },
+            "form": {
+                "new_title": "New Profile",
+                "edit_title": "Edit Profile",
+                "name_label": "Name (Minecraft Nick)",
+                "name_ph": "Ex: Notch",
+                "role_label": "Role",
+                "custom_role_ph": "Custom Role Name",
+                "color_label": "Role Color",
+                "avatar_label": "Custom Avatar (Optional)",
+                "avatar_ph": "Leave empty to use Minecraft head",
+                "bio_label": "Description / Bio",
+                "bio_ph": "Brief description of staff member...",
+                "cancel": "Cancel",
+                "save_changes": "Save Changes",
+                "preview_name": "Name",
+                "preview_role": "Role"
+            },
+            "roles": {
+                "admin": "Admin",
+                "moderator": "Moderator",
+                "helper": "Helper",
+                "user": "User",
+                "developer": "Developer",
+                "custom": "Custom"
+            }
+        },
+        "donations": {
+            "title": "Donations Management",
+            "search_ph": "Search by user...",
+            "new_btn": "New Donation",
+            "edit_title": "Edit Donation",
+            "empty": "No donations registered.",
+            "anonymous": "Anonymous",
+            "no_msg": "No message",
+            "public": "Public",
+            "private": "Private",
+            "form": {
+                "donor_name": "Donor Name",
+                "name_ph": "Ex: John Doe",
+                "email_label": "Email (Private)",
+                "amount": "Amount",
+                "currency": "Currency",
+                "message": "Message",
+                "is_public": "Make donation public",
+                "cancel": "Cancel",
+                "save": "Save"
+            },
+            "delete_confirm": {
+                "title": "Confirm Deletion",
+                "msg": "Are you sure you want to delete this donation? This action cannot be undone.",
+                "btn": "Delete"
+            }
+        },
+        "donors": {
+            "manager_title": "Donors Manager",
+            "add_btn": "Add Donor",
+            "empty_msg": "The list is empty. Default donors will be used on the public page.",
+            "import_btn": "Import Original Donors",
+            "new_title": "New Donor",
+            "edit_title": "Edit Donor",
+            "form": {
+                "nick": "Nickname (Minecraft)",
+                "nick_ph": "Ex: Notch",
+                "is_premium": "Is Premium User (Auto Skin)",
+                "skin_url": "Skin URL",
+                "skin_ph": "/skins/myskin.png or https://...",
+                "skin_hint": "If you uploaded the skin manually to /skins/, write the relative path.",
+                "desc": "Phrase / Description",
+                "desc_ph": "Custom message...",
+                "desc_en": "Phrase / Description (English)",
+                "desc_en_ph": "Custom message in English...",
+                "translate_en": "Translate to English",
+                "translate_es": "Translate to Spanish",
+                "ranks": "Selected Ranks",
+                "cancel": "Cancel",
+                "save": "Save"
+            },
+            "delete_confirm": {
+                "title": "Delete Donor?",
+                "msg": "This action will permanently remove the donor from the list.",
+                "btn": "Yes, Delete"
+            },
+            "import_confirm": {
+                "title": "Import Defaults?",
+                "msg": "Are you sure? This will replace your current list with the server's original donors.",
+                "btn": "Import"
+            },
+            "validation": {
+                "name_req": "Name is required",
+                "skin_req": "Skin URL is required for non-premium",
+                "desc_req": "Description is required",
+                "save_error": "Error saving changes",
+                "translate_error": "Error translating"
+            },
+            "profiles": {
+                "killu": "Administrator, Builder, and Interface Designer.",
+                "neroferno": "Owner, Programmer, and Content Creator.",
+                "law": "Founder and Community Administrator.",
+                "pixie": "Founder and Expert Builder.",
+                "zeta": "Founder and Veteran Moderator.",
+                "sendples": "Founder and Technical Support.",
+                "zen": "Featured Donor and Active Member.",
+                "churly": "Full Stack Developer and Contributor.",
+                "nana": "Donor and VIP Member."
+            }
+        },
+        "news": {
+            "upload_error_bucket": "Bucket not found",
+            "upload_error_unknown": "Unknown error uploading image",
+            "error_delete": "Error deleting news",
+            "error_save": "Error saving news",
+            "edit_title": "Edit News",
+            "create_title": "Write News",
+            "cancel": "Cancel",
+            "form": {
+                "title": "Title",
+                "category": "Category",
+                "status": "Status",
+                "draft": "Draft",
+                "published": "Published",
+                "image": "Cover Image",
+                "content": "Content (Markdown)",
+                "publish": "Publish",
+                "save": "Save Changes"
+            },
+            "translate_to_en_title": "Translate Title to English",
+            "translate_to_es_title": "Translate Title to Spanish",
+            "translate_to_en_content": "Translate Content to English",
+            "translate_to_es_content": "Translate Content to Spanish",
+            "english_suffix": "(English)",
+            "english_placeholder": "Title in English...",
+            "uploading": "Uploading...",
+            "insert_image": "Insert Image",
+            "search_ph": "Search news...",
+            "write_btn": "Write News",
+            "no_news": "No news found.",
+            "table": {
+                "title": "Title",
+                "category": "Category",
+                "status": "Status",
+                "date": "Date",
+                "actions": "Actions"
+            },
+            "delete_tooltip": "Delete",
+            "delete_modal": {
+                "title": "Delete News?",
+                "desc": "This action cannot be undone. The news post will be permanently deleted.",
+                "cancel": "Cancel",
+                "confirm": "Yes, Delete"
             }
         },
         "alerts": {
@@ -601,7 +819,34 @@
             "initial_msg": "Use the search bar to find users.",
             "searching": "Searching...",
             "confirm_role": "Change role to ",
-            "error_role": "Error updating role"
+            "error_role": "Error updating role",
+            "gamification": "Gamification",
+            "medals": "Medals",
+            "medals_of": "Medals of",
+            "no_medals": "No medals created in the system.",
+            "save_medals": "Save Changes",
+            "saving": "Saving...",
+            "error_medals": "Error saving medals",
+            "role_modal": {
+                "title": "Confirm Role Change?",
+                "desc": "You are about to change the user's role",
+                "to": "to",
+                "confirm": "Confirm Change",
+                "cancel": "Cancel"
+            }
+        },
+        "gamification": {
+            "medals": {
+                "title": "Medals Management",
+                "new_medal_default": "New Medal",
+                "desc_default": "Medal description...",
+                "delete_confirm": "Delete this medal?",
+                "saving": "Saving...",
+                "save": "Save Changes",
+                "name_placeholder": "Medal Name",
+                "desc_placeholder": "Description...",
+                "create_btn": "Create New Medal"
+            }
         },
         "settings": {
             "loading": "Loading settings...",
@@ -632,6 +877,70 @@
                 "confirm_on": "Yes, close site",
                 "confirm_off": "Open site",
                 "cancel": "Oops... better not"
+            },
+            "sections": {
+                "general": "General Configuration",
+                "broadcast": "Broadcast & Alerts",
+                "hero": "Main Banner (Home)",
+                "rules": "Rules Editor",
+                "donors": "Donors Manager (Carousel)",
+                "donations": "Donation History",
+                "console": "Secure Console (RCON)"
+            },
+            "maintenance_label": "MAINTENANCE",
+            "recruitment": {
+                "title": "Recruitment",
+                "status_open": "OPEN",
+                "status_closed": "CLOSED",
+                "status_label": "Application Status",
+                "link_label": "Form Link",
+                "link_ph": "https://forms.google.com/..."
+            },
+            "broadcast": {
+                "title": "Global Alerts",
+                "status_label": "Alert Status",
+                "active": "Visible",
+                "inactive": "Hidden",
+                "message_label": "Message",
+                "placeholder": "Ex: Scheduled maintenance",
+                "type_label": "Alert Type",
+                "preview": "Preview",
+                "empty_msg": "(Empty message)",
+                "disabled_msg": "(Disabled)",
+                "save_btn": "Save Config"
+            },
+            "hero": {
+                "title": "Home Banners",
+                "edit_slide": "Edit Slide",
+                "new_slide": "New Slide",
+                "image_url": "Image URL",
+                "title_label": "Title",
+                "subtitle_label": "Subtitle",
+                "btn_text": "Button Text",
+                "btn_link": "Button Link",
+                "save_btn": "Save Changes",
+                "cancel_btn": "Cancel",
+                "no_slides": "No active banners.",
+                "delete_confirm": "Delete slide?"
+            },
+            "rules": {
+                "title": "Server Rules",
+                "export_tooltip": "Export Rules (JSON)",
+                "save_btn": "Save Changes",
+                "saving": "Saving...",
+                "title_ph": "Title",
+                "desc_ph": "Description...",
+                "add_btn": "Add New Rule",
+                "delete_title": "Delete Rule?",
+                "delete_msg": "This will permanently delete the rule.",
+                "delete_confirm": "Yes, Delete"
+            },
+            "console": {
+                "title": "Secure Command Bridge",
+                "desc": "Send commands safely to the Minecraft server via CrystalBridge Plugin. Executed with console privileges.",
+                "logs_ph": "Command logs will appear here...",
+                "cmd_ph": "say Hello world (or any command without /)",
+                "send_btn": "Send"
             }
         },
         "suggestions": {
@@ -645,6 +954,19 @@
                 "user": "User",
                 "message": "Message",
                 "action": "Action"
+            },
+            "filter_all": "All",
+            "filter_bug": "Bug",
+            "filter_feature": "Feature",
+            "filter_mod": "Mod",
+            "filter_other": "Other",
+            "actions_disciplinaries": "Disciplinary Actions",
+            "delete_tooltip": "Delete",
+            "delete_modal": {
+                "title": "Are you sure?",
+                "desc": "This action will permanently delete the suggestion.",
+                "cancel": "Cancel",
+                "confirm": "Delete"
             }
         },
         "polls": {
@@ -671,43 +993,40 @@
                 "error_options": "You need at least 2 options",
                 "error_create": "Error creating poll"
             },
-            "confirm_close": "Are you sure you want to end the active poll?"
-        },
-        "news": {
-            "loading": "Loading news...",
-            "edit_title": "Edit News",
-            "create_title": "New News",
-            "cancel": "Cancel",
-            "form": {
-                "title": "Title",
-                "category": "Category",
-                "status": "Status",
-                "draft": "Draft",
-                "published": "Published",
-                "image": "Cover Image (URL)",
-                "content": "Content",
-                "save": "Save Changes",
-                "publish": "Publish News"
+            "confirm_close": "Are you sure you want to end the active poll?",
+            "tabs": {
+                "active": "Active",
+                "history": "History"
             },
-            "search_ph": "Search news...",
-            "write_btn": "Write News",
+            "new_btn": "NEW POLL",
+            "create_now_btn": "Create a poll now",
+            "history_title": "Poll History",
+            "loading_history": "Loading history...",
             "table": {
                 "title": "Title",
-                "category": "Category",
-                "status": "Status",
                 "date": "Date",
-                "actions": "Actions"
+                "votes": "Votes",
+                "status": "Status"
             },
-            "no_news": "No news yet.",
-            "delete_modal": {
-                "title": "Delete News?",
-                "desc": "This action cannot be undone. The news will be permanently deleted.",
-                "confirm": "Yes, Delete",
+            "status_chip": {
+                "active": "ACTIVE",
+                "closed": "CLOSED"
+            },
+            "no_history": "No history",
+            "pagination": "Page {{page}} of {{total}}",
+            "form_extras": {
+                "title_es": "Title (Spanish)",
+                "title_en": "Title (English)",
+                "question_es": "Question (Spanish)",
+                "question_en": "Question (English)",
+                "option_es": "Option (ES)",
+                "option_en": "Option (EN)",
+                "translate": "Translate",
+                "delete_option": "Delete option",
                 "cancel": "Cancel"
-            },
-            "error_save": "Error saving news",
-            "error_delete": "Error deleting"
+            }
         },
+
         "events": {
             "title": "Events & Contests Management",
             "loading": "Loading events...",
@@ -747,7 +1066,22 @@
                 "cancel": "Cancel"
             },
             "error_save": "Error saving event",
-            "error_delete": "Error deleting"
+            "error_delete": "Error deleting",
+            "delete_tooltip": "Delete",
+            "registrations": {
+                 "title": "Registrations",
+                 "empty": "No registrations yet.",
+                 "loading": "Loading...",
+                 "unknown_user": "Unknown User",
+                 "view_tooltip": "View Registrations"
+            },
+            "form_extras": {
+                "title_es": "Title (Spanish)",
+                "title_en": "Title (English)",
+                "desc_es": "Description (Spanish)",
+                "desc_en": "Description (English)",
+                "translate_btn": "Translate"
+            }
         }
     },
     "support": {
@@ -762,6 +1096,69 @@
         "subject_placeholder": "Ex: Rank issue...",
         "message": "Message",
         "message_placeholder": "Describe your issue in detail...",
-        "type_message": "Type a message..."
+        "type_message": "Type a message...",
+        "ticket_closed": "This ticket is closed.",
+        "categories": {
+            "general": "General",
+            "bug": "🐛 Bug Report",
+            "player": "🚫 Player Report",
+            "billing": "💰 Billing/Store",
+            "unban": "🔓 Unban Request"
+        }
+    },
+    "tutorial": {
+        "step1_title": "Welcome to CrystalTides!",
+        "step1_content": "Discover the new web experience of your favorite server. We have revamped everything for you.",
+        "step1_action": "Start Tour",
+        "step2_title": "Quick Navigation",
+        "step2_content": "Use our new Command Palette by pressing Ctrl + K (or Cmd + K) to go anywhere instantly.",
+        "step2_action": "Next",
+        "step3_title": "Your Achievements",
+        "step3_content": "Visit your profile to see your stats, skins, and medals earned while playing.",
+        "step3_action": "Next",
+        "step4_title": "Stay Informed",
+        "step4_content": "The new Notification Center will alert you of events, rewards, and important news.",
+        "step4_action": "Got it",
+        "step5_title": "All Set!",
+        "step5_content": "Explore the web, join the server, and have fun. See you in CrystalTides!",
+        "step5_action": "Finish",
+        "back": "Back"
+    },
+    "common": {
+        "loading_content": "Loading content...",
+        "loading": "Loading...",
+        "processing": "Processing...",
+        "copy": "COPY",
+        "copied": "COPIED"
+    },
+    "staff": {
+        "title": "Our Team",
+        "subtitle": "Meet the people who make CrystalTides possible.",
+        "hiring_title": "We're hiring!",
+        "hiring_action": "Apply here",
+        "loading": "Loading team..."
+    },
+    "not_found_page": {
+        "title": "404 You fell into the void!",
+        "description": "It seems this chunk failed to generate properly or you teleported to invalid coordinates.",
+        "button": "RESPAWN AT SPAWN"
+    },
+    "status": {
+        "title": "Server Status",
+        "subtitle": "Check availability, players, and performance of CrystalTides live.",
+        "version": "Version",
+        "players": "Players",
+        "online": "ONLINE",
+        "offline": "OFFLINE",
+        "online_players": "Connected Players",
+        "tech_info": "Technical Information",
+        "more": "more",
+        "no_players": "No players online.",
+        "list_unavailable": "Player list unavailable.",
+        "latency": "Estimated Latency",
+        "mode": "Mode",
+        "platform": "Platform",
+        "offline_title": "Server Unavailable",
+        "offline_desc": "The server appears to be offline or under maintenance. Please check our Discord for more information."
     }
 }

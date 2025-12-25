@@ -1,5 +1,6 @@
 import { useNavigate, Link, useSearchParams } from 'react-router-dom'
-import { FaUser, FaSignOutAlt, FaGamepad, FaTrophy, FaServer, FaCamera, FaPen, FaComment, FaShieldAlt, FaMedal, FaLink, FaDiscord, FaTwitch, FaCog } from 'react-icons/fa'
+import { FaUser, FaSignOutAlt, FaGamepad, FaTrophy, FaServer, FaCamera, FaPen, FaComment, FaShieldAlt, FaMedal, FaLink, FaDiscord, FaTwitch, FaCog, FaTwitter } from 'react-icons/fa'
+import { SiKofi } from 'react-icons/si'
 import { useAuth } from '../context/AuthContext'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../services/supabaseClient'
@@ -11,6 +12,7 @@ import Loader from "../components/UI/Loader"
 import ConfirmationModal from "../components/UI/ConfirmationModal"
 import PlayerStats from "../components/Widgets/PlayerStats"
 import { MEDAL_ICONS } from "../utils/MedalIcons"
+import Toast, { ToastType } from "../components/UI/Toast"
 
 interface Thread {
     id: string | number;
@@ -159,6 +161,17 @@ export default function Account() {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const API_URL = import.meta.env.VITE_API_URL
+    
+    // Toast State
+    const [toast, setToast] = useState<{ visible: boolean; message: string; type: ToastType }>({
+        visible: false,
+        message: '',
+        type: 'info'
+    })
+
+    const showToast = (message: string, type: ToastType = 'info') => {
+        setToast({ visible: true, message, type })
+    }
 
     // Auth Check
     useEffect(() => {
@@ -364,18 +377,58 @@ export default function Account() {
     // Settings Logic
     const [passwords, setPasswords] = useState({ new: '', confirm: '' })
     const [publicStats, setPublicStats] = useState(user?.user_metadata?.public_stats !== false)
+    const [bio, setBio] = useState(user?.user_metadata?.bio || "")
+    const [socialLinks, setSocialLinks] = useState({
+        discord: user?.user_metadata?.social_discord || "",
+        twitter: user?.user_metadata?.social_twitter || "",
+        twitch: user?.user_metadata?.social_twitch || "",
+        youtube: user?.user_metadata?.social_youtube || "",
+        kofi: user?.user_metadata?.social_kofi || ""
+    })
+    const [isSavingProfile, setIsSavingProfile] = useState(false)
+
+    // Auto-fill social links from connected identities
+    useEffect(() => {
+        if (!user) return;
+        
+        setSocialLinks(prev => {
+            const next = { ...prev };
+            let changed = false;
+
+            if (discordIdentity && !prev.discord) {
+                const name = discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.user_name;
+                if (name) {
+                    next.discord = name;
+                    changed = true;
+                }
+            }
+
+            if (twitchIdentity && !prev.twitch) {
+                // Twitch usually exposes 'name' or 'login'
+                const name = twitchIdentity.identity_data?.name || twitchIdentity.identity_data?.login;
+                if (name) {
+                     // Can be full URL "https://twitch.tv/user" or just user.
+                     // Placeholder says "Canal de Twitch", let's put full URL if possible or just name
+                     next.twitch = `https://twitch.tv/${name}`;
+                     changed = true;
+                }
+            }
+
+            return changed ? next : prev;
+        })
+    }, [discordIdentity, twitchIdentity, user])
 
     const handleUpdatePassword = async () => {
-        if(passwords.new !== passwords.confirm) return alert("Las contraseñas no coinciden")
-        if(passwords.new.length < 6) return alert("Mínimo 6 caracteres")
+        if(passwords.new !== passwords.confirm) return showToast("Las contraseñas no coinciden", "error")
+        if(passwords.new.length < 6) return showToast("Mínimo 6 caracteres", "error")
         try {
             const { error } = await supabase.auth.updateUser({ password: passwords.new })
             if(error) throw error
-            alert(t('account.settings.success_password', '¡Contraseña actualizada!'))
+            showToast(t('account.settings.success_password', '¡Contraseña actualizada!'), 'success')
             setPasswords({ new: '', confirm: '' })
         } catch(e) {
             const message = e instanceof Error ? e.message : String(e);
-            alert("Error: " + message)
+            showToast("Error: " + message, "error")
         }
     }
 
@@ -383,6 +436,26 @@ export default function Account() {
          const newVal = !publicStats
          setPublicStats(newVal)
          await updateUser({ public_stats: newVal })
+    }
+
+    const handleSaveProfile = async () => {
+        setIsSavingProfile(true)
+        try {
+            await updateUser({
+                bio,
+                social_discord: socialLinks.discord,
+                social_twitter: socialLinks.twitter,
+                social_twitch: socialLinks.twitch,
+                social_youtube: socialLinks.youtube,
+                social_kofi: socialLinks.kofi
+            })
+            showToast("Perfil actualizado correctamente", "success")
+        } catch (e) {
+            console.error(e)
+            showToast("Error al guardar el perfil", "error")
+        } finally {
+            setIsSavingProfile(false)
+        }
     }
 
     useEffect(() => {
@@ -393,8 +466,17 @@ export default function Account() {
                     if (!res.ok) throw new Error("Failed to fetch stats")
                     return res.json()
                 })
-                .then(data => {
-                    setStatsData(data)
+                .then(response => {
+                    // Handle Standardized Response { success, data }
+                    if (response.success && response.data) {
+                        setStatsData(response.data)
+                    } else if (!response.success && response.data) {
+                         // Fallback in case I screwed up and returned data directly (legacy check)
+                         setStatsData(response.data)
+                    } else {
+                        // Unexpected structure
+                         setStatsData(response) 
+                    }
                     setStatsError(false)
                 })
                 .catch(err => {
@@ -405,7 +487,21 @@ export default function Account() {
         }
     }, [activeTab, isLinked, statsQueryParam, API_URL])
 
-    if (loading || !user) return <div style={{height:'100vh', display:'flex', alignItems:'center', justifyContent:'center'}}><Loader /></div>
+    if (loading || !user) return (
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display:'flex', 
+            flexDirection: 'column',
+            alignItems:'center', 
+            justifyContent: 'flex-start',
+            paddingTop: '20vh', // Start at 20% of screen height
+            background: '#080808'
+        }}>
+            <Loader style={{ height: 'auto', minHeight: 'auto' }} />
+        </div>
+    )
 
     return (
         <div className="account-page" style={{ paddingTop: '6rem', minHeight: '100vh', paddingBottom: '4rem', background: '#080808' }}>
@@ -463,7 +559,7 @@ export default function Account() {
                     </nav>
                 </aside>
 
-                {/* Main Content */}
+                {/* Main Content Area */}
                 <main className="dashboard-content">
                     {activeTab === 'overview' && (
                         <div className="fade-in">
@@ -811,6 +907,75 @@ export default function Account() {
                             <h2 style={{ color: '#fff', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>{t('account.settings.title', 'Configuración')}</h2>
                             
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                                {/* Profile Info Card */}
+                                <div className="dashboard-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', gridColumn: '1 / -1' }}>
+                                    <h3 style={{ color: '#fff', marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'10px' }}><FaUser /> Información del Perfil</h3>
+                                    
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                                        <div>
+                                            <label style={{ display: 'block', color: '#ccc', marginBottom: '8px', fontSize: '0.9rem' }}>Biografía (Markdown opcional)</label>
+                                            <textarea 
+                                                value={bio}
+                                                onChange={e => setBio(e.target.value)}
+                                                rows={6}
+                                                maxLength={500}
+                                                placeholder="Cuéntanos un poco sobre ti..."
+                                                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', resize: 'vertical' }}
+                                            />
+                                            <span style={{ fontSize: '0.7rem', color: '#666', marginTop: '4px', display: 'block' }}>{bio.length}/500 caracteres</span>
+                                        </div>
+                                        
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            <label style={{ color: '#ccc', fontSize: '0.9rem' }}>Redes Sociales</label>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <FaDiscord style={{ color: '#5865F2', width: '20px' }} />
+                                                <input 
+                                                    value={socialLinks.discord}
+                                                    onChange={e => setSocialLinks({...socialLinks, discord: e.target.value})}
+                                                    placeholder="Usuario#0000"
+                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <FaTwitter style={{ color: '#1da1f2', width: '20px' }} />
+                                                <input 
+                                                    value={socialLinks.twitter}
+                                                    onChange={e => setSocialLinks({...socialLinks, twitter: e.target.value})}
+                                                    placeholder="Twitter (ej: @miusuario)"
+                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <FaTwitch style={{ color: '#9146FF', width: '20px' }} />
+                                                <input 
+                                                    value={socialLinks.twitch}
+                                                    onChange={e => setSocialLinks({...socialLinks, twitch: e.target.value})}
+                                                    placeholder="Canal de Twitch"
+                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                <SiKofi style={{ color: '#00AF96', width: '20px' }} />
+                                                <input 
+                                                    value={socialLinks.kofi}
+                                                    onChange={e => setSocialLinks({...socialLinks, kofi: e.target.value})}
+                                                    placeholder="URL de Ko-Fi (ej: https://ko-fi.com/usuario)"
+                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                />
+                                            </div>
+                                            
+                                            <button 
+                                                onClick={handleSaveProfile}
+                                                disabled={isSavingProfile}
+                                                className="btn-primary"
+                                                style={{ marginTop: '1rem', padding: '12px' }}
+                                            >
+                                                {isSavingProfile ? 'Guardando...' : 'Guardar Información'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Privacy Card */}
                                 <div className="dashboard-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
                                     <h3 style={{ color: '#fff', marginBottom: '1rem', display:'flex', alignItems:'center', gap:'10px' }}><FaShieldAlt /> {t('account.settings.privacy', 'Privacidad')}</h3>
@@ -866,12 +1031,20 @@ export default function Account() {
                 </main>
             </div>
             
+            
             <ConfirmationModal 
                 isOpen={isUnlinkModalOpen}
                 onClose={() => setIsUnlinkModalOpen(false)}
                 onConfirm={confirmUnlink}
                 title="Desvincular cuenta"
                 message="¿Estás seguro? Podrías perder acceso a ciertas características."
+            />
+            
+            <Toast 
+                isVisible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast(prev => ({ ...prev, visible: false }))}
             />
         </div>
     )

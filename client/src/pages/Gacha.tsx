@@ -1,63 +1,147 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
-import { FaCoins, FaBoxOpen, FaStar, FaGem, FaGift } from 'react-icons/fa';
+import { FaCoins, FaBoxOpen, FaStar, FaGem, FaGift, FaClock, FaHistory, FaCheck } from 'react-icons/fa';
 // @ts-ignore
 import confetti from 'canvas-confetti';
 import { IconType } from 'react-icons';
+import { useAuth } from '../context/AuthContext';
+import Loader from '../components/UI/Loader';
+import { useNavigate } from 'react-router-dom';
 
 interface Reward {
     id: string;
     name: string;
     rarity: string;
     color: string;
-    icon: IconType;
+    type?: string;
 }
 
-// Mock Rewards for now
-const REWARDS = [
-    { id: 'common_xp', name: '100 XP', rarity: 'common', color: '#b0c3d9', icon: FaStar },
-    { id: 'rare_coin', name: '50 KilluCoins', rarity: 'rare', color: '#0070dd', icon: FaCoins },
-    { id: 'epic_medal', name: 'Medalla Beta Tester', rarity: 'epic', color: '#a335ee', icon: FaGem },
-    { id: 'legendary_vip', name: 'VIP 3 Días', rarity: 'legendary', color: '#ff8000', icon: FaGift },
-];
+const RARITY_COLORS: Record<string, string> = {
+    common: '#b0c3d9',
+    rare: '#0070dd',
+    epic: '#a335ee',
+    legendary: '#ff8000'
+};
+
+const RARITY_ICONS: Record<string, IconType> = {
+    common: FaStar,
+    rare: FaCoins,
+    epic: FaGem,
+    legendary: FaGift
+};
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function Gacha() {
-
-    const [balance, setBalance] = useState(1000); // Mock balance
+    const { user, loading: authLoading } = useAuth();
+    const navigate = useNavigate();
+    
+    // Status
     const [isOpening, setIsOpening] = useState(false);
     const [reward, setReward] = useState<Reward | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [cooldown, setCooldown] = useState(false);
+    const [history, setHistory] = useState<any[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
 
-    const handleOpen = () => {
-        if (balance < 100 || isOpening) return;
+    useEffect(() => {
+        if (!authLoading && !user) {
+            navigate('/login');
+        }
+    }, [user, authLoading, navigate]);
 
-        setBalance(prev => prev - 100);
+    useEffect(() => {
+         if (user) fetchHistory();
+    }, [user]);
+
+    const fetchHistory = async () => {
+        try {
+            const res = await fetch(`${API_URL}/gacha/history/${user?.id}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.data) {
+                    setHistory(data.data);
+                    // Simple check if rolled today from history to show disabled button initially
+                    const lastRoll = data.data[0];
+                    if (lastRoll) {
+                        const lastDate = new Date(lastRoll.created_at);
+                        const diff = Date.now() - lastDate.getTime();
+                        if (diff < 24 * 60 * 60 * 1000) {
+                            setCooldown(true);
+                        }
+                    }
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    const handleOpen = async () => {
+        if (!user || isOpening || cooldown) return;
+
         setIsOpening(true);
         setReward(null);
+        setError(null);
 
-        // Simulate network delay / animation time
-        setTimeout(() => {
-            const randomReward = REWARDS[Math.floor(Math.random() * REWARDS.length)];
-            setReward(randomReward);
-            setIsOpening(false);
+        try {
+            // Animation Delay Simulation (3s)
+            const animationPromise = new Promise(resolve => setTimeout(resolve, 3000));
             
-            // Trigger Confetti
-            if (randomReward.rarity === 'legendary' || randomReward.rarity === 'epic') {
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: [randomReward.color, '#ffffff']
-                });
-            } else {
-                confetti({
-                    particleCount: 50,
-                    spread: 50,
-                    origin: { y: 0.6 }
-                });
+            // API Call
+            const apiPromise = fetch(`${API_URL}/gacha/roll`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id })
+            });
+
+            const [_, res] = await Promise.all([animationPromise, apiPromise]);
+            const response = await res.json();
+
+            if (response.success && response.data) {
+                const wonReward: Reward = {
+                    ...response.data,
+                    color: RARITY_COLORS[response.data.rarity] || '#fff'
+                };
+                
+                setReward(wonReward);
+                setCooldown(true);
+                fetchHistory(); // Update history
+
+                // Trigger Confetti
+                if (wonReward.rarity === 'legendary' || wonReward.rarity === 'epic') {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: [wonReward.color, '#ffffff']
+                    });
+                } else {
+                    confetti({
+                        particleCount: 50,
+                        spread: 50,
+                        origin: { y: 0.6 }
+                    });
+                }
+
+            } else {            
+                if (response.error?.code === 'COOLDOWN') {
+                     setCooldown(true);
+                     setError("¡Ya jugaste hoy! Vuelve mañana.");
+                } else {
+                     setError(response.error?.message || "Error al tirar");
+                }
             }
 
-        }, 3000);
+        } catch (e) {
+            console.error(e);
+            setError("Error de conexión");
+        } finally {
+            setIsOpening(false);
+        }
     };
+
+    if (authLoading) return <div style={{ paddingTop: '100px', display:'flex', justifyContent:'center'}}><Loader text="Cargando Gacha..." /></div>;
+
+    const RewardIcon = reward ? (RARITY_ICONS[reward.rarity] || FaBoxOpen) : FaBoxOpen;
 
     return (
         <div className="gacha-container fade-in">
@@ -71,6 +155,7 @@ export default function Gacha() {
                     align-items: center;
                     color: white;
                     overflow: hidden;
+                    font-family: 'Outfit', sans-serif;
                 }
                 .crate-area {
                     position: relative;
@@ -108,9 +193,10 @@ export default function Gacha() {
                     gap: 1rem;
                 }
                 .action-btn:disabled {
-                    opacity: 0.5;
+                    background: #333;
+                    color: #666;
+                    box-shadow: none;
                     cursor: not-allowed;
-                    filter: grayscale(1);
                 }
                 .action-btn:hover:not(:disabled) {
                     transform: translateY(-2px);
@@ -125,11 +211,6 @@ export default function Gacha() {
                     border: 2px solid;
                     min-width: 300px;
                 }
-                .rarity-common { border-color: #b0c3d9; box-shadow: 0 0 20px rgba(176, 195, 217, 0.3); }
-                .rarity-rare { border-color: #0070dd; box-shadow: 0 0 20px rgba(0, 112, 221, 0.4); }
-                .rarity-epic { border-color: #a335ee; box-shadow: 0 0 30px rgba(163, 53, 238, 0.5); }
-                .rarity-legendary { border-color: #ff8000; box-shadow: 0 0 40px rgba(255, 128, 0, 0.6); }
-                
                 .glow-bg {
                     position: absolute;
                     width: 600px;
@@ -140,18 +221,52 @@ export default function Gacha() {
                     animation: pulse 4s infinite alternate;
                 }
                 @keyframes pulse { from { opacity: 0.05; transform: scale(0.8); } to { opacity: 0.2; transform: scale(1.1); } }
+                
+                .history-panel {
+                    position: absolute;
+                    right: 20px;
+                    top: 100px;
+                    width: 300px;
+                    background: rgba(0,0,0,0.8);
+                    border: 1px solid #333;
+                    border-radius: 12px;
+                    padding: 1rem;
+                    max-height: 400px;
+                    overflow-y: auto;
+                    z-index: 10;
+                }
             `}</style>
             
             <div className="glow-bg" />
 
             {/* Header */}
             <div style={{ zIndex: 1, textAlign: 'center' }}>
-                <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>KilluCoin Gacha</h1>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(0,0,0,0.5)', padding: '0.5rem 1.5rem', borderRadius: '30px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                    <FaCoins style={{ color: '#FFD700' }} />
-                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{balance.toLocaleString()} KC</span>
-                </div>
+                <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Recompensa Diaria</h1>
+                <p style={{ color: '#aaa' }}>¡Prueba tu suerte gratis cada 24 horas y recibe premios en el servidor!</p>
             </div>
+
+            <button 
+                onClick={() => setShowHistory(!showHistory)}
+                style={{ position: 'absolute', right: 20, top: 100, background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem 1rem', color: '#fff', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', zIndex: 20 }}
+            >
+                <FaHistory /> Historial
+            </button>
+
+            {showHistory && (
+                <div className="history-panel fade-in">
+                    <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Últimos Premios</h3>
+                    {history.length === 0 ? <p style={{color:'#666', fontSize:'0.9rem'}}>Sin historial</p> : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            {history.map((h, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ccc' }}>
+                                    <span style={{ color: RARITY_COLORS[h.rarity] || '#fff' }}>[{h.rarity || 'common'}] {h.reward_name}</span>
+                                    <span style={{ color: '#666' }}>{new Date(h.created_at).toLocaleDateString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Main Area */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 1, width: '100%' }}>
@@ -164,19 +279,21 @@ export default function Gacha() {
                             animate={{ scale: 1, rotate: 0 }}
                             exit={{ scale: 0, opacity: 0 }}
                             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                            className={`reward-card rarity-${reward.rarity}`}
+                            className="reward-card"
+                            style={{ borderColor: reward.color, boxShadow: `0 0 30px ${reward.color}40` }}
                         >
                             <div style={{ fontSize: '4rem', color: reward.color, marginBottom: '1rem' }}>
-                                <reward.icon />
+                                <RewardIcon />
                             </div>
                             <h2 style={{ color: reward.color, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{reward.rarity}</h2>
                             <h3 style={{ fontSize: '2rem' }}>{reward.name}</h3>
+                            <p style={{ color: '#aaa', margin: '1rem 0' }}>¡El premio ha sido enviado a tu cola del servidor!</p>
                             <button 
                                 className="btn-secondary" 
-                                style={{ marginTop: '2rem', width: '100%' }}
+                                style={{ marginTop: '1rem', width: '100%' }}
                                 onClick={() => setReward(null)}
                             >
-                                Abrir otra
+                                <FaCheck /> Entendido
                             </button>
                         </Motion.div>
                     ) : (
@@ -194,13 +311,22 @@ export default function Gacha() {
                             </Motion.div>
                             
                             {!isOpening && (
-                                <button className="action-btn" onClick={handleOpen} disabled={balance < 100}>
-                                    <FaBoxOpen /> Abrir Caja (100 KC)
-                                </button>
+                                <>
+                                    <button 
+                                        className="action-btn" 
+                                        onClick={handleOpen} 
+                                        disabled={cooldown}
+                                        title={cooldown ? "Vuelve mañana" : "Tirar Ruleta"}
+                                    >
+                                        {cooldown ? <><FaClock /> En Cooldown</> : <><FaGift /> Reclamar Diario</>}
+                                    </button>
+                                    {cooldown && <p style={{ marginTop: '1rem', color: '#ff4444' }}>{error || "¡Ya has reclamado tu premio hoy!"}</p>}
+                                    {error && !cooldown && <p style={{ marginTop: '1rem', color: '#ff4444' }}>{error}</p>}
+                                </>
                             )}
                             
                              {isOpening && (
-                                <h2 style={{ marginTop: '2rem', animation: 'blink 1s infinite' }}>Abriendo...</h2>
+                                <h2 style={{ marginTop: '2rem', animation: 'blink 1s infinite' }}>Abriendo caja...</h2>
                             )}
                         </div>
                     )}

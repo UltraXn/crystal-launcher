@@ -2,6 +2,7 @@ import util from 'minecraft-server-util';
 import express, { Request, Response } from 'express';
 import fetch from 'node-fetch';
 import mysql from 'mysql2/promise';
+import * as userService from '../services/userService.js';
 
 const router = express.Router();
 
@@ -130,80 +131,109 @@ router.get('/resources', async (req: Request, res: Response) => {
 // Route: Get Online Staff
 // (util imported at top)
 
-// Route: Get Online Staff (Real-time via RCON)
+// Route: Get Online Staff (Real-time via Query Protocol - No RCON)
 router.get('/staff', async (req: Request, res: Response) => {
     let connection = null;
-    const rconOptions = {
-        timeout: 1000 * 5 // 5s timeout
-    };
     
     try {
-        // 1. Fetch Online Players via RCON
-        const rconHost = process.env.RCON_HOST || process.env.MC_SERVER_HOST || 'localhost';
-        const rconPort = parseInt(process.env.RCON_PORT as string) || 25575;
-        const rconPass = process.env.RCON_PASSWORD;
+        // 1. Fetch Online Players via Query Protocol (Lighter than RCON)
+        const host = process.env.MC_SERVER_HOST || 'localhost';
+        const port = parseInt(process.env.MC_SERVER_PORT as string) || 25565;
 
-        if (!rconPass) {
-             throw new Error("RCON password not configured");
+        // Use util.status (Query) to get player list
+        // Note: 'enableSRV: true' is good for domain resolution
+        // Note: Query output depends on server.properties 'enable-query=true' usually, or standard handshake logic.
+        // util.status usually gets sample list. If full list is needed, util.queryFull is better but requires enable-query=true.
+        // Let's try util.status first as it is used in live status.
+        
+        let onlineUsernames: string[] = [];
+        // Use a Map to store original casing if needed, but Set for uniqueness
+        const uniqueUsers = new Set<string>();
+        
+        // 1. Try Query Protocol
+        try {
+            const result = await util.status(host, port, { timeout: 4000, enableSRV: true }); // Increased timeout
+            if (result.players.sample) {
+                 result.players.sample.forEach(p => uniqueUsers.add(p.name));
+            }
+        } catch (statusErr) {
+             console.warn("[Staff Route] Query failed:", (statusErr as Error).message);
         }
 
-        const client = new util.RCON();
-        await client.connect(rconHost, rconPort);
-        await client.login(rconPass);
-        
-        // Command: list
-        // Output format typically: "There are 2/100 players online: User1, User2"
-        const response = await client.execute('list');
-        await client.close();
-        
-        // Parse Output
-        // Remove color codes if any (Section sign + char)
-        const cleanResponse = response.replace(/§./g, '');
-        
-        if (!cleanResponse.includes(':')) {
-            // No players or empty list "There are 0/100 players online: " or just "There are 0/100..."
-            return res.json([]);
-        }
-        
-        const playerPart = cleanResponse.split(':')[1];
-        if (!playerPart || playerPart.trim().length === 0) {
-             return res.json([]);
+        // 2. Try Plan DB
+        if (!connection) connection = await mysql.createConnection(dbConfig);
+        try {
+            const [rows]: any = await connection.execute(`
+                SELECT pu.name 
+                FROM plan_sessions ps
+                JOIN plan_users pu ON ps.user_id = pu.id
+                WHERE ps.session_end IS NULL
+            `); 
+            rows.forEach((r: any) => uniqueUsers.add(r.name));
+        } catch (dbErr) {
+            console.error("[Staff Route] DB Fetch Error:", (dbErr as Error).message);
         }
 
-        // List of online usernames
-        const onlineUsernames = playerPart.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        onlineUsernames = Array.from(uniqueUsers);
+        console.log("[Staff Route] Detected Online Users:", onlineUsernames);
 
         if (onlineUsernames.length === 0) {
+            if (connection) await connection.end();
             return res.json([]);
         }
 
         // 2. Resolve Ranks for these players via DB
-        connection = await mysql.createConnection(dbConfig);
+        if (!connection) connection = await mysql.createConnection(dbConfig);
         
-        // Prepare placeholders
+        // 2. Resolve Ranks for these players via REAL permissions table
+        if (!connection) connection = await mysql.createConnection(dbConfig);
+        
         const placeholders = onlineUsernames.map(() => '?').join(',');
         
-        // Query LP
+        // This query gets the username AND all groups they belong to
         const [rows]: any = await connection.execute(`
-            SELECT username, primary_group, uuid
-            FROM luckperms_players
-            WHERE username IN (${placeholders})
-            AND (
-                primary_group IN ('developer', 'killuwu', 'neroferno', 'killu', 'fundador', 'admin', 'owner', '§f§r')
-                OR username = 'UltraXn'
-            )
+            SELECT lp.username, lp.uuid, up.permission as group_name
+            FROM luckperms_players lp
+            LEFT JOIN luckperms_user_permissions up ON lp.uuid = up.uuid AND up.permission LIKE 'group.%'
+            WHERE lp.username IN (${placeholders})
         `, onlineUsernames);
 
-        // Query Skins from SkinRestorer (sr_players uses 'uuid' column type varchar? or binary? Assume varchar from previous debug)
-        // Previous debug in playerStats.js confirmed table sr_players, column skin_identifier, uuid.
+        // Group rows by username to handle multiple group memberships
+        const userGroupsList: any[] = [];
+        const processedUsers = new Map();
+
+        rows.forEach((r: any) => {
+            if (!processedUsers.has(r.username)) {
+                processedUsers.set(r.username, { 
+                    username: r.username, 
+                    uuid: r.uuid, 
+                    groups: [] 
+                });
+            }
+            if (r.group_name) {
+                processedUsers.get(r.username).groups.push(r.group_name.replace('group.', ''));
+            }
+        });
+
+        const finalUsers = Array.from(processedUsers.values());
+        console.log("[Staff Check] Users and their groups:", finalUsers.map(u => `${u.username}: [${u.groups.join(', ')}]`));
+
+        if (finalUsers.length === 0) {
+             await connection.end();
+             return res.json([]);
+        }
+
+        // Query Skins from SkinRestorer (sr_players)
+        // ... (Same Logic)
         
-        // Fetch skins for these UUIDs
+
+        // Fetch skins
         let skinMap: any = {};
-        if (rows.length > 0) {
+        const uuids = finalUsers.map(u => u.uuid);
+        
+        if (uuids.length > 0) {
             try {
-                const uuids = rows.map((r: any) => r.uuid);
                 const skinPlaceholders = uuids.map(() => '?').join(',');
-                
                 const [skinRows]: any = await connection.execute(`
                     SELECT uuid, skin_identifier 
                     FROM sr_players 
@@ -218,19 +248,17 @@ router.get('/staff', async (req: Request, res: Response) => {
             }
         }
 
-        // Fetch Session Start Times (for uptime)
+        // Fetch Session Start Times
         let sessionMap: any = {};
-        if (rows.length > 0) {
+        if (uuids.length > 0) {
             try {
-                const uuids = rows.map((r: any) => r.uuid);
                 const sessionPlaceholders = uuids.map(() => '?').join(',');
-                
-                // Get active sessions (Latest session start)
                 const [sessionRows]: any = await connection.execute(`
                     SELECT pu.uuid, MAX(ps.session_start) as session_start 
                     FROM plan_sessions ps 
                     JOIN plan_users pu ON ps.user_id = pu.id 
                     WHERE pu.uuid IN (${sessionPlaceholders})
+                    AND ps.session_end IS NULL 
                     GROUP BY pu.uuid
                 `, uuids);
                 
@@ -243,48 +271,67 @@ router.get('/staff', async (req: Request, res: Response) => {
         }
 
         // Map structure
-        const staff = rows.map((row: any) => {
-            let role = row.primary_group;
+        const staff = finalUsers.map((user: any) => {
+            // Determine the "best" role from all their groups
+            const staffGroups = ['owner', 'fundador', 'neroferno', 'killu', 'killuwu', 'developer', 'admin', 'ꐽ'];
+            let role = user.groups.find((g: string) => staffGroups.includes(g.toLowerCase())) || user.groups[0] || 'default';
             let roleImage = null;
 
             // Normalize Role & Image
-            if (row.username === 'UltraXn' && row.primary_group === 'default') {
+            if (user.username === 'UltraXn' && role === 'default') {
                 role = 'Founder';
                 roleImage = '/ranks/rank-neroferno.png';
             }
             
-            if (row.primary_group === '§f§r') {
+            if (role === '§f§r') {
                role = 'Founder';
                roleImage = '/ranks/rank-neroferno.png';
             }
+            
+            // Handle Unicode Developer Group or explicit mapping
+            if (role === 'ꐽ') {
+                role = 'developer';
+                roleImage = '/ranks/developer.png';
+            }
 
-            if (row.primary_group === 'neroferno') {
+            if (role.toLowerCase() === 'neroferno') {
                 roleImage = '/ranks/rank-neroferno.png';
             }
 
-            // Determine Avatar (Custom Skin > UUID)
-            const skinName = skinMap[row.uuid];
+            // Determine Avatar
+            const skinName = skinMap[user.uuid];
             const avatarUrl = skinName 
                 ? `https://mc-heads.net/avatar/${skinName}/100` 
-                : `https://mc-heads.net/avatar/${row.uuid}/100`;
+                : `https://mc-heads.net/avatar/${user.uuid}/100`;
 
             return {
-                username: row.username,
+                username: user.username,
                 role: role,
                 role_image: roleImage,
-                uuid: row.uuid,
+                uuid: user.uuid,
                 avatar: avatarUrl,
-                login_time: sessionMap[row.uuid] || Date.now()
+                login_time: sessionMap[user.uuid] || Date.now()
             }
         });
 
         res.json(staff);
 
     } catch (error) {
-        console.error("Staff Online Route Error:", error);
+        console.error("Staff Online Route Error (" + (error as Error).message + ")");
         res.json([]);
     } finally {
         if (connection) await connection.end();
+    }
+});
+
+// Route: Get ALL Persistent Staff (from DB, not just online)
+router.get('/all-staff', async (req: Request, res: Response) => {
+    try {
+        const staff = await userService.getStaffUsers();
+        res.json({ success: true, data: staff });
+    } catch (error: any) {
+        console.error("All Staff Route Error:", error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 

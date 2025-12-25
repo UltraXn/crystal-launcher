@@ -1,5 +1,6 @@
 import supabase from '../config/supabaseClient.js';
 import * as logService from '../services/logService.js';
+import { translateText } from '../services/translationService.js';
 import { Request, Response } from 'express';
 
 // Obtener todas las configuraciones
@@ -31,11 +32,46 @@ export const updateSetting = async (req: Request, res: Response) => {
         const { key } = req.params;
         const { value, username, userId } = req.body; // userId y username para logs
 
+        let finalValue = value;
+
+        // Auto Translation for Staff Cards
+        if (key === 'staff_cards') {
+            try {
+                const cards = typeof value === 'string' ? JSON.parse(value) : value;
+                if (Array.isArray(cards)) {
+                    const translatedCards = await Promise.all(cards.map(async (card: any) => ({
+                        ...card,
+                        role_en: card.role ? await translateText(card.role, 'en') : card.role_en,
+                        description_en: card.description ? await translateText(card.description, 'en') : card.description_en
+                    })));
+                    finalValue = JSON.stringify(translatedCards);
+                }
+            } catch (err) {
+                console.error("Error translating staff cards:", err);
+            }
+        }
+
+        // Auto Translation for Donors List
+        if (key === 'donors_list') {
+            try {
+                const donors = typeof value === 'string' ? JSON.parse(value) : value;
+                if (Array.isArray(donors)) {
+                    const translatedDonors = await Promise.all(donors.map(async (donor: any) => ({
+                        ...donor,
+                        description_en: donor.description ? await translateText(donor.description, 'en') : donor.description_en
+                    })));
+                    finalValue = JSON.stringify(translatedDonors);
+                }
+            } catch (err) {
+                console.error("Error translating donors list:", err);
+            }
+        }
+
         const { data, error } = await supabase
             .from('site_settings')
             .upsert({ 
                 key,
-                value, 
+                value: finalValue, 
                 updated_at: new Date(),
                 updated_by: userId || null 
             })

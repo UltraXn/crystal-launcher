@@ -2,14 +2,15 @@ import * as ticketService from '../services/ticketService.js';
 import * as logService from '../services/logService.js';
 import * as minecraftService from '../services/minecraftService.js';
 import { Request, Response } from 'express';
+import { sendSuccess, sendError } from '../utils/responseHandler.js';
 
 // Admin: Get all tickets
 export const getAllTickets = async (req: Request, res: Response) => {
     try {
         const tickets = await ticketService.getAllTickets();
-        res.json(tickets);
+        return sendSuccess(res, tickets);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -19,23 +20,22 @@ export const createTicket = async (req: Request, res: Response) => {
         const { user_id, subject, description, priority } = req.body;
 
         if (!user_id || !subject) {
-            return res.status(400).json({ error: 'Missing user_id or subject' });
+            return sendError(res, 'Missing user_id or subject', 'MISSING_FIELD', 400);
         }
 
         const ticket = await ticketService.createTicket(user_id, { subject, description, priority });
         
         // Log
         logService.createLog({
-            user_id,
             username: 'User', // TODO: Fetch real username
             action: 'CREATE_TICKET',
             details: `Ticket #${ticket.id}: ${subject}`,
             source: 'web'
         }).catch(console.error);
 
-        res.status(201).json(ticket);
+        return sendSuccess(res, ticket, 'Ticket created successfully');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -54,9 +54,9 @@ export const updateStatus = async (req: Request, res: Response) => {
             source: 'web'
         }).catch(console.error);
 
-        res.json(ticket);
+        return sendSuccess(res, ticket, 'Ticket status updated');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -64,9 +64,9 @@ export const updateStatus = async (req: Request, res: Response) => {
 export const getStats = async (req: Request, res: Response) => {
     try {
         const stats = await ticketService.getTicketStats();
-        res.json(stats);
+        return sendSuccess(res, stats);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -75,9 +75,9 @@ export const getMessages = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const messages = await ticketService.getTicketMessages(parseInt(id));
-        res.json(messages);
+        return sendSuccess(res, messages);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -87,19 +87,19 @@ export const addMessage = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { user_id, message, is_staff } = req.body;
 
-        if (!message) return res.status(400).json({ error: "Message is required" });
+        if (!message) return sendError(res, "Message is required", 'MISSING_FIELD', 400);
 
         const newMessage = await ticketService.addTicketMessage(parseInt(id), user_id, message, is_staff);
-        res.status(201).json(newMessage);
+        return sendSuccess(res, newMessage, 'Message added');
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
 export const banUser = async (req: Request, res: Response) => {
     try {
         const { username, reason } = req.body;
-        if (!username) return res.status(400).json({ error: 'Username required' });
+        if (!username) return sendError(res, 'Username required', 'MISSING_FIELD', 400);
 
         const cmd = `ban ${username} ${reason || 'Banned via Web Panel'}`;
         const result = await minecraftService.sendCommand(cmd);
@@ -112,12 +112,12 @@ export const banUser = async (req: Request, res: Response) => {
                 source: 'web'
             }).catch(console.error);
 
-            res.json({ message: `User ${username} banned successfully` });
+            return sendSuccess(res, { command: cmd }, `User ${username} banned successfully`);
         } else {
-            res.status(500).json({ error: result.error });
+            return sendError(res, result.error || 'RCON Error', 'RCON_FAILED');
         }
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };
 
@@ -133,8 +133,8 @@ export const deleteTicket = async (req: Request, res: Response) => {
             source: 'web'
         }).catch(console.error);
 
-        res.json({ message: "Ticket deleted successfully" });
+        return sendSuccess(res, null, "Ticket deleted successfully");
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        return sendError(res, error.message);
     }
 };

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../services/supabaseClient'
 import { FaPaperPlane, FaArrowLeft, FaShieldAlt } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 
@@ -119,7 +119,7 @@ export default function TicketDetail() {
         }
     }
 
-    if (loading) return <div className="container" style={{paddingTop: '6rem'}}>Loading...</div>
+    if (loading) return <div className="container" style={{paddingTop: '6rem'}}>{t('common.loading')}</div>
 
     return (
         <div className="container" style={{paddingTop: '6rem', minHeight: '90vh', display: 'flex', flexDirection: 'column'}}>
@@ -216,7 +216,7 @@ export default function TicketDetail() {
                 }}>
                     <input 
                         type="text" 
-                        placeholder={ticket?.status === 'closed' ? "This ticket is closed." : t('support.type_message')}
+                        placeholder={ticket?.status === 'closed' ? t('support.ticket_closed') : t('support.type_message')}
                         value={newMessage}
                         onChange={e => setNewMessage(e.target.value)}
                         disabled={ticket?.status === 'closed'}

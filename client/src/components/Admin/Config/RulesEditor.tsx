@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { FaGavel, FaPlus, FaTrash, FaSave } from 'react-icons/fa';
+import { FaGavel, FaPlus, FaTrash, FaSave, FaFileExport } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import ConfirmationModal from '../../UI/ConfirmationModal';
 
 interface Rule {
     id: number;
@@ -18,15 +19,23 @@ interface RulesEditorProps {
 
 // Initial mock rules if none exist
 const DEFAULT_RULES: Rule[] = [
-    { id: 1, title: 'Respeto Mutuo', description: 'Trata a todos los jugadores y staff con respeto. El acoso no es tolerado.' },
-    { id: 2, title: 'No Hacks / Cheats', description: 'El uso de clientes modificados que den ventaja está prohibido.' },
-    { id: 3, title: 'Griefing', description: 'Destruir construcciones de otros jugadores es sancionable.' }
+    { id: 1, title: 'PVP Consensuado', description: 'Estará permitido el PVP mientras sea acordado entre las partes. No abusen de jugadores que no quieran participar.' },
+    { id: 2, title: 'Cero Tolerancia al Robo', description: 'Prohibido robar, destruir construcciones o matar mascotas. Todo queda registrado (CoreProtect) y se castiga con Permaban.' },
+    { id: 3, title: 'Bases en Aldeas', description: 'Si ocupas una aldea, deja una señal visible (cartel, muralla) para indicar que es tu base y evitar saqueos accidentales.' },
+    { id: 4, title: 'Granjas y Automatización', description: 'Prohibidas las granjas de Aldeanos y de Hierro. La automatización debe ser SEMI-automática (requiere activación manual).' },
+    { id: 5, "title": "Límite de Mega-Construcciones", "description": "No se permiten construcciones masivas que abarquen demasiados chunks/carguen el servidor innecesariamente." },
+    { id: 6, title: 'Estética del Bioma', description: 'Elimina construcciones temporales (pilares de tierra, puentes 1x1) que afeen el entorno.' },
+    { id: 7, title: 'Calidad de Construcción', description: 'Se espera un esfuerzo estético mínimo. Evita dejar estructuras a medio terminar o sin propósito.' },
+    { id: 8, title: 'Contenido y Streaming', description: 'Se permite el stream dando créditos al servidor. Invitados son bienvenidos bajo estas mismas reglas.' },
+    { id: 9, title: 'Uso de /co inspect', description: 'Puedes usar este comando para investigar robos. Reporta los hallazgos a la administración, no actúes por tu cuenta.' },
+    { id: 10, title: 'Mediación de Conflictos', description: 'No tomes la justicia por tu mano. Si alguien rompe las reglas, repórtalo en lugar de tomar represalias.' }
 ];
 
 export default function RulesEditor({ settings, onUpdate, saving }: RulesEditorProps) {
     const { t } = useTranslation();
     const [rules, setRules] = useState<Rule[]>([]);
     const [prevRulesStr, setPrevRulesStr] = useState<string | null>(null);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
     // Pattern: Adjust state during render when props change
     const rulesStr = settings?.server_rules ? (typeof settings.server_rules === 'string' ? settings.server_rules : JSON.stringify(settings.server_rules)) : null;
@@ -49,8 +58,12 @@ export default function RulesEditor({ settings, onUpdate, saving }: RulesEditorP
     };
 
     const handleDelete = (id: number) => {
-        if(!window.confirm('¿Borrar esta regla?')) return;
-        setRules(rules.filter(r => r.id !== id));
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDelete = () => {
+        setRules(rules.filter(r => r.id !== deleteConfirmId));
+        setDeleteConfirmId(null);
     };
 
     const handleChange = (id: number, field: keyof Rule, value: string) => {
@@ -61,15 +74,30 @@ export default function RulesEditor({ settings, onUpdate, saving }: RulesEditorP
         onUpdate('server_rules', JSON.stringify(rules));
     };
 
+    const handleExport = () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(rules, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "server_rules.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
     return (
         <div className="admin-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    <FaGavel /> {t('admin.settings.rules.title', 'Reglamento del Servidor')}
+                    <FaGavel /> {t('admin.settings.rules.title')}
                 </h3>
-                <button onClick={handleSave} className="btn-primary" disabled={saving === 'server_rules'}>
-                    <FaSave /> {saving === 'server_rules' ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={handleExport} className="btn-secondary" title={t('admin.settings.rules.export_tooltip')}>
+                        <FaFileExport />
+                    </button>
+                    <button onClick={handleSave} className="btn-primary" disabled={saving === 'server_rules'}>
+                        <FaSave /> {saving === 'server_rules' ? t('admin.settings.saving') : t('admin.settings.rules.save_btn')}
+                    </button>
+                </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -88,7 +116,7 @@ export default function RulesEditor({ settings, onUpdate, saving }: RulesEditorP
                                 borderRadius: '50%', 
                                 display: 'flex', 
                                 alignItems: 'center', 
-                                justifyContent: 'center',
+                                justifyContent: 'center', 
                                 fontWeight: 'bold'
                             }}>
                                 {index + 1}
@@ -99,14 +127,14 @@ export default function RulesEditor({ settings, onUpdate, saving }: RulesEditorP
                                     className="admin-input" 
                                     value={rule.title} 
                                     onChange={(e) => handleChange(rule.id, 'title', e.target.value)}
-                                    placeholder="Título de la Regla"
+                                    placeholder={t('admin.settings.rules.title_ph')}
                                     style={{ fontWeight: 'bold' }}
                                 />
                                 <textarea 
                                     className="admin-input" 
                                     value={rule.description} 
                                     onChange={(e) => handleChange(rule.id, 'description', e.target.value)}
-                                    placeholder="Descripción detallada..."
+                                    placeholder={t('admin.settings.rules.desc_ph')}
                                     rows={2}
                                 />
                             </div>
@@ -127,8 +155,18 @@ export default function RulesEditor({ settings, onUpdate, saving }: RulesEditorP
                 className="btn-secondary" 
                 style={{ marginTop: '1rem', width: '100%', border: '1px dashed #444', background: 'transparent' }}
             >
-                <FaPlus /> Añadir Nueva Regla
+                <FaPlus /> {t('admin.settings.rules.add_btn')}
             </button>
+
+            <ConfirmationModal 
+                isOpen={!!deleteConfirmId}
+                onClose={() => setDeleteConfirmId(null)}
+                onConfirm={confirmDelete}
+                title={t('admin.settings.rules.delete_title')}
+                message={t('admin.settings.rules.delete_msg')}
+                confirmText={t('admin.settings.rules.delete_confirm')}
+                isDanger={true}
+            />
         </div>
     );
 }

@@ -16,8 +16,11 @@ import settingsRoutes from './routes/settingsRoutes.js';
 import playerStatsRoutes from './routes/playerStats.js';
 import serverRoutes from './routes/serverRoutes.js';
 import serverStatusRoutes from './routes/serverStatus.js';
+import bridgeRoutes from './routes/bridgeRoutes.js'; // Secure CrystalBridge
 import taskRoutes from './routes/taskRoutes.js';
 import noteRoutes from './routes/noteRoutes.js';
+import gachaRoutes from './routes/gachaRoutes.js';
+import translationRoutes from './routes/translationRoutes.js';
 import { initCleanupJob } from './services/cleanupService.js';
 
 const app = express();
@@ -47,14 +50,28 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/player-stats', playerStatsRoutes);
 app.use('/api/server', serverRoutes);
 app.use('/api/server/status', serverStatusRoutes);
+app.use('/api/bridge', bridgeRoutes); // Secure CrystalBridge
+app.use('/api/gacha', gachaRoutes);
 
 // Staff Hub Routes
 app.use('/api/staff/tasks', taskRoutes);
 app.use('/api/staff/notes', noteRoutes);
+app.use('/api/translation', translationRoutes);
+
+// Swagger Docs
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger.js';
+
+// Documentation Route
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Base route
 app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to CrystalTides API' });
+    res.json({ 
+        message: 'Welcome to CrystalTides API',
+        documentation: '/api/docs',
+        version: '1.0.0'
+    });
 });
 
 export default app;

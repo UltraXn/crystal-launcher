@@ -319,3 +319,84 @@
     border-color: var(--accent);
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
 }
+
+/* =========================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ========================================= */
+@media (max-width: 768px) {
+    /* Hero Adjustments */
+    .hero {
+        padding-top: 4rem; /* More space for fixed navbar */
+        height: auto;
+        min-height: 90vh;
+        justify-content: center;
+    }
+
+    .hero h1 {
+        font-size: 2.2rem; /* Smaller Title */
+        margin-bottom: 1rem;
+    }
+
+    .hero p {
+        font-size: 1rem;
+        padding: 0 1rem;
+    }
+
+    /* IP Box Styling Stack */
+    .server-ip-box {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+        gap: 0.8rem;
+        padding: 1rem;
+    }
+
+    .server-ip-info {
+        align-items: center; /* Center text */
+    }
+
+    .server-ip {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+
+    .btn-copy-box {
+        justify-content: center;
+        width: 100%;
+        padding: 0.8rem; /* Bigger touch target */
+    }
+
+    .btn-donate-hero {
+        width: 100%;
+        justify-content: center;
+        padding: 1rem;
+    }
+
+    /* Account Page Mobile */
+    .account-card {
+        padding: 1.5rem;
+    }
+}
+
+/* Gacha Mobile Fixes (Since Gacha uses styled-jsx mainly, we add global helper here) */
+@media (max-width: 480px) {
+    .gacha-container h1 {
+        font-size: 2rem !important; /* Force smaller size */
+    }
+    
+    .crate-area {
+        width: 100% !important;
+        max-width: 280px !important;
+        height: 280px !important;
+    }
+
+    .crate {
+        font-size: 8rem !important;
+    }
+
+    .action-btn {
+        width: 90%;
+        font-size: 1.2rem !important;
+        padding: 1rem !important;
+    }
+}

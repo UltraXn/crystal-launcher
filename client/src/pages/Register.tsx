@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { FaUser, FaEnvelope, FaLock, FaUserPlus, FaDiscord, FaTwitch, FaEye, FaEyeSlash } from 'react-icons/fa'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import SuccessModal from '../components/UI/SuccessModal'
 import { useTranslation } from 'react-i18next'
 import { Provider } from '@supabase/supabase-js'
 
@@ -16,7 +15,6 @@ export default function Register() {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [error, setError] = useState('')
-    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     const { register, loginWithProvider } = useAuth()
     const navigate = useNavigate()
@@ -49,7 +47,7 @@ export default function Register() {
             })
 
             if (user) {
-                setShowSuccessModal(true)
+                navigate('/register/success')
             }
         } catch (err) {
             console.error(err)
@@ -65,14 +63,6 @@ export default function Register() {
 
     return (
         <div className="account-page">
-            <SuccessModal
-                isOpen={showSuccessModal}
-                title={t('register.success_title')}
-                message={t('register.success_msg')}
-                buttonText={t('register.go_to_login')}
-                onAction={() => navigate('/login')}
-                onClose={() => navigate('/login')}
-            />
 
             <div className="account-container">
                 <div className="account-card animate-pop-up">

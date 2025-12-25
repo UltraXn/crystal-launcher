@@ -1,4 +1,5 @@
 import { FaArrowUp } from "react-icons/fa"
+import { SiKofi } from "react-icons/si"
 import { Link } from "react-router-dom"
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
@@ -28,7 +29,7 @@ export default function Footer() {
             <div className="footer-content">
                 <div className="footer-section brand-section">
                     <Link to="/" onClick={scrollToTop} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <img src="/images/ui/logo.webp" alt="Crystal Tides SMP Logo" className="footer-logo" width="60" height="60" />
+                        <img src="/images/ui/logo.webp" alt="CrystalTides SMP Logo" className="footer-logo" width="60" height="60" />
                         <h3 style={{ margin: 0, fontSize: '1.5rem' }}>CRYSTALTIDES SMP</h3>
                     </Link>
                     <p className="slogan">{t('footer.slogan')}</p>
@@ -51,18 +52,27 @@ export default function Footer() {
                             <li><Link to="/#contests">{t('footer.events')}</Link></li>
                             <li><Link to="/#stories">{t('footer.stories')}</Link></li>
                             <li><Link to="/forum">{t('footer.forum')}</Link></li>
-                            <li><Link to="/#donors" style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{t('footer.donate')}</Link></li>
+                            <li><Link to="/#donors" style={{ 
+                                color: 'var(--accent)', 
+                                fontWeight: 'bold', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '8px' 
+                            }}>
+                                <SiKofi size="1.2em" />
+                                <span>{t('footer.donate')}</span>
+                            </Link></li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <button className={`scroll-top-btn ${showScrollBtn ? 'visible' : ''}`} onClick={scrollToTop} aria-label="Volver arriba">
+            <button className={`scroll-top-btn ${showScrollBtn ? 'visible' : ''}`} onClick={scrollToTop} aria-label={t('footer.aria_scroll_top', 'Volver arriba')}>
                 <FaArrowUp />
             </button>
 
             <div className="footer-bottom">
-                <p>&copy; {new Date().getFullYear()} Crystal Tides SMP. {t('footer.rights')}</p>
+                <p>&copy; {new Date().getFullYear()} CrystalTides SMP. {t('footer.rights')}</p>
             </div>
         </footer>
     )

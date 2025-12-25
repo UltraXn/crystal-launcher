@@ -1,13 +1,9 @@
 html {
     scroll-behavior: smooth;
     scroll-padding-top: 90px;
-    cursor: url('/cursor.png'), auto;
 }
 
-/* Custom Cursor */
-body {
-    cursor: url('/cursor.png'), auto;
-}
+
 
 a,
 button,
@@ -16,7 +12,7 @@ button,
 .btn,
 .btn-copy-box,
 .social-link {
-    cursor: url('/cursor.png'), pointer;
+    cursor: pointer;
 }
 
 /* Animations */
@@ -1926,14 +1922,8 @@ button,
    2. Descomenta las líneas de abajo quitando los símbolos de comentario.
 ----------------------------------------------------------- */
 
-/*
-body {
-    cursor: url('/cursor.png'), auto;
-}
-
-a, button, input, select, textarea, .clickable {
-    cursor: url('/cursor-active.png'), pointer;
-}
+/* 
+   Legacy cursor styles removed to avoid conflicts with TentacleCursor.tsx
 */
 
 /* Forum Styles */

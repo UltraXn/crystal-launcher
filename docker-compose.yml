@@ -1,16 +1,25 @@
 services:
   # Frontend (React + Vite + Nginx)
   frontend:
-    # Local image name
-    image: crystaltides-frontend:latest
+    # Use the 'builder' stage from the Dockerfile (Node environment)
     build:
       context: ./client
+      target: builder
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
-        VITE_API_URL: /api
+    # Run Vite development server bound to all interfaces
+    command: npm run dev -- --host 0.0.0.0 --port 80
+    volumes:
+      - ./client:/app
+      - /app/node_modules
     ports:
-      - "5173:80" # Map host 5173 to container 80
+      - "80:80"
+    environment:
+      - VITE_PROXY_TARGET=http://backend:3001
+      - VITE_API_URL=/api
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
     depends_on:
       - backend
     restart: always
@@ -26,3 +35,12 @@ services:
       - ./server/.env # Load environment variables from this file
     restart: always
 
+  # Cloudflare Tunnel (Expose to Internet securely without port forwarding)
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN} # Define this in .env or replace directly here for testing
+    depends_on:
+      - frontend

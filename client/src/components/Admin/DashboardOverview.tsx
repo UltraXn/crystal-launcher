@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { FaUser, FaServer, FaTicketAlt, FaMoneyBillWave, FaMemory, FaMicrochip, FaUsers, FaClock } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
+import Loader from "../UI/Loader"
+import AnimatedCounter from "../UI/AnimatedCounter"
 
 interface StaffMember {
     username: string;
@@ -9,6 +11,19 @@ interface StaffMember {
     role_image?: string;
     login_time: number;
 }
+
+const getRoleImage = (role: string) => {
+    const r = role.toLowerCase();
+    if (r.includes('developer') || r.includes('ꐽ')) return '/ranks/developer.png';
+    if (r.includes('killu')) return '/ranks/rank-killu.png';
+    if (r.includes('neroferno')) return '/ranks/rank-neroferno.png';
+    if (r.includes('fundador') || r.includes('owner')) return '/ranks/rank-fundador.png';
+    if (r.includes('admin')) return '/ranks/admin.png';
+    if (r.includes('mod')) return '/ranks/moderator.png';
+    if (r.includes('helper')) return '/ranks/helper.png';
+    if (r.includes('staff')) return '/ranks/staff.png';
+    return null;
+};
 
 export default function DashboardOverview() {
     const { t } = useTranslation()
@@ -27,6 +42,7 @@ export default function DashboardOverview() {
     const [staffOnline, setStaffOnline] = useState<StaffMember[]>([])
     const [ticketStats, setTicketStats] = useState({ open: 0, urgent: 0 })
     const [donationStats, setDonationStats] = useState({ currentMonth: "0.00", percentChange: 0 })
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -37,8 +53,11 @@ export default function DashboardOverview() {
                     fetch(`${API_URL}/server/status/live`)
                 ]);
 
-                const dataRes = resRes.ok ? await resRes.json() : null;
-                const dataLive = resLive.ok ? await resLive.json() : null;
+                const rawRes = resRes.ok ? await resRes.json() : null;
+                const rawLive = resLive.ok ? await resLive.json() : null;
+                
+                const dataRes = rawRes?.success ? rawRes.data : rawRes;
+                const dataLive = rawLive?.success ? rawLive.data : rawLive;
 
                 if (dataRes || dataLive) {
                     setServerStats({
@@ -66,26 +85,38 @@ export default function DashboardOverview() {
                 // Fetch Staff Online
                 const resStaff = await fetch(`${API_URL}/server/staff`)
                 if (resStaff.ok) {
-                    const dataStaff = await resStaff.json()
-                    setStaffOnline(dataStaff)
+                    const rawStaff = await resStaff.json()
+                    const staffList = (rawStaff.success ? rawStaff.data : rawStaff) || []
+                    
+                    if (Array.isArray(staffList)) {
+                        const allowedRoles = ['neroferno', 'killu', 'killuwu', 'developer', 'admin', 'fundador', 'owner', 'ꐽ'];
+                        const filteredStaff = staffList.filter((s: StaffMember) => allowedRoles.some(role => s.role.toLowerCase().includes(role)));
+                        setStaffOnline(filteredStaff)
+                    } else {
+                        setStaffOnline([])
+                    }
                 }
 
                 // Fetch Ticket Stats
                 const resTickets = await fetch(`${API_URL}/tickets/stats`)
                 if(resTickets.ok) {
-                    const dataTickets = await resTickets.json()
-                    setTicketStats(dataTickets)
+                    const rawTickets = await resTickets.json()
+                    const stats = rawTickets.success ? rawTickets.data : rawTickets
+                    setTicketStats(stats || { open: 0, urgent: 0 })
                 }
 
                 // Fetch Donation Stats
                 const resDonations = await fetch(`${API_URL}/donations/stats`)
                 if(resDonations.ok) {
-                    const dataDonations = await resDonations.json()
-                    setDonationStats(dataDonations)
+                    const rawDonations = await resDonations.json()
+                    const stats = rawDonations.success ? rawDonations.data : rawDonations
+                    setDonationStats(stats || { currentMonth: "0.00", percentChange: 0 })
                 }
 
             } catch (error) {
                 console.error("Error loading dashboard data", error)
+            } finally {
+                setLoading(false)
             }
         }
 
@@ -98,6 +129,14 @@ export default function DashboardOverview() {
     const memoryPercent = serverStats.memory.limit > 0 
         ? Math.round((serverStats.memory.current / serverStats.memory.limit) * 100) 
         : 0;
+
+    if (loading) {
+        return (
+            <div style={{ padding: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Loader style={{ height: 'auto', minHeight: '150px' }} />
+            </div>
+        )
+    }
 
     return (
         <div className="dashboard-wrapper">
@@ -113,21 +152,21 @@ export default function DashboardOverview() {
                 />
                 <StatCard
                     title={t('admin.dashboard.stats.players')}
-                    value={serverStats.players.online}
+                    value={<AnimatedCounter value={serverStats.players.online} />}
                     percent={`${t('admin.dashboard.stats.capacity')}: ${serverStats.players.max}`}
                     icon={<FaUser />}
                     color="#3b82f6"
                 />
                 <StatCard
                     title={t('admin.dashboard.stats.pending_tickets')}
-                    value={ticketStats.open}
+                    value={<AnimatedCounter value={ticketStats.open} />}
                     percent={`${ticketStats.urgent} ${t('admin.dashboard.stats.high_priority')}`}
                     icon={<FaTicketAlt />}
                     color="#facc15"
                 />
                 <StatCard
                     title={t('admin.dashboard.stats.revenue')}
-                    value={`$${donationStats.currentMonth}`}
+                    value={<AnimatedCounter value={parseFloat(donationStats.currentMonth) || 0} decimals={2} prefix="$" />}
                     percent={`${Number(donationStats.percentChange) >= 0 ? '+' : ''}${donationStats.percentChange}% ${t('admin.dashboard.stats.vs_prev_month')}`}
                     icon={<FaMoneyBillWave />}
                     color="#c084fc"
@@ -179,7 +218,7 @@ export default function DashboardOverview() {
                     <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <FaUsers style={{ color: 'var(--accent)' }} /> 
                         Staff Online
-                        {staffOnline.length > 0 && <span style={{ background: '#4ade80', color: '#000', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px', marginLeft: 'auto' }}>{staffOnline.length} Active</span>}
+                        {staffOnline.length > 0 && <span style={{ background: '#4ade80', color: '#000', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px', marginLeft: 'auto' }}>{staffOnline.length} {t('admin.dashboard.staff.active_badge')}</span>}
                     </h3>
                     
                     <div style={{ flex: 1 }}>
@@ -190,14 +229,14 @@ export default function DashboardOverview() {
                                         {staffOnline.map((staff, idx) => (
                                             <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'rgba(255,255,255,0.03)', padding: '0.8rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', transition: 'transform 0.2s', cursor: 'default' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}>
                                                 <div style={{ position: 'relative' }}>
-                                                    <img src={staff.avatar} alt={staff.username} style={{ width: '38px', height: '38px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
+                                                    <img src={`https://mc-heads.net/avatar/${staff.username}/64`} alt={staff.username} style={{ width: '38px', height: '38px', borderRadius: '8px', border: '2px solid rgba(255,255,255,0.1)' }} />
                                                     <div style={{ position: 'absolute', bottom: 0, right: 0, width: '10px', height: '10px', background: '#4ade80', borderRadius: '50%', border: '2px solid #1a1a1a' }}></div>
                                                 </div>
                                                 <div style={{ flex: 1 }}>
                                                     <div style={{ fontWeight: 'bold', fontSize: '0.95rem', color: '#fff' }}>{staff.username}</div>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                                                        {staff.role_image ? (
-                                                            <img src={staff.role_image} alt={staff.role} style={{ height: '24px', objectFit: 'contain' }} />
+                                                        {getRoleImage(staff.role) || staff.role_image ? (
+                                                            <img src={getRoleImage(staff.role) || staff.role_image} alt={staff.role} style={{ height: 'auto' }} />
                                                         ) : (
                                                             <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: '4px', color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{staff.role}</span>
                                                         )}
@@ -223,7 +262,7 @@ export default function DashboardOverview() {
                                 ) : (
                                     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem 0', opacity: 0.6 }}>
                                         <FaUsers size={32} style={{ marginBottom: '1rem', color: '#666' }} />
-                                        <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>No hay staff conectado</p>
+                                        <p style={{ margin: 0, fontStyle: 'italic', color: '#888' }}>{t('admin.dashboard.staff.no_staff')}</p>
                                     </div>
                                 )}
                             </div>
@@ -242,7 +281,7 @@ export default function DashboardOverview() {
 
 interface StatCardProps {
     title: string;
-    value: string | number;
+    value: React.ReactNode;
     percent: string;
     color?: string;
     icon: React.ReactNode;

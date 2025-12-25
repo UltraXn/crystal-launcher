@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../services/supabaseClient'
 import { FaHeart, FaUser } from 'react-icons/fa'
+import { useTranslation } from 'react-i18next'
 import '../../donation-feed.css'
 
 interface Donation {
@@ -11,12 +12,14 @@ interface Donation {
     currency: string;
     amount: string | number;
     message?: string;
+    message_en?: string;
     is_public: boolean;
 }
 
 export default function DonationFeed() {
     const [donations, setDonations] = useState<Donation[]>([])
     const [loading, setLoading] = useState(true)
+    const { t, i18n } = useTranslation()
 
     useEffect(() => {
         fetchDonations()
@@ -52,7 +55,18 @@ export default function DonationFeed() {
         }
     }
 
-    if (loading) return <div style={{ textAlign: 'center', padding: '2rem' }}>Cargando donaciones...</div>
+    if (loading) return (
+        <div style={{ 
+            textAlign: 'center', 
+            height: '400px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            color: 'var(--muted)'
+        }}>
+            {t('donors.loading_donations')}
+        </div>
+    )
 
     const renderDonationCard = (donation: Donation, index: string | number) => (
         <div className="donation-card" key={`${donation.id || donation.message_id}-${index}`}>
@@ -75,7 +89,7 @@ export default function DonationFeed() {
             </div>
             {donation.message && (
                 <div className="donation-message">
-                    "{donation.message}"
+                    "{i18n.language === 'en' && donation.message_en ? donation.message_en : donation.message}"
                 </div>
             )}
         </div>
@@ -85,7 +99,7 @@ export default function DonationFeed() {
         <div className="donation-feed">
             {donations.length === 0 ? (
                 <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '12px' }}>
-                    <p>Aún no hay donaciones recientes. ¡Sé el primero en apoyar!</p>
+                    <p>{t('donors.no_donations')}</p>
                 </div>
             ) : (
                 <div className="donation-scroll-track">

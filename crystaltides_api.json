@@ -1,0 +1,243 @@
+{
+	"info": {
+		"_postman_id": "crystaltides-api",
+		"name": "CrystalTides API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Admin Panel",
+			"item": [
+				{
+					"name": "Logs (Web)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/logs?page=1&limit=50&source=web",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "logs"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "50" },
+								{ "key": "source", "value": "web" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Logs (Game/RCON)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/logs/commands?page=1&limit=50",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "logs", "commands"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "50" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Polls (History)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/polls?page=1&limit=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "polls"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Poll",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"New Poll\",\n    \"options\": [\"Option A\", \"Option B\"],\n    \"duration_hours\": 24\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/polls",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "polls"]
+						}
+					}
+				},
+				{
+					"name": "Get Donations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/donations?page=1&limit=50",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "donations"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "50" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Donation (Manual)",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"from_name\": \"User123\",\n    \"amount\": \"10.00\",\n    \"currency\": \"USD\",\n    \"message\": \"Great server!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/donations",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "donations"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Staff Hub",
+			"item": [
+				{
+					"name": "Get Tasks",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/staff/tasks",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "staff", "tasks"]
+						}
+					}
+				},
+				{
+					"name": "Create Task",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Fix Web Bug\",\n    \"status\": \"todo\",\n    \"priority\": \"high\",\n    \"assigned_to\": \"Admin\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/staff/tasks",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "staff", "tasks"]
+						}
+					}
+				},
+				{
+					"name": "Get Notes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/staff/notes",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "staff", "notes"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Content",
+			"item": [
+				{
+					"name": "Get News",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/news",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "news"]
+						}
+					}
+				},
+				{
+					"name": "Create News",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Update v1.0\",\n    \"content\": \"New features...\",\n    \"category\": \"update\",\n    \"image_url\": \"https://example.com/img.png\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/news",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "news"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Public Profile & Stats",
+			"item": [
+				{
+					"name": "Get Player Stats (Full)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/player-stats/UltraXn",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "player-stats", "UltraXn"],
+							"description": "Reemplaza 'UltraXn' con cualquier usuario para ver sus stats combinadas (MC + Web)."
+						}
+					}
+				},
+				{
+					"name": "Get Web User Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users/profile/UltraXn",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users", "profile", "UltraXn"]
+						}
+					}
+				},
+				{
+					"name": "Search/List Users (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/users?page=1&limit=20&search=",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "users"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "20" },
+								{ "key": "search", "value": "" }
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001",
+			"type": "string"
+		}
+	]
+}

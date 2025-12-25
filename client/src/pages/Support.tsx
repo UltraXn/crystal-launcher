@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { supabase } from '../services/supabaseClient'
 import { FaPlus, FaTicketAlt, FaCommentAlt } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -101,6 +101,8 @@ export default function Support() {
         }
     }
 
+    if (loading) return <div className="container" style={{paddingTop: '6rem'}}>{t('common.loading')}</div>
+
     return (
         <div className="container" style={{paddingTop: '6rem', minHeight: '80vh'}}>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem'}}>
@@ -118,9 +120,7 @@ export default function Support() {
             </div>
 
             {/* Tickets List */}
-            {loading ? (
-                <div style={{textAlign: 'center', padding: '3rem'}}>Loading...</div>
-            ) : tickets.length === 0 ? (
+            {tickets.length === 0 ? (
                 <div className="empty-state" style={{textAlign: 'center', padding: '4rem', background: 'var(--card-bg)', borderRadius: '1rem'}}>
                     <FaTicketAlt style={{fontSize: '3rem', color: 'var(--muted)', marginBottom: '1rem'}} />
                     <h3>{t('support.no_tickets')}</h3>
@@ -204,11 +204,11 @@ export default function Support() {
                                         onChange={e => setNewTicket({...newTicket, category: e.target.value})}
                                         style={{width: '100%', padding: '0.8rem', borderRadius: '0.5rem', background: '#0f0f1a', border: '1px solid #333', color: 'white'}}
                                     >
-                                        <option value="General">General</option>
-                                        <option value="Bug Report">🐛 Bug Report</option>
-                                        <option value="Player Report">🚫 Player Report</option>
-                                        <option value="Billing">💰 Billing/Store</option>
-                                        <option value="Unban Request">🔓 Unban Request</option>
+                                        <option value="General">{t('support.categories.general')}</option>
+                                        <option value="Bug Report">{t('support.categories.bug')}</option>
+                                        <option value="Player Report">{t('support.categories.player')}</option>
+                                        <option value="Billing">{t('support.categories.billing')}</option>
+                                        <option value="Unban Request">{t('support.categories.unban')}</option>
                                     </select>
                                 </div>
                                 <div>

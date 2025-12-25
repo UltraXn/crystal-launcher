@@ -13,6 +13,7 @@ export const getAllEvents = async (req: Request, res: Response) => {
 
 export const createEvent = async (req: Request, res: Response) => {
     try {
+        console.log("Creating event - Body received:", JSON.stringify(req.body));
         const event = await eventService.createEvent(req.body);
 
         logService.createLog({
@@ -24,7 +25,8 @@ export const createEvent = async (req: Request, res: Response) => {
 
         res.json(event);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        console.error("Error creating event:", error);
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
 

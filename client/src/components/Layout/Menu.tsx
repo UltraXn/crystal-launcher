@@ -16,8 +16,8 @@ export default function Menu() {
     const itemsRef = useRef<(HTMLAnchorElement | HTMLDivElement)[]>([])
 
     // Check if admin (Same logic as Navbar)
-    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper', 'owner', 'founder']
-    const isAdmin = allowedRoles.includes(user?.user_metadata?.role)
+    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper', 'owner', 'founder', 'developer']
+    const isAdmin = allowedRoles.includes(user?.user_metadata?.role?.toLowerCase())
 
     const toggleMenu = () => {
         if (!isOpen && buttonRef.current) {

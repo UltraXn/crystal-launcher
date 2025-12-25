@@ -65,7 +65,7 @@ export default function BroadcastManager({ settings, onUpdate, saving }: Broadca
     return (
         <div className="admin-card">
             <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                <FaBullhorn /> {t('admin.settings.broadcast.title', 'Alertas Globales')}
+                <FaBullhorn /> {t('admin.settings.broadcast.title')}
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -73,9 +73,9 @@ export default function BroadcastManager({ settings, onUpdate, saving }: Broadca
                 {/* 1. Toggle Active */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '8px' }}>
                     <div>
-                        <span style={{ fontWeight: 'bold' }}>Estado de la Alerta</span>
+                        <span style={{ fontWeight: 'bold' }}>{t('admin.settings.broadcast.status_label')}</span>
                         <p style={{ margin: 0, fontSize: '0.8rem', color: '#888' }}>
-                            {config.active ? 'Visible en toda la web' : 'Oculta para los usuarios'}
+                            {config.active ? t('admin.settings.broadcast.active') : t('admin.settings.broadcast.inactive')}
                         </p>
                     </div>
                     <label className="switch">
@@ -90,19 +90,19 @@ export default function BroadcastManager({ settings, onUpdate, saving }: Broadca
 
                 {/* 2. Message Input */}
                 <div>
-                    <label className="admin-label">Mensaje del Anuncio</label>
+                    <label className="admin-label">{t('admin.settings.broadcast.message_label')}</label>
                     <input 
                         className="admin-input" 
                         value={config.message}
                         onChange={(e) => setConfig({...config, message: e.target.value})}
-                        placeholder="Ej: Mantenimiento programado para el Sábado a las 20:00"
+                        placeholder={t('admin.settings.broadcast.placeholder')}
                     />
                 </div>
 
                 {/* 3. Type Selector */}
                 <div>
-                    <label className="admin-label">Tipo de Alerta</label>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <label className="admin-label">{t('admin.settings.broadcast.type_label')}</label>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                         {(['info', 'alert', 'error'] as const).map(type => (
                             <div 
                                 key={type}
@@ -137,7 +137,7 @@ export default function BroadcastManager({ settings, onUpdate, saving }: Broadca
                     borderRadius: '8px', 
                     marginTop: '0.5rem'
                 }}>
-                    <label style={{ fontSize: '0.75rem', color: '#666', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>Vista Previa</label>
+                    <label style={{ fontSize: '0.75rem', color: '#666', textTransform: 'uppercase', marginBottom: '0.5rem', display: 'block' }}>{t('admin.settings.broadcast.preview')}</label>
                     
                     {config.active ? (
                         <div style={{
@@ -149,11 +149,11 @@ export default function BroadcastManager({ settings, onUpdate, saving }: Broadca
                             textAlign: 'center',
                             boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                         }}>
-                             {config.message || '(Mensaje vacío)'}
+                             {config.message || t('admin.settings.broadcast.empty_msg')}
                         </div>
                     ) : (
                         <div style={{ textAlign: 'center', color: '#666', fontStyle: 'italic', padding: '0.5rem' }}>
-                            (La alerta está desactivada)
+                            {t('admin.settings.broadcast.disabled_msg')}
                         </div>
                     )}
                 </div>
@@ -165,7 +165,7 @@ export default function BroadcastManager({ settings, onUpdate, saving }: Broadca
                         disabled={saving === 'broadcast_config'}
                         style={{ padding: '0.8rem 2rem' }}
                     >
-                        {saving === 'broadcast_config' ? 'Guardando...' : <><FaSave /> Guardar Configuración</>}
+                        {saving === 'broadcast_config' ? t('admin.settings.saving') : <><FaSave /> {t('admin.settings.broadcast.save_btn')}</>}
                     </button>
                 </div>
                 

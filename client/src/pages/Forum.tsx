@@ -3,15 +3,17 @@ import { FaComments, FaBullhorn, FaTools, FaCoffee, FaUser, FaClock, FaFire, FaP
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
+interface Poll {
+    question: string;
+    question_en?: string;
+    options: PollOption[];
+}
+
 interface PollOption {
     id: string | number;
     label: string;
+    label_en?: string;
     percent: number;
-}
-
-interface Poll {
-    question: string;
-    options: PollOption[];
 }
 
 interface Category {
@@ -27,8 +29,10 @@ interface Category {
 interface NewsItem {
     id: string | number;
     title: string;
+    title_en?: string;
     image: string;
     content: string;
+    content_en?: string;
     status: string;
 }
 
@@ -79,7 +83,7 @@ const initialCategories: Category[] = [
 ]
 
 export default function Forum() {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const [categories, setCategories] = useState<Category[]>(initialCategories)
     const [activePoll, setActivePoll] = useState<Poll | null>(null)
     const API_URL = import.meta.env.VITE_API_URL
@@ -92,9 +96,10 @@ export default function Forum() {
         // 1. Fetch Real Active Poll
         fetch(`${API_URL}/polls/active`)
             .then(res => res.json())
-            .then(data => {
-                if (data && !data.message) { 
-                    setActivePoll(data)
+            .then(resData => {
+                const poll = resData.success ? resData.data : resData
+                if (poll && !poll.message && poll.options && poll.options.length > 0) { 
+                    setActivePoll(poll)
                 }
             })
             .catch(err => console.error("Error loading poll:", err))
@@ -155,16 +160,18 @@ export default function Forum() {
                                 <span style={{ color: '#ff4500', display: 'flex', alignItems: 'center', gap: '5px' }}><FaFire /> {t('forum_page.hot')}</span>
                             </div>
                             <h3 className="poll-question" style={{ fontSize: '1.2rem', marginBottom: '1.5rem', color: '#fff' }}>
-                                {activePoll.question}
+                                {i18n.language === 'en' && activePoll.question_en ? activePoll.question_en : activePoll.question}
                             </h3>
 
                             <div className="poll-options">
-                                {activePoll.options.slice(0, 3).map((opt: PollOption) => (
+                                {(activePoll.options || []).slice(0, 3).map((opt: PollOption) => (
                                     <div key={opt.id} className="poll-option" style={{ marginBottom: '0.5rem' }}>
                                         <div className="poll-bar-track" style={{ height: '30px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', position: 'relative', overflow: 'hidden' }}>
                                             <div className="poll-bar-fill" style={{ width: `${opt.percent}%`, height: '100%', background: 'var(--accent)', opacity: 0.3, position: 'absolute', top: 0, left: 0 }}></div>
                                             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.8rem' }}>
-                                                <span className="poll-label" style={{ fontWeight: 500, color: '#fff', zIndex: 1, fontSize: '0.9rem' }}>{opt.label}</span>
+                                                <span className="poll-label" style={{ fontWeight: 500, color: '#fff', zIndex: 1, fontSize: '0.9rem' }}>
+                                                    {i18n.language === 'en' && opt.label_en ? opt.label_en : opt.label}
+                                                </span>
                                                 <span className="poll-percent" style={{ fontWeight: 'bold', color: 'var(--accent)', zIndex: 1, fontSize: '0.9rem' }}>{opt.percent}%</span>
                                             </div>
                                         </div>
@@ -205,9 +212,11 @@ export default function Forum() {
                                 transition: 'transform 0.3s'
                             }}>
                                 <span style={{ background: '#f59e0b', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', width: 'fit-content', marginBottom: '0.5rem' }}>{t('forum_page.new_badge')}</span>
-                                <h3 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '0.5rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{latestNews.title}</h3>
+                                <h3 style={{ color: '#fff', fontSize: '1.5rem', marginBottom: '0.5rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                                    {i18n.language === 'en' && latestNews.title_en ? latestNews.title_en : latestNews.title}
+                                </h3>
                                 <p style={{ color: '#ddd', fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                    {latestNews.content ? latestNews.content.substring(0, 100) : ""}...
+                                    {(i18n.language === 'en' && latestNews.content_en ? latestNews.content_en : (latestNews.content || "")).substring(0, 100)}...
                                 </p>
                             </div>
                         </Link>

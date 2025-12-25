@@ -13,11 +13,7 @@ interface Notification {
 
 export default function NotificationCenter() {
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<Notification[]>([
-        { id: 1, type: 'info', title: 'Bienvenido', message: 'Gracias por unirte a CrystalTides.', time: 'Hace 2m', read: false },
-        { id: 2, type: 'success', title: 'Recompensa', message: 'Has recibido tu kit de inicio.', time: 'Hace 1h', read: true },
-        { id: 3, type: 'warning', title: 'Mantenimiento', message: 'El servidor reiniciará a las 04:00 AM.', time: 'Hace 5h', read: true },
-    ]);
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Close when clicking outside
@@ -54,6 +50,7 @@ export default function NotificationCenter() {
         <div className="notification-center" ref={containerRef} style={{ position: 'relative' }}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
+                aria-label="Notificaciones"
                 style={{ 
                     background: 'transparent', 
                     border: 'none', 

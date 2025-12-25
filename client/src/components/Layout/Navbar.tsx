@@ -128,18 +128,23 @@ export default function Navbar() {
     }
 
     const handleLogout = async () => {
-        await logout()
-        setDropdownOpen(false)
-        navigate('/')
+        try {
+            await logout()
+        } catch (error) {
+            console.error("Logout error:", error)
+        } finally {
+            setDropdownOpen(false)
+            navigate('/')
+        }
     }
 
     const location = useLocation()
     // Exact match for home, since other pages like /forum need to be treated as "internal"
     const isHome = location.pathname === '/'
 
-    // Check if admin (Allowed roles: admin, neroferno, killu, helper)
-    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper']
-    const isAdmin = allowedRoles.includes(user?.user_metadata?.role)
+    // Check if admin (Allowed roles: admin, neroferno, killu, helper, developer)
+    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper', 'developer']
+    const isAdmin = allowedRoles.includes(user?.user_metadata?.role?.toLowerCase())
 
     return (
         <header className={`navbar ${scrolled ? 'scrolled' : ''} ${isHome ? 'is-home' : ''}`}>
@@ -149,24 +154,26 @@ export default function Navbar() {
                         <img
                             ref={logoRef}
                             src="/images/ui/logo.webp"
-                            alt="Crystal Tides SMP Logo"
+                            alt="CrystalTides SMP Logo"
                             className="navbar-logo"
                             onMouseEnter={handleLogoHover}
                             width="40"
                             height="40"
                         />
-                        <span className="navbar-title">Crystal Tides SMP</span>
+                        <span className="navbar-title">CrystalTides SMP</span>
                     </Link>
                 </div>
                 <div className="nav-links">
-                    <div className="desktop-nav-items">
-                        <Link to="/#rules">{t('navbar.rules')}</Link>
-                        <Link to="/#donors" style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{t('navbar.donors')}</Link>
-                        <Link to="/#news">{t('navbar.news')}</Link>
-                        <Link to="/#suggestions">{t('footer.suggestions')}</Link>
-                        <Link to="/forum">{t('navbar.forum')}</Link>
-                        <Link to="/map">{t('footer.online_map')}</Link>
-                    </div>
+                    {!location.pathname.startsWith('/admin') && (
+                        <div className="desktop-nav-items">
+                            <Link to="/#rules">{t('navbar.rules')}</Link>
+                            <Link to="/#donors" style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{t('navbar.donors')}</Link>
+                            <Link to="/#news">{t('navbar.news')}</Link>
+                            <Link to="/#suggestions">{t('footer.suggestions')}</Link>
+                            <Link to="/forum">{t('navbar.forum')}</Link>
+                            <Link to="/map">{t('footer.online_map')}</Link>
+                        </div>
+                    )}
                     <div className="mobile-menu-trigger">
                         <Menu />
                     </div>
@@ -208,7 +215,20 @@ export default function Navbar() {
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                             >
                                 {user.user_metadata?.avatar_url ? (
-                                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="user-mini-avatar" />
+                                    <img 
+                                        src={user.user_metadata.avatar_url} 
+                                        alt="Avatar" 
+                                        className="user-mini-avatar" 
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            if (user.user_metadata?.username) {
+                                                e.currentTarget.src = `https://minotar.net/helm/${user.user_metadata.username}/64.png`;
+                                            } else {
+                                                e.currentTarget.style.display = 'none';
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden'); // Hacky fallback logic or just let it break gracefully
+                                            }
+                                        }}
+                                    />
                                 ) : (
                                     <FaUserCircle size={20} />
                                 )}
@@ -281,6 +301,7 @@ function UserRoleDisplay({ role }: { role: string }) {
         killu: { label: t('account.roles.killu'), img: '/ranks/rank-killu.png' },
         founder: { label: t('account.roles.founder'), img: '/ranks/rank-fundador.png' },
         admin: { label: t('account.roles.admin'), img: '/ranks/admin.png' },
+        developer: { label: t('account.roles.developer'), img: '/ranks/developer.png' },
         helper: { label: t('account.roles.helper'), img: '/ranks/helper.png' },
         donor: { label: t('account.roles.donor'), img: '/ranks/rank-donador.png' },
         user: { label: t('account.roles.user'), img: '/ranks/user.png' }
@@ -290,7 +311,7 @@ function UserRoleDisplay({ role }: { role: string }) {
     const current = rolesMap[role] || roles.user
 
     if(current.img) {
-        return <img src={current.img} alt={role} />
+        return <img src={current.img} alt={role} style={{ height: 'auto', width: 'auto' }} />
     }
 
     return (

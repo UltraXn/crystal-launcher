@@ -1,5 +1,6 @@
 import supabase from './supabaseService.js';
 import * as pollService from './pollService.js';
+import * as discordService from './discordService.js';
 
 export const getThreads = async (categoryId: number) => {
     // Select * and the count of related posts
@@ -89,6 +90,9 @@ export const createThread = async ({ category_id, title, content, user_data, pol
         
         await supabase.from('forum_threads').update({ poll_id: poll.id }).eq('id', thread.id);
     }
+
+    // 3. Notify Discord
+    discordService.notifyNewThread(thread).catch(console.error);
 
     return thread;
 };
@@ -209,8 +213,8 @@ export const getCategoryStats = async () => {
     return stats;
 }
 
-export const updateThread = async (id: number, { title, content }: any) => {
-    const { data, error } = await supabase.from('forum_threads').update({ title, content }).eq('id', id).select().single();
+export const updateThread = async (id: number, updates: any) => {
+    const { data, error } = await supabase.from('forum_threads').update(updates).eq('id', id).select().single();
     if(error) throw error;
     return data;
 };

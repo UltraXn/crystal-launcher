@@ -11,7 +11,9 @@ import confetti from "canvas-confetti"
 interface ContestEvent {
     id: string | number;
     title: string;
+    title_en?: string;
     description: string;
+    description_en?: string;
     type: 'hammer' | 'dice' | 'map' | 'running';
     status: 'active' | 'soon' | 'finished';
 }
@@ -31,15 +33,16 @@ const iconMap: Record<string, React.ReactElement> = {
 }
 
 const ContestCard = ({ event, onRegister, registering, isRegistered }: ContestCardProps) => {
-    const { t } = useTranslation()
-    const { id, title, description, type, status } = event
+    const { t, i18n } = useTranslation()
+    const { id, title, title_en, description, description_en, type, status } = event
     
     // Fallback status text
     const statusText = status === 'active' ? t('contests.status.active') :
                        status === 'soon' ? t('contests.status.soon') :
                        t('contests.status.finished');
 
-
+    const displayTitle = (i18n.language === 'en' && title_en) ? title_en : title;
+    const displayDescription = (i18n.language === 'en' && description_en) ? description_en : description;
 
     return (
         <div className="contest-card">
@@ -58,8 +61,8 @@ const ContestCard = ({ event, onRegister, registering, isRegistered }: ContestCa
                 <div className="contest-main-icon">
                     {iconMap[type] || <FaHammer />}
                 </div>
-                <h3 className="contest-title">{title}</h3>
-                <p className="contest-desc">{description}</p>
+                <h3 className="contest-title">{displayTitle}</h3>
+                <p className="contest-desc">{displayDescription}</p>
             </div>
             
             <div className="contest-card-footer">
@@ -69,25 +72,27 @@ const ContestCard = ({ event, onRegister, registering, isRegistered }: ContestCa
                         onClick={() => !isRegistered && onRegister(id)}
                         disabled={registering || isRegistered}
                     >
-                        {registering ? 'Procesando...' : isRegistered ? (
+                        {registering ? t('common.processing') : isRegistered ? (
                             <>
-                                <FaCheckCircle /> ¡Ya estás dentro!
+                                <FaCheckCircle /> {t('contests.registered_btn')}
                             </>
                         ) : (
                             <>
-                                <FaSignInAlt /> Inscribirme Ahora
+                                <FaSignInAlt /> {t('contests.register_btn')}
                             </>
                         )}
                     </button>
                 ) : (
                     <button className="contest-action-btn disabled" disabled>
-                        Evento Finalizado
+                        {t('contests.status.finished')}
                     </button>
                 )}
             </div>
         </div>
     )
 }
+
+import ConfirmationModal from "../components/UI/ConfirmationModal"
 
 export default function Contests() {
     const { t } = useTranslation()
@@ -96,7 +101,8 @@ export default function Contests() {
     const [events, setEvents] = useState<ContestEvent[]>([])
     const [myRegistrations, setMyRegistrations] = useState<(string | number)[]>([])
     const [loading, setLoading] = useState(true)
-    const [registering, setRegistering] = useState<string | number | null>(null) // ID of event being registered for
+    const [registering, setRegistering] = useState<string | number | null>(null)
+    const [showLoginModal, setShowLoginModal] = useState(false)
 
     const API_URL = import.meta.env.VITE_API_URL
 
@@ -139,13 +145,11 @@ export default function Contests() {
         }
 
         fetchData()
-    }, [user, API_URL]) // Re-run if user logs in/out
+    }, [user, API_URL]) 
 
     const handleRegister = async (eventId: string | number) => {
         if (!user) {
-            if(window.confirm("Debes iniciar sesión para inscribirte. ¿Ir al login?")) {
-                navigate('/login')
-            }
+            setShowLoginModal(true)
             return
         }
 
@@ -161,15 +165,14 @@ export default function Contests() {
 
             if (!res.ok) {
                 if (data.error && data.error.includes("Ya estás inscrito")) {
-                    alert("¡Ya estás inscrito en este evento!")
+                    alert(t('contests.already_registered'))
                 } else {
-                    throw new Error(data.error || "Error al inscribirse")
+                    throw new Error(data.error || t('contests.registration_error'))
                 }
             } else {
                 // Success!
                 triggerConfetti()
                 setMyRegistrations(prev => [...prev, eventId])
-                // alert("¡Inscripción exitosa! Te esperamos.") // Optional: remove alert if button change is enough
             }
         } catch (error: any) {
             console.error("Registration error:", error)
@@ -211,7 +214,7 @@ export default function Contests() {
 
             <div className="contests-grid">
                 {loading ? (
-                    <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#666' }}>Cargando eventos...</div>
+                    <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#666' }}>{t('common.loading')}</div>
                 ) : events.length > 0 ? (
                     events.map(event => (
                         <ContestCard 
@@ -224,10 +227,23 @@ export default function Contests() {
                     ))
                 ) : (
                     <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#666', border: '1px dashed #333', padding: '2rem', borderRadius: '8px' }}>
-                        No hay eventos activos por el momento.
+                        {t('contests.no_events')}
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal 
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
+                onConfirm={() => {
+                    setShowLoginModal(false)
+                    navigate('/login')
+                }}
+                title={t('login.title')}
+                message={t('contests.login_required')}
+                confirmText={t('login.sign_in_verb')}
+                cancelText="Cancelar"
+            />
         </Section>
     )
 }

@@ -1,15 +1,18 @@
+import { lazy } from 'react'
 import Hero from "../components/Hero"
 import Section from "../components/Layout/Section"
 import SectionDivider from "../components/Layout/SectionDivider"
 import ServerFeatures from "../components/Home/ServerFeatures"
 import LazyWrapper from "../components/Utils/LazyWrapper"
 
-import Rules from "./Rules"
-import Donors from "./Donors"
-import Contests from "./Contests"
-import Blog from "./Blog"
-import Stories from "./Stories"
-import Suggestions from "./Suggestions"
+// Lazy load below-the-fold sections to reduce initial bundle size
+const Rules = lazy(() => import("./Rules"))
+const Donors = lazy(() => import("./Donors"))
+const Contests = lazy(() => import("./Contests"))
+const Blog = lazy(() => import("./Blog"))
+const Stories = lazy(() => import("./Stories"))
+const Suggestions = lazy(() => import("./Suggestions"))
+import StaffShowcase from "../components/Home/StaffShowcase"
 
 import { useTranslation } from 'react-i18next'
 import DiscordButton from "../components/UI/DiscordButton"
@@ -61,6 +64,12 @@ export default function Home() {
                 <LazyWrapper>
                     <Donors />
                 </LazyWrapper>
+            </div>
+
+            <SectionDivider />
+
+            <div id="staff">
+                <StaffShowcase />
             </div>
 
             <SectionDivider />

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
-import { FaUser, FaCalendarAlt, FaArrowLeft, FaEye, FaReply, FaPaperPlane, FaEdit, FaTrash, FaCheck, FaTimes, FaImage } from "react-icons/fa"
+import { FaUser, FaCalendarAlt, FaArrowLeft, FaEye, FaReply, FaPaperPlane, FaEdit, FaTrash, FaCheck, FaTimes, FaImage, FaThumbtack, FaLock, FaUnlock } from "react-icons/fa"
 import Loader from "../components/UI/Loader"
 import { useAuth } from "../context/AuthContext"
 import RoleBadge from "../components/User/RoleBadge"
 import PollDisplay from "../components/Forum/PollDisplay"
 import { useTranslation } from "react-i18next"
 import { supabase } from '../services/supabaseClient'
+import MarkdownRenderer from "../components/UI/MarkdownRenderer"
 
 interface Thread {
     id: string | number;
@@ -23,6 +24,10 @@ interface Thread {
     category_id: number;
     views: number;
     poll: Poll | null;
+    pinned: boolean;
+    locked: boolean;
+    title_en?: string;
+    content_en?: string;
 }
 
 interface Comment {
@@ -92,32 +97,7 @@ interface Poll {
     closesIn: string;
 }
 
-// Simple Custom Markdown Renderer (moved to top level)
-const MarkdownRenderer = ({ content }: { content: string }) => {
-    if (!content) return null;
-    const parts = content.split(/(!\[.*?\]\(.*?\)|\[.*?\]\(.*?\)|(?:\*\*[^*]+\*\*))/g);
-    return (
-        <>
-            {parts.map((part, index: number) => {
-                const imgMatch = part.match(/^!\[(.*?)\]\((.*?)\)$/);
-                if (imgMatch) {
-                    return (
-                        <div key={index} style={{ margin: '1rem 0', borderRadius: '8px', overflow: 'hidden' }}>
-                            <img src={imgMatch[2]} alt={imgMatch[1] || 'Image'} style={{ maxWidth: '100%', height: 'auto', borderRadius: '8px', display: 'block' }} loading="lazy" />
-                        </div>
-                    );
-                }
-                const linkMatch = part.match(/^\[(.*?)\]\((.*?)\)$/);
-                if (linkMatch) {
-                   return <a key={index} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{linkMatch[1]}</a>;
-                }
-                const boldMatch = part.match(/^\*\*(.*?)\*\*$/);
-                if (boldMatch) { return <strong key={index} style={{ color: '#fff' }}>{boldMatch[1]}</strong>; }
-                return <span key={index}>{part}</span>;
-            })}
-        </>
-    );
-};
+// MarkdownRenderer is now imported from shared components
 
 export default function ForumThread() {
     const { type, id } = useParams<{ type: 'news' | 'topic', id: string }>()
@@ -139,7 +119,7 @@ export default function ForumThread() {
 
     const API_URL = import.meta.env.VITE_API_URL
     const isTopic = type === 'topic'
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
 
     const [deleteModal, setDeleteModal] = useState<{ type: 'thread' | 'post', id: string | number } | null>(null)
 
@@ -160,6 +140,8 @@ export default function ForumThread() {
                     id: threadData.id,
                     title: threadData.title,
                     content: threadData.content,
+                    title_en: threadData.title_en,
+                    content_en: threadData.content_en,
                     author: isTopic ? (threadData.author_name || "Anónimo") : "Staff",
                     author_id: isTopic ? threadData.user_id : threadData.author_id, // Important for ownership check
                     author_avatar: isTopic ? threadData.author_avatar : null, // Add avatar
@@ -170,7 +152,9 @@ export default function ForumThread() {
                     tag: isTopic ? (categoryNames[threadData.category_id] || "General") : threadData.category,
                     category_id: threadData.category_id,
                     views: threadData.views || 0,
-                    poll: threadData.poll || null
+                    poll: threadData.poll || null,
+                    pinned: threadData.pinned || false,
+                    locked: threadData.locked || false
                 })
 
                 setEditThreadData({ title: threadData.title, content: threadData.content })
@@ -222,8 +206,13 @@ export default function ForumThread() {
 
     const isOwnerOrAdmin = (targetUserId: string | null) => {
         if (!user) return false;
-        const isAdmin = user.user_metadata?.role === 'admin' || user.user_metadata?.role === 'owner';
+        const isAdmin = ['admin', 'owner', 'neroferno', 'killu', 'helper'].includes(user.user_metadata?.role);
         return isAdmin || (user.id === targetUserId);
+    }
+
+    const isAdmin = () => {
+        if (!user) return false;
+        return ['admin', 'owner', 'neroferno', 'killu', 'helper'].includes(user.user_metadata?.role);
     }
 
     const handleUpdateThread = async () => {
@@ -240,6 +229,32 @@ export default function ForumThread() {
             } else {
                 alert("Error al actualizar");
             }
+        } catch (e) { console.error(e); }
+    }
+
+    const togglePin = async () => {
+        if (!thread) return;
+        try {
+            const newValue = !thread.pinned;
+            const res = await fetch(`${API_URL}/forum/thread/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pinned: newValue })
+            });
+            if (res.ok) setThread({ ...thread, pinned: newValue });
+        } catch (e) { console.error(e); }
+    }
+
+    const toggleLock = async () => {
+        if (!thread) return;
+        try {
+            const newValue = !thread.locked;
+            const res = await fetch(`${API_URL}/forum/thread/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ locked: newValue })
+            });
+            if (res.ok) setThread({ ...thread, locked: newValue });
         } catch (e) { console.error(e); }
     }
 
@@ -440,7 +455,9 @@ export default function ForumThread() {
                                     />
                                 </div>
                             ) : (
-                                <h1 style={{ fontSize: '2.5rem', color: '#fff', lineHeight: 1.2 }}>{thread.title}</h1>
+                                    <h1 style={{ fontSize: '2.5rem', color: '#fff', lineHeight: 1.2 }}>
+                                        {(i18n.language === 'en' && thread?.title_en) ? thread.title_en : thread.title}
+                                    </h1>
                             )}
 
                             <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -454,10 +471,22 @@ export default function ForumThread() {
                                     </div>
                                 </div>
 
-                                {/* Owner/Admin Actions for Thread */}
+                                 {/* Owner/Admin Actions for Thread */}
                                 {isTopic && isOwnerOrAdmin(thread.author_id) && !isEditingThread && (
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={() => setIsEditingThread(true)} className="btn-icon" title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer' }}>
+                                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                                        {/* Mod Tools - Only for Staff */}
+                                        {isAdmin() && (
+                                            <>
+                                                <button onClick={togglePin} className="btn-icon" title={thread.pinned ? "Desfijar" : "Fijar"} style={{ background: 'transparent', border: 'none', color: thread.pinned ? 'var(--accent)' : '#888', cursor: 'pointer' }}>
+                                                    <FaThumbtack size={16} style={{ transform: thread.pinned ? 'rotate(0deg)' : 'rotate(45deg)', transition: 'all 0.3s' }} />
+                                                </button>
+                                                <button onClick={toggleLock} className="btn-icon" title={thread.locked ? "Desbloquear" : "Bloquear"} style={{ background: 'transparent', border: 'none', color: thread.locked ? '#ef4444' : '#888', cursor: 'pointer' }}>
+                                                    {thread.locked ? <FaLock size={16} /> : <FaUnlock size={16} />}
+                                                </button>
+                                            </>
+                                        )}
+                                        
+                                        <button onClick={() => setIsEditingThread(true)} className="btn-icon" title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', marginLeft: '0.5rem' }}>
                                             <FaEdit size={18} />
                                         </button>
                                         <button onClick={handleDeleteThread} className="btn-icon" title="Eliminar" style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
@@ -489,7 +518,7 @@ export default function ForumThread() {
                             />
                         ) : (
                             <div className="thread-content" style={{ color: '#e0e0e0', fontSize: '1.1rem', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-                                <MarkdownRenderer content={thread.content} />
+                                <MarkdownRenderer content={(i18n.language === 'en' && thread?.content_en) ? thread.content_en : thread.content} />
                             </div>
                         )}
                         
@@ -557,91 +586,99 @@ export default function ForumThread() {
                     </div>
 
                     {user ? (
-                        <form onSubmit={handlePostComment} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#333', overflow: 'hidden', flexShrink: 0 }}>
-                                 {user.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <FaUser color="#888" style={{padding:'8px'}}/>}
+                        thread.locked && !isAdmin() ? (
+                            <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                <FaLock size={30} style={{ color: '#ef4444', marginBottom: '1rem' }} />
+                                <h4 style={{ color: '#fff', margin: '0 0 0.5rem 0' }}>Tema Cerrado</h4>
+                                <p style={{ color: '#888', margin: 0 }}>Este tema ha sido bloqueado por un moderador y no admite más respuestas.</p>
                             </div>
-                            <div style={{ flexGrow: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden', transition: 'border-color 0.2s' }}
-                                 onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-                                 onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
-                            >
-                                <textarea 
-                                    className="form-textarea" 
-                                    placeholder={t('forum_thread.write_reply')} 
-                                    rows={3} 
-                                    value={newComment} 
-                                    onChange={(e) => setNewComment(e.target.value)} 
-                                    style={{ 
-                                        width: '100%', 
-                                        background: 'transparent', 
-                                        border: 'none', 
-                                        padding: '1rem', 
-                                        color: '#fff', 
-                                        resize: 'vertical', 
-                                        minHeight: '80px',
-                                        outline: 'none'
-                                    }}
-                                ></textarea>
-                                
-                                {/* Image Preview Area - Integrated */}
-                                {pendingImageRepl && (
-                                    <div style={{ padding: '0 1rem 1rem 1rem' }}>
-                                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '1rem', border: '1px solid var(--accent)', padding: '0.5rem' }}>
-                                            <img src={pendingImageRepl.preview} style={{ height: '50px', borderRadius: '4px', objectFit: 'cover' }} alt="preview" />
-                                            <div style={{ fontSize: '0.8rem', color: '#ccc' }}>
-                                                <div style={{ fontWeight: 'bold', color: '#fff' }}>Imagen lista</div>
-                                            </div>
-                                            <button type="button" onClick={clearReplImage} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding: '0 0.5rem', fontSize:'1.1rem'}}><FaTimes /></button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Toolbar */}
-                                <div style={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between', 
-                                    alignItems: 'center', 
-                                    padding: '0.5rem 1rem', 
-                                    background: 'rgba(255,255,255,0.02)', 
-                                    borderTop: '1px solid rgba(255,255,255,0.05)' 
-                                }}>
-                                    <label title="Adjuntar imagen" style={{ 
-                                        cursor: 'pointer', 
-                                        color: pendingImageRepl ? 'var(--accent)' : '#aaa', 
-                                        fontSize: '1.2rem', 
-                                        padding: '0.5rem', 
-                                        borderRadius: '50%', 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        justifyContent: 'center',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => {e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'}}
-                                    onMouseLeave={(e) => {e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = pendingImageRepl ? 'var(--accent)' : '#aaa'}}
-                                    >
-                                        <FaImage />
-                                        <input type="file" accept="image/*" onChange={handleReplImageSelect} style={{ display: 'none' }} />
-                                    </label>
-
-                                    <button type="submit" disabled={(!newComment.trim() && !pendingImageRepl)} style={{
-                                        background: (!newComment.trim() && !pendingImageRepl) ? '#444' : 'var(--accent)',
-                                        color: (!newComment.trim() && !pendingImageRepl) ? '#888' : '#000',
-                                        border: 'none',
-                                        padding: '0.4rem 1.2rem',
-                                        borderRadius: '4px',
-                                        fontWeight: 'bold',
-                                        fontSize: '0.9rem',
-                                        cursor: (!newComment.trim() && !pendingImageRepl) ? 'not-allowed' : 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem',
-                                        transition: 'transform 0.1s'
-                                    }}>
-                                        <FaPaperPlane size={12} /> {t('forum_thread.publish')}
-                                    </button>
+                        ) : (
+                            <form onSubmit={handlePostComment} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#333', overflow: 'hidden', flexShrink: 0 }}>
+                                     {user.user_metadata?.avatar_url ? <img src={user.user_metadata.avatar_url} style={{width:'100%',height:'100%',objectFit:'cover'}} alt="user"/> : <FaUser color="#888" style={{padding:'8px'}}/>}
                                 </div>
-                            </div>
-                        </form>
+                                <div style={{ flexGrow: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', overflow: 'hidden', transition: 'border-color 0.2s' }}
+                                     onFocus={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
+                                     onBlur={(e) => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                                >
+                                    <textarea 
+                                        className="form-textarea" 
+                                        placeholder={t('forum_thread.write_reply')} 
+                                        rows={3} 
+                                        value={newComment} 
+                                        onChange={(e) => setNewComment(e.target.value)} 
+                                        style={{ 
+                                            width: '100%', 
+                                            background: 'transparent', 
+                                            border: 'none', 
+                                            padding: '1rem', 
+                                            color: '#fff', 
+                                            resize: 'vertical', 
+                                            minHeight: '80px',
+                                            outline: 'none'
+                                        }}
+                                    ></textarea>
+                                    
+                                    {/* Image Preview Area - Integrated */}
+                                    {pendingImageRepl && (
+                                        <div style={{ padding: '0 1rem 1rem 1rem' }}>
+                                            <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '1rem', border: '1px solid var(--accent)', padding: '0.5rem' }}>
+                                                <img src={pendingImageRepl.preview} style={{ height: '50px', borderRadius: '4px', objectFit: 'cover' }} alt="preview" />
+                                                <div style={{ fontSize: '0.8rem', color: '#ccc' }}>
+                                                    <div style={{ fontWeight: 'bold', color: '#fff' }}>Imagen lista</div>
+                                                </div>
+                                                <button type="button" onClick={clearReplImage} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding: '0 0.5rem', fontSize:'1.1rem'}}><FaTimes /></button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Toolbar */}
+                                    <div style={{ 
+                                        display: 'flex', 
+                                        justifyContent: 'space-between', 
+                                        alignItems: 'center', 
+                                        padding: '0.5rem 1rem', 
+                                        background: 'rgba(255,255,255,0.02)', 
+                                        borderTop: '1px solid rgba(255,255,255,0.05)' 
+                                    }}>
+                                        <label title="Adjuntar imagen" style={{ 
+                                            cursor: 'pointer', 
+                                            color: pendingImageRepl ? 'var(--accent)' : '#aaa', 
+                                            fontSize: '1.2rem', 
+                                            padding: '0.5rem', 
+                                            borderRadius: '50%', 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => {e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'}}
+                                        onMouseLeave={(e) => {e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = pendingImageRepl ? 'var(--accent)' : '#aaa'}}
+                                        >
+                                            <FaImage />
+                                            <input type="file" accept="image/*" onChange={handleReplImageSelect} style={{ display: 'none' }} />
+                                        </label>
+
+                                        <button type="submit" disabled={(!newComment.trim() && !pendingImageRepl)} style={{
+                                            background: (!newComment.trim() && !pendingImageRepl) ? '#444' : 'var(--accent)',
+                                            color: (!newComment.trim() && !pendingImageRepl) ? '#888' : '#000',
+                                            border: 'none',
+                                            padding: '0.4rem 1.2rem',
+                                            borderRadius: '4px',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.9rem',
+                                            cursor: (!newComment.trim() && !pendingImageRepl) ? 'not-allowed' : 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            transition: 'transform 0.1s'
+                                        }}>
+                                            <FaPaperPlane size={12} /> {t('forum_thread.publish')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        )
                     ) : (
                         <div style={{ textAlign: 'center', padding: '2rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
                             <p style={{ color: 'var(--muted)', marginBottom: '1rem' }}>{t('forum_thread.login_to_reply')}</p>
