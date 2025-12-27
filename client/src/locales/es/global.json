@@ -366,6 +366,12 @@
         "name": {
             "error_update": "Error al actualizar nombre"
         },
+        "avatar_preference": {
+            "title": "Preferencia de Avatar",
+            "minecraft": "Minecraft",
+            "social": "Social / Web",
+            "hint": "* Elige que imagen prefieres ver en tu perfil publico y barra de navegacion."
+        },
         "roles": {
             "admin": "Administrador",
             "user": "Usuario",
@@ -697,7 +703,7 @@
             "linked_account": "Cuenta Enlazada",
             "confirm_modal": {
                 "title": "Confirmar Equipo",
-                "detected_msg": "Se han detectado <1>{{count}}</1> miembros del staff activos.",
+                "detected_msg": "Se han detectado <b>{{count}}</b> miembros del staff activos.",
                 "warning": "Esta acción reemplazará la lista actual.",
                 "cancel": "Cancelar",
                 "save": "Guardar Staff"

@@ -2,6 +2,54 @@ import supabase from './supabaseService.js';
 import * as pollService from './pollService.js';
 import * as discordService from './discordService.js';
 
+export interface ForumThread {
+    id: number;
+    category_id: number;
+    user_id: string;
+    author_name: string;
+    author_avatar: string;
+    author_role: string;
+    title: string;
+    content: string;
+    slug: string;
+    views: number;
+    pinned: boolean;
+    poll_id?: number | null;
+    created_at: string;
+    reply_count?: number; // Virtual field
+    forum_posts?: { count: number }[]; // Relation for count
+}
+
+export interface ForumPost {
+    id: number;
+    thread_id: number;
+    user_id: string;
+    author_name: string;
+    author_avatar: string;
+    author_role: string;
+    content: string;
+    created_at: string;
+}
+
+interface CreateThreadData {
+    category_id: number;
+    title: string;
+    content: string;
+    user_data: {
+        id: string;
+        name: string;
+        avatar: string;
+        role: string;
+    };
+    poll_data?: {
+        enabled: boolean;
+        question?: string;
+        options?: string[];
+        closes_at?: string;
+        discord_link?: string;
+    };
+}
+
 // Helper function for slug generation
 const slugify = (text: string) => {
     return text
@@ -27,9 +75,9 @@ export const getThreads = async (categoryId: number) => {
     if(error) throw error;
     
     // Flatten structure: forum_posts: [{count: 3}] -> reply_count: 3
-    return data.map((t: any) => ({
+    return (data as unknown as ForumThread[]).map((t) => ({
         ...t,
-        reply_count: t.forum_posts ? t.forum_posts[0].count : 0,
+        reply_count: t.forum_posts && t.forum_posts.length > 0 ? t.forum_posts[0].count : 0,
         forum_posts: undefined // Remove the array
     }));
 };
@@ -43,9 +91,9 @@ export const getUserThreads = async (userId: string) => {
 
     if(error) throw error;
 
-    return data.map((t: any) => ({
+    return (data as unknown as ForumThread[]).map((t) => ({
         ...t,
-        reply_count: t.forum_posts ? t.forum_posts[0].count : 0,
+        reply_count: t.forum_posts && t.forum_posts.length > 0 ? t.forum_posts[0].count : 0,
         forum_posts: undefined
     }));
 };
@@ -73,7 +121,7 @@ export const getThread = async (id: number | string) => {
     return { ...thread, poll };
 };
 
-export const createThread = async ({ category_id, title, content, user_data, poll_data }: any) => {
+export const createThread = async ({ category_id, title, content, user_data, poll_data }: CreateThreadData) => {
     const slug = slugify(title);
 
     // 1. Create Thread
@@ -125,7 +173,7 @@ export const getPosts = async (threadId: number) => {
     return data;
 };
 
-export const createPost = async ({ thread_id, content, user_data }: any) => {
+export const createPost = async ({ thread_id, content, user_data }: { thread_id: number; content: string; user_data: { id: string; name: string; avatar: string; role: string } }) => {
     const { data, error } = await supabase.from('forum_posts').insert([{
         thread_id, 
         content, 
@@ -178,7 +226,7 @@ export const getCategoryStats = async () => {
             .eq('category_id', catId);
         
         if (threads && threads.length > 0) {
-            const threadIds = threads.map((t: any) => t.id);
+            const threadIds = threads.map((t) => t.id);
 
             // Count replies
             const { count: replyCount } = await supabase
@@ -235,7 +283,7 @@ export const getCategoryStats = async () => {
     return stats;
 }
 
-export const updateThread = async (id: number, updates: any) => {
+export const updateThread = async (id: number, updates: Partial<ForumThread>) => {
     const { data, error } = await supabase.from('forum_threads').update(updates).eq('id', id).select().single();
     if(error) throw error;
     return data;
@@ -258,7 +306,7 @@ export const deleteThread = async (id: number) => {
     if(error) throw error;
 };
 
-export const updatePost = async (id: number, { content }: any) => {
+export const updatePost = async (id: number, { content }: { content: string }) => {
     const { data, error } = await supabase.from('forum_posts').update({ content }).eq('id', id).select().single();
     if(error) throw error;
     return data;

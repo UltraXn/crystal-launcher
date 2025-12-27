@@ -32,6 +32,7 @@ interface Profile {
     social_twitch?: string;
     social_youtube?: string;
     minecraft_uuid?: string;
+    avatar_preference?: 'minecraft' | 'social';
 }
 
 interface PlayerStats {
@@ -329,7 +330,11 @@ export default function PublicProfile() {
                     <div className="profile-card">
                         <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
                             <img 
-                                src={profile.avatar_url || `https://mc-heads.net/avatar/${profile.username}/128`} 
+                                src={
+                                    (profile.avatar_preference === 'social' && profile.avatar_url) 
+                                        ? profile.avatar_url 
+                                        : `https://mc-heads.net/avatar/${profile.username}/128`
+                                } 
                                 alt={profile.username}
                                 style={{ 
                                     width: '128px', 

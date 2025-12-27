@@ -22,15 +22,16 @@ export const initCleanupJob = () => {
 
             if (toDelete && toDelete.length > 0) {
                 console.log(`🗑️ Se encontraron ${toDelete.length} noticias irrelevantes para eliminar.`);
-                const idsToDelete = toDelete.map((n: any) => n.id);
+                const idsToDelete = toDelete.map((n: { id: number }) => n.id);
                 const { error: deleteError } = await supabase.from('news').delete().in('id', idsToDelete);
                 if (deleteError) throw deleteError;
                 console.log('✅ Limpieza de noticias completada.');
             } else {
                 console.log('✨ No hay noticias antiguas para limpiar.');
             }
-        } catch (error: any) {
-            console.error('❌ Error en el job de limpieza de noticias:', error.message);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error('❌ Error en el job de limpieza de noticias:', message);
         }
     });
 
@@ -54,8 +55,9 @@ export const initCleanupJob = () => {
             } else {
                 console.log('✨ No hay logs antiguos para eliminar.');
             }
-        } catch (error: any) {
-            console.error('❌ Error en el job de limpieza de logs:', error.message);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error('❌ Error en el job de limpieza de logs:', message);
         }
     });
 

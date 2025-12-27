@@ -1,4 +1,9 @@
 import pool from '../config/database.js';
+import { RowDataPacket } from 'mysql2';
+
+interface SkinRow extends RowDataPacket {
+    Value: string;
+}
 
 let cachedTableName: string | null = null;
 
@@ -6,12 +11,12 @@ const findSkinTable = async () => {
     if (cachedTableName) return cachedTableName;
 
     try {
-        const [rows]: any[] = await pool.query('SHOW TABLES');
+        const [rows] = await pool.query<RowDataPacket[]>('SHOW TABLES');
         // Rows is [{ Tables_in_dbname: 'tablename' }, ...]
         // We look for 'skins' case insensitive
         for (const row of rows) {
             const tableName = Object.values(row)[0] as string;
-            if (tableName.toLowerCase().includes('skins')) {
+            if (tableName && tableName.toLowerCase().includes('skins')) {
                 cachedTableName = tableName;
                 return tableName;
             }
@@ -22,9 +27,7 @@ const findSkinTable = async () => {
     return null;
 };
 
-const getSkinCrafatar = (username: string) => {
-    return `https://crafatar.com/skins/${username}`; // Fallback URL
-};
+
 
 const getSkinMinotar = (username: string) => {
     return `https://minotar.net/skin/${username}`;
@@ -38,7 +41,7 @@ const getSkinFromDb = async (username: string) => {
         // SkinsRestorer typically has columns: Nick, Value, Signature, Timestamp
         // Nick is the player name (lowercase usually?)
         
-        const [rows]: any[] = await pool.query(`SELECT Value FROM ${tableName} WHERE Name = ?`, [username]);
+        const [rows] = await pool.query<SkinRow[]>(`SELECT Value FROM ${tableName} WHERE Name = ?`, [username]);
         
         if (rows.length > 0) {
             const textureBase64 = rows[0].Value;

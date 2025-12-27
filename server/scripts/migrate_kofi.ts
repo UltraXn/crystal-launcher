@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
 
 // Load env vars
 dotenv.config({ path: path.resolve('f:/Portafolio/crystaltides/server/.env') });
@@ -90,14 +89,6 @@ const mapCSVToDB = async () => {
             const dateStr = cols[0];
             const dateObj = new Date(dateStr);
             
-            const amount = parseFloat(cols[7]) > 0 ? cols[7] : cols[8]; // Sometimes 'Received' is 0 but 'Given' has value? 
-            // Looking at the file:
-            // Line 3: Received 0, Given 3.00, Type Tip
-            // Line 4: Received 0, Given 5.00, Type Shop Order
-            // Line 22: Received 10.00, Given 0, Type Tip
-            // It seems "Received" is net? Or Given is total?
-            // Actually, in Ko-Fi exports:
-            // "Given" is usually the amount paid by supporter.
             // "Received" might be after fees?
             // Let's use the larger of the two to show the "face value" of the donation/purchase.
             const rawAmount = Math.max(parseFloat(cols[7] || '0'), parseFloat(cols[8] || '0'));

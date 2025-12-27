@@ -16,7 +16,7 @@ export const postComment = async (req: Request, res: Response) => {
     try {
         const { profileId } = req.params;
         const { content } = req.body;
-        const user = (req as any).user;
+        const user = req.user;
 
         if (!user) return sendError(res, 'Unauthorized', 'UNAUTHORIZED', 401);
         if (!content) return sendError(res, 'Content is required', 'MISSING_FIELDS', 400);

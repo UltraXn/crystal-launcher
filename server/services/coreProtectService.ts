@@ -1,6 +1,13 @@
 import pool from '../config/coreProtectDb.js';
+import { RowDataPacket } from 'mysql2';
 
-export const getCommandLogs = async ({ page = 1, limit = 50, search = '' }: any) => {
+interface CommandLogQuery {
+    page?: number;
+    limit?: number;
+    search?: string;
+}
+
+export const getCommandLogs = async ({ page = 1, limit = 50, search = '' }: CommandLogQuery) => {
     try {
         const offset = (page - 1) * limit;
         
@@ -61,7 +68,7 @@ export const getCommandLogs = async ({ page = 1, limit = 50, search = '' }: any)
             countParams.push(`%${search}%`, `%${search}%`);
         }
         
-        const [countRows]: any[] = await pool.query(countQuery, countParams);
+        const [countRows] = await pool.query<RowDataPacket[]>(countQuery, countParams);
         const total = countRows[0].total;
 
         return {

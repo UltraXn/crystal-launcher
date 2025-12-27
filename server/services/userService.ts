@@ -1,5 +1,36 @@
 import supabase from './supabaseService.js';
 import db from '../config/database.js';
+import { RowDataPacket } from 'mysql2';
+import { User } from '@supabase/supabase-js';
+
+interface LuckPermsPlayer extends RowDataPacket {
+    uuid: string;
+    username: string;
+    role: string;
+}
+
+interface LuckPermsPermission extends RowDataPacket {
+    uuid: string;
+    permission: string;
+}
+
+interface PlanUser extends RowDataPacket {
+    uuid: string;
+    name: string;
+}
+
+export interface WebUser {
+    id: string;
+    email?: string;
+    username: string;
+    role: string;
+    medals: unknown[];
+    avatar_url?: string;
+    discord: { id: string; username: string } | null;
+    twitch: { id: string; username: string } | null;
+    created_at: string;
+    last_sign_in?: string;
+}
 
 /**
  * Get Staff Users from Database (LuckPerms + Web Users)
@@ -11,7 +42,7 @@ export const getStaffUsers = async () => {
         
         // 1. Fetch UUIDs from LuckPerms Players (Primary Group)
         const groupsPlaceholder = targetGroups.map(() => '?').join(',');
-        const [lpPlayers]: any = await db.query(`
+        const [lpPlayers] = await db.query<LuckPermsPlayer[]>(`
             SELECT uuid, username, primary_group as role FROM luckperms_players 
             WHERE primary_group IN (${groupsPlaceholder})
         `, targetGroups);
@@ -19,7 +50,7 @@ export const getStaffUsers = async () => {
         // 2. Fetch UUIDs from Permissions (Secondary Groups)
         const groupPerms = targetGroups.map(g => `group.${g}`);
         const permsPlaceholder = groupPerms.map(() => '?').join(',');
-        const [lpPermissions]: any = await db.query(`
+        const [lpPermissions] = await db.query<LuckPermsPermission[]>(`
             SELECT uuid, permission FROM luckperms_user_permissions 
             WHERE permission IN (${permsPlaceholder})
         `, groupPerms);
@@ -27,11 +58,11 @@ export const getStaffUsers = async () => {
         // Merge results (Map UUID -> Role)
         const staffMap = new Map<string, { role: string, name?: string }>();
         
-        lpPlayers.forEach((row: any) => {
+        lpPlayers.forEach((row) => {
             staffMap.set(row.uuid, { role: row.role, name: row.username });
         });
         
-        lpPermissions.forEach((row: any) => {
+        lpPermissions.forEach((row) => {
             if (!staffMap.has(row.uuid)) {
                 staffMap.set(row.uuid, { role: row.permission.replace('group.', ''), name: undefined });
             }
@@ -44,11 +75,11 @@ export const getStaffUsers = async () => {
         const missingNameUUIDs = uuids.filter(uuid => !staffMap.get(uuid)?.name);
         
         if (missingNameUUIDs.length > 0) {
-            const [planUsers]: any = await db.query(`
+            const [planUsers] = await db.query<PlanUser[]>(`
                 SELECT uuid, name FROM plan_users WHERE uuid IN (${missingNameUUIDs.map(() => '?').join(',')})
             `, missingNameUUIDs);
             
-            planUsers.forEach((u: any) => {
+            planUsers.forEach((u) => {
                 const manual = staffMap.get(u.uuid);
                 if (manual) manual.name = u.name;
             });
@@ -63,7 +94,7 @@ export const getStaffUsers = async () => {
             if (!data.name) continue; // Skip if name unresolved
             
             // Match Supabase User
-            const sbMatch = sbUsers.find((sb: any) => sb.username.toLowerCase() === data.name!.toLowerCase());
+            const sbMatch = sbUsers.find((sb) => sb.username.toLowerCase() === data.name!.toLowerCase());
             
             finalStaff.push({
                 uuid: uuid, // Minecraft UUID
@@ -91,16 +122,16 @@ export const getStaffUsers = async () => {
  * For this implementation, we will fetch from public.profiles and assume it has role field,
  * OR we fetch auth.users using listUsers() admin method.
  */
-export const getAllUsers = async (query = '') => {
+export const getAllUsers = async (query = ''): Promise<WebUser[]> => {
     // Using Supabase Admin API to list users
     // If you have a LOT of users, you should rely on server-side pagination or search if available.
     // Standard Supabase List Users does not search by email easily. We will filter in memory for now.
     const { data: { users }, error } = await supabase.auth.admin.listUsers();
     if (error) throw error;
     
-    let filtered = users;
+    let filtered = users || [];
     if(query) {
-        filtered = users.filter((u: any) => 
+        filtered = filtered.filter((u) => 
             (u.email && u.email.toLowerCase().includes(query.toLowerCase())) ||
             (u.user_metadata?.username && u.user_metadata.username.toLowerCase().includes(query.toLowerCase())) ||
             (u.user_metadata?.full_name && u.user_metadata.full_name.toLowerCase().includes(query.toLowerCase()))
@@ -108,9 +139,9 @@ export const getAllUsers = async (query = '') => {
     }
 
     // Map to a friendlier format
-    return filtered.map((u: any) => {
-        const discordIdentity = u.identities?.find((i: any) => i.provider === 'discord');
-        const twitchIdentity = u.identities?.find((i: any) => i.provider === 'twitch');
+    return filtered.map((u) => {
+        const discordIdentity = u.identities?.find((i) => i.provider === 'discord');
+        const twitchIdentity = u.identities?.find((i) => i.provider === 'twitch');
 
         return {
             id: u.id,
@@ -138,11 +169,7 @@ export const getAllUsers = async (query = '') => {
  * Update user role
  * We will store the role in user_metadata for simplicity
  */
-/**
- * Update user role
- * We will store the role in user_metadata for simplicity
- */
-export const updateUserRole = async (userId: string, newRole: string) => {
+export const updateUserRole = async (userId: string, newRole: string): Promise<User | null> => {
     const { data: { user }, error } = await supabase.auth.admin.updateUserById(
         userId,
         { user_metadata: { role: newRole } }
@@ -156,7 +183,7 @@ export const updateUserRole = async (userId: string, newRole: string) => {
  * Update any user metadata (e.g. medals)
  * This performs a merge with existing metadata
  */
-export const updateUserMetadata = async (userId: string, metadata: any) => {
+export const updateUserMetadata = async (userId: string, metadata: Record<string, unknown>): Promise<User | null> => {
     const { data: { user }, error } = await supabase.auth.admin.updateUserById(
         userId,
         { user_metadata: metadata }
@@ -177,7 +204,7 @@ export const getPublicProfile = async (identifier: string) => {
 
     const searchTerm = identifier.toLowerCase();
 
-    const target = users.find((u: any) => {
+    const target = users?.find((u) => {
         const meta = u.user_metadata || {};
         return (meta.username && meta.username.toLowerCase() === searchTerm) ||
                (meta.full_name && meta.full_name.toLowerCase() === searchTerm) ||
@@ -207,6 +234,7 @@ export const getPublicProfile = async (identifier: string) => {
         social_twitter: target.user_metadata?.social_twitter,
         social_twitch: target.user_metadata?.social_twitch,
         social_youtube: target.user_metadata?.social_youtube,
-        minecraft_uuid: target.user_metadata?.minecraft_uuid
+        minecraft_uuid: target.user_metadata?.minecraft_uuid,
+        avatar_preference: target.user_metadata?.avatar_preference || 'minecraft'
     };
 };

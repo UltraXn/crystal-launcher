@@ -156,7 +156,37 @@ export default function Menu() {
                                  <FaGift style={{ marginRight: '8px' }}/> {t('gacha.title', 'Recompensa Diaria')}
                             </Link>
                             <Link to="/account" className="menu-item" onClick={closeMenu}>
-                                 <FaUserCircle style={{ marginRight: '8px' }}/> {user.user_metadata?.username || 'Mi Cuenta'}
+                                 <FaUserCircle style={{ marginRight: '8px' }}/> {(() => {
+                                    const meta = user.user_metadata || {};
+                                    const identities = user.identities || [];
+                                    
+                                    // 1. Web Nick (Full Name > Display Name > Username)
+                                    if (meta.full_name) return meta.full_name;
+                                    if (meta.display_name) return meta.display_name;
+                                    if (meta.username) return meta.username;
+                                    
+                                    // 2. Discord
+                                    const discord = identities.find((id: any) => id.provider === 'discord');
+                                    if (discord?.identity_data) {
+                                        return discord.identity_data.full_name || 
+                                               discord.identity_data.custom_claims?.global_name || 
+                                               discord.identity_data.name || 
+                                               discord.identity_data.user_name;
+                                    }
+
+                                    // 3. Twitch
+                                    const twitch = identities.find((id: any) => id.provider === 'twitch');
+                                    if (twitch?.identity_data) {
+                                        return twitch.identity_data.display_name || 
+                                               twitch.identity_data.full_name || 
+                                               twitch.identity_data.name;
+                                    }
+
+                                    // 4. Minecraft
+                                    if (meta.minecraft_nick) return meta.minecraft_nick;
+
+                                    return user.email?.split('@')[0] || 'Mi Cuenta';
+                                })()}
                             </Link>
                         </div>
                     )}

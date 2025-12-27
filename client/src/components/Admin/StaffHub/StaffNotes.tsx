@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import Loader from '../../UI/Loader';
 import ConfirmationModal from '../../UI/ConfirmationModal';
+import { supabase } from '../../../services/supabaseClient';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const COLORS = [
@@ -34,7 +35,10 @@ export default function StaffNotes() {
 
     const fetchNotes = async () => {
         try {
-            const res = await fetch(`${API_URL}/staff/notes`);
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(`${API_URL}/staff/notes`, {
+                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+            });
             if (res.ok) {
                 const data = await res.json();
                 setNotes(data);
@@ -57,9 +61,13 @@ export default function StaffNotes() {
         };
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/notes`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                 },
                 body: JSON.stringify(newNoteData)
             });
 
@@ -82,8 +90,10 @@ export default function StaffNotes() {
         setNotes(notes.filter(n => n.id !== deleteConfirmId));
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/notes/${deleteConfirmId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
             });
             if (!res.ok) throw new Error('Failed to delete');
         } catch (error) {

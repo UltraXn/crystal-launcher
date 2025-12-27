@@ -3,6 +3,7 @@ import { FaSearch, FaSpinner, FaDonate, FaBoxOpen, FaUser, FaClock, FaEdit, FaTr
 import Loader from "../UI/Loader"
 import { useTranslation } from "react-i18next"
 import ConfirmationModal from "../UI/ConfirmationModal"
+import { supabase } from "../../services/supabaseClient"
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
@@ -34,7 +35,10 @@ export default function DonationsManager() {
     const fetchDonations = useCallback(async () => {
         setLoading(true)
         try {
-            const res = await fetch(`${API_URL}/donations?page=${page}&limit=20&search=${search}`)
+            const { data: { session } } = await supabase.auth.getSession()
+            const res = await fetch(`${API_URL}/donations?page=${page}&limit=20&search=${search}`, {
+                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+            })
             if(res.ok) {
                 const rawData = await res.json()
                 const payload = rawData.success ? rawData.data : rawData
@@ -81,7 +85,11 @@ export default function DonationsManager() {
     const executeDelete = async () => {
         if (!deleteConfirm) return
         try {
-            const res = await fetch(`${API_URL}/donations/${deleteConfirm}`, { method: 'DELETE' })
+            const { data: { session } } = await supabase.auth.getSession()
+            const res = await fetch(`${API_URL}/donations/${deleteConfirm}`, { 
+                method: 'DELETE',
+                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+            })
             if (res.ok) {
                 setDonations(donations.filter(d => d.id !== deleteConfirm))
                 setDeleteConfirm(null)
@@ -105,9 +113,13 @@ export default function DonationsManager() {
             : `${API_URL}/donations`
 
         try {
+            const { data: { session } } = await supabase.auth.getSession()
+            const headers: any = { 'Content-Type': 'application/json' }
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`
+
             const res = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(currentDonation)
             })
 

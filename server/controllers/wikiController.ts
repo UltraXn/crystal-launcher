@@ -26,7 +26,7 @@ export const getArticle = async (req: Request, res: Response) => {
 
 export const createWikiArticle = async (req: Request, res: Response) => {
     try {
-        const user = (req as any).user;
+        const user = req.user;
         const articleData: Partial<WikiArticle> = { ...req.body, author_id: user?.id };
         const article = await wikiService.createArticle(articleData);
         return sendSuccess(res, article, 'Article created');

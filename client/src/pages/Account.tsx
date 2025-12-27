@@ -382,7 +382,7 @@ export default function Account() {
     const [publicStats, setPublicStats] = useState(user?.user_metadata?.public_stats !== false)
     
     // Zod Form for Profile
-    const { register, handleSubmit, setValue } = useForm<UpdateUserFormValues>({
+    const { register, handleSubmit, setValue, watch } = useForm<UpdateUserFormValues>({
         resolver: zodResolver(updateUserSchema),
         defaultValues: {
             bio: user?.user_metadata?.bio || "",
@@ -390,7 +390,8 @@ export default function Account() {
             social_twitter: user?.user_metadata?.social_twitter || "",
             social_twitch: user?.user_metadata?.social_twitch || "",
             social_youtube: user?.user_metadata?.social_youtube || "",
-            social_kofi: user?.user_metadata?.social_kofi || ""
+            social_kofi: user?.user_metadata?.social_kofi || "",
+            avatar_preference: user?.user_metadata?.avatar_preference || "minecraft"
         }
     })
 
@@ -504,7 +505,15 @@ export default function Account() {
                             {uploading ? (
                                 <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#333' }}>...</div>
                             ) : (
-                                <img src={user.user_metadata?.avatar_url || (isLinked ? `https://mc-heads.net/avatar/${statsData?.username || mcUsername}/100` : "https://ui-avatars.com/api/?name=" + (user.user_metadata?.full_name || "User"))} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img 
+                                    src={
+                                        (user.user_metadata?.avatar_preference === 'social' && user.user_metadata?.avatar_url) 
+                                            ? user.user_metadata.avatar_url 
+                                            : (isLinked ? `https://mc-heads.net/avatar/${statsData?.username || mcUsername}/100` : "https://ui-avatars.com/api/?name=" + (user.user_metadata?.full_name || "User"))
+                                    } 
+                                    alt="Avatar" 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                />
                             )}
                             <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', background: 'rgba(0,0,0,0.6)', fontSize: '0.7rem', padding: '2px 0' }}><FaCamera /></div>
                         </div>
@@ -900,6 +909,61 @@ export default function Account() {
                                 {/* Profile Info Card */}
                                 <div className="dashboard-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', gridColumn: '1 / -1' }}>
                                     <h3 style={{ color: '#fff', marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'10px' }}><FaUser /> Información del Perfil</h3>
+
+                                    {/* Avatar Preference Selector */}
+                                    <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <label style={{ display: 'block', color: '#ccc', marginBottom: '1rem', fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                            Preferencia de Avatar
+                                        </label>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div 
+                                                onClick={() => setValue('avatar_preference', 'minecraft')}
+                                                style={{ 
+                                                    padding: '1rem', 
+                                                    borderRadius: '10px', 
+                                                    border: `2px solid ${watch('avatar_preference') === 'minecraft' ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
+                                                    background: watch('avatar_preference') === 'minecraft' ? 'rgba(109, 165, 192, 0.1)' : 'transparent',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '0.8rem',
+                                                    transition: '0.2s'
+                                                }}
+                                            >
+                                                <img src={`https://mc-heads.net/avatar/${mcUsername}/48`} alt="MC" style={{ width: '40px', height: '40px' }} />
+                                                <span style={{ fontSize: '0.85rem', color: watch('avatar_preference') === 'minecraft' ? '#fff' : '#888', fontWeight: '600' }}>Minecraft</span>
+                                            </div>
+
+                                            <div 
+                                                onClick={() => setValue('avatar_preference', 'social')}
+                                                style={{ 
+                                                    padding: '1rem', 
+                                                    borderRadius: '10px', 
+                                                    border: `2px solid ${watch('avatar_preference') === 'social' ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
+                                                    background: watch('avatar_preference') === 'social' ? 'rgba(109, 165, 192, 0.1)' : 'transparent',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    gap: '0.8rem',
+                                                    transition: '0.2s'
+                                                }}
+                                            >
+                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#333' }}>
+                                                    <img 
+                                                        src={user?.user_metadata?.avatar_url || "https://ui-avatars.com/api/?name=" + (user?.user_metadata?.full_name || "User")} 
+                                                        alt="Social" 
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                                    />
+                                                </div>
+                                                <span style={{ fontSize: '0.85rem', color: watch('avatar_preference') === 'social' ? '#fff' : '#888', fontWeight: '600' }}>Social / Web</span>
+                                            </div>
+                                        </div>
+                                        <p style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#666', fontStyle: 'italic' }}>
+                                            * Selecciona qué imagen prefieres ver en tu perfil público y barra de navegación.
+                                        </p>
+                                    </div>
                                     
                                     <form onSubmit={handleSubmit(handleSaveProfile)} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
                                         <div>

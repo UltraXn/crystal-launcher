@@ -1,6 +1,26 @@
 import supabase from './supabaseService.js';
 import { translateText } from './translationService.js';
 
+export interface Donation {
+    id: number;
+    amount: number;
+    type: string;
+    from_name: string;
+    message?: string;
+    message_en?: string;
+    currency: string;
+    status: string;
+    platform: string;
+    created_at: string;
+    raw_data?: unknown;
+}
+
+interface DonationQuery {
+    page?: number;
+    limit?: number;
+    search?: string;
+}
+
 export const getMonthlyStats = async () => {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -31,7 +51,7 @@ export const getMonthlyStats = async () => {
     if (prevError) throw prevError;
 
     // Helper helper sum
-    const sum = (rows: any[]) => rows.reduce((acc, row) => acc + parseFloat(row.amount || 0), 0);
+    const sum = (rows: { amount: unknown }[]) => rows.reduce((acc, row) => acc + parseFloat(String(row.amount || 0)), 0);
     const currentTotal = sum(currentData);
     const prevTotal = sum(prevData);
 
@@ -50,7 +70,7 @@ export const getMonthlyStats = async () => {
     };
 };
 
-export const getDonations = async ({ page = 1, limit = 20, search = '' }: any) => {
+export const getDonations = async ({ page = 1, limit = 20, search = '' }: DonationQuery) => {
     const offset = (page - 1) * limit;
     
     let query = supabase
@@ -74,7 +94,7 @@ export const getDonations = async ({ page = 1, limit = 20, search = '' }: any) =
     };
 };
 
-export const createDonation = async (donationData: any) => {
+export const createDonation = async (donationData: Partial<Donation>) => {
     const messageEn = donationData.message ? await translateText(donationData.message, 'en') : null;
 
     const { data, error } = await supabase
@@ -89,7 +109,7 @@ export const createDonation = async (donationData: any) => {
     return data;
 };
 
-export const updateDonation = async (id: number, updates: any) => {
+export const updateDonation = async (id: number, updates: Partial<Donation>) => {
     const { data, error } = await supabase
         .from('donations')
         .update(updates)

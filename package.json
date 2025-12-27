@@ -1,6 +1,7 @@
 {
     "name": "crystaltides-app",
     "version": "1.0.0",
+    "packageManager": "npm@11.6.4",
     "private": true,
     "workspaces": [
         "client",
@@ -8,7 +9,9 @@
         "packages/*"
     ],
     "scripts": {
-        "start": "concurrently \"npm run server\" \"npm run client\"",
+        "dev": "turbo run dev",
+        "build": "turbo run build",
+        "lint": "turbo run lint",
         "client": "npm run dev -w client",
         "server": "npm run dev -w server",
         "install:all": "npm install"
@@ -59,6 +62,7 @@
         "postcss": "^8.5.6",
         "sucrase": "^3.35.1",
         "tailwindcss": "^4.1.18",
+        "turbo": "^2.7.2",
         "typescript-eslint": "^8.50.1",
         "vite": "^7.3.0",
         "vitest": "^4.0.16"

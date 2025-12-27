@@ -4,6 +4,7 @@ import { FaPlus, FaTimes, FaLayerGroup, FaTag, FaUser } from 'react-icons/fa';
 import { KanbanTask } from './KanbanCard';
 import Loader from '../../UI/Loader';
 import ConfirmationModal from '../../UI/ConfirmationModal';
+import { supabase } from '../../../services/supabaseClient';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -38,7 +39,10 @@ export default function KanbanBoard() {
 
     const fetchTasks = async () => {
         try {
-            const res = await fetch(`${API_URL}/staff/tasks`);
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(`${API_URL}/staff/tasks`, {
+               headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+            });
             if (res.ok) {
                 const data = await res.json() as KanbanTask[];
                 const mappedData = data.map((task: any) => ({
@@ -66,9 +70,13 @@ export default function KanbanBoard() {
         };
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/tasks`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                },
                 body: JSON.stringify(taskPayload)
             });
 
@@ -91,7 +99,11 @@ export default function KanbanBoard() {
         setTasks(prev => prev.filter(t => t.id !== id));
 
         try {
-            await fetch(`${API_URL}/staff/tasks/${id}`, { method: 'DELETE' });
+            const { data: { session } } = await supabase.auth.getSession();
+            await fetch(`${API_URL}/staff/tasks/${id}`, { 
+                method: 'DELETE',
+                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+             });
         } catch (error) {
             console.error("Error deleting task:", error);
             setTasks(previousTasks);
@@ -119,9 +131,13 @@ export default function KanbanBoard() {
         }));
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             await fetch(`${API_URL}/staff/tasks/${cardId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                },
                 body: JSON.stringify({ column_id: columnId })
             });
         } catch (error) {

@@ -370,6 +370,12 @@
         "name": {
             "error_update": "Error updating name"
         },
+        "avatar_preference": {
+            "title": "Avatar Preference",
+            "minecraft": "Minecraft",
+            "social": "Social / Web",
+            "hint": "* Choose which image you prefer to see on your public profile and navigation bar."
+        },
         "roles": {
             "admin": "Administrator",
             "user": "Adventurer",
@@ -702,7 +708,7 @@
             "linked_account": "Linked Account",
             "confirm_modal": {
                 "title": "Confirm Team",
-                "detected_msg": "Detected <1>{{count}}</1> active staff members.",
+                "detected_msg": "Detected <b>{{count}}</b> active staff members.",
                 "warning": "This action will replace the current list.",
                 "cancel": "Cancel",
                 "save": "Save Staff"

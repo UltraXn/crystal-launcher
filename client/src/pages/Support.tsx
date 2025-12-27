@@ -149,7 +149,7 @@ export default function Support() {
                         style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', flexWrap: 'wrap', width: '100%' }}
                     >
                         <button 
-                            className="nav-btn primary" 
+                            className="nav-btn" 
                             onClick={() => user ? setShowCreateModal(true) : navigate('/login')}
                             style={{ 
                                 padding: '1rem 2.5rem', 
@@ -160,12 +160,12 @@ export default function Support() {
                                 borderRadius: '12px',
                                 textTransform: 'uppercase',
                                 fontWeight: 'bold',
-                                color: '#000', /* Enforce black text */
-                                background: 'var(--accent, #89d9d1)', /* Fallback to hex if var fails */
-                                border: 'none'
+                                color: '#fff', /* White text for contrast */
+                                background: 'rgba(137, 217, 209, 0.2)', /* Semi-transparent accent bg */
+                                border: '1px solid var(--accent)' /* Accent border */
                              }}
                         >
-                            <FaPlus /> {t('support.create_ticket')}
+                            <FaPlus style={{ color: 'var(--accent)' }} /> {t('support.create_ticket')}
                         </button>
                         <a 
                             href="https://discord.com/invite/TDmwYNnvyT" 

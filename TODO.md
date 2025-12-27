@@ -63,12 +63,12 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 
 - [x] **Perfiles Avanzados**: Estadísticas reales y personalización (Bio/Redes).
 - [x] **Muro de Comentarios**: Mensajes en perfiles.
-- [ ] **Selector de Avatar**: Opción para elegir entre Avatar Web (Discord) o Skin de Minecraft.
+- [x] **Selector de Avatar**: Opción para elegir entre Avatar Web (Discord) o Skin de Minecraft.
 - [x] **Wiki / Gamepedia**: Sección de guías.
 
 ### 🎨 UX/UI y Diseño
 
-- [ ] **Verificación de Dispositivos**: Revisar diseño responsivo en Tablet y Móvil (Web y Admin).
+- [ ] **Verificación de Dispositivos**: Revisar diseño responsivo en Tablet y Móvil (Web y Admin). (En progreso: Fixed Navbar mobile name & Support buttons).
 
 ### 🔗 Integración Profunda (Fase 8)
 

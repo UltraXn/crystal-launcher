@@ -33,7 +33,8 @@ jobs:
       - name: Build and load Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./server
+          context: .
+          file: ./server/Dockerfile
           load: true
           push: false
           tags: ghcr.io/ultraxn/crystaltides-backend:latest
@@ -53,7 +54,8 @@ jobs:
       - name: Build and load Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./client
+          context: .
+          file: ./client/Dockerfile
           load: true
           push: false
           tags: ghcr.io/ultraxn/crystaltides-frontend:latest

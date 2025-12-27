@@ -1,8 +1,8 @@
 import util from 'minecraft-server-util';
 
-const options: any = {
-    timeout: 5000, // timeout in milliseconds
-    enableSRV: true // SRV record lookup
+const options = {
+    timeout: 5000,
+    enableSRV: true
 };
 
 /**
@@ -29,8 +29,11 @@ export const getServerStatus = async (host: string, port = 25565) => {
             favicon: result.favicon, // Base64 image
             ping: result.roundTripLatency
         };
-    } catch (error: any) {
-        console.error('Error fetching Minecraft server status:', error.message);
+    } catch (error) {
+        // Safe error handling for unknown error type
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error('Error fetching Minecraft server status:', errorMessage);
+        
         // Devolvemos un objeto indicando que está offline, en lugar de crashear
         return {
             online: false,
@@ -70,12 +73,11 @@ export const sendCommand = async (command: string) => {
         if (response.ok) {
             return { success: true };
         } else {
-            const err = await response.text();
-            console.error("Pterodactyl API Error:", err);
             return { success: false, error: "API Error" };
         }
-    } catch (error: any) {
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("Failed to send command:", error);
-        return { success: false, error: error.message };
+        return { success: false, error: errorMessage };
     }
 }

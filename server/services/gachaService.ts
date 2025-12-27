@@ -1,5 +1,5 @@
 import supabase from '../config/supabaseClient.js';
-import * as userService from './userService.js';
+
 import * as commandService from './commandService.js';
 
 // Estructura de un Premio

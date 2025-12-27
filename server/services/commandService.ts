@@ -1,4 +1,13 @@
 import pool from '../config/database.js';
+import { RowDataPacket } from 'mysql2';
+
+interface CommandRow extends RowDataPacket {
+    id: number;
+    command: string;
+    executed: number;
+    executed_at: string;
+    created_at: string;
+}
 
 /**
  * Adds a Minecraft command to the secure execution queue.
@@ -12,7 +21,8 @@ export const queueCommand = async (command: string) => {
             [command]
         );
         console.log(`[Command Queue] Queued command: ${command}`);
-        return { success: true, id: (result as any).insertId };
+        const insertId = (result as { insertId: number }).insertId;
+        return { success: true, id: insertId };
     } catch (error) {
         console.error('[Command Queue] Failed to queue command:', error);
         return { success: false, error: 'Database error' };
@@ -25,11 +35,11 @@ export const queueCommand = async (command: string) => {
  */
 export const checkCommandStatus = async (id: number) => {
     try {
-        const [rows] = await pool.query(
+        const [rows] = await pool.query<CommandRow[]>(
             'SELECT * FROM web_pending_commands WHERE id = ?',
             [id]
         );
-        const command = (rows as any[])[0];
+        const command = rows[0];
         if (!command) return null;
         return {
             executed: Boolean(command.executed),

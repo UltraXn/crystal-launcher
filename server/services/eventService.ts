@@ -1,6 +1,29 @@
 import supabase from '../config/supabaseClient.js';
 import { translateText } from './translationService.js';
 
+export interface Event {
+    id: number;
+    title: string;
+    description: string;
+    title_en?: string;
+    description_en?: string;
+    type: string;
+    status: string;
+    image_url?: string;
+    created_at?: string;
+}
+
+export interface EventRegistration {
+    id: number;
+    event_id: number;
+    user_id: string;
+    created_at?: string;
+    profiles?: {
+        username: string;
+        avatar_url: string | null;
+    };
+}
+
 export const getAllEvents = async () => {
     const { data, error } = await supabase
         .from('events')
@@ -11,7 +34,7 @@ export const getAllEvents = async () => {
     return data;
 };
 
-export const createEvent = async (eventData: any) => {
+export const createEvent = async (eventData: Partial<Event>) => {
     // Auto translation
     try {
         if (eventData.title && !eventData.title_en) {
@@ -40,7 +63,7 @@ export const createEvent = async (eventData: any) => {
     return data[0];
 };
 
-export const updateEvent = async (id: number, updates: any) => {
+export const updateEvent = async (id: number, updates: Partial<Event>) => {
     // Auto translation
     try {
         if (updates.title && !updates.title_en) {
@@ -54,10 +77,12 @@ export const updateEvent = async (id: number, updates: any) => {
     }
 
     // Sanitize updates
-    const cleanUpdates: any = {};
-    const allowed = ['title', 'description', 'title_en', 'description_en', 'type', 'status', 'image_url'];
+    const cleanUpdates: Record<string, unknown> = {};
+    const allowed = ['title', 'description', 'title_en', 'description_en', 'type', 'status', 'image_url'] as const;
     allowed.forEach(field => {
-        if (updates[field] !== undefined) cleanUpdates[field] = updates[field];
+        if (updates[field as keyof Event] !== undefined) {
+             cleanUpdates[field] = updates[field as keyof Event];
+        }
     });
 
     const { data, error } = await supabase
@@ -120,13 +145,13 @@ export const getRegistrations = async (eventId: number) => {
     
     if (userResponse.error) {
         console.error("Error fetching users for registrations:", userResponse.error);
-        return regs.map((r: any) => ({ ...r, profiles: { username: 'Unknown', avatar_url: null } }));
+        return regs.map((r) => ({ ...r, profiles: { username: 'Unknown', avatar_url: null } }));
     }
 
     const users = userResponse.data?.users || [];
 
-    return regs.map((reg: any) => {
-        const user = users.find((u: any) => u.id === reg.user_id);
+    return regs.map((reg) => {
+        const user = users.find((u) => u.id === reg.user_id);
         const username = user?.user_metadata?.username || user?.user_metadata?.full_name || 'Desconocido';
         const avatar = user?.user_metadata?.avatar_url || null;
 
@@ -147,5 +172,5 @@ export const getUserRegistrations = async (userId: string) => {
         .eq('user_id', userId);
 
     if (error) throw error;
-    return data.map((r: any) => r.event_id);
+    return data.map((r) => r.event_id);
 }

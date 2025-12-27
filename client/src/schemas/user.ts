@@ -26,6 +26,7 @@ export const updateUserSchema = z.object({
     social_twitch: z.string().optional(),
     social_youtube: z.string().optional(),
     social_kofi: z.string().optional(),
+    avatar_preference: z.enum(['minecraft', 'social']).optional(),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

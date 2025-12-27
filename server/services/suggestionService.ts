@@ -1,7 +1,16 @@
 import supabase from './supabaseService.js';
 import { translateText } from './translationService.js';
 
-export const createSuggestion = async (data: any) => {
+interface SuggestionData {
+    nickname: string;
+    type: string;
+    message: string;
+    user_id?: string;
+}
+
+
+
+export const createSuggestion = async (data: SuggestionData) => {
     // data: { nickname, type, message, user_id (opt) }
     const { data: result, error } = await supabase
         .from('suggestions')

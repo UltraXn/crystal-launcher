@@ -14,7 +14,7 @@ export interface WikiArticle {
 }
 
 export const getWikiArticles = async (category?: string): Promise<WikiArticle[]> => {
-    const url = new URL(`${API_URL}/wiki`);
+    const url = new URL(`${API_URL}/wiki`, window.location.origin);
     if (category) url.searchParams.append('category', category);
     
     const res = await fetch(url.toString())

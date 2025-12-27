@@ -216,24 +216,34 @@ export default function Navbar() {
                                 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem' }}
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
                             >
-                                {user.user_metadata?.avatar_url ? (
-                                    <img 
-                                        src={user.user_metadata.avatar_url} 
-                                        alt="Avatar" 
-                                        className="user-mini-avatar" 
-                                        onError={(e) => {
-                                            e.currentTarget.onerror = null;
-                                            if (user.user_metadata?.username) {
-                                                e.currentTarget.src = `https://minotar.net/helm/${user.user_metadata.username}/64.png`;
-                                            } else {
-                                                e.currentTarget.style.display = 'none';
-                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                            }
-                                        }}
-                                    />
-                                ) : (
-                                    <FaUserCircle size={20} />
-                                )}
+                                {(() => {
+                                    const meta = user.user_metadata || {};
+                                    const prefersSocial = meta.avatar_preference === 'social' && meta.avatar_url;
+                                    
+                                    if (prefersSocial) {
+                                        return (
+                                            <img 
+                                                src={meta.avatar_url} 
+                                                alt="Avatar" 
+                                                className="user-mini-avatar" 
+                                                onError={(e) => {
+                                                    e.currentTarget.onerror = null;
+                                                    e.currentTarget.src = `https://mc-heads.net/avatar/${meta.minecraft_nick || meta.username || 'steve'}/64`;
+                                                }}
+                                            />
+                                        );
+                                    }
+
+                                    // Default to Minecraft
+                                    const mcNick = meta.minecraft_nick || meta.username || 'steve';
+                                    return (
+                                        <img 
+                                            src={`https://mc-heads.net/avatar/${mcNick}/64`} 
+                                            alt="Avatar" 
+                                            className="user-mini-avatar" 
+                                        />
+                                    );
+                                })()}
                                 <span>{(() => {
                                     const meta = user.user_metadata || {};
                                     const identities = user.identities || [];

@@ -21,7 +21,13 @@ export const getAllTickets = async () => {
 /**
  * Create a new ticket
  */
-export const createTicket = async (userId: string, ticketData: any) => {
+interface TicketData {
+    subject: string;
+    description: string;
+    priority?: string;
+}
+
+export const createTicket = async (userId: string, ticketData: TicketData) => {
     const { subject, description, priority } = ticketData;
 
     const { data, error } = await supabase

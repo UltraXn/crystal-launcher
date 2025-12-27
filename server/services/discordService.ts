@@ -1,12 +1,20 @@
 import fetch from 'node-fetch';
+import { ForumThread } from './forumService.js';
 
 const DISCORD_FORUM_WEBHOOK = process.env.DISCORD_FORUM_WEBHOOK;
 const DISCORD_MC_EVENTS_WEBHOOK = process.env.DISCORD_MC_EVENTS_WEBHOOK;
 
+interface WebhookPayload {
+    content?: string;
+    embeds?: Record<string, unknown>[];
+    username?: string;
+    avatar_url?: string;
+}
+
 /**
  * Send an announcement to a Discord channel via Webhook
  */
-export const sendAnnouncement = async (webhookUrl: string | undefined, payload: any) => {
+export const sendAnnouncement = async (webhookUrl: string | undefined, payload: WebhookPayload) => {
     if (!webhookUrl) {
         console.warn("[Discord Service] Webhook URL not configured. Skipping announcement.");
         return;
@@ -30,7 +38,7 @@ export const sendAnnouncement = async (webhookUrl: string | undefined, payload: 
 /**
  * Specific helper for Forum Threads
  */
-export const notifyNewThread = async (thread: any) => {
+export const notifyNewThread = async (thread: ForumThread) => {
     const payload = {
         embeds: [{
             title: `📌 Nuevo Tema: ${thread.title}`,
