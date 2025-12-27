@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
-import { FaUser, FaMedal, FaGamepad, FaTrophy, FaSkull, FaClock, FaCoins, FaHammer, FaDraftingCompass, FaTwitter, FaDiscord, FaTwitch, FaYoutube } from "react-icons/fa"
+import { motion } from "framer-motion"
+import { FaUser, FaMedal, FaGamepad, FaTrophy, FaSkull, FaClock, FaCoins, FaHammer, FaDraftingCompass, FaTwitter, FaDiscord, FaTwitch, FaYoutube, FaHome } from "react-icons/fa"
 import RoleBadge from "../components/User/RoleBadge"
 import Loader from "../components/UI/Loader"
 import { MEDAL_ICONS } from "../utils/MedalIcons"
 import MarkdownRenderer from "../components/UI/MarkdownRenderer"
+import ProfileWall from "../components/User/ProfileWall"
+import { useAuth } from "../context/AuthContext"
 
 interface MedalDefinition {
     id: string | number;
@@ -16,6 +19,7 @@ interface MedalDefinition {
 }
 
 interface Profile {
+    id: string;
     username: string;
     avatar_url?: string;
     role: string;
@@ -27,6 +31,7 @@ interface Profile {
     social_twitter?: string;
     social_twitch?: string;
     social_youtube?: string;
+    minecraft_uuid?: string;
 }
 
 interface PlayerStats {
@@ -46,6 +51,9 @@ export default function PublicProfile() {
     const { username } = useParams()
     const navigate = useNavigate()
     const { t } = useTranslation()
+    const { user: currentUser } = useAuth()
+    
+    const isAdmin = !!(currentUser?.role && ['admin', 'neroferno', 'killu', 'killuwu', 'developer'].includes(currentUser.role.toLowerCase()))
     
     const [profile, setProfile] = useState<Profile | null>(null)
     const [loading, setLoading] = useState(true)
@@ -65,7 +73,9 @@ export default function PublicProfile() {
                     if(resUser.status === 404) throw new Error(t('profile.not_found', 'Usuario no encontrado'))
                     throw new Error("Error loading profile")
                 }
-                const userData = await resUser.json()
+                const response = await resUser.json()
+                if (!response.success || !response.data) throw new Error("Invalid response format")
+                const userData = response.data
                 setProfile(userData)
 
                 // 2. Fetch Medals Definitions (if user has medals)
@@ -115,10 +125,59 @@ export default function PublicProfile() {
     if (loading) return <div className="layout-center"><Loader /></div>
     
     if (error) return (
-        <div className="layout-center" style={{ flexDirection: 'column', gap: '1rem', color: '#ff4444' }}>
-            <FaUser size={48} />
-            <h2>{error}</h2>
-            <button className="btn-secondary" onClick={() => navigate('/')}>Volver al Inicio</button>
+        <div style={{ 
+            display: 'flex',
+            flexDirection: 'column', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '2rem', 
+            minHeight: '80vh',
+            textAlign: 'center',
+            padding: '2rem',
+            width: '100%'
+        }}>
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{
+                    width: '120px',
+                    height: '120px',
+                    background: 'rgba(255, 68, 68, 0.1)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1px solid rgba(255, 68, 68, 0.2)',
+                    marginBottom: '1rem',
+                    boxShadow: '0 0 40px rgba(255, 68, 68, 0.1)'
+                }}
+            >
+                <FaUser size={50} style={{ color: '#ff4444', opacity: 0.8 }} />
+            </motion.div>
+            
+            <div style={{ maxWidth: '450px' }}>
+                <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '1rem', background: 'linear-gradient(to bottom, #fff, #888)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    {t('profile.not_found_title', '¿A dónde se fue?')}
+                </h2>
+                <p style={{ color: 'var(--muted)', fontSize: '1.1rem', lineHeight: 1.6, marginBottom: '2.5rem' }}>
+                    {t('profile.not_found_desc', 'No hemos podido encontrar a ningún usuario con ese nombre. Quizás se ha perdido en el mar o nunca existió.')}
+                </p>
+                
+                <button 
+                    className="nav-btn primary" 
+                    onClick={() => navigate('/')}
+                    style={{ 
+                        padding: '1rem 2.5rem', 
+                        fontSize: '1rem', 
+                        borderRadius: '12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.8rem'
+                    }}
+                >
+                    <FaHome /> {t('common.back_home', 'Volver al Inicio')}
+                </button>
+            </div>
         </div>
     )
 
@@ -138,16 +197,26 @@ export default function PublicProfile() {
                 }
                 .profile-content {
                     width: 100%;
-                    max-width: 1000px;
+                    max-width: 1400px; /* Increased max-width for 3 columns */
                     padding: 0 1rem;
                     display: grid;
-                    grid-template-columns: 300px 1fr;
+                    grid-template-columns: 300px 1fr 300px; /* 3 Columns */
                     gap: 2rem;
+                    align-items: start;
                 }
                 .profile-sidebar {
                     display: flex;
                     flex-direction: column;
                     gap: 1.5rem;
+                }
+                .profile-main {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2rem;
+                }
+                .profile-skin-column {
+                     display: flex;
+                     flex-direction: column;
                 }
                 .profile-card {
                     background: rgba(255, 255, 255, 0.03);
@@ -158,26 +227,57 @@ export default function PublicProfile() {
                     position: relative;
                     overflow: hidden;
                 }
-                .profile-main {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2rem;
-                }
                 .skin-preview {
-                    height: 400px;
+                    height: 500px; /* Taller for full body side view */
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+                    background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+                    border-radius: 12px;
+                    overflow: hidden; /* Ensure no overflow */
                 }
-                @media (max-width: 800px) {
+                .skin-preview img {
+                    max-height: 90%;
+                    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+                    transition: transform 0.3s ease;
+                }
+                .skin-preview:hover img {
+                    transform: scale(1.05);
+                }
+                
+                @media (max-width: 1200px) {
+                    /* Re-think responsive: 
+                       If 1200px:
+                       Col 1: Sidebar
+                       Col 2: Main + Skin (stacked)
+                    */
+                    .profile-content {
+                       grid-template-columns: 300px 1fr;
+                       grid-template-areas: 
+                           "sidebar main"
+                           "sidebar skin";
+                    }
+                    .profile-sidebar { grid-area: sidebar; }
+                    .profile-main { grid-area: main; }
+                    .profile-skin-column { 
+                       display: block; 
+                       grid-area: skin; 
+                    }
+                }
+
+                @media (max-width: 850px) {
                     .profile-content {
                         grid-template-columns: 1fr;
+                        grid-template-areas: 
+                            "sidebar"
+                            "skin"
+                            "main";
                     }
                     .skin-preview {
-                        height: 300px;
+                        height: 350px;
                     }
                 }
+
                 .stat-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -241,7 +341,7 @@ export default function PublicProfile() {
                             />
                             {/* Role Badge integrated */}
                             <div style={{ marginTop: '1rem' }}>
-                                <RoleBadge role={profile.role} username={profile.username} />
+                                <RoleBadge role={profile.role} username={profile.username} uuid={profile.minecraft_uuid} />
                             </div>
                         </div>
 
@@ -279,12 +379,19 @@ export default function PublicProfile() {
                                                 <span style={{ fontSize: '0.9rem' }}>{profile.social_twitter}</span>
                                             </a>
                                         )}
-                                        {profile.social_twitch && (
-                                            <a href={`https://twitch.tv/${profile.social_twitch}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc', textDecoration: 'none' }}>
-                                                <FaTwitch style={{ color: '#9146FF' }} />
-                                                <span style={{ fontSize: '0.9rem' }}>{profile.social_twitch}</span>
-                                            </a>
-                                        )}
+                                        {profile.social_twitch && (() => {
+                                            const raw = profile.social_twitch;
+                                            const isUrl = raw.includes('twitch.tv');
+                                            const username = isUrl ? raw.split('/').pop() : raw;
+                                            const url = isUrl ? (raw.startsWith('http') ? raw : `https://${raw}`) : `https://twitch.tv/${raw}`;
+                                            
+                                            return (
+                                                <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc', textDecoration: 'none' }}>
+                                                    <FaTwitch style={{ color: '#9146FF' }} />
+                                                    <span style={{ fontSize: '0.9rem' }}>{username}</span>
+                                                </a>
+                                            )
+                                        })()}
                                         {profile.social_youtube && (
                                             <a href={profile.social_youtube.startsWith('http') ? profile.social_youtube : `https://youtube.com/${profile.social_youtube}`} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ccc', textDecoration: 'none' }}>
                                                 <FaYoutube style={{ color: '#ff0000' }} />
@@ -298,7 +405,7 @@ export default function PublicProfile() {
                     )}
                 </div>
 
-                {/* Right Column: Content */}
+                {/* Middle Column: Main Content */}
                 <div className="profile-main">
                     
                     {/* Medals Showcase */}
@@ -395,19 +502,23 @@ export default function PublicProfile() {
                         )}
                     </div>
 
-                    {/* Skin Body Preview */}
-                    <div className="admin-card" style={{ textAlign: 'center' }}>
+                    {/* Profile Wall / Comments Section */}
+                    <ProfileWall profileId={profile.id} isAdmin={isAdmin} />
+                </div>
+
+                {/* Right Column: Skin Preview */}
+                <div className="profile-skin-column">
+                    <div className="admin-card" style={{ textAlign: 'center', height: '100%' }}>
                         <h3 style={{ marginBottom: '1rem', textAlign:'left' }}>Skin</h3>
                         <div className="skin-preview">
                             <img 
-                                src={`https://mc-heads.net/body/${profile.username}/300`} 
+                                src={`https://mc-heads.net/body/${profile.username}/240`} 
                                 alt="Skin Body" 
-                                style={{ filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.5))' }}
                             />
                         </div>
                     </div>
-
                 </div>
+
             </div>
         </div>
     )

@@ -16,7 +16,12 @@ interface PlayerStats {
 }
 
 // Map specific Unicode Groups found in DB to internal keys
-const GROUP_MAP: any = {
+import { RowDataPacket } from 'mysql2';
+
+interface GroupMap { [key: string]: string }
+
+// Map specific Unicode Groups found in DB to internal keys
+const GROUP_MAP: GroupMap = {
     '§f§r': 'neroferno',
     '§f§r': 'fundador',
     '§f§r': 'donador',
@@ -32,11 +37,11 @@ export const getPlayerStats = async (usernameFragment: string): Promise<PlayerSt
 
     // 1. Resolve User (UUID/Name) from PLAN
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanUsername);
-    let query = isUUID 
+    const query = isUUID 
         ? `SELECT uuid, name, id, registered FROM plan_users WHERE uuid = ? LIMIT 1`
         : `SELECT uuid, name, id, registered FROM plan_users WHERE name = ? ORDER BY registered DESC LIMIT 1`;
 
-    let [users]: any = await db.query(query, [cleanUsername]);
+    const [users] = await db.query<RowDataPacket[]>(query, [cleanUsername]);
 
     // Fallback logic for compacted/dashed UUIDs
     if (users.length === 0 && isUUID) {
@@ -88,29 +93,35 @@ export const getPlayerStats = async (usernameFragment: string): Promise<PlayerSt
 
 // --- Helpers ---
 
-const getSessionStats = async (planUserId: number) => {
+interface SessionStats {
+    playtime?: number;
+    mobs?: number;
+    deaths?: number;
+}
+
+const getSessionStats = async (planUserId: number): Promise<SessionStats> => {
     try {
-        const [rows]: any = await db.query(`
+        const [rows] = await db.query<RowDataPacket[]>(`
             SELECT 
                 SUM(CASE WHEN session_end IS NOT NULL THEN (session_end - session_start) ELSE (UNIX_TIMESTAMP(NOW()) * 1000 - session_start) END) as playtime,
                 SUM(mob_kills) as mobs,
                 SUM(deaths) as deaths
             FROM plan_sessions WHERE user_id = ?
         `, [planUserId]);
-        return rows[0] || {};
-    } catch (e) { console.error("SessionStats Error", e); return {}; }
+        return (rows[0] as SessionStats) || { playtime: 0, mobs: 0, deaths: 0 };
+    } catch (e) { console.error("SessionStats Error", e); return { playtime: 0, mobs: 0, deaths: 0 }; }
 };
 
 const getPvpKills = async (uuid: string) => {
     try {
-        const [rows]: any = await db.query(`SELECT COUNT(*) as count FROM plan_kills WHERE killer_uuid = ?`, [uuid]);
+        const [rows] = await db.query<RowDataPacket[]>(`SELECT COUNT(*) as count FROM plan_kills WHERE killer_uuid = ?`, [uuid]);
         return rows[0]?.count || 0;
-    } catch (e) { return 0; }
+    } catch { return 0; }
 };
 
 const getMoney = async (uuid: string) => {
     try {
-         const [rows]: any = await db.query(`
+         const [rows] = await db.query<RowDataPacket[]>(`
             SELECT 
                 (SELECT uv.double_value FROM plan_extension_user_values uv JOIN plan_extension_providers ep ON uv.provider_id = ep.id JOIN plan_extension_plugins pl ON ep.plugin_id = pl.id WHERE (pl.name LIKE '%Economy%' OR pl.name LIKE '%Vault%') AND (ep.name LIKE '%Balance%' OR ep.text LIKE '%Balance%') AND uv.uuid = ? ORDER BY uv.id DESC LIMIT 1) as vault_balance,
                 (SELECT uv.string_value FROM plan_extension_user_values uv JOIN plan_extension_providers ep ON uv.provider_id = ep.id JOIN plan_extension_plugins pl ON ep.plugin_id = pl.id WHERE (pl.name LIKE '%Economy%' OR pl.name LIKE '%Vault%') AND (ep.name LIKE '%Balance%' OR ep.text LIKE '%Balance%' OR ep.name LIKE '%vault_eco_balance%') AND uv.uuid = ? ORDER BY uv.id DESC LIMIT 1) as vault_balance_str
@@ -121,37 +132,38 @@ const getMoney = async (uuid: string) => {
             val = Number(rows[0].vault_balance_str.replace(/[^0-9.]/g, '')) || 0;
         }
         return val;
-    } catch (e) { return 0; }
+    } catch { return 0; }
 };
 
 const getLuckPermsGroups = async (uuid: string) => {
     try {
-        const [lpUsers]: any = await db.query(`SELECT primary_group FROM luckperms_players WHERE uuid = ?`, [uuid]);
-        let groups: string[] = [];
+        const [lpUsers] = await db.query<RowDataPacket[]>(`SELECT primary_group FROM luckperms_players WHERE uuid = ?`, [uuid]);
+        const groups: string[] = [];
         if (lpUsers.length > 0 && lpUsers[0].primary_group) groups.push(lpUsers[0].primary_group);
         
-        const [lpPerms]: any = await db.query(`SELECT permission FROM luckperms_user_permissions WHERE uuid = ? AND permission LIKE 'group.%'`, [uuid]);
-        lpPerms.forEach((row: any) => groups.push(row.permission.replace('group.', '')));
+        const [lpPerms] = await db.query<RowDataPacket[]>(`SELECT permission FROM luckperms_user_permissions WHERE uuid = ? AND permission LIKE 'group.%'`, [uuid]);
+        // Typed row instead of any
+        lpPerms.forEach((row) => groups.push(row.permission.replace('group.', '')));
         return groups;
-    } catch (e) { return ['default']; }
+    } catch { return ['default']; }
 };
 
 const getCoreProtectStats = async (username: string) => {
     try {
         if (!process.env.CP_DB_HOST) return { mined: 0, placed: 0 };
-        const [users]: any = await cpDb.query('SELECT rowid FROM co_user WHERE user = ? LIMIT 1', [username]);
+        const [users] = await cpDb.query<RowDataPacket[]>('SELECT rowid FROM co_user WHERE user = ? LIMIT 1', [username]);
         if (users.length === 0) return { mined: 0, placed: 0 };
         
         const cpUserId = users[0].rowid;
-        const [mined]: any = await cpDb.query('SELECT COUNT(*) as count FROM co_block WHERE user = ? AND action = 0', [cpUserId]);
-        const [placed]: any = await cpDb.query('SELECT COUNT(*) as count FROM co_block WHERE user = ? AND action = 1', [cpUserId]);
+        const [mined] = await cpDb.query<RowDataPacket[]>('SELECT COUNT(*) as count FROM co_block WHERE user = ? AND action = 0', [cpUserId]);
+        const [placed] = await cpDb.query<RowDataPacket[]>('SELECT COUNT(*) as count FROM co_block WHERE user = ? AND action = 1', [cpUserId]);
         
         return { mined: mined[0].count, placed: placed[0].count };
     } catch (e) { console.error("CP Error", e); return { mined: 0, placed: 0 }; }
 };
 
 const processRank = (groups: string[]) => {
-    let normalizedGroups = groups.map(g => GROUP_MAP[g] || g.toLowerCase());
+    const normalizedGroups = groups.map(g => GROUP_MAP[g] || g.toLowerCase());
     let highestRank = 'default';
     let highestIndex = -1;
     

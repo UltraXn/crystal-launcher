@@ -1,6 +1,50 @@
 import supabase from './supabaseService.js';
 import { translateText } from './translationService.js';
 
+interface PollOption {
+    id: number;
+    poll_id: number;
+    label: string;
+    label_en?: string | null;
+    votes?: number;
+}
+
+interface Poll {
+    id: number;
+    title: string;
+    title_en?: string | null;
+    question: string;
+    question_en?: string | null;
+    is_active: boolean;
+    closes_at?: string | null;
+    created_at?: string;
+    thread_id?: number | null;
+    discord_link?: string | null;
+    options?: PollOption[];
+    totalVotes?: number;
+    closesIn?: string;
+}
+
+interface CreatePollDTO {
+    title: string;
+    title_en?: string;
+    question: string;
+    question_en?: string;
+    options: (string | { label: string; label_en?: string })[];
+    closes_at?: string;
+    thread_id?: number;
+    discord_link?: string;
+}
+
+interface UpdatePollDTO {
+    title: string;
+    title_en?: string;
+    question: string;
+    question_en?: string;
+    options: (string | { label: string; label_en?: string })[];
+    closes_at?: string;
+}
+
 export const getActivePoll = async () => {
     // 1. Fetch active poll
     const { data: poll, error } = await supabase
@@ -24,13 +68,13 @@ export const getActivePoll = async () => {
         .eq('poll_id', poll.id)
         .order('id', { ascending: true });
     
-    const safeOptions = options || [];
+    const safeOptions: PollOption[] = options || [];
         
     // Calculate total votes
-    const totalVotes = safeOptions.reduce((sum: number, opt: any) => sum + (opt.votes || 0), 0);
+    const totalVotes = safeOptions.reduce((sum: number, opt: PollOption) => sum + (opt.votes || 0), 0);
     
     // Calculate percentages
-    const optionsWithPercent = safeOptions.map((opt: any) => ({
+    const optionsWithPercent = safeOptions.map((opt: PollOption) => ({
         ...opt,
         percent: totalVotes === 0 ? 0 : Math.round(((opt.votes || 0) / totalVotes) * 100)
     }));
@@ -60,11 +104,11 @@ export const getPollById = async (id: number) => {
     if(error || !poll) return null;
 
     const { data: options } = await supabase.from('poll_options').select('*').eq('poll_id', poll.id);
-    const safeOptions = options || [];
-    const totalVotes = safeOptions.reduce((acc: number, o: any) => acc + (o.votes||0), 0);
+    const safeOptions: PollOption[] = options || [];
+    const totalVotes = safeOptions.reduce((acc: number, o: PollOption) => acc + (o.votes||0), 0);
     
     // Calculate percentages
-    const optionsWithPercent = safeOptions.map((opt: any) => ({
+    const optionsWithPercent = safeOptions.map((opt: PollOption) => ({
         ...opt,
         percent: totalVotes === 0 ? 0 : Math.round(((opt.votes || 0) / totalVotes) * 100)
     }));
@@ -103,7 +147,7 @@ export const votePoll = async (pollId: number, optionId: number) => {
     return { success: true, votes: newVotes };
 };
 
-export const createPoll = async ({ title, title_en, question, question_en, options, closes_at, thread_id, discord_link }: any) => {
+export const createPoll = async ({ title, title_en, question, question_en, options, closes_at, thread_id, discord_link }: CreatePollDTO) => {
     // Deactivate others ONLY if Global (no thread_id)
     if (!thread_id) {
         await supabase.from('polls').update({ is_active: false }).is('thread_id', null).neq('id', -1); 
@@ -131,7 +175,7 @@ export const createPoll = async ({ title, title_en, question, question_en, optio
 
     if (options && options.length > 0) {
         // Options can be string[] or { label, label_en }[]
-        const optionsData = await Promise.all(options.map(async (opt: any) => {
+        const optionsData = await Promise.all(options.map(async (opt) => {
             let label = '';
             let label_en = '';
 
@@ -158,6 +202,73 @@ export const createPoll = async ({ title, title_en, question, question_en, optio
     return poll;
 };
 
+export const updatePoll = async (id: number, { title, title_en, question, question_en, options, closes_at }: UpdatePollDTO) => {
+    // 1. Update main fields
+    const finalTitleEn = title_en ? title_en : await translateText(title, 'en');
+    const finalQuestionEn = question_en ? question_en : await translateText(question, 'en');
+
+    const { data: poll, error } = await supabase
+        .from('polls')
+        .update({
+            title,
+            title_en: finalTitleEn,
+            question,
+            question_en: finalQuestionEn,
+            closes_at
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    
+    if (error) throw error;
+
+    // 2. Diff Options
+    
+    // FETCH EXISTING
+    const { data: existingOptions } = await supabase
+        .from('poll_options')
+        .select('*')
+        .eq('poll_id', id)
+        .order('id', { ascending: true });
+    
+    const safeExisting: PollOption[] = existingOptions || [];
+
+    // We will update first N options, create remaining, delete extras?
+    if (options && Array.isArray(options)) {
+        for (let i = 0; i < options.length; i++) {
+            const opt = options[i];
+            const label = typeof opt === 'string' ? opt : opt.label;
+            const label_en = typeof opt === 'string' ? await translateText(opt, 'en') : (opt.label_en || await translateText(opt.label, 'en'));
+
+            if (safeExisting && i < safeExisting.length) {
+                // UPDATE existing
+                await supabase
+                    .from('poll_options')
+                    .update({ label, label_en })
+                    .eq('id', safeExisting[i].id);
+            } else {
+                // CREATE new
+                await supabase
+                    .from('poll_options')
+                    .insert({
+                        poll_id: id,
+                        label,
+                        label_en,
+                        votes: 0
+                    });
+            }
+        }
+
+        // DELETE extras if new list is shorter
+        if (safeExisting && safeExisting.length > options.length) {
+             const toDelete = safeExisting.slice(options.length).map((o) => o.id);
+             await supabase.from('poll_options').delete().in('id', toDelete);
+        }
+    }
+
+    return poll;
+};
+
 export const closePoll = async (id: number) => {
     const { error } = await supabase
         .from('polls')
@@ -176,7 +287,7 @@ export const deletePoll = async (id: number) => {
     return { success: true };
 };
 
-export const getPolls = async ({ page = 1, limit = 10 }: any) => {
+export const getPolls = async ({ page = 1, limit = 10 }: { page: number; limit: number }) => {
     const offset = (page - 1) * limit;
     
     // Fetch polls
@@ -193,16 +304,21 @@ export const getPolls = async ({ page = 1, limit = 10 }: any) => {
         return { data: [], total: 0, page, totalPages: 0 };
     }
 
-    const pollIds = polls.map((p: any) => p.id);
+    // Cast as Poll[] to avoid 'any' issues downstream
+    const safePolls: Poll[] = polls as Poll[];
+
+    const pollIds = safePolls.map((p) => p.id);
     const { data: options } = await supabase
         .from('poll_options')
         .select('poll_id, votes')
         .in('poll_id', pollIds);
+    
+    const safeOptions: Partial<PollOption>[] = options || [];
 
     // enrich polls
-    const enrichedPolls = polls.map((p: any) => {
-        const pOptions = (options || []).filter((o: any) => o.poll_id === p.id);
-        const totalVotes = pOptions.reduce((acc: number, curr: any) => acc + (curr.votes || 0), 0);
+    const enrichedPolls = safePolls.map((p) => {
+        const pOptions = safeOptions.filter((o) => o.poll_id === p.id);
+        const totalVotes = pOptions.reduce((acc: number, curr: Partial<PollOption>) => acc + (curr.votes || 0), 0);
         return { ...p, totalVotes };
     });
 

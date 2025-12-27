@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { FaSearch, FaPlus, FaTimes, FaSpinner, FaPaperPlane, FaGavel, FaCheckCircle, FaLock, FaEye, FaTicketAlt, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa"
+import { FaSearch, FaPlus, FaTimes, FaSpinner, FaPaperPlane, FaGavel, FaCheckCircle, FaLock, FaEye, FaTicketAlt, FaExclamationCircle, FaExclamationTriangle, FaTrash } from "react-icons/fa"
 import { useAuth } from "../../context/AuthContext"
 import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
+import { supabase } from "../../services/supabaseClient"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -15,6 +16,10 @@ interface Ticket {
     priority: 'low' | 'medium' | 'high' | 'urgent';
     status: 'open' | 'pending' | 'resolved' | 'closed';
     created_at: string;
+    profiles?: {
+        username: string;
+        avatar_url: string;
+    };
 }
 
 interface Message {
@@ -50,6 +55,8 @@ export default function TicketsManager() {
     const [loading, setLoading] = useState(true)
     const [showCreateModal, setShowCreateModal] = useState(false)
     const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null) // Controls if Detail Modal is open
+    const [selectedTicketIds, setSelectedTicketIds] = useState<number[]>([])
+    const [confirmBulkDelete, setConfirmBulkDelete] = useState(false)
 
     // Create Ticket State
     const [newTicket, setNewTicket] = useState<{
@@ -63,7 +70,15 @@ export default function TicketsManager() {
     const fetchTickets = async () => {
         try {
             setLoading(true)
-            const res = await fetch(`${API_URL}/tickets`)
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
+            const res = await fetch(`${API_URL}/tickets`, { headers })
+            if (res.status === 429) {
+                console.warn("Rate limited fetching tickets. Retrying automatically in 5s.")
+                setTimeout(fetchTickets, 5000)
+                return
+            }
             if (!res.ok) throw new Error("Error fetching tickets")
             const data = await res.json()
             if (data.success && Array.isArray(data.data)) {
@@ -72,10 +87,10 @@ export default function TicketsManager() {
                 setTickets(data)
             } else {
                 setTickets([])
-                console.error("Unexpected response format:", data)
             }
         } catch (error) {
             console.error("Failed to load tickets", error)
+            setAlert({ message: t('admin.alerts.error_title') + ": " + (error instanceof Error ? error.message : "Unknown Error"), type: 'error' })
         } finally {
             setLoading(false)
         }
@@ -96,9 +111,13 @@ export default function TicketsManager() {
 
         try {
             setIsSubmitting(true)
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             const res = await fetch(`${API_URL}/tickets`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     user_id: user.id,
                     subject: newTicket.subject,
@@ -119,6 +138,50 @@ export default function TicketsManager() {
         }
     }
 
+    const toggleSelectTicket = (id: number) => {
+        setSelectedTicketIds(prev => 
+            prev.includes(id) ? prev.filter(ticketId => ticketId !== id) : [...prev, id]
+        )
+    }
+
+    const toggleSelectAll = () => {
+        if (selectedTicketIds.length === tickets.length) {
+            setSelectedTicketIds([])
+        } else {
+            setSelectedTicketIds(tickets.map(t => t.id))
+        }
+    }
+
+    const handleBulkDelete = async () => {
+        if (selectedTicketIds.length === 0) return;
+        
+        try {
+            setLoading(true)
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
+            // Since we don't have a bulk delete API yet, we'll do parallel requests
+            // Ideally this should be a single API call /tickets/bulk-delete
+            await Promise.all(selectedTicketIds.map(id => 
+                fetch(`${API_URL}/tickets/${id}`, {
+                    method: 'DELETE',
+                    headers
+                })
+            ));
+
+            setAlert({ message: t('admin.tickets.bulk_delete_success', 'Tickets eliminados correctamente'), type: 'success' })
+            setSelectedTicketIds([])
+            fetchTickets()
+        } catch (error) {
+            console.error(error)
+            setAlert({ message: t('admin.alerts.error_title'), type: 'error' })
+        } finally {
+            setLoading(false)
+            setConfirmBulkDelete(false)
+        }
+    }
+
     return (
         <div className="admin-card">
             {/* CARD HEADER */}
@@ -128,6 +191,15 @@ export default function TicketsManager() {
                     <input type="text" placeholder={t('admin.tickets.search_placeholder')} style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
+                    {selectedTicketIds.length > 0 && (
+                        <button
+                            className="btn-primary"
+                            onClick={() => setConfirmBulkDelete(true)}
+                            style={{ fontSize: '0.9rem', padding: '0.6rem 1.2rem', display: 'flex', gap: '0.5rem', alignItems: 'center', background: '#ef4444', color: 'white' }}
+                        >
+                            <FaTrash size={12} /> {t('admin.tickets.delete_selected', 'Eliminar')} ({selectedTicketIds.length})
+                        </button>
+                    )}
                     <button
                         className="btn-primary"
                         onClick={() => setShowCreateModal(true)}
@@ -153,6 +225,14 @@ export default function TicketsManager() {
                     <table className="admin-table">
                         <thead>
                             <tr>
+                                <th style={{width: '30px'}}>
+                                    <input 
+                                        type="checkbox" 
+                                        checked={tickets.length > 0 && selectedTicketIds.length === tickets.length}
+                                        onChange={toggleSelectAll}
+                                        style={{cursor:'pointer'}}
+                                    />
+                                </th>
                                 <th style={{width: '50px'}}>{t('admin.tickets.table.id')}</th>
                                 <th>{t('admin.tickets.table.user')}</th>
                                 <th>{t('admin.tickets.table.subject')}</th>
@@ -164,9 +244,24 @@ export default function TicketsManager() {
                         </thead>
                         <tbody>
                             {Array.isArray(tickets) && tickets.map(ticketItem => (
-                                <tr key={ticketItem.id} onClick={() => setSelectedTicket(ticketItem)} style={{ cursor: 'pointer' }}>
+                                <tr key={ticketItem.id} onClick={() => setSelectedTicket(ticketItem)} style={{ cursor: 'pointer', background: selectedTicketIds.includes(ticketItem.id) ? 'rgba(255,255,255,0.05)' : 'transparent' }}>
+                                    <td onClick={e => e.stopPropagation()}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedTicketIds.includes(ticketItem.id)}
+                                            onChange={() => toggleSelectTicket(ticketItem.id)}
+                                            style={{cursor:'pointer'}}
+                                        />
+                                    </td>
                                     <td style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>#{ticketItem.id}</td>
-                                    <td style={{ color: '#aaa', fontSize: '0.9rem' }}>{ticketItem.user_id?.substring(0, 8) || 'Anon'}...</td>
+                                    <td style={{ color: '#aaa', fontSize: '0.9rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {ticketItem.profiles?.avatar_url && (
+                                                <img src={ticketItem.profiles.avatar_url} alt="" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
+                                            )}
+                                            {ticketItem.profiles?.username || ticketItem.user_id?.substring(0, 8) || 'Anon'}
+                                        </div>
+                                    </td>
                                     <td style={{ fontWeight: '500', color: '#fff' }}>{ticketItem.subject}</td>
                                     <td><PriorityBadge priority={ticketItem.priority} /></td>
                                     <td><StatusBadge status={ticketItem.status} /></td>
@@ -290,6 +385,13 @@ export default function TicketsManager() {
                     refreshTickets={fetchTickets}
                 />
             )}
+            {confirmBulkDelete && (
+                <CustomConfirm 
+                    message={t('admin.tickets.bulk_delete_confirm', `¿Seguro que quieres eliminar ${selectedTicketIds.length} tickets seleccionados? Esta acción es irreversible.`)}
+                    onConfirm={handleBulkDelete}
+                    onCancel={() => setConfirmBulkDelete(false)}
+                />
+            )}
         </div>
     )
 }
@@ -315,7 +417,10 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
 
     const fetchMessages = useCallback(async () => {
         try {
-            const res = await fetch(`${API_URL}/tickets/${ticket.id}/messages`)
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
+            const res = await fetch(`${API_URL}/tickets/${ticket.id}/messages`, { headers })
             if (res.ok) {
                 const data = await res.json()
                 if (data.success && Array.isArray(data.data)) {
@@ -337,6 +442,34 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
     useEffect(() => {
         if (ticket) {
             fetchMessages()
+
+            // Real-time Subscription
+            console.log("Setting up realtime subscription for ticket:", ticket.id);
+            const channel = supabase
+                .channel(`ticket_chat_admin_${ticket.id}`)
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'ticket_messages',
+                    filter: `ticket_id=eq.${ticket.id}`
+                }, (payload: { new: any }) => {
+                    console.log("New message received in Admin:", payload.new);
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === payload.new.id)) return prev;
+                        return [...prev, payload.new as Message];
+                    });
+                    setTimeout(() => {
+                         if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: 'smooth' })
+                    }, 100)
+                })
+                .subscribe((status) => {
+                    console.log("Admin Realtime Subscription Status:", status);
+                })
+
+            return () => {
+                console.log("Cleaning up subscription for ticket:", ticket.id);
+                supabase.removeChannel(channel)
+            }
         }
     }, [ticket, fetchMessages])
 
@@ -346,9 +479,13 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
 
         setSending(true)
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             const res = await fetch(`${API_URL}/tickets/${ticket.id}/messages`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     user_id: user.id,
                     message: newMessage,
@@ -394,9 +531,13 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
         }
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             const res = await fetch(url, {
                 method: method,
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: body ? JSON.stringify(body) : undefined
             })
 
@@ -540,9 +681,13 @@ function BanUserModal({ onClose, onSuccess }: BanUserModalProps) {
         
         setLoading(true)
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             await fetch(`${import.meta.env.VITE_API_URL}/tickets/ban`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ 
                     username: nickname, 
                     reason: duration === 'perm' ? `[PERMANENTE] ${reason}` : `[TEMP: ${timeValue}${timeUnit}] ${reason}`

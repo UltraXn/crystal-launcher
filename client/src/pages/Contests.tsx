@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
 import Section from "../components/Layout/Section"
 import { FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaSignInAlt } from "react-icons/fa"
-import anime from "animejs"
+import anime from "animejs/lib/anime.js"
 import { useTranslation } from 'react-i18next'
 import { useAuth } from "../context/AuthContext"
 import { useNavigate } from "react-router-dom"
+import { supabase } from "../services/supabaseClient"
 // @ts-ignore
 import confetti from "canvas-confetti"
 
@@ -111,7 +112,7 @@ export default function Contests() {
 
         const fetchData = async () => {
              try {
-                // 1. Fetch Events
+                // 1. Fetch Events (Public)
                 const eventsRes = await fetch(`${API_URL}/events`)
                 const eventsData = await eventsRes.json()
                 if (Array.isArray(eventsData)) {
@@ -120,10 +121,22 @@ export default function Contests() {
 
                 // 2. Fetch User Registrations (if logged in)
                 if (user) {
-                     const regRes = await fetch(`${API_URL}/events/my-registrations?userId=${user.id}`)
-                     const regData = await regRes.json()
-                     if (Array.isArray(regData)) {
-                         setMyRegistrations(regData)
+                     // Get Token
+                     const { data: { session } } = await supabase.auth.getSession();
+                     const token = session?.access_token;
+
+                     if (token) {
+                        const regRes = await fetch(`${API_URL}/events/my-registrations?userId=${user.id}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        })
+                        if (regRes.ok) {
+                            const regData = await regRes.json()
+                            if (Array.isArray(regData)) {
+                                setMyRegistrations(regData)
+                            }
+                        }
                      }
                 }
 
@@ -155,9 +168,16 @@ export default function Contests() {
 
         setRegistering(eventId)
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) throw new Error("No hay sesión activa");
+
             const res = await fetch(`${API_URL}/events/${eventId}/register`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ userId: user.id })
             })
             

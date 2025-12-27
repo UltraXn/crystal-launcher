@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
-import { FaWater, FaGhost, FaTree, FaCheck, FaUsers, FaSave, FaChevronDown, FaChevronUp, FaCogs, FaBullhorn, FaImage, FaGavel, FaDonate, FaTerminal } from 'react-icons/fa'
+import { FaWater, FaGhost, FaTree, FaCheck, FaUsers, FaSave, FaChevronDown, FaChevronUp, FaCogs, FaBullhorn, FaImage, FaGavel, FaDonate, FaTerminal, FaShieldAlt } from 'react-icons/fa'
 import { useAuth } from '../../context/AuthContext'
 import ConfirmationModal from '../UI/ConfirmationModal'
 import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
+import { supabase } from '../../services/supabaseClient'
 import BroadcastManager from './Config/BroadcastManager'
 import HeroBannerManager from './Config/HeroBannerManager'
 import RulesEditor from './Config/RulesEditor'
 import SecureConsole from './Config/SecureConsole'
 import DonationsManager from './DonationsManager'
 import DonorsManager from './DonorsManager'
+import PoliciesManager from './Config/PoliciesManager'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -68,9 +70,15 @@ export default function SiteConfig() {
         try {
             const username = user?.user_metadata?.full_name || user?.email || 'Admin';
             
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 
+                'Content-Type': 'application/json' 
+            };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             const res = await fetch(`${API_URL}/settings/${key}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ 
                     value: String(value),
                     username, 
@@ -267,6 +275,11 @@ export default function SiteConfig() {
             {/* 6. HISTORIAL DE DONACIONES */}
             <ConfigSection title={t('admin.settings.sections.donations')} icon={<FaDonate />}>
                 <DonationsManager />
+            </ConfigSection>
+
+            {/* 8. POLÍTICAS LEGALES */}
+            <ConfigSection title={t('admin.settings.sections.policies', 'Políticas del Sitio')} icon={<FaShieldAlt />}>
+                <PoliciesManager />
             </ConfigSection>
 
             {/* 7. CONSOLA */}

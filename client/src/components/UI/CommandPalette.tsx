@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion as Motion } from 'framer-motion';
-import { FaSearch, FaHome, FaUser, FaUsers, FaMap, FaDiscord, FaShoppingCart, FaCog, FaShieldAlt, FaQuestionCircle, FaBoxOpen } from 'react-icons/fa';
+import { FaSearch, FaHome, FaUser, FaUsers, FaMap, FaDiscord, FaCog, FaShieldAlt, FaQuestionCircle, FaBoxOpen } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 
@@ -48,7 +48,7 @@ export default function CommandPalette() {
             items: [
                 { id: 'home', label: t('nav.home', 'Inicio'), icon: <FaHome />, action: () => navigate('/') },
                 { id: 'account', label: t('nav.account', 'Mi Cuenta'), icon: <FaUser />, action: () => navigate('/account') },
-                { id: 'staff', label: t('nav.staff', 'Staff'), icon: <FaUsers />, action: () => navigate('/staff') },
+                { id: 'staff', label: t('nav.staff', 'Staff'), icon: <FaUsers />, action: () => navigate('/#staff') },
                 { id: 'map', label: t('nav.map', 'Mapa'), icon: <FaMap />, action: () => navigate('/map') },
                 { id: 'gacha', label: 'KilluCoin Gacha', icon: <FaBoxOpen />, action: () => navigate('/gacha') },
                 { id: 'forum', label: 'Foro', icon: <FaQuestionCircle />, action: () => navigate('/forum') },
@@ -56,10 +56,9 @@ export default function CommandPalette() {
             ] 
         },
         {
-            section: 'Social & Tienda',
+            section: 'Social',
             items: [
-                { id: 'discord', label: 'Discord', icon: <FaDiscord />, action: () => window.open('https://discord.gg/crystaltides', '_blank') },
-                { id: 'store', label: 'Tienda', icon: <FaShoppingCart />, action: () => window.open('https://store.crystaltides.net', '_blank') },
+                { id: 'discord', label: 'Discord', icon: <FaDiscord />, action: () => window.open('https://discord.com/invite/TDmwYNnvyT', '_blank') },
             ]
         }
     ];

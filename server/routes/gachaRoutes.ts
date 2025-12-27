@@ -1,5 +1,6 @@
 import express from 'express';
 import * as gachaController from '../controllers/gachaController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -31,7 +32,7 @@ const router = express.Router();
  *       429:
  *         description: Cooldown activo
  */
-router.post('/roll', gachaController.roll);
+router.post('/roll', authenticateToken, gachaController.roll);
 
 /**
  * @swagger
@@ -49,6 +50,6 @@ router.post('/roll', gachaController.roll);
  *       200:
  *         description: Historial recuperado
  */
-router.get('/history/:userId', gachaController.getHistory);
+router.get('/history/:userId', authenticateToken, gachaController.getHistory);
 
 export default router;

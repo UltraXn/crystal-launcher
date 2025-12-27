@@ -30,8 +30,9 @@ router.get('/live', async (req: Request, res: Response) => {
             latency: result.roundTripLatency
         });
 
-    } catch (error: any) {
-        console.warn(`[Server Status] Check Failed: ${error.message}`);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn(`[Server Status] Check Failed: ${message}`);
         
         // Fallback: Return offline structure so frontend handles it gracefully
         res.json({
@@ -43,7 +44,7 @@ router.get('/live', async (req: Request, res: Response) => {
                 max: 0,
                 sample: []
             },
-            error: error.message
+            error: message
         });
     }
 });

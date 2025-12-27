@@ -2,11 +2,25 @@ import supabase from '../services/supabaseService.js';
 import * as logService from '../services/logService.js';
 import { translateText } from '../services/translationService.js';
 
-// Canal de anuncios de Discord (Debería estar en .env idealmente, aquí hardcodeado o pasado por config)
-const DISCORD_ANNOUNCEMENTS_CHANNEL_ID = process.env.DISCORD_ANNOUNCEMENTS_CHANNEL_ID;
+import { Request, Response } from 'express';
 
-export const getAllNews = async (req: any, res: any) => {
-    // ... existing body ...
+// Canal de anuncios de Discord (Debería estar en .env idealmente, aquí hardcodeado o pasado por config, currently unused so removed to fix lint)
+// const DISCORD_ANNOUNCEMENTS_CHANNEL_ID = process.env.DISCORD_ANNOUNCEMENTS_CHANNEL_ID;
+
+// Helper function for slug generation
+const slugify = (text: string) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .normalize('NFD') // Normalize special chars (e.g. á -> a)
+        .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+        .replace(/[^a-z0-9\s-]/g, '') // Remove invalid chars
+        .trim()
+        .replace(/\s+/g, '-') // Replace spaces with -
+        .replace(/-+/g, '-'); // Replace multiple - with single -
+};
+
+export const getAllNews = async (req: Request, res: Response) => {
     try {
         const { data, error } = await supabase
             .from('news')
@@ -15,96 +29,249 @@ export const getAllNews = async (req: any, res: any) => {
 
         if (error) throw error;
 
-        const newsWithCounts = data.map((n: any) => ({
+        // Type the mapped item explicitly to avoid 'any'
+        interface NewsItem {
+            comments?: { count: number }[];
+            [key: string]: unknown;
+        }
+
+        const newsWithCounts = data.map((n: NewsItem) => ({
             ...n,
-            replies: n.comments ? n.comments[0].count : 0,
+            replies: n.comments && n.comments[0] ? n.comments[0].count : 0,
             comments: undefined
         }));
 
         res.status(200).json(newsWithCounts);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
-export const getNewsById = async (req: any, res: any) => {
-    // ... existing body ...
+export const getNewsById = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        const isNumeric = /^\d+$/.test(id);
 
-        // 1. Obtener noticia actual
-        const { data: newsItem, error: fetchError } = await supabase
-            .from('news')
-            .select('*')
-            .eq('id', id)
-            .single();
+        let query = supabase.from('news').select('*');
+        
+        if (isNumeric) {
+            query = query.eq('id', id);
+        } else {
+            query = query.eq('slug', id);
+        }
+
+        const { data: newsItem, error: fetchError } = await query.single();
 
         if (fetchError) throw fetchError;
         if (!newsItem) return res.status(404).json({ error: "Noticia no encontrada" });
 
         // 2. Incrementar visitas (si existe la columna views)
-        // Nota: Asegúrate de correr "ALTER TABLE public.news ADD COLUMN views INTEGER DEFAULT 0;"
         const newViews = (newsItem.views || 0) + 1;
 
         await supabase
             .from('news')
             .update({ views: newViews })
-            .eq('id', id);
+            .eq('id', newsItem.id); // Always update by ID once found
 
         // Retornamos el item con las vistas actualizadas (optimista)
         res.status(200).json({ ...newsItem, views: newViews });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
-export const getCommentsByNewsId = async (req: any, res: any) => {
-    // ... existing body ...
+export const getCommentsByNewsId = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
+        let newsId = id;
+
+        // Si el ID no es numérico, asumimos que es un slug y buscamos el ID real
+        if (!/^\d+$/.test(id)) {
+            const { data: news, error: newsError } = await supabase
+                .from('news')
+                .select('id')
+                .eq('slug', id)
+                .single();
+            
+            if (newsError || !news) {
+                return res.status(404).json({ error: "Noticia no encontrada" });
+            }
+            newsId = news.id;
+        }
+
         const { data, error } = await supabase
             .from('comments')
             .select('*')
-            .eq('news_id', id)
+            .eq('news_id', newsId)
             .order('created_at', { ascending: true });
 
         if (error) throw error;
         res.status(200).json(data);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
-export const createComment = async (req: any, res: any) => {
+export const createComment = async (req: Request, res: Response) => {
     try {
-        const { id } = req.params; // news_id
-        const { user_name, user_avatar, content, user_role } = req.body;
+        const { id } = req.params; // news_id o slug
+        // Don't trust body for user info
+        const { content } = req.body;
+        const user = req.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Usuario no autenticado" });
+        }
+
+        let newsId = id;
+
+        // Resolver slug a ID si es necesario
+        if (!/^\d+$/.test(id)) {
+            const { data: news, error: newsError } = await supabase
+                .from('news')
+                .select('id')
+                .eq('slug', id)
+                .single();
+            
+            if (newsError || !news) {
+                console.error(`Error resolving slug '${id}' to ID:`, newsError);
+                return res.status(404).json({ error: "Noticia no encontrada" });
+            }
+            newsId = news.id;
+        }
+
+        // Fetch latest user metadata to get correct avatar and role
+        // Ideally this should come from a 'profiles' table join, but for now we query auth/profiles
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, role, avatar_url')
+            .eq('id', user.id)
+            .single();
+
+        // Fallback to auth metadata if profile fails or is incomplete
+        const { data: { user: authUser } } = await supabase.auth.admin.getUserById(user.id);
+        
+        // Hybrid Priority Resolution based on User Feedback
+        // 1. Username: Profile (UltraXn) > Metadata (Discord Name)
+        const finalUsername = profile?.username || authUser?.user_metadata?.username || user.username;
+        
+        // 2. Role: Metadata (Source of Truth for Permissions) > Profile
+        const finalRole = authUser?.user_metadata?.role || profile?.role || 'user';
+        
+        // 3. Avatar: Metadata (Social PFP) > Profile (Minecraft Skin)
+        const finalAvatar = authUser?.user_metadata?.avatar_url || profile?.avatar_url || null;
 
         const { data, error } = await supabase
             .from('comments')
             .insert([{
-                news_id: id,
-                user_name,
-                user_avatar,
+                news_id: newsId,
+                // user_id removed as column does not exist
+                user_name: finalUsername,
+                user_avatar: finalAvatar,
                 content,
-                user_role: user_role || 'user'
+                user_role: finalRole
             }])
             .select();
 
         if (error) throw error;
         res.status(201).json(data[0]);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
-export const createNews = async (req: any, res: any) => {
+export const updateComment = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params; // comment id
+        const { content } = req.body;
+        const user = req.user;
+
+        if (!user) return res.status(401).json({ error: "Usuario no autenticado" });
+
+        // 1. Verify existence and ownership
+        const { data: comment, error: fetchError } = await supabase
+            .from('comments')
+            .select('user_name')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !comment) return res.status(404).json({ error: "Comentario no encontrado" });
+
+        // Fallback ownership check using username (since user_id is missing in this table)
+        if (comment.user_name !== user.username) {
+             return res.status(403).json({ error: "No tienes permiso para editar este comentario" });
+        }
+
+        // 2. Update
+        const { error } = await supabase
+            .from('comments')
+            .update({ content })
+            .eq('id', id);
+
+        if (error) throw error;
+        res.status(200).json({ message: "Comentario actualizado" });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
+    }
+};
+
+export const deleteComment = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params; // comment id
+        const user = req.user;
+        console.log(`[deleteComment] Attempting to delete comment ID: ${id} by User: ${user?.username} (${user?.id})`);
+
+        if (!user) return res.status(401).json({ error: "Usuario no autenticado" });
+
+        // 1. Verify existence
+        const { data: comment, error: fetchError } = await supabase
+            .from('comments')
+            .select('user_name')
+            .eq('id', id)
+            .single();
+
+        if (fetchError) console.error(`[deleteComment] DB Error fetching comment:`, fetchError);
+        if (!comment) console.error(`[deleteComment] Comment not found in DB`);
+
+        if (fetchError || !comment) return res.status(404).json({ error: "Comentario no encontrado" });
+
+        // 2. Check Permissions (Owner OR Admin)
+        const isAdmin = ['admin', 'owner', 'neroferno', 'killu', 'helper'].includes(user.role);
+        
+        // Ownership check via username
+        if (comment.user_name !== user.username && !isAdmin) {
+            return res.status(403).json({ error: "No tienes permiso para eliminar este comentario" });
+        }
+
+        // 3. Delete
+        const { error } = await supabase
+            .from('comments')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.status(200).json({ message: "Comentario eliminado" });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
+    }
+};
+
+export const createNews = async (req: Request, res: Response) => {
     try {
         const { title, category, content, image, status, author_id, username, title_en, content_en } = req.body;
 
         // Auto Translation if not provided
         const finalTitleEn = title_en || await translateText(title, 'en');
         const finalContentEn = content_en || await translateText(content, 'en');
+        
+        // Generate Slug
+        const slug = slugify(title);
 
         const { data, error } = await supabase
             .from('news')
@@ -116,7 +283,8 @@ export const createNews = async (req: any, res: any) => {
                 status, 
                 author_id,
                 title_en: finalTitleEn, 
-                content_en: finalContentEn 
+                content_en: finalContentEn,
+                slug: slug
             }])
             .select();
 
@@ -132,20 +300,41 @@ export const createNews = async (req: any, res: any) => {
         }).catch(console.error);
 
         res.status(201).json(data[0]);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
-export const updateNews = async (req: any, res: any) => {
+export const updateNews = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         console.log(`[UPDATE NEWS] ID: ${id}, Body:`, JSON.stringify(req.body));
         const { title, category, content, image, status, username, user_id, title_en, content_en } = req.body;
 
+        // If title changed, update slug
+        let slug = undefined;
+        if (title) {
+            slug = slugify(title);
+        }
+
+        interface NewsUpdates {
+            title?: string;
+            category?: string;
+            content?: string;
+            image?: string;
+            status?: string;
+            title_en?: string;
+            content_en?: string;
+            slug?: string;
+        }
+
+        const updates: NewsUpdates = { title, category, content, image, status, title_en, content_en };
+        if (slug) updates.slug = slug;
+
         const { data, error } = await supabase
             .from('news')
-            .update({ title, category, content, image, status, title_en, content_en })
+            .update(updates)
             .eq('id', id)
             .select();
 
@@ -161,12 +350,13 @@ export const updateNews = async (req: any, res: any) => {
         }).catch(console.error);
 
         res.status(200).json(data[0]);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
-export const deleteNews = async (req: any, res: any) => {
+export const deleteNews = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { userId, username } = req.query;
@@ -180,15 +370,16 @@ export const deleteNews = async (req: any, res: any) => {
 
         // Log action
         logService.createLog({
-            user_id: userId || null,
-            username: username || 'Admin',
+            user_id: userId as string || undefined,
+            username: username as string || 'Admin',
             action: 'DELETE_NEWS',
             details: `Deleted news #${id}`,
             source: 'web'
         }).catch(console.error);
 
         res.status(200).json({ message: 'Noticia eliminada correctamente' });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import anime from 'animejs';
+import anime from 'animejs/lib/anime.js';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 
 interface SectionProps {

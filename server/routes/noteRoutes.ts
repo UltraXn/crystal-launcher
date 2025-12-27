@@ -1,7 +1,13 @@
 import express from 'express';
 import * as noteController from '../controllers/noteController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
+import { checkRole, STAFF_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
+
+// All staff note routes require authentication and staff role
+router.use(authenticateToken);
+router.use(checkRole(STAFF_ROLES));
 
 // GET /api/staff/notes
 router.get('/', noteController.getNotes);

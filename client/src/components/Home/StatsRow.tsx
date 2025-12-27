@@ -2,7 +2,7 @@ import { useRef, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaDiscord, FaUserPlus, FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
 import { motion as Motion, useInView } from "framer-motion";
-import anime from "animejs";
+import anime from "animejs/lib/anime.js";
 
 export default function StatsRow() {
     const { t } = useTranslation();

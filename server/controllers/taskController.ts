@@ -10,8 +10,9 @@ export const getTasks = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.json(data);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -32,8 +33,9 @@ export const createTask = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.status(201).json(data ? data[0] : null);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -50,8 +52,9 @@ export const updateTask = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.json(data ? data[0] : null);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -65,7 +68,8 @@ export const deleteTask = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.json({ message: 'Task deleted successfully' });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };

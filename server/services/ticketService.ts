@@ -8,10 +8,10 @@ import supabase from './supabaseService.js';
  * For now, we'll fetch tickets and typically frontend handles user ID resolution or we join 'profiles' if it exists.
  */
 export const getAllTickets = async () => {
-    // Fetch tickets ordered by created_at desc
+    // Fetch tickets with associated profile aliases
     const { data, error } = await supabase
         .from('tickets')
-        .select('*')
+        .select('*, profiles(username, avatar_url)')
         .order('created_at', { ascending: false });
 
     if (error) throw error;

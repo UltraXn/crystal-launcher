@@ -4,7 +4,7 @@ import { FaCopy, FaCheck } from "react-icons/fa"
 import { SiKofi } from "react-icons/si"
 import HeroBackgroundCarousel from "./Carousel"
 import HeroParticles from "./Particles"
-import anime from "animejs"
+import anime from "animejs/lib/anime.js"
 import { useTranslation } from 'react-i18next'
 
 export default function Hero() {

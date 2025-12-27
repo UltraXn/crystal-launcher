@@ -60,10 +60,12 @@
         "map": "Mapa",
         "forum": "Foro",
         "account": "Mi Cuenta",
-        "login": "Ingresar",
+        "login": "Login",
         "menu": "MENU",
         "achievements": "Logros",
-        "register": "Registrarse"
+        "register": "Registrarse",
+        "support": "Soporte",
+        "gacha": "Gacha"
     },
     "features": {
         "economy_title": "Economía Dinámica",
@@ -478,11 +480,18 @@
 },
 "admin": {
         "loading_panel": "Cargando panel...",
+        "sidebar": {
+            "general": "General",
+            "community": "Comunidad",
+            "staff_management": "Staff & Gestión"
+        },
+        "back_home": "Volver al Inicio",
         "access_denied": {
             "title": "ACCESO DENEGADO 🛑",
             "msg": "No tienes los permisos necesarios para estar aquí.",
             "back_home": "Volver al Inicio"
         },
+
         "panel_subtitle": "Panel de control administrativo",
         "tabs": {
             "general": "General",
@@ -514,9 +523,57 @@
             "staff_hub": "Espacio de Trabajo Staff",
             "docs": "Documentación Interna"
         },
+        "docs": {
+            "titles": {
+                "intro": "Introducción",
+                "staff_hub": "Staff Hub",
+                "moderation": "Moderación & Usuarios",
+                "users_manage": "Gestión de Usuarios",
+                "console": "Consola & Comandos",
+                "console_bridge": "Consola Remota (Secure Bridge)",
+                "content": "Gestión de Contenido",
+                "content_web": "Contenido Web",
+                "gamification": "Gamificación"
+            },
+            "content": {
+                "intro_msg": "Bienvenido al centro de control. Desde aquí puedes gestionar casi todos los aspectos del servidor y la comunidad.",
+                "warning_title": "Advertencia",
+                "warning_msg": "Las acciones realizadas aquí tienen impacto directo en el juego y la base de datos en vivo. Úsalas con responsabilidad.",
+                "staff_intro": "Herramientas para la organización interna del equipo.",
+                "kanban_desc": "Un tablero de gestión de proyectos simple.",
+                "kanban_todo": "Tareas pendientes.",
+                "kanban_progress": "En lo que se está trabajando actualmente.",
+                "kanban_done": "Tareas finalizadas.",
+                "notes_title": "Notas de Staff",
+                "notes_desc": "Un muro de post-its compartidos. Úsalo para dejar recordatorios rápidos.",
+                "users_desc": "Lista completa de usuarios registrados.",
+                "users_roles": "Asignar roles web (Admin, Mod).",
+                "users_ban": "Bloquear acceso a la web.",
+                "tickets_desc": "Centro de soporte. Prioriza y responde tickets de usuarios.",
+                "console_desc": "Ejecuta comandos en el servidor de Minecraft de forma segura.",
+                "common_cmds": "Comandos Comunes",
+                "cmd_kick": "Expulsar.",
+                "cmd_ban": "Banear.",
+                "cmd_broadcast": "Anuncio global.",
+                "news": "Noticias",
+                "news_desc": "Editor de posts tipo blog con Markdown.",
+                "broadcast_desc": "Controla la alerta superior de la web.",
+                "polls": "Encuestas",
+                "polls_desc": "Crea votaciones para la comunidad.",
+                "gacha_config": "Configuración Gacha",
+                "gacha_cooldown": "24 horas por usuario.",
+                "prizes": "Premios",
+                "gacha_prizes": "Entrega automática in-game."
+            }
+        },
         "dashboard": {
             "stats": {
                 "server_status": "Estado del Servidor",
+                "server_online": "EN LÍNEA",
+                "server_offline": "OFFLINE",
+                "server_error": "ERROR",
+                "status_starting": "INICIANDO",
+                "status_stopping": "DETENIENDO",
                 "running_smooth": "Todo en orden ✨",
                 "check_console": "Revisa la consola ⚠️",
                 "players": "Jugadores Simultáneos",
@@ -539,11 +596,12 @@
                 "ram": "Uso RAM"
             },
             "staff": {
-                "title": "Staff Online",
+                "title": "Staff en Línea",
                 "offline_msg": "Servidor Offline - Sin actividad",
                 "coming_soon": "Próximamente: Lista de staff en tiempo real",
                 "no_staff": "No hay staff conectado",
-                "active_badge": "Activos"
+                "active_badge": "Activos",
+                "online_status": "En línea"
             }
         },
         "tickets": {
@@ -941,11 +999,21 @@
                 "send_btn": "Enviar"
             }
         },
+        "logs": {
+            "search_placeholder": "Buscar usuario, comando...",
+            "filter_source": "FUENTE:",
+            "filter_all": "TODOS",
+            "filter_web": "WEB",
+            "filter_game": "JUEGO"
+        },
         "suggestions": {
             "title": "Buzón de Sugerencias",
-            "loading": "Cargando...",
-            "empty": "No hay sugerencias recibidas.",
-            "delete_confirm": "¿Estás seguro de que quieres eliminar esta sugerencia?",
+            "filter_all": "Todas",
+            "filter_bug": "Bugs",
+            "filter_feature": "Mejoras",
+            "filter_mod": "Mods/Plugins",
+            "filter_other": "Otros",
+            "loading": "Cargando sugerencias...",
             "table": {
                 "date": "Fecha",
                 "type": "Tipo",
@@ -953,18 +1021,40 @@
                 "message": "Mensaje",
                 "action": "Acción"
             },
-            "filter_all": "Todos",
-            "filter_bug": "Bug",
-            "filter_feature": "Feature",
-            "filter_mod": "Mod",
-            "filter_other": "Otro",
             "actions_disciplinaries": "Acciones Disciplinarias",
-            "delete_tooltip": "Eliminar",
+            "delete_tooltip": "Eliminar Sugerencia",
+            "empty": "No hay sugerencias que mostrar.",
             "delete_modal": {
-                "title": "¿Estás seguro?",
-                "desc": "Esta acción eliminará la sugerencia permanentemente.",
-                "cancel": "Cancelar",
-                "confirm": "Eliminar"
+                "title": "¿Eliminar Sugerencia?",
+                "desc": "¿Estás seguro de que quieres eliminar esta sugerencia? Esta acción no se puede deshacer.",
+                "confirm": "Sí, Eliminar",
+                "cancel": "Cancelar"
+            },
+            "approve_tooltip": "Aprobar",
+            "reject_tooltip": "Rechazar",
+            "pin_tooltip": "Fijar"
+        },
+        "notifications": {
+            "title": "Notificaciones",
+            "empty": "No tienes notificaciones nuevas.",
+            "mark_all_read": "Marcar todas como leídas",
+            "view_all": "Ver todas las notificaciones",
+            "new_notification": "Nueva Notificación",
+            "type": {
+                "system": "Sistema",
+                "announcement": "Anuncio",
+                "reward": "Recompensa",
+                "ticket": "Ticket",
+                "suggestion": "Sugerencia",
+                "event": "Evento"
+            },
+            "mark_read_tooltip": "Marcar como leída",
+            "delete_tooltip": "Eliminar notificación",
+            "delete_modal": {
+                "title": "¿Eliminar Notificación?",
+                "desc": "¿Estás seguro de que quieres eliminar esta notificación? Esta acción no se puede deshacer.",
+                "confirm": "Sí, Eliminar",
+                "cancel": "Cancelar"
             }
         },
         "polls": {
@@ -997,6 +1087,7 @@
                 "history": "Historial"
             },
             "new_btn": "NUEVA ENCUESTA",
+            "edit_btn": "Editar",
             "create_now_btn": "Crear una encuesta ahora",
             "history_title": "Historial de Encuestas",
             "loading_history": "Cargando historial...",
@@ -1083,26 +1174,57 @@
         }
     },
     "support": {
-        "title": "Soporte Técnico",
-        "subtitle": "¿Tienes algún problema? Abre un ticket y te ayudaremos.",
+        "title": "Centro de Soporte",
+        "subtitle": "¿Tienes problemas? Abre un ticket y te ayudaremos.",
         "create_ticket": "Nuevo Ticket",
+        "discord_btn": "Soporte en Discord",
         "no_tickets": "No tienes tickets abiertos",
         "create_first": "Crea uno nuevo para contactar al Staff.",
-        "new_ticket_title": "Crear Nuevo Ticket",
+        "create_first_btn": "Abrir mi primer ticket",
+        "new_ticket_title": "Abrir Nuevo Ticket",
         "category": "Categoría",
+        "priority": "Prioridad",
+        "login_required": "Debes iniciar sesión",
+        "login_hint": "Inicia sesión para ver tus tickets o crear uno nuevo.",
         "subject": "Asunto",
         "subject_placeholder": "Ej: Problema con rango...",
         "message": "Mensaje",
         "message_placeholder": "Describe tu problema en detalle...",
         "type_message": "Escribe un mensaje...",
         "ticket_closed": "Este ticket está cerrado.",
+        "your_tickets": "Sus Tickets",
+        "total": "total",
         "categories": {
             "general": "General",
             "bug": "🐛 Reporte de Bug",
             "player": "🚫 Reporte de Jugador",
             "billing": "💰 Facturación/Tienda",
             "unban": "🔓 Solicitud de Unban"
-        }
+        },
+        "priorities": {
+            "low": "Baja",
+            "normal": "Media",
+            "high": "Alta",
+            "urgent": "Urgente"
+        },
+        "error_create": "Error al crear el ticket. Por favor, inténtalo de nuevo."
+    },
+    "gacha": {
+        "title": "Recompensa Diaria",
+        "subtitle": "¡Prueba tu suerte gratis cada 24 horas y recibe premios en el servidor!",
+        "claim_btn": "Reclamar Diario",
+        "cooldown_btn": "En Cooldown",
+        "history_btn": "Historial",
+        "last_rewards": "Últimos Premios",
+        "no_history": "Sin historial",
+        "opening": "Abriendo caja...",
+        "claim_success": "¡El premio ha sido enviado a tu cola del servidor!",
+        "understood": "Entendido",
+        "vuelve_mañana": "Vuelve mañana",
+        "already_claimed": "¡Ya has reclamado tu premio hoy!",
+        "roll_error": "Error al tirar",
+        "conn_error": "Error de conexión",
+        "loading": "Cargando Gacha..."
     },
     "tutorial": {
         "step1_title": "¡Bienvenido a CrystalTides!",
@@ -1127,7 +1249,14 @@
         "loading": "Cargando...",
         "processing": "Procesando...",
         "copy": "COPIAR",
-        "copied": "COPIADO"
+        "copied": "COPIADO",
+        "back_home": "Volver al Inicio",
+        "cancel": "Cancelar",
+        "submit": "Enviar"
+    },
+    "profile": {
+        "not_found_title": "¿A dónde se fue?",
+        "not_found_desc": "No hemos podido encontrar a ningún usuario con ese nombre. Quizás se ha perdido en el mar o nunca existió."
     },
     "staff": {
         "title": "Nuestro Equipo",

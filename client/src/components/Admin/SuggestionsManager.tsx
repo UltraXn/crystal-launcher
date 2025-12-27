@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { FaTrash, FaInbox, FaFilter, FaGavel } from 'react-icons/fa'
+import { FaTrash, FaInbox, FaFilter, FaGavel, FaCheck, FaTimes, FaThumbtack } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
 
@@ -120,16 +120,40 @@ export default function SuggestionsManager() {
                                     <td style={{fontWeight:'bold', color: s.nickname==='Anónimo'?'#666':'#fff'}}>{s.nickname}</td>
                                     <td style={{maxWidth:'300px', whiteSpace:'pre-wrap'}}>{s.message}</td>
                                     <td>
-                                        <div style={{display:'flex', gap:'0.5rem'}}>
+                                        <div style={{display:'flex', gap:'0.4rem'}}>
+                                            <button 
+                                                className="btn-icon" 
+                                                title={t('admin.suggestions.approve_tooltip', 'Aprobar')}
+                                                onClick={() => alert('Funcionalidad en desarrollo: Aprobar Sugerencia')}
+                                                style={{color: '#4ade80', background:'rgba(74, 222, 128, 0.1)', padding:'6px'}}
+                                            >
+                                                <FaCheck size={12} />
+                                            </button>
+                                             <button 
+                                                className="btn-icon" 
+                                                title={t('admin.suggestions.reject_tooltip', 'Rechazar')}
+                                                onClick={() => alert('Funcionalidad en desarrollo: Rechazar Sugerencia')}
+                                                style={{color: '#f87171', background:'rgba(248, 113, 113, 0.1)', padding:'6px'}}
+                                            >
+                                                <FaTimes size={12} />
+                                            </button>
+                                             <button 
+                                                className="btn-icon" 
+                                                title={t('admin.suggestions.pin_tooltip', 'Fijar')}
+                                                onClick={() => alert('Funcionalidad en desarrollo: Fijar Sugerencia')}
+                                                style={{color: '#fbbf24', background:'rgba(251, 191, 36, 0.1)', padding:'6px'}}
+                                            >
+                                                <FaThumbtack size={12} />
+                                            </button>
                                             <button 
                                                 className="btn-icon" 
                                                 title={t('admin.suggestions.actions_disciplinaries')}
                                                 onClick={() => alert('Funcionalidad en desarrollo: Acciones Disciplinarias')}
-                                                style={{color: '#f59e0b'}}
+                                                style={{color: '#a78bfa', background:'rgba(167, 139, 250, 0.1)', padding:'6px'}}
                                             >
-                                                <FaGavel />
+                                                <FaGavel size={12} />
                                             </button>
-                                            <button onClick={() => handleDelete(s.id)} className="btn-icon delete" title={t('admin.suggestions.delete_tooltip')}><FaTrash /></button>
+                                            <button onClick={() => handleDelete(s.id)} className="btn-icon delete" title={t('admin.suggestions.delete_tooltip')} style={{padding:'6px'}}><FaTrash size={12} /></button>
                                         </div>
                                     </td>
                                 </tr>

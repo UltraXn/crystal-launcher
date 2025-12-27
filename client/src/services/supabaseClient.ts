@@ -11,4 +11,10 @@ if (!supabaseUrl || !supabaseKey) {
     console.log('Supabase init:', supabaseUrl)
 }
 
-export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder')
+export const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseKey || 'placeholder', {
+    realtime: {
+        params: {
+            eventsPerSecond: 10,
+        },
+    },
+})

@@ -12,7 +12,7 @@ export const getStatus = async (req: Request, res: Response) => {
         const status = await minecraftService.getServerStatus(host, port);
 
         res.json(status);
-    } catch (error) {
+    } catch {
         res.status(500).json({
             online: false,
             error: 'Internal server error fetching status'
@@ -26,14 +26,6 @@ export const getSkin = async (req: Request, res: Response) => {
         if (!username) return res.status(400).json({ error: 'Username required' });
 
         const skinData = await skinService.getSkinUrl(username);
-        // Redirect to the skin URL so the frontend can just use <img src="/api/minecraft/skin/user" />?
-        // OR return JSON?
-        // SkinViewer expects a URL to a texture image.
-        // If I redirect, I can just pass the API URL to SkinViewer.
-        // However, SkinViewer (skinview3d) might need CORS headers on the image.
-        // Mojang/Minotar images usually have CORS.
-        // If I redirect, the browser fetches the target.
-        // Let's return JSON to be safe and flexible.
         res.json(skinData);
     } catch (error) {
         console.error("Error fetching skin:", error);
@@ -48,6 +40,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SU
 let supabase: SupabaseClient | null = null;
 if (supabaseUrl && supabaseKey) supabase = createClient(supabaseUrl, supabaseKey);
 
+import { RowDataPacket } from 'mysql2';
 
 export const verifyLinkCode = async (req: Request, res: Response) => {
     try {
@@ -57,7 +50,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
         if (!supabase) return res.status(503).json({ error: 'Server configuration error (Supabase)' });
 
         // 1. Verify Code in MySQL
-        const [rows]: any[] = await pool.execute(
+        const [rows] = await pool.execute<RowDataPacket[]>(
             'SELECT * FROM web_verifications WHERE code = ?',
             [code]
         );
@@ -94,9 +87,10 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
         
         res.json({ success: true, username: verification.player_name, uuid: verification.uuid });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Link Verification Error:', error);
-        res.status(500).json({ error: 'Verification failed: ' + error.message });
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: 'Verification failed: ' + message });
     }
 };
 
@@ -123,9 +117,10 @@ export const initWebLink = async (req: Request, res: Response) => {
 
         res.json({ success: true, code });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Init Web Link Error:', error);
-        res.status(500).json({ error: 'Failed to initiate link: ' + error.message });
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: 'Failed to initiate link: ' + message });
     }
 };
 
@@ -136,7 +131,7 @@ export const checkLinkStatus = async (req: Request, res: Response) => {
 
         if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
 
-        const [rows]: any[] = await pool.execute('SELECT * FROM linked_accounts WHERE web_user_id = ?', [userId]);
+        const [rows] = await pool.execute<RowDataPacket[]>('SELECT * FROM linked_accounts WHERE web_user_id = ?', [userId]);
 
         if (rows.length > 0) {
             const link = rows[0];
@@ -156,8 +151,9 @@ export const checkLinkStatus = async (req: Request, res: Response) => {
         
         res.json({ linked: false });
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Check Link Status Error:', error);
-        res.status(500).json({ error: error.message });
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };

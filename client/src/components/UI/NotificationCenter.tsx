@@ -11,7 +11,10 @@ interface Notification {
     read: boolean;
 }
 
+import { useTranslation } from 'react-i18next'; // Added import
+
 export default function NotificationCenter() {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +53,7 @@ export default function NotificationCenter() {
         <div className="notification-center" ref={containerRef} style={{ position: 'relative' }}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                aria-label="Notificaciones"
+                aria-label={t('admin.notifications.label', 'Notificaciones')}
                 style={{ 
                     background: 'transparent', 
                     border: 'none', 
@@ -118,7 +121,7 @@ export default function NotificationCenter() {
                             alignItems: 'center',
                             background: 'rgba(0,0,0,0.2)'
                         }}>
-                            <h3 style={{ margin: 0, fontSize: '1rem' }}>Notificaciones</h3>
+                            <h3 style={{ margin: 0, fontSize: '1rem' }}>{t('admin.notifications.title', 'Notificaciones')}</h3>
                             {unreadCount > 0 && (
                                 <button 
                                     onClick={handleMarkAllRead}
@@ -131,7 +134,7 @@ export default function NotificationCenter() {
                                         textDecoration: 'underline'
                                     }}
                                 >
-                                    Marcar leídas
+                                    {t('admin.notifications.mark_all_read', 'Marcar leídas')}
                                 </button>
                             )}
                         </div>
@@ -140,7 +143,7 @@ export default function NotificationCenter() {
                         <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                             {notifications.length === 0 ? (
                                 <div style={{ padding: '2rem', textAlign: 'center', color: '#666', fontStyle: 'italic' }}>
-                                    No tienes notificaciones.
+                                    {t('admin.notifications.empty', 'No tienes notificaciones.')}
                                 </div>
                             ) : (
                                 notifications.map(n => (
@@ -179,7 +182,7 @@ export default function NotificationCenter() {
                                                 padding: '2px',
                                                 alignSelf: 'flex-start'
                                             }}
-                                            title="Descartar"
+                                            title={t('admin.notifications.dismiss', 'Descartar')}
                                         >
                                             <FaTimes />
                                         </button>

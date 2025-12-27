@@ -12,6 +12,9 @@ import Loader from "../components/UI/Loader"
 import ConfirmationModal from "../components/UI/ConfirmationModal"
 import PlayerStats from "../components/Widgets/PlayerStats"
 import { MEDAL_ICONS } from "../utils/MedalIcons"
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { updateUserSchema, UpdateUserFormValues } from '../schemas/user'
 import Toast, { ToastType } from "../components/UI/Toast"
 
 interface Thread {
@@ -377,46 +380,40 @@ export default function Account() {
     // Settings Logic
     const [passwords, setPasswords] = useState({ new: '', confirm: '' })
     const [publicStats, setPublicStats] = useState(user?.user_metadata?.public_stats !== false)
-    const [bio, setBio] = useState(user?.user_metadata?.bio || "")
-    const [socialLinks, setSocialLinks] = useState({
-        discord: user?.user_metadata?.social_discord || "",
-        twitter: user?.user_metadata?.social_twitter || "",
-        twitch: user?.user_metadata?.social_twitch || "",
-        youtube: user?.user_metadata?.social_youtube || "",
-        kofi: user?.user_metadata?.social_kofi || ""
+    
+    // Zod Form for Profile
+    const { register, handleSubmit, setValue } = useForm<UpdateUserFormValues>({
+        resolver: zodResolver(updateUserSchema),
+        defaultValues: {
+            bio: user?.user_metadata?.bio || "",
+            social_discord: user?.user_metadata?.social_discord || "",
+            social_twitter: user?.user_metadata?.social_twitter || "",
+            social_twitch: user?.user_metadata?.social_twitch || "",
+            social_youtube: user?.user_metadata?.social_youtube || "",
+            social_kofi: user?.user_metadata?.social_kofi || ""
+        }
     })
+
     const [isSavingProfile, setIsSavingProfile] = useState(false)
 
     // Auto-fill social links from connected identities
     useEffect(() => {
         if (!user) return;
         
-        setSocialLinks(prev => {
-            const next = { ...prev };
-            let changed = false;
-
-            if (discordIdentity && !prev.discord) {
-                const name = discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.user_name;
-                if (name) {
-                    next.discord = name;
-                    changed = true;
-                }
+        if (discordIdentity) {
+            const name = discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.user_name;
+            if (name && !user.user_metadata?.social_discord) {
+                setValue('social_discord', name)
             }
+        }
 
-            if (twitchIdentity && !prev.twitch) {
-                // Twitch usually exposes 'name' or 'login'
-                const name = twitchIdentity.identity_data?.name || twitchIdentity.identity_data?.login;
-                if (name) {
-                     // Can be full URL "https://twitch.tv/user" or just user.
-                     // Placeholder says "Canal de Twitch", let's put full URL if possible or just name
-                     next.twitch = `https://twitch.tv/${name}`;
-                     changed = true;
-                }
+        if (twitchIdentity) {
+            const name = twitchIdentity.identity_data?.name || twitchIdentity.identity_data?.login;
+            if (name && !user.user_metadata?.social_twitch) {
+                 setValue('social_twitch', `https://twitch.tv/${name}`)
             }
-
-            return changed ? next : prev;
-        })
-    }, [discordIdentity, twitchIdentity, user])
+        }
+    }, [discordIdentity, twitchIdentity, user, setValue])
 
     const handleUpdatePassword = async () => {
         if(passwords.new !== passwords.confirm) return showToast("Las contraseñas no coinciden", "error")
@@ -438,17 +435,10 @@ export default function Account() {
          await updateUser({ public_stats: newVal })
     }
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = async (data: UpdateUserFormValues) => {
         setIsSavingProfile(true)
         try {
-            await updateUser({
-                bio,
-                social_discord: socialLinks.discord,
-                social_twitter: socialLinks.twitter,
-                social_twitch: socialLinks.twitch,
-                social_youtube: socialLinks.youtube,
-                social_kofi: socialLinks.kofi
-            })
+            await updateUser(data)
             showToast("Perfil actualizado correctamente", "success")
         } catch (e) {
             console.error(e)
@@ -911,69 +901,72 @@ export default function Account() {
                                 <div className="dashboard-card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', gridColumn: '1 / -1' }}>
                                     <h3 style={{ color: '#fff', marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'10px' }}><FaUser /> Información del Perfil</h3>
                                     
-                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+                                    <form onSubmit={handleSubmit(handleSaveProfile)} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
                                         <div>
                                             <label style={{ display: 'block', color: '#ccc', marginBottom: '8px', fontSize: '0.9rem' }}>Biografía (Markdown opcional)</label>
                                             <textarea 
-                                                value={bio}
-                                                onChange={e => setBio(e.target.value)}
+                                                {...register('bio')}
                                                 rows={6}
                                                 maxLength={500}
                                                 placeholder="Cuéntanos un poco sobre ti..."
                                                 style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', resize: 'vertical' }}
                                             />
-                                            <span style={{ fontSize: '0.7rem', color: '#666', marginTop: '4px', display: 'block' }}>{bio.length}/500 caracteres</span>
+                                            <span style={{ fontSize: '0.7rem', color: '#666', marginTop: '4px', display: 'block' }}>Max 500 caracteres</span>
                                         </div>
                                         
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                            <label style={{ color: '#ccc', fontSize: '0.9rem' }}>Redes Sociales</label>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <FaDiscord style={{ color: '#5865F2', width: '20px' }} />
+                                            <label style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '-0.5rem' }}>Redes Sociales</label>
+                                            
+                                            {/* Discord Input Group */}
+                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                                <FaDiscord style={{ color: '#5865F2', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
-                                                    value={socialLinks.discord}
-                                                    onChange={e => setSocialLinks({...socialLinks, discord: e.target.value})}
+                                                    {...register('social_discord')}
                                                     placeholder="Usuario#0000"
-                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
                                                 />
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <FaTwitter style={{ color: '#1da1f2', width: '20px' }} />
+
+                                            {/* Twitter Input Group */}
+                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                                <FaTwitter style={{ color: '#1da1f2', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
-                                                    value={socialLinks.twitter}
-                                                    onChange={e => setSocialLinks({...socialLinks, twitter: e.target.value})}
+                                                    {...register('social_twitter')}
                                                     placeholder="Twitter (ej: @miusuario)"
-                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
                                                 />
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <FaTwitch style={{ color: '#9146FF', width: '20px' }} />
+
+                                            {/* Twitch Input Group */}
+                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                                <FaTwitch style={{ color: '#9146FF', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
-                                                    value={socialLinks.twitch}
-                                                    onChange={e => setSocialLinks({...socialLinks, twitch: e.target.value})}
+                                                    {...register('social_twitch')}
                                                     placeholder="Canal de Twitch"
-                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
                                                 />
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <SiKofi style={{ color: '#00AF96', width: '20px' }} />
+
+                                            {/* Ko-Fi Input Group */}
+                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                                <SiKofi style={{ color: '#00AF96', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
-                                                    value={socialLinks.kofi}
-                                                    onChange={e => setSocialLinks({...socialLinks, kofi: e.target.value})}
-                                                    placeholder="URL de Ko-Fi (ej: https://ko-fi.com/usuario)"
-                                                    style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                    {...register('social_kofi')}
+                                                    placeholder="URL de Ko-Fi"
+                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
                                                 />
                                             </div>
                                             
                                             <button 
-                                                onClick={handleSaveProfile}
+                                                type="submit"
                                                 disabled={isSavingProfile}
                                                 className="btn-primary"
-                                                style={{ marginTop: '1rem', padding: '12px' }}
+                                                style={{ marginTop: '0.5rem', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
                                             >
-                                                {isSavingProfile ? 'Guardando...' : 'Guardar Información'}
+                                                {isSavingProfile ? <Loader style={{height: '20px', minHeight: 'auto'}} /> : <><FaUser /> Guardar Información</>}
                                             </button>
                                         </div>
-                                    </div>
+                                    </form>
                                 </div>
 
                                 {/* Privacy Card */}

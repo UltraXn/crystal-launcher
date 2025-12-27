@@ -1,8 +1,8 @@
 
 import { useState, useRef, useEffect } from 'react'
-import { FaBars, FaUserCircle, FaShieldAlt } from 'react-icons/fa'
+import { FaBars, FaUserCircle, FaShieldAlt, FaGift } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
-import anime from 'animejs'
+import anime from 'animejs/lib/anime.js'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
@@ -120,6 +120,7 @@ export default function Menu() {
                 <div className="dropdown-divider"></div>
                 <Link to="/#suggestions" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.suggestions')}</Link>
                 <Link to="/forum" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.forum')}</Link>
+                <Link to="/support" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('navbar.support', 'Soporte')}</Link>
                 <Link to="/map" className="menu-item" onClick={closeMenu} ref={addToRefs}>{t('footer.online_map')}</Link>
 
                 <div className="dropdown-divider"></div>
@@ -151,7 +152,10 @@ export default function Menu() {
                                      <FaShieldAlt style={{ marginRight: '8px' }}/> {t('account.admin_panel')}
                                 </Link>
                             )}
-                            <Link to="/account" className="menu-item" onClick={closeMenu} style={{ color: 'var(--accent)' }}>
+                            <Link to="/gacha" className="menu-item" onClick={closeMenu} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
+                                 <FaGift style={{ marginRight: '8px' }}/> {t('gacha.title', 'Recompensa Diaria')}
+                            </Link>
+                            <Link to="/account" className="menu-item" onClick={closeMenu}>
                                  <FaUserCircle style={{ marginRight: '8px' }}/> {user.user_metadata?.username || 'Mi Cuenta'}
                             </Link>
                         </div>

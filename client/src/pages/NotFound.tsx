@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
-import anime from "animejs"
+import anime from "animejs/lib/anime.js"
 import { useTranslation } from "react-i18next"
 
 export default function NotFound() {

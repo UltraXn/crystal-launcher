@@ -3,6 +3,20 @@ import * as logService from '../services/logService.js';
 import { translateText } from '../services/translationService.js';
 import { Request, Response } from 'express';
 
+// Configuración pública permitida para usuarios no autenticados
+const PUBLIC_SETTINGS_WHITELIST = [
+    'maintenance_mode',
+    'theme',
+    'hero_banners',
+    'hero_slides',
+    'staff_cards',
+    'broadcasts',
+    'server_rules',
+    'donors_list',
+    'last_donors',
+    'medal_definitions'
+];
+
 // Obtener todas las configuraciones
 export const getSettings = async (req: Request, res: Response) => {
     try {
@@ -12,17 +26,22 @@ export const getSettings = async (req: Request, res: Response) => {
 
         if (error) throw error;
 
-        // Convertir array [{key: 'theme', value: 'default'}] a objeto { theme: 'default' }
-        const settings: any = {};
+        const isAdmin = req.user && ['admin', 'neroferno', 'killu', 'killuwu', 'developer'].includes(req.user.role);
+
+        // Convertir array a objeto y filtrar si no es admin
+        const settings: Record<string, string> = {};
         if (data) {
-            data.forEach((item: any) => {
-                settings[item.key] = item.value;
+            data.forEach((item: { key: string, value: string }) => {
+                if (isAdmin || PUBLIC_SETTINGS_WHITELIST.includes(item.key)) {
+                    settings[item.key] = item.value;
+                }
             });
         }
 
         res.json(settings);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -39,7 +58,7 @@ export const updateSetting = async (req: Request, res: Response) => {
             try {
                 const cards = typeof value === 'string' ? JSON.parse(value) : value;
                 if (Array.isArray(cards)) {
-                    const translatedCards = await Promise.all(cards.map(async (card: any) => ({
+                    const translatedCards = await Promise.all(cards.map(async (card: { role?: string, role_en?: string, description?: string, description_en?: string }) => ({
                         ...card,
                         role_en: card.role ? await translateText(card.role, 'en') : card.role_en,
                         description_en: card.description ? await translateText(card.description, 'en') : card.description_en
@@ -56,7 +75,7 @@ export const updateSetting = async (req: Request, res: Response) => {
             try {
                 const donors = typeof value === 'string' ? JSON.parse(value) : value;
                 if (Array.isArray(donors)) {
-                    const translatedDonors = await Promise.all(donors.map(async (donor: any) => ({
+                    const translatedDonors = await Promise.all(donors.map(async (donor: { description?: string, description_en?: string }) => ({
                         ...donor,
                         description_en: donor.description ? await translateText(donor.description, 'en') : donor.description_en
                     })));
@@ -89,7 +108,8 @@ export const updateSetting = async (req: Request, res: Response) => {
         });
 
         res.json(data ? data[0] : null);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };

@@ -73,9 +73,8 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
-  /* Cursor personalizado (La imagen debe ser máx 32x32px o 64x64px. Si es mayor, el navegador la ignorará) */
-/* Cursor personalizado manejado por componente React (TentacleCursor) */
-/* cursor: none; */
+  /* Cursor personalizado */
+  cursor: url('/images/ui/cursor.webp'), auto;
 }
 
 
@@ -183,4 +182,11 @@ body {
 
 .delay-300 {
   animation-delay: 0.3s;
+}
+
+/* Username Link Effect */
+.username-link:hover {
+  text-shadow: 0 0 8px currentColor, 0 0 12px currentColor;
+  opacity: 1 !important;
+  text-decoration: underline !important;
 }

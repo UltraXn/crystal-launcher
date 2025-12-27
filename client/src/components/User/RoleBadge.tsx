@@ -1,9 +1,10 @@
 interface RoleBadgeProps {
     role?: string;
     username?: string;
+    uuid?: string;
 }
 
-export default function RoleBadge({ role, username }: RoleBadgeProps) {
+export default function RoleBadge({ role, username, uuid }: RoleBadgeProps) {
     if (!role && !username) return null
 
     const r = role ? role.toLowerCase() : ""
@@ -12,7 +13,7 @@ export default function RoleBadge({ role, username }: RoleBadgeProps) {
     // Ranks Específicos de Owner (Killu / Neroferno)
     if (r === 'owner' || u.includes('killu') || u.includes('ultraxn') || u.includes('neroferno')) {
         if (u.includes('killu')) {
-            return <img src="/ranks/rank-killu.png" alt="KILLU" style={{ verticalAlign: 'middle' }} />
+             return <img src="/ranks/rank-killu.png" alt="KILLU" style={{ verticalAlign: 'middle', height: '32px' }} />
         }
         if (u.includes('ultraxn') || u.includes('neroferno')) {
             return <img src="/ranks/rank-neroferno.png" alt="NEROFERNO" style={{ verticalAlign: 'middle' }} />
@@ -22,6 +23,9 @@ export default function RoleBadge({ role, username }: RoleBadgeProps) {
     }
 
     // Ranks con Imágenes (Admin / Helper / Donador / User)
+    if (r === 'staff') {
+        return <img src="/ranks/staff.png" alt="STAFF" style={{ verticalAlign: 'middle' }} />
+    }
     if (r === 'admin') {
         return <img src="/ranks/admin.png" alt="ADMIN" style={{ verticalAlign: 'middle' }} />
     }

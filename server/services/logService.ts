@@ -1,6 +1,21 @@
 import supabase from './supabaseService.js';
 
-export const createLog = async ({ user_id, username, action, details, source = 'web' }: any) => {
+interface LogEntry {
+    user_id?: string;
+    username?: string;
+    action: string;
+    details: string | object;
+    source?: string;
+}
+
+interface LogQueryParams {
+    limit?: number;
+    offset?: number;
+    source?: string;
+    search?: string;
+}
+
+export const createLog = async ({ user_id, username, action, details, source = 'web' }: LogEntry) => {
     // Si details es string, usarlo. Si es objeto, stringify.
     const detailsText = typeof details === 'object' ? JSON.stringify(details) : details;
 
@@ -24,7 +39,7 @@ export const createLog = async ({ user_id, username, action, details, source = '
     return data;
 };
 
-export const getLogs = async ({ limit = 50, offset = 0, source, search }: any) => {
+export const getLogs = async ({ limit = 50, offset = 0, source, search }: LogQueryParams) => {
     let query = supabase
         .from('system_logs')
         .select('*', { count: 'exact' })
@@ -41,7 +56,7 @@ export const getLogs = async ({ limit = 50, offset = 0, source, search }: any) =
 };
 
 // Placeholder for CoreProtect
-export const getGameLogs = async (params: any) => {
+export const getGameLogs = async (_params: LogQueryParams) => {
     // Future integration with CoreProtect MySQL
     return {
         logs: [],

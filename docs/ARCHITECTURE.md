@@ -45,6 +45,17 @@ Para acciones administrativas inmediatas (Baneos, Kicks, Reinicios), la API se c
 
 ---
 
+## 📖 Documentación de Funcionalidades
+
+- [🛡️ Staff Hub (Gestión Interna)](./STAFF_HUB.md)
+- [🌉 CrystalBridge (Integración MC)](./CRYSTAL_BRIDGE.md)
+- [🎰 Sistema Gacha (KilluCoin)](./GACHA_SYSTEM.md)
+- [🏛️ Foro y Comunidad](./FORUM_SYSTEM.md)
+- [👤 Perfiles y Estadísticas](./USER_PROFILES.md)
+- [🎨 Arquitectura Frontend (Forms V2)](./FRONTEND_ARCHITECTURE.md)
+
+---
+
 ## 🔄 Flujos Clave
 
 ### A. Sistema Gacha (Ejemplo Completo)

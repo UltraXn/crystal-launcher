@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { FaBook, FaBullhorn, FaUserShield, FaClipboardList, FaTerminal, FaGamepad, FaChevronDown } from 'react-icons/fa';
 import MarkdownRenderer from '../UI/MarkdownRenderer';
+import { useTranslation } from 'react-i18next';
 
-const DOCS_DATA = [
-    // ... (Data remains same)
+const useDocsData = () => {
+    const { t } = useTranslation();
+    
+    return [
     {
         id: 'intro',
-        title: 'Introducción',
+        title: t('admin.docs.titles.intro', 'Introducción'),
         icon: FaBook,
         content: `
-# Panel de Administración CrystalTides
+# ${t('admin.docs.titles.intro', 'Introducción')}
 
-Bienvenido al centro de control. Desde aquí puedes gestionar casi todos los aspectos del servidor y la comunidad.
+${t('admin.docs.content.intro_msg', 'Bienvenido al centro de control. Desde aquí puedes gestionar casi todos los aspectos del servidor y la comunidad.')}
 
-⚠️ **Advertencia**: Las acciones realizadas aquí tienen impacto directo en el juego y la base de datos en vivo. Úsalas con responsabilidad.
+⚠️ **${t('admin.docs.content.warning_title', 'Advertencia')}**: ${t('admin.docs.content.warning_msg', 'Las acciones realizadas aquí tienen impacto directo en el juego y la base de datos en vivo. Úsalas con responsabilidad.')}
         `
     },
     {
@@ -23,81 +26,83 @@ Bienvenido al centro de control. Desde aquí puedes gestionar casi todos los asp
         content: `
 # 🛡️ Staff Hub
 
-Herramientas para la organización interna del equipo.
+${t('admin.docs.content.staff_intro', 'Herramientas para la organización interna del equipo.')}
 
 ### 📋 Kanban Board (Tareas)
-Un tablero de gestión de proyectos simple.
-- **To Do**: Tareas pendientes.
-- **In Progress**: En lo que se está trabajando actualmente.
-- **Done**: Tareas finalizadas.
+${t('admin.docs.content.kanban_desc', 'Un tablero de gestión de proyectos simple.')}
+- **To Do**: ${t('admin.docs.content.kanban_todo', 'Tareas pendientes.')}
+- **In Progress**: ${t('admin.docs.content.kanban_progress', 'En lo que se está trabajando actualmente.')}
+- **Done**: ${t('admin.docs.content.kanban_done', 'Tareas finalizadas.')}
 
-### 📝 Notas de Staff
-Un muro de post-its compartidos. Úsalo para dejar recordatorios rápidos.
+### 📝 ${t('admin.docs.content.notes_title', 'Notas de Staff')}
+${t('admin.docs.content.notes_desc', 'Un muro de post-its compartidos. Úsalo para dejar recordatorios rápidos.')}
         `
     },
     {
         id: 'moderation',
-        title: 'Moderación & Usuarios',
+        title: t('admin.docs.titles.moderation', 'Moderación & Usuarios'),
         icon: FaUserShield,
         content: `
-# 👮 Gestión de Usuarios
+# 👮 ${t('admin.docs.titles.users_manage', 'Gestión de Usuarios')}
 
 ### Users Manager
-Lista completa de usuarios registrados.
-- **Roles**: Asignar roles web (Admin, Mod).
-- **Ban**: Bloquear acceso a la web.
+${t('admin.docs.content.users_desc', 'Lista completa de usuarios registrados.')}
+- **Roles**: ${t('admin.docs.content.users_roles', 'Asignar roles web (Admin, Mod).')}
+- **Ban**: ${t('admin.docs.content.users_ban', 'Bloquear acceso a la web.')}
 
 ### Tickets System
-Centro de soporte. Prioriza y responde tickets de usuarios.
+${t('admin.docs.content.tickets_desc', 'Centro de soporte. Prioriza y responde tickets de usuarios.')}
         `
     },
     {
         id: 'console',
-        title: 'Consola & Comandos',
+        title: t('admin.docs.titles.console', 'Consola & Comandos'),
         icon: FaTerminal,
         content: `
-# 💻 Consola Remota (Secure Bridge)
+# 💻 ${t('admin.docs.titles.console_bridge', 'Consola Remota (Secure Bridge)')}
 
-Ejecuta comandos en el servidor de Minecraft de forma segura.
+${t('admin.docs.content.console_desc', 'Ejecuta comandos en el servidor de Minecraft de forma segura.')}
 
-### Comandos Comunes
-- \`kick <player>\`: Expulsar.
-- \`ban <player>\`: Banear.
-- \`broadcast <msg>\`: Anuncio global.
+### ${t('admin.docs.content.common_cmds', 'Comandos Comunes')}
+- \`kick <player>\`: ${t('admin.docs.content.cmd_kick', 'Expulsar.')}
+- \`ban <player>\`: ${t('admin.docs.content.cmd_ban', 'Banear.')}
+- \`broadcast <msg>\`: ${t('admin.docs.content.cmd_broadcast', 'Anuncio global.')}
         `
     },
     {
         id: 'content',
-        title: 'Gestión de Contenido',
+        title: t('admin.docs.titles.content', 'Gestión de Contenido'),
         icon: FaBullhorn,
         content: `
-# 📢 Contenido Web
+# 📢 ${t('admin.docs.titles.content_web', 'Contenido Web')}
 
-### Noticias
-Editor de posts tipo blog con Markdown.
+### ${t('admin.docs.content.news', 'Noticias')}
+${t('admin.docs.content.news_desc', 'Editor de posts tipo blog con Markdown.')}
 
 ### Broadcasts
-Controla la alerta superior de la web.
+${t('admin.docs.content.broadcast_desc', 'Controla la alerta superior de la web.')}
 
-### Encuestas
-Crea votaciones para la comunidad.
+### ${t('admin.docs.content.polls', 'Encuestas')}
+${t('admin.docs.content.polls_desc', 'Crea votaciones para la comunidad.')}
         `
     },
     {
         id: 'gamification',
-        title: 'Gamificación',
+        title: t('admin.docs.titles.gamification', 'Gamificación'),
         icon: FaGamepad,
         content: `
 # 🎮 Gacha & Stats
 
-### Configuración Gacha
-- **Cooldown**: 24 horas por usuario.
-- **Premios**: Entrega automática in-game.
+### ${t('admin.docs.content.gacha_config', 'Configuración Gacha')}
+- **Cooldown**: ${t('admin.docs.content.gacha_cooldown', '24 horas por usuario.')}
+- **${t('admin.docs.content.prizes', 'Premios')}**: ${t('admin.docs.content.gacha_prizes', 'Entrega automática in-game.')}
         `
     }
 ];
+};
 
 export default function AdminDocs() {
+    const DOCS_DATA = useDocsData(); // Use the hook
     const [activeTab, setActiveTab] = useState('intro');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const activeDoc = DOCS_DATA.find(d => d.id === activeTab) || DOCS_DATA[0];

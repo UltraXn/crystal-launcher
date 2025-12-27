@@ -1,7 +1,8 @@
 /* Main CSS Entry Point */
 
 /* 1. Variables & Global Tokens */
-@import './styles/variables.css';
+/* 1. Variables & Global Tokens */
+/* variables.css merged into base.css */
 
 /* 2. Animations & Keyframes */
 @import './styles/animations.css';

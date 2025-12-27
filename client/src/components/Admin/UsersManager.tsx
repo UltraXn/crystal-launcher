@@ -69,14 +69,18 @@ export default function UsersManager() {
         try {
             setLoading(true)
             setHasSearched(true)
-            // Changed query param to 'search' to allow backend to handle email OR username searching
-            const res = await fetch(`${API_URL}/users?search=${encodeURIComponent(searchQuery)}`)
+            
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = session ? {
+                'Authorization': `Bearer ${session.access_token}`
+            } : {};
+
+            const res = await fetch(`${API_URL}/users?search=${encodeURIComponent(searchQuery)}`, { headers })
             if(res.ok) {
                 const response = await res.json()
                 if (Array.isArray(response)) {
                     setUsers(response)
                 } else if (response.data && Array.isArray(response.data)) {
-                     // Handle wrapped response { success: true, data: [...] }
                     setUsers(response.data);
                 } else {
                     console.error("Unexpected users response format:", response);
@@ -100,19 +104,24 @@ export default function UsersManager() {
         const { userId, newRole } = roleChangeModal;
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 
+                'Content-Type': 'application/json' 
+            };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             const res = await fetch(`${API_URL}/users/${userId}/role`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ role: newRole })
             })
             if(res.ok) {
                 setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u))
                 if (user && user.id === userId) {
-                    // Refresh session instead of logout to update UI reactively
                     await supabase.auth.refreshSession();
-                    window.location.reload(); // Reload to ensure all components re-render with new permissions
+                    window.location.reload();
                 }
-                setRoleChangeModal(null); // Close modal
+                setRoleChangeModal(null);
             } else {
                 alert(t('admin.users.error_role'))
             }
@@ -125,17 +134,21 @@ export default function UsersManager() {
         if (!editingUser) return;
         setSavingMedals(true);
         try {
-            // Merge existing metadata with new medals array
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers: Record<string, string> = { 
+                'Content-Type': 'application/json' 
+            };
+            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+
             const res = await fetch(`${API_URL}/users/${editingUser.id}/metadata`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ metadata: { medals: editingUser.medals } })
             });
 
             if (res.ok) {
-                // Update local user list
                 setUsers(users.map(u => u.id === editingUser.id ? { ...u, medals: editingUser.medals } : u));
-                setEditingUser(null); // Close modal
+                setEditingUser(null);
             } else {
                 alert(t('admin.users.error_medals'));
             }

@@ -4,20 +4,22 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Provider } from '@supabase/supabase-js'
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { registerSchema, RegisterFormValues } from '../schemas/user'
 
 export default function Register() {
     const { t } = useTranslation()
-    const [email, setEmail] = useState('')
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
-
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const [error, setError] = useState('')
+    const [generalError, setGeneralError] = useState('')
 
     const { register, loginWithProvider } = useAuth()
     const navigate = useNavigate()
+
+    const { register: registerField, handleSubmit, formState: { errors, isSubmitting } } = useForm<RegisterFormValues>({
+        resolver: zodResolver(registerSchema)
+    })
 
     const handleProviderLogin = async (provider: Provider) => {
         try {
@@ -25,25 +27,18 @@ export default function Register() {
         } catch (err) {
             console.error(err)
             const message = err instanceof Error ? err.message : String(err)
-            setError(`Error al iniciar con ${provider}: ${message}`)
+            setGeneralError(`Error al iniciar con ${provider}: ${message}`)
         }
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setError('')
-
-        if (password !== confirmPassword) {
-            return setError(t('register.passwords_do_not_match'))
-        }
+    const onSubmit = async (data: RegisterFormValues) => {
+        setGeneralError('')
 
         try {
-            // Use user provided username (independent of Minecraft nick)
-            const { user } = await register(email, password, {
-                username: username,
-                full_name: username,
-                // role: 'user', 
-                avatar_url: `https://ui-avatars.com/api/?name=${username}`
+            const { user } = await register(data.email, data.password, {
+                username: data.username,
+                full_name: data.username,
+                avatar_url: `https://ui-avatars.com/api/?name=${data.username}`
             })
 
             if (user) {
@@ -54,10 +49,10 @@ export default function Register() {
             const message = err instanceof Error ? err.message : String(err)
             
             if (message.includes('unique constraint') || message.includes('409')) {
-                return setError(`${t('register.user_exists')} (DB)`)
+                return setGeneralError(`${t('register.user_exists')} (DB)`)
             }
             
-            setError('Error: ' + message)
+            setGeneralError('Error: ' + message)
         }
     }
 
@@ -71,19 +66,18 @@ export default function Register() {
                         <p>{t('register.subtitle')}</p>
                     </div>
 
-                    {error && <div style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>{error}</div>}
+                    {generalError && <div style={{ color: 'red', textAlign: 'center', marginBottom: '1rem', background: 'rgba(255,0,0,0.1)', padding: '0.5rem', borderRadius: '4px' }}>{generalError}</div>}
 
-                    <form className="account-form" onSubmit={handleSubmit}>
+                    <form className="account-form" onSubmit={handleSubmit(onSubmit)}>
                         
                         <div className="form-group">
                             <label><FaUser /> {t('register.username_label')}</label>
                             <input
                                 type="text"
                                 placeholder={t('register.username_placeholder')}
-                                required
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                {...registerField("username")}
                             />
+                            {errors.username && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.username.message}</span>}
                         </div>
 
                         <div className="form-group">
@@ -91,10 +85,9 @@ export default function Register() {
                             <input
                                 type="email"
                                 placeholder={t('register.email_placeholder')}
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                {...registerField("email")}
                             />
+                             {errors.email && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.email.message}</span>}
                         </div>
 
                         <div className="form-group">
@@ -103,9 +96,7 @@ export default function Register() {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    {...registerField("password")}
                                     style={{ paddingRight: '2.5rem' }}
                                 />
                                 <button
@@ -123,12 +114,14 @@ export default function Register() {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        padding: '0.25rem'
+                                        padding: '0.25rem',
+                                        zIndex: 2
                                     }}
                                 >
                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
+                            {errors.password && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.password.message}</span>}
                         </div>
 
                         <div className="form-group">
@@ -137,9 +130,7 @@ export default function Register() {
                                 <input
                                     type={showConfirmPassword ? "text" : "password"}
                                     placeholder="••••••••"
-                                    required
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    {...registerField("confirmPassword")}
                                     style={{ paddingRight: '2.5rem' }}
                                 />
                                 <button
@@ -157,16 +148,18 @@ export default function Register() {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
-                                        padding: '0.25rem'
+                                        padding: '0.25rem',
+                                        zIndex: 2
                                     }}
                                 >
                                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
+                            {errors.confirmPassword && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.confirmPassword.message}</span>}
                         </div>
 
-                        <button type="submit" className="btn-submit">
-                            <FaUserPlus /> {t('register.submit')}
+                        <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                            <FaUserPlus /> {isSubmitting ? t('register.loading') : t('register.submit')}
                         </button>
                     </form>
 
@@ -182,6 +175,7 @@ export default function Register() {
                             onClick={() => handleProviderLogin('discord')}
                             className="btn-submit"
                             style={{ background: '#5865F2', marginTop: 0 }}
+                            disabled={isSubmitting}
                         >
                             <FaDiscord size={20} /> Discord
                         </button>
@@ -190,6 +184,7 @@ export default function Register() {
                             onClick={() => handleProviderLogin('twitch')}
                             className="btn-submit"
                             style={{ background: '#9146FF', marginTop: 0 }}
+                            disabled={isSubmitting}
                         >
                             <FaTwitch size={20} /> Twitch
                         </button>

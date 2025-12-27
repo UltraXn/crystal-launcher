@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FaPoll, FaPlus, FaTimes, FaCheck, FaCheckCircle, FaSpinner, FaStopCircle, FaHistory, FaLanguage } from 'react-icons/fa'
+import { FaPoll, FaPlus, FaTimes, FaCheck, FaCheckCircle, FaSpinner, FaStopCircle, FaHistory, FaLanguage, FaEdit } from 'react-icons/fa'
 import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
 
@@ -49,6 +49,7 @@ export default function PollsManager() {
     const [daysDuration, setDaysDuration] = useState(7)
     const [buttonSuccess, setButtonSuccess] = useState(false)
     const [showModal, setShowModal] = useState(false)
+    const [editingId, setEditingId] = useState<number | null>(null)
     
     const [translating, setTranslating] = useState<string | null>(null)
 
@@ -87,7 +88,39 @@ export default function PollsManager() {
         if(tab === 'history') fetchHistory()
     }, [tab, page, fetchActive, fetchHistory])
 
-    // Create Handler
+    // Edit Handler
+    const handleEdit = (poll: Poll) => {
+        setTitle(poll.title)
+        setTitleEn(poll.title_en || '')
+        setQuestion(poll.question)
+        setQuestionEn(poll.question_en || '')
+        
+        const mappedOptions = poll.options.map(o => ({
+            label: o.label,
+            labelEn: o.label_en || ''
+        }))
+        
+        // Ensure at least 2 options
+        while(mappedOptions.length < 2) {
+             mappedOptions.push({label: '', labelEn: ''})
+        }
+
+        setOptions(mappedOptions)
+        setEditingId(poll.id)
+        setShowModal(true)
+    }
+
+    // Reset Form
+    const resetForm = () => {
+         setTitle('')
+         setTitleEn('')
+         setQuestion('')
+         setQuestionEn('')
+         setOptions([{label: '', labelEn: ''}, {label: '', labelEn: ''}])
+         setEditingId(null)
+    }
+
+    // Create/Edit Handler
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault()
         setCreating(true)
@@ -107,8 +140,11 @@ export default function PollsManager() {
                 label_en: o.labelEn
             }))
 
-            const res = await fetch(`${API_URL}/polls/create`, {
-                method: 'POST',
+            const endpoint = editingId ? `${API_URL}/polls/update/${editingId}` : `${API_URL}/polls/create`
+            const method = editingId ? 'PUT' : 'POST'
+
+            const res = await fetch(endpoint, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     title, 
@@ -121,11 +157,7 @@ export default function PollsManager() {
             })
             
             if(res.ok) {
-                setTitle('')
-                setTitleEn('')
-                setQuestion('')
-                setQuestionEn('')
-                setOptions([{label: '', labelEn: ''}, {label: '', labelEn: ''}])
+                resetForm()
                 fetchActive()
                 setButtonSuccess(true)
                 setTimeout(() => {
@@ -239,37 +271,143 @@ export default function PollsManager() {
                         </div>
                     ) : (
                         activePoll ? (
-                            <div>
-                                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'1rem' }}>
-                                    <span className="badge" style={{background:'#22c55e', color:'#000'}}>{t('admin.polls.status_active')}</span>
-                                    <span style={{fontSize:'0.8rem', color:'#aaa'}}>{t('admin.polls.ends_in')} {activePoll.closesIn}</span>
+                            <div style={{ 
+                                background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6))',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                borderRadius: '12px',
+                                padding: '2rem',
+                                position: 'relative',
+                                overflow: 'hidden'
+                            }}>
+                                {/* Decorative Glow */}
+                                <div style={{
+                                    position: 'absolute', top: -50, right: -50, width: 200, height: 200,
+                                    background: 'var(--accent)', opacity: 0.1, filter: 'blur(80px)', borderRadius: '50%'
+                                }}></div>
+
+                                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'1.5rem' }}>
+                                    <h4 style={{ margin:0, color:'#fff', fontSize: '2rem', fontWeight: '800', lineHeight: 1.2 }}>
+                                        {activePoll.title}
+                                    </h4>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                                        <span className="badge" style={{
+                                             background:'rgba(34, 197, 94, 0.2)', 
+                                             color:'#22c55e', 
+                                             border: '1px solid rgba(34, 197, 94, 0.3)',
+                                             padding: '4px 10px',
+                                             borderRadius: '20px',
+                                             fontSize: '0.75rem',
+                                             fontWeight: '800',
+                                             letterSpacing: '0.5px'
+                                        }}>
+                                            {t('admin.polls.active_title').toUpperCase()}
+                                        </span>
+                                        <div style={{display:'flex', gap:'5px', alignItems:'center'}}>
+                                            <button 
+                                                onClick={() => handleEdit(activePoll)}
+                                                className="btn-icon"
+                                                style={{
+                                                    background: 'rgba(255,255,255,0.05)',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: '6px',
+                                                    padding: '4px 8px',
+                                                    cursor: 'pointer',
+                                                    color: '#fff',
+                                                    display: 'flex', alignItems: 'center', gap: '4px',
+                                                    fontSize: '0.8rem',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                title={t('admin.polls.edit_btn')}
+                                            >
+                                                <FaEdit /> {t('admin.polls.edit_btn')}
+                                            </button>
+                                            <span style={{fontSize:'0.8rem', color:'#aaa', display: 'flex', alignItems: 'center', gap: '5px'}}>
+                                                <FaHistory size={10} /> {t('admin.polls.ends_in')} <span style={{color: '#fff', fontWeight: 'bold'}}>{activePoll.closesIn}</span>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
-                                <h4 style={{marginBottom:'0.5rem', color:'var(--accent)', fontSize: '1.5rem'}}>{activePoll.title}</h4>
-                                <p style={{marginBottom:'2rem', fontSize:'1.2rem', color: '#ddd'}}>{activePoll.question}</p>
+                                <p style={{ marginBottom:'2.5rem', fontSize:'1.1rem', color: '#94a3b8', lineHeight: 1.6, maxWidth: '80%' }}>
+                                    {activePoll.question}
+                                </p>
 
-                                <div style={{display:'flex', flexDirection:'column', gap:'0.8rem', marginBottom:'2rem'}}>
-                                    {activePoll.options && Array.isArray(activePoll.options) && activePoll.options.map(opt => (
-                                        <div key={opt.id} style={{
-                                            background:'rgba(255,255,255,0.03)', 
-                                            padding:'1rem', 
-                                            borderRadius:'4px', 
-                                            display:'flex', 
-                                            justifyContent:'space-between',
-                                            border: '1px solid rgba(255,255,255,0.1)'
-                                        }}>
-                                            <span style={{ fontSize: '1.1rem' }}>{opt.label}</span>
-                                            <span style={{fontWeight:'bold', color: 'var(--accent)'}}>{opt.percent}% ({opt.votes} {t('admin.polls.votes')})</span>
+                                <div style={{ display:'flex', flexDirection:'column', gap:'1.2rem', marginBottom:'2.5rem' }}>
+                                    {activePoll.options && Array.isArray(activePoll.options) && activePoll.options.map((opt, idx) => (
+                                        <div key={opt.id || idx} style={{ position: 'relative' }}>
+                                            {/* Bar Background */}
+                                            <div style={{
+                                                background: 'rgba(255,255,255,0.03)',
+                                                borderRadius: '8px',
+                                                height: '48px',
+                                                width: '100%',
+                                                position: 'relative',
+                                                overflow: 'hidden',
+                                                border: '1px solid rgba(255,255,255,0.05)'
+                                            }}>
+                                                {/* Progress Fill */}
+                                                <div style={{
+                                                    position: 'absolute', top: 0, left: 0, bottom: 0,
+                                                    width: `${opt.percent || 0}%`,
+                                                    background: opt.percent && opt.percent > 0 ? 'var(--accent)' : 'transparent',
+                                                    opacity: 0.15,
+                                                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}></div>
+
+                                                 {/* Progress Line */}
+                                                 <div style={{
+                                                    position: 'absolute', bottom: 0, left: 0,
+                                                    width: `${opt.percent || 0}%`,
+                                                    height: '2px',
+                                                    background: 'var(--accent)',
+                                                    boxShadow: '0 0 10px var(--accent)',
+                                                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                                                }}></div>
+
+                                                {/* Content */}
+                                                <div style={{
+                                                    position: 'absolute', inset: 0,
+                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                    padding: '0 1.2rem'
+                                                }}>
+                                                    <span style={{ fontSize: '1rem', fontWeight: '500', color: '#fff', zIndex: 2 }}>{opt.label}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{ fontSize: '0.9rem', color: '#aaa' }}>{opt.votes} {t('admin.polls.votes')}</span>
+                                                        <span style={{ fontWeight:'bold', color: 'var(--accent)', fontSize: '1.1rem', minWidth: '45px', textAlign: 'right' }}>{opt.percent}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
-                                    <div style={{marginTop:'0.5rem', textAlign:'right', color:'#888', fontSize:'0.9rem'}}>
+                                    <div style={{ marginTop:'0.5rem', textAlign:'right', color:'#64748b', fontSize:'0.9rem', fontWeight: '500' }}>
                                         {t('admin.polls.total_votes', {count: activePoll.totalVotes})}
                                     </div>
                                 </div>
 
-                                <button onClick={handleClose} className="btn-secondary" style={{borderColor:'#ef4444', color:'#ef4444', padding: '0.8rem 2rem'}}>
-                                    <FaStopCircle /> {t('admin.polls.close_btn')}
-                                </button>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <button 
+                                        onClick={handleClose} 
+                                        className="btn-secondary" 
+                                        style={{
+                                            borderColor:'rgba(239, 68, 68, 0.5)', 
+                                            color:'#ef4444', 
+                                            padding: '0.8rem 2rem',
+                                            background: 'rgba(239, 68, 68, 0.05)',
+                                            display: 'flex', alignItems: 'center', gap: '8px',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+                                            e.currentTarget.style.borderColor = '#ef4444'
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'
+                                            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.5)'
+                                        }}
+                                    >
+                                        <FaStopCircle /> {t('admin.polls.close_btn')}
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div style={{textAlign:'center', padding:'5rem 2rem', color:'#666', border:'2px dashed #333', borderRadius:'8px'}}>

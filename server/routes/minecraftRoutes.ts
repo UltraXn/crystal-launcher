@@ -1,5 +1,6 @@
 import express from 'express';
 import * as minecraftController from '../controllers/minecraftController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -7,9 +8,9 @@ const router = express.Router();
 router.get('/status', minecraftController.getStatus);
 router.get('/skin/:username', minecraftController.getSkin);
 
-// POST /api/minecraft/link
-router.post('/link', minecraftController.verifyLinkCode);
-router.post('/link/init', minecraftController.initWebLink);
-router.get('/link/check', minecraftController.checkLinkStatus);
+// Minecraft Account Linking (Requires authentication)
+router.post('/link/init', authenticateToken, minecraftController.initWebLink);
+router.get('/link/check', authenticateToken, minecraftController.checkLinkStatus);
+router.post('/link', authenticateToken, minecraftController.verifyLinkCode);
 
 export default router;

@@ -6,12 +6,13 @@ export const getActivePoll = async (req: Request, res: Response) => {
     try {
         const poll = await pollService.getActivePoll();
         return sendSuccess(res, poll); // Can be null, that's fine
-    } catch (error: any) {
+    } catch (error: unknown) {
         // Handle "relation does not exist" gracefully as usual
-        if (error.message && error.message.includes('does not exist')) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        if (message.includes('does not exist')) {
             return sendSuccess(res, null, 'Tables missing, no poll returned');
         }
-        return sendError(res, error.message);
+        return sendError(res, message);
     }
 };
 
@@ -20,8 +21,9 @@ export const vote = async (req: Request, res: Response) => {
         const { pollId, optionId } = req.body;
         const result = await pollService.votePoll(pollId, optionId);
         return sendSuccess(res, result, 'Vote recorded');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return sendError(res, message);
     }
 };
 
@@ -29,8 +31,20 @@ export const create = async (req: Request, res: Response) => {
     try {
         const result = await pollService.createPoll(req.body);
         return sendSuccess(res, result, 'Poll created successfully');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return sendError(res, message);
+    }
+};
+
+export const update = async (req: Request, res: Response) => {
+    try {
+        const id = parseInt(req.params.id);
+        const result = await pollService.updatePoll(id, req.body);
+        return sendSuccess(res, result, 'Poll updated successfully');
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return sendError(res, message);
     }
 };
 
@@ -38,8 +52,9 @@ export const close = async (req: Request, res: Response) => {
     try {
         await pollService.closePoll(parseInt(req.params.id));
         return sendSuccess(res, null, 'Poll closed successfully');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return sendError(res, message);
     }
 };
 
@@ -49,7 +64,8 @@ export const getPolls = async (req: Request, res: Response) => {
         const limit = parseInt(req.query.limit as string) || 10;
         const result = await pollService.getPolls({ page, limit });
         return sendSuccess(res, result);
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return sendError(res, message);
     }
 };

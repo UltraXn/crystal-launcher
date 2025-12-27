@@ -4,7 +4,7 @@ export const translateText = async (text: string, targetLang: string = 'en'): Pr
     if (!text) return '';
     
     try {
-        let processedText = text;
+        const processedText = text;
         
         const protectionMap: Record<string, string> = {
             'outrageous': 'ultroso',

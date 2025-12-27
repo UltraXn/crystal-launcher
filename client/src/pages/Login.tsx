@@ -4,17 +4,21 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { Provider } from '@supabase/supabase-js'
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { loginSchema, LoginFormValues } from '../schemas/user'
 
 export default function Login() {
     const { t } = useTranslation()
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
+    const [generalError, setGeneralError] = useState('')
 
     const { login, loginWithProvider } = useAuth()
     const navigate = useNavigate()
+
+    const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema)
+    })
 
     const handleProviderLogin = async (provider: Provider) => {
         try {
@@ -22,29 +26,25 @@ export default function Login() {
         } catch (err) {
             console.error(err)
             const message = err instanceof Error ? err.message : String(err)
-            setError(`Error al iniciar con ${provider}: ${message}`)
+            setGeneralError(`Error al iniciar con ${provider}: ${message}`)
         }
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setError('')
-        setLoading(true)
+    const onSubmit = async (data: LoginFormValues) => {
+        setGeneralError('')
 
         try {
-            await login(email, password)
+            await login(data.email, data.password)
             // Navegar al dashboard o home tras login exitoso
             navigate('/')
         } catch (err) {
             console.error(err)
             const message = err instanceof Error ? err.message : String(err)
             if (message === 'Invalid login credentials') {
-                setError('Credenciales inválidas. Verifica tu correo y contraseña.')
+                setGeneralError('Credenciales inválidas. Verifica tu correo y contraseña.')
             } else {
-                setError(message || 'Error al iniciar sesión')
+                setGeneralError(message || 'Error al iniciar sesión')
             }
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -57,19 +57,18 @@ export default function Login() {
                         <p>{t('login.welcome')}</p>
                     </div>
 
-                    {error && <div className="error-message" style={{ color: '#ff6b6b', background: 'rgba(255, 107, 107, 0.1)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center', fontSize: '0.9rem', border: '1px solid rgba(255, 107, 107, 0.2)' }}>{error}</div>}
+                    {generalError && <div className="error-message" style={{ color: '#ff6b6b', background: 'rgba(255, 107, 107, 0.1)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center', fontSize: '0.9rem', border: '1px solid rgba(255, 107, 107, 0.2)' }}>{generalError}</div>}
 
-                    <form className="account-form" onSubmit={handleSubmit}>
+                    <form className="account-form" onSubmit={handleSubmit(onSubmit)}>
                         <div className="form-group">
                             <label><FaEnvelope /> {t('login.email_label')}</label>
                             <input
                                 type="email"
                                 placeholder={t('login.email_placeholder')}
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={loading}
+                                {...register("email")}
+                                disabled={isSubmitting}
                             />
+                            {errors.email && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.email.message}</span>}
                         </div>
 
                         <div className="form-group">
@@ -78,11 +77,9 @@ export default function Login() {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder={t('login.password_placeholder')}
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
+                                    {...register("password")}
                                     style={{ paddingRight: '2.5rem' }}
-                                    disabled={loading}
+                                    disabled={isSubmitting}
                                 />
                                 <button
                                     type="button"
@@ -106,6 +103,7 @@ export default function Login() {
                                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                             </div>
+                            {errors.password && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.password.message}</span>}
                         </div>
 
                         <div style={{ textAlign: 'right', marginBottom: '1rem' }}>
@@ -114,8 +112,8 @@ export default function Login() {
                             </Link>
                         </div>
 
-                        <button type="submit" className="btn-submit" disabled={loading}>
-                            {loading ? t('login.loading') : <><FaSignInAlt /> {t('login.sign_in_verb')}</>}
+                        <button type="submit" className="btn-submit" disabled={isSubmitting}>
+                            {isSubmitting ? t('login.loading') : <><FaSignInAlt /> {t('login.sign_in_verb')}</>}
                         </button>
                     </form>
 
@@ -131,7 +129,7 @@ export default function Login() {
                             onClick={() => handleProviderLogin('discord')}
                             className="btn-submit"
                             style={{ background: '#5865F2', marginTop: 0 }}
-                            disabled={loading}
+                            disabled={isSubmitting}
                         >
                             <FaDiscord size={20} /> Discord
                         </button>
@@ -140,7 +138,7 @@ export default function Login() {
                             onClick={() => handleProviderLogin('twitch')}
                             className="btn-submit"
                             style={{ background: '#9146FF', marginTop: 0 }}
-                            disabled={loading}
+                            disabled={isSubmitting}
                         >
                             <FaTwitch size={20} /> Twitch
                         </button>

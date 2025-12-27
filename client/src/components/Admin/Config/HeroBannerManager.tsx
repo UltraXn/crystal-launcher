@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { FaImage, FaPlus, FaTrash, FaEdit, FaCheck, FaLink } from 'react-icons/fa';
+import { useState, useRef } from 'react';
+import { FaImage, FaPlus, FaTrash, FaEdit, FaCheck, FaLink, FaSpinner, FaCloudUploadAlt } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../../../services/supabaseClient';
 
 interface HeroSlide {
     id?: number;
@@ -46,6 +47,9 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
     const [activeEditIndex, setActiveEditIndex] = useState<number | null>(null);
     const [prevSlidesStr, setPrevSlidesStr] = useState<string | null>(null);
     
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     // Form State
     const [formData, setFormData] = useState<HeroSlide>({
         id: 0,
@@ -70,6 +74,47 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
             setSlides(DEFAULT_SLIDES as HeroSlide[]);
         }
     }
+
+    const uploadImage = async (file: File): Promise<string | null> => {
+        try {
+            setUploading(true);
+            
+            // Generate filename based on timestamp
+            const fileExt = 'webp'; // Force webp extension since we might want to convert locally or just assume upload
+            const fileName = `hero-banners/${Date.now()}.${fileExt}`;
+
+            // Helper to convert to WebP (Simplified version without canvas for now if accept="image/*" or direct upload)
+            // Ideally we use the same canvas logic as AdminNews but for brevity let's try direct upload first or simplified.
+            // Let's perform a direct upload of the file for now to ensure it works, user can optimize if needed.
+            // Actually, let's use the file type.
+            
+            const { data, error: uploadError } = await supabase.storage
+                .from('forum-uploads') // Using same bucket for now
+                .upload(fileName, file, {
+                     contentType: file.type
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicData } = supabase.storage.from('forum-uploads').getPublicUrl(fileName);
+            return publicData.publicUrl;
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert("Error al subir imagen");
+            return null;
+        } finally {
+            setUploading(false);
+        }
+    }
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        const url = await uploadImage(file);
+        if (url) {
+            setFormData(prev => ({ ...prev, image: url }));
+        }
+    };
 
     const handleEdit = (index: number) => {
         setActiveEditIndex(index);
@@ -107,7 +152,7 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
 
     if (isEditing) {
         return (
-            <div className="admin-card">
+            <div style={{ animation: 'fadeIn 0.3s' }}>
                  <h3 style={{ marginBottom: '1.5rem', display:'flex', alignItems:'center', gap:'0.5rem' }}>
                     {activeEditIndex !== null ? t('admin.settings.hero.edit_slide') : t('admin.settings.hero.new_slide')}
                 </h3>
@@ -115,7 +160,24 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
                         <label className="admin-label">{t('admin.settings.hero.image_url')}</label>
-                        <input className="admin-input" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="https://..." />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input className="admin-input" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} placeholder="https://..." style={{ flex: 1 }} />
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                style={{ display: 'none' }} 
+                                onChange={handleFileChange} 
+                                accept="image/*"
+                            />
+                            <button 
+                                className="btn-secondary" 
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploading}
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }}
+                            >
+                                {uploading ? <FaSpinner className="spin" /> : <FaCloudUploadAlt />} Subir
+                            </button>
+                        </div>
                         {formData.image && <img src={formData.image} alt="Preview" style={{ width: '100%', height: '150px', objectFit: 'cover', marginTop: '0.5rem', borderRadius: '4px', opacity: 0.7 }} />}
                     </div>
                     <div>
@@ -151,7 +213,7 @@ export default function HeroBannerManager({ settings, onUpdate, saving }: HeroBa
     }
 
     return (
-        <div className="admin-card">
+        <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
                     <FaImage /> {t('admin.settings.hero.title')}

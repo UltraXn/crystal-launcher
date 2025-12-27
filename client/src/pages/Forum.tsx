@@ -34,6 +34,7 @@ interface NewsItem {
     content: string;
     content_en?: string;
     status: string;
+    slug?: string;
 }
 
 interface CategoryStat {
@@ -146,15 +147,15 @@ export default function Forum() {
             </p>
 
             {/* Featured Section: Poll OR News */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem' }}>
                 
                 {/* Active Poll Column */}
-                <div>
+                <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
                     <div className="section-subtitle" style={{ color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FaPoll color="var(--accent)" /> <span>{t('forum_page.official_poll_section')}</span>
                     </div>
                     {activePoll ? (
-                         <div className="poll-card" style={{ border: '1px solid var(--accent)', boxShadow: '0 0 15px rgba(109,165,192,0.1)', height: '100%' }}>
+                         <div className="poll-card" style={{ border: '1px solid var(--accent)', boxShadow: '0 0 15px rgba(109,165,192,0.1)', height: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
                             <div style={{ marginBottom: '1rem', color: 'var(--accent)', fontSize: '0.9rem', fontWeight: 'bold', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
                                 <span><FaPoll style={{ marginRight: '8px', verticalAlign: 'middle' }} />{t('forum_page.active_voting')}</span>
                                 <span style={{ color: '#ff4500', display: 'flex', alignItems: 'center', gap: '5px' }}><FaFire /> {t('forum_page.hot')}</span>
@@ -163,7 +164,7 @@ export default function Forum() {
                                 {i18n.language === 'en' && activePoll.question_en ? activePoll.question_en : activePoll.question}
                             </h3>
 
-                            <div className="poll-options">
+                            <div className="poll-options" style={{ flex: 1 }}>
                                 {(activePoll.options || []).slice(0, 3).map((opt: PollOption) => (
                                     <div key={opt.id} className="poll-option" style={{ marginBottom: '0.5rem' }}>
                                         <div className="poll-bar-track" style={{ height: '30px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', position: 'relative', overflow: 'hidden' }}>
@@ -178,12 +179,10 @@ export default function Forum() {
                                     </div>
                                 ))}
                             </div>
-                            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                                <Link to="/forum/topic/active-poll" className="btn-small" style={{ fontSize: '0.8rem', color: 'var(--muted)', textDecoration: 'underline' }}>{t('forum_page.view_full')}</Link>
-                            </div>
+
                         </div>
                     ) : (
-                        <div style={{ padding: '2rem', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#888', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ padding: '2rem', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#888', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1rem', flex: 1 }}>
                             <FaPoll size={30} style={{ opacity: 0.3 }} />
                             <p>{t('forum_page.no_active_poll')}</p>
                         </div>
@@ -191,12 +190,12 @@ export default function Forum() {
                 </div>
 
                 {/* News Column */}
-                <div>
+                <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column' }}>
                      <div className="section-subtitle" style={{ color: '#fff', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FaBullhorn color="#f59e0b" /> <span>{t('forum_page.news_section')}</span>
                     </div>
                     {latestNews ? (
-                        <Link to={`/forum/thread/news/${latestNews.id}`} style={{ textDecoration: 'none', height: '100%', display: 'block' }}>
+                        <Link to={`/forum/thread/news/${latestNews.slug || latestNews.id}`} style={{ textDecoration: 'none', flex: 1, display: 'block' }}>
                             <div className="news-card-featured" style={{ 
                                 background: `linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url(${latestNews.image})`, 
                                 backgroundSize: 'cover', 
@@ -221,12 +220,12 @@ export default function Forum() {
                             </div>
                         </Link>
                     ) : (
-                         <div style={{ padding: '2rem', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#888', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
+                         <div style={{ padding: '2rem', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#888', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '1rem', flex: 1 }}>
                             <FaBullhorn size={30} style={{ opacity: 0.3 }} />
                             <p style={{ margin: 0 }}>{t('forum_page.loading_news')}</p> 
                             {/* Actually we should check if loading finished and list is empty to say 'No news'. For MVP: 'Cargando' is safe default or 'No noticias' if we knew for sure. */}
                             {/* Let's be smart: initialCategories has 0 topics. We can check category 1. */}
-                            <Link to="/forum/1" className="btn-secondary" style={{ marginTop: '1rem', fontSize: '0.8rem', padding: '0.5rem 1rem' }}>{t('forum_page.view_all_news')}</Link>
+                            <Link to="/forum/announcements" className="btn-secondary" style={{ marginTop: '1rem', fontSize: '0.8rem', padding: '0.5rem 1rem' }}>{t('forum_page.view_all_news')}</Link>
                         </div>
                     )}
                 </div>

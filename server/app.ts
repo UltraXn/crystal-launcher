@@ -21,9 +21,25 @@ import taskRoutes from './routes/taskRoutes.js';
 import noteRoutes from './routes/noteRoutes.js';
 import gachaRoutes from './routes/gachaRoutes.js';
 import translationRoutes from './routes/translationRoutes.js';
+import ruleRoutes from './routes/ruleRoutes.js';
+import policyRoutes from './routes/policyRoutes.js';
+import profileCommentRoutes from './routes/profileCommentRoutes.js';
+import wikiRoutes from './routes/wikiRoutes.js';
 import { initCleanupJob } from './services/cleanupService.js';
 
+import helmet from 'helmet';
+import { apiLimiter, sensitiveActionLimiter } from './middleware/rateLimitMiddleware.js';
+
 const app = express();
+
+// Trust Proxy (Required for Rate Limiting behind Proxy/Load Balancer)
+app.set('trust proxy', 1);
+
+// Security Middleware
+app.use(helmet());
+app.use('/api', apiLimiter); // Global limit for all API routes
+
+import hpp from 'hpp';
 
 // Middleware
 app.use(cors());
@@ -32,6 +48,7 @@ app.use(express.json());
 // Iniciar Jobs
 initCleanupJob();
 app.use(express.urlencoded({ extended: true })); // Necesario para Ko-Fi payload
+app.use(hpp()); // Protect against HTTP Parameter Pollution attacks
 
 // Routes
 app.use('/api/system', systemRoutes);
@@ -42,16 +59,20 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/donations', donationRoutes);
-app.use('/api/suggestions', suggestionRoutes);
+app.use('/api/suggestions', sensitiveActionLimiter, suggestionRoutes);
 app.use('/api/polls', pollRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/rules', ruleRoutes); // Interactive Rules
+app.use('/api/policies', policyRoutes);
+app.use('/api/profiles/comments', profileCommentRoutes);
+app.use('/api/wiki', wikiRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/player-stats', playerStatsRoutes);
 app.use('/api/server', serverRoutes);
 app.use('/api/server/status', serverStatusRoutes);
 app.use('/api/bridge', bridgeRoutes); // Secure CrystalBridge
-app.use('/api/gacha', gachaRoutes);
+app.use('/api/gacha', sensitiveActionLimiter, gachaRoutes);
 
 // Staff Hub Routes
 app.use('/api/staff/tasks', taskRoutes);

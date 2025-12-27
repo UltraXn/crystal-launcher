@@ -1,8 +1,14 @@
 import express from 'express';
 import * as logsController from '../controllers/logsController.js'; // CoreProtect Logs
 import * as logController from '../controllers/logController.js'; // Internal Logs
+import { authenticateToken } from '../middleware/authMiddleware.js';
+import { checkRole, STAFF_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
+
+// All log routes require staff authentication
+router.use(authenticateToken);
+router.use(checkRole(STAFF_ROLES));
 
 /**
  * @swagger
@@ -52,5 +58,11 @@ router.post('/', logController.createLog);
  *         description: Lista de comandos ejecutados por jugadores
  */
 router.get('/commands', logsController.getCommandLogs);
+
+// Security Reporting (Public/Semi-public)
+import { optionalAuthenticateToken } from '../middleware/authMiddleware.js';
+import { sensitiveActionLimiter } from '../middleware/rateLimitMiddleware.js';
+
+router.post('/security/report', sensitiveActionLimiter, optionalAuthenticateToken, logController.reportSecurityAlert);
 
 export default router;

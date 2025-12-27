@@ -7,6 +7,8 @@ import { IconType } from 'react-icons';
 import { useAuth } from '../context/AuthContext';
 import Loader from '../components/UI/Loader';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { supabase } from '../services/supabaseClient';
 
 interface Reward {
     id: string;
@@ -35,6 +37,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 export default function Gacha() {
     const { user, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     
     // Status
     const [isOpening, setIsOpening] = useState(false);
@@ -56,12 +59,16 @@ export default function Gacha() {
 
     const fetchHistory = async () => {
         try {
-            const res = await fetch(`${API_URL}/gacha/history/${user?.id}`);
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(`${API_URL}/gacha/history/${user?.id}`, {
+                headers: {
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 if (data.success && data.data) {
                     setHistory(data.data);
-                    // Simple check if rolled today from history to show disabled button initially
                     const lastRoll = data.data[0];
                     if (lastRoll) {
                         const lastDate = new Date(lastRoll.created_at);
@@ -83,13 +90,17 @@ export default function Gacha() {
         setError(null);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             // Animation Delay Simulation (3s)
             const animationPromise = new Promise(resolve => setTimeout(resolve, 3000));
             
             // API Call
             const apiPromise = fetch(`${API_URL}/gacha/roll`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify({ userId: user.id })
             });
 
@@ -133,13 +144,13 @@ export default function Gacha() {
 
         } catch (e) {
             console.error(e);
-            setError("Error de conexión");
+            setError(t('gacha.conn_error'));
         } finally {
             setIsOpening(false);
         }
     };
 
-    if (authLoading) return <div style={{ paddingTop: '100px', display:'flex', justifyContent:'center'}}><Loader text="Cargando Gacha..." /></div>;
+    if (authLoading) return <div style={{ paddingTop: '100px', display:'flex', justifyContent:'center'}}><Loader text={t('gacha.loading')} /></div>;
 
     const RewardIcon = reward ? (RARITY_ICONS[reward.rarity] || FaBoxOpen) : FaBoxOpen;
 
@@ -240,25 +251,25 @@ export default function Gacha() {
             <div className="glow-bg" />
 
             {/* Header */}
-            <div style={{ zIndex: 1, textAlign: 'center' }}>
-                <h1 style={{ fontSize: '3rem', marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Recompensa Diaria</h1>
-                <p style={{ color: '#aaa' }}>¡Prueba tu suerte gratis cada 24 horas y recibe premios en el servidor!</p>
+            <div style={{ zIndex: 1, textAlign: 'center', padding: '0 1rem' }}>
+                <h1 style={{ fontSize: 'clamp(2rem, 8vw, 3.5rem)', marginBottom: '0.5rem', background: 'linear-gradient(to right, #fff, #aaa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontWeight: 900 }}>{t('gacha.title')}</h1>
+                <p style={{ color: '#aaa', maxWidth: '500px' }}>{t('gacha.subtitle')}</p>
             </div>
 
             <button 
                 onClick={() => setShowHistory(!showHistory)}
                 style={{ position: 'absolute', right: 20, top: 100, background: 'rgba(255,255,255,0.1)', border: 'none', padding: '0.5rem 1rem', color: '#fff', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', zIndex: 20 }}
             >
-                <FaHistory /> Historial
+                <FaHistory /> <span className="mobile-hide">{t('gacha.history_btn')}</span>
             </button>
 
             {showHistory && (
                 <div className="history-panel fade-in">
-                    <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Últimos Premios</h3>
-                    {history.length === 0 ? <p style={{color:'#666', fontSize:'0.9rem'}}>Sin historial</p> : (
+                    <h3 style={{ borderBottom: '1px solid #333', paddingBottom: '0.5rem', marginBottom: '1rem' }}>{t('gacha.last_rewards')}</h3>
+                    {history.length === 0 ? <p style={{color:'#666', fontSize:'0.9rem'}}>{t('gacha.no_history')}</p> : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            {history.map((h, i) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ccc' }}>
+                            {history.slice(0, 10).map((h, i) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#ccc' }}>
                                     <span style={{ color: RARITY_COLORS[h.rarity] || '#fff' }}>[{h.rarity || 'common'}] {h.reward_name}</span>
                                     <span style={{ color: '#666' }}>{new Date(h.created_at).toLocaleDateString()}</span>
                                 </div>
@@ -287,13 +298,13 @@ export default function Gacha() {
                             </div>
                             <h2 style={{ color: reward.color, textTransform: 'uppercase', marginBottom: '0.5rem' }}>{reward.rarity}</h2>
                             <h3 style={{ fontSize: '2rem' }}>{reward.name}</h3>
-                            <p style={{ color: '#aaa', margin: '1rem 0' }}>¡El premio ha sido enviado a tu cola del servidor!</p>
+                            <p style={{ color: '#aaa', margin: '1rem 0' }}>{t('gacha.claim_success')}</p>
                             <button 
-                                className="btn-secondary" 
-                                style={{ marginTop: '1rem', width: '100%' }}
+                                className="nav-btn primary" 
+                                style={{ marginTop: '1rem', width: '100%', padding: '0.8rem' }}
                                 onClick={() => setReward(null)}
                             >
-                                <FaCheck /> Entendido
+                                <FaCheck /> {t('gacha.understood')}
                             </button>
                         </Motion.div>
                     ) : (
@@ -316,17 +327,17 @@ export default function Gacha() {
                                         className="action-btn" 
                                         onClick={handleOpen} 
                                         disabled={cooldown}
-                                        title={cooldown ? "Vuelve mañana" : "Tirar Ruleta"}
+                                        title={cooldown ? t('gacha.vuelve_mañana') : "Tirar Ruleta"}
                                     >
-                                        {cooldown ? <><FaClock /> En Cooldown</> : <><FaGift /> Reclamar Diario</>}
+                                        {cooldown ? <><FaClock /> {t('gacha.cooldown_btn')}</> : <><FaGift /> {t('gacha.claim_btn')}</>}
                                     </button>
-                                    {cooldown && <p style={{ marginTop: '1rem', color: '#ff4444' }}>{error || "¡Ya has reclamado tu premio hoy!"}</p>}
+                                    {cooldown && <p style={{ marginTop: '1rem', color: '#ff4444' }}>{t('gacha.already_claimed')}</p>}
                                     {error && !cooldown && <p style={{ marginTop: '1rem', color: '#ff4444' }}>{error}</p>}
                                 </>
                             )}
                             
                              {isOpening && (
-                                <h2 style={{ marginTop: '2rem', animation: 'blink 1s infinite' }}>Abriendo caja...</h2>
+                                <h2 style={{ marginTop: '2rem', animation: 'blink 1s infinite' }}>{t('gacha.opening')}</h2>
                             )}
                         </div>
                     )}

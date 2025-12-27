@@ -2,9 +2,9 @@ import Menu from "./Menu"
 import NotificationCenter from "../../components/UI/NotificationCenter"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
-import { FaUserCircle, FaTrophy, FaEdit, FaShieldAlt, FaSignOutAlt, FaCog, FaServer, FaLink } from "react-icons/fa"
+import { FaUserCircle, FaTrophy, FaEdit, FaShieldAlt, FaSignOutAlt, FaCog, FaServer, FaLink, FaGift } from "react-icons/fa"
 import { useRef, useState, useEffect } from "react"
-import anime from 'animejs'
+import anime from 'animejs/lib/anime.js'
 
 import { useTranslation } from 'react-i18next'
 
@@ -169,8 +169,10 @@ export default function Navbar() {
                             <Link to="/#rules">{t('navbar.rules')}</Link>
                             <Link to="/#donors" style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{t('navbar.donors')}</Link>
                             <Link to="/#news">{t('navbar.news')}</Link>
-                            <Link to="/#suggestions">{t('footer.suggestions')}</Link>
+                            <Link to="/#suggestions">{t('navbar.suggestions')}</Link>
                             <Link to="/forum">{t('navbar.forum')}</Link>
+                            <Link to="/wiki">Guía</Link>
+                            <Link to="/support">{t('navbar.support', 'Soporte')}</Link>
                             <Link to="/map">{t('footer.online_map')}</Link>
                         </div>
                     )}
@@ -225,14 +227,45 @@ export default function Navbar() {
                                                 e.currentTarget.src = `https://minotar.net/helm/${user.user_metadata.username}/64.png`;
                                             } else {
                                                 e.currentTarget.style.display = 'none';
-                                                e.currentTarget.nextElementSibling?.classList.remove('hidden'); // Hacky fallback logic or just let it break gracefully
+                                                e.currentTarget.nextElementSibling?.classList.remove('hidden');
                                             }
                                         }}
                                     />
                                 ) : (
                                     <FaUserCircle size={20} />
                                 )}
-                                <span>{user.user_metadata?.username || user?.email?.split('@')[0] || 'User'}</span>
+                                <span>{(() => {
+                                    const meta = user.user_metadata || {};
+                                    const identities = user.identities || [];
+                                    
+                                    // 1. Web Nick (Full Name > Display Name > Username)
+                                    // We prioritize full_name as it is the primary display name in settings.
+                                    if (meta.full_name) return meta.full_name;
+                                    if (meta.display_name) return meta.display_name;
+                                    if (meta.username) return meta.username;
+                                    
+                                    // 2. Discord
+                                    const discord = identities.find((id: any) => id.provider === 'discord');
+                                    if (discord?.identity_data) {
+                                        return discord.identity_data.full_name || 
+                                               discord.identity_data.custom_claims?.global_name || 
+                                               discord.identity_data.name || 
+                                               discord.identity_data.user_name;
+                                    }
+
+                                    // 3. Twitch
+                                    const twitch = identities.find((id: any) => id.provider === 'twitch');
+                                    if (twitch?.identity_data) {
+                                        return twitch.identity_data.display_name || 
+                                               twitch.identity_data.full_name || 
+                                               twitch.identity_data.name;
+                                    }
+
+                                    // 4. Minecraft
+                                    if (meta.minecraft_nick) return meta.minecraft_nick;
+
+                                    return user.email?.split('@')[0] || 'User';
+                                })()}</span>
                             </button>
 
                             {/* Dropdown Menu - ALWAYS RENDERED but visibility controlled by anime.js */}
@@ -250,6 +283,10 @@ export default function Navbar() {
                                             <UserRoleDisplay role={user.user_metadata?.role || 'user'} />
                                         </div>
                                     </div>
+                                <Link to="/gacha" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
+                                    <FaGift /> {t('gacha.title', 'Recompensa Diaria')}
+                                </Link>
+                                <div className="dropdown-divider"></div>
                                 <Link to="/account?tab=overview" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs}>
                                     <FaServer /> {t('account.nav.overview', 'Resumen')}
                                 </Link>

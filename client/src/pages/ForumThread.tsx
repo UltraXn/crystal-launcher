@@ -142,12 +142,12 @@ export default function ForumThread() {
                     content: threadData.content,
                     title_en: threadData.title_en,
                     content_en: threadData.content_en,
-                    author: isTopic ? (threadData.author_name || "Anónimo") : "Staff",
+                    author: isTopic ? (threadData.author_name || "Anónimo") : "CrystalTidesSMP",
                     author_id: isTopic ? threadData.user_id : threadData.author_id, // Important for ownership check
-                    author_avatar: isTopic ? threadData.author_avatar : null, // Add avatar
-                    author_role: isTopic ? threadData.author_role : "owner",
+                    author_avatar: isTopic ? threadData.author_avatar : "/images/ui/logo.webp", // Add avatar
+                    author_role: isTopic ? threadData.author_role : "staff",
                     date: new Date(threadData.created_at).toLocaleDateString(),
-                    longDate: new Date(threadData.created_at).toLocaleString(),
+                    longDate: new Date(threadData.created_at).toLocaleDateString() + " " + new Date(threadData.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     image: isTopic ? null : threadData.image,
                     tag: isTopic ? (categoryNames[threadData.category_id] || "General") : threadData.category,
                     category_id: threadData.category_id,
@@ -182,7 +182,7 @@ export default function ForumThread() {
                     }) => ({
                         id: c.id,
                         user: (isTopic ? c.author_name : c.user_name) || "Anónimo",
-                        user_id: isTopic ? (c.user_id || null) : null,
+                        user_id: c.user_id || null, // Include for both types
                         avatar: (isTopic ? c.author_avatar : c.user_avatar) || null,
                         role: (isTopic ? c.author_role : c.user_role) || "user",
                         date: new Date(c.created_at).toLocaleDateString() + " " + new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -218,9 +218,15 @@ export default function ForumThread() {
     const handleUpdateThread = async () => {
         if (!editThreadData.title.trim() || !editThreadData.content.trim()) return;
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            
             const res = await fetch(`${API_URL}/forum/thread/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(editThreadData)
             });
             if (res.ok) {
@@ -235,10 +241,16 @@ export default function ForumThread() {
     const togglePin = async () => {
         if (!thread) return;
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const newValue = !thread.pinned;
             const res = await fetch(`${API_URL}/forum/thread/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify({ pinned: newValue })
             });
             if (res.ok) setThread({ ...thread, pinned: newValue });
@@ -248,10 +260,16 @@ export default function ForumThread() {
     const toggleLock = async () => {
         if (!thread) return;
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const newValue = !thread.locked;
             const res = await fetch(`${API_URL}/forum/thread/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify({ locked: newValue })
             });
             if (res.ok) setThread({ ...thread, locked: newValue });
@@ -265,9 +283,17 @@ export default function ForumThread() {
     const handleUpdatePost = async (postId: string | number) => {
          if (!editPostContent.trim()) return;
          try {
-            const res = await fetch(`${API_URL}/forum/posts/${postId}`, {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const url = isTopic ? `${API_URL}/forum/posts/${postId}` : `${API_URL}/news/comments/${postId}`;
+
+            const res = await fetch(url, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: JSON.stringify({ content: editPostContent })
             });
             if (res.ok) {
@@ -285,15 +311,26 @@ export default function ForumThread() {
         if (!deleteModal) return;
         
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            const authHeaders = { 'Authorization': `Bearer ${token}` };
+
             if (deleteModal.type === 'thread') {
-                const res = await fetch(`${API_URL}/forum/thread/${deleteModal.id}`, { method: 'DELETE' });
+                const res = await fetch(`${API_URL}/forum/thread/${deleteModal.id}`, { 
+                    method: 'DELETE',
+                    headers: authHeaders 
+                });
                 if (res.ok) {
                     navigate('/forum');
                 } else {
                     alert("Error al eliminar el tema");
                 }
             } else if (deleteModal.type === 'post') {
-                const res = await fetch(`${API_URL}/forum/posts/${deleteModal.id}`, { method: 'DELETE' });
+                const url = isTopic ? `${API_URL}/forum/posts/${deleteModal.id}` : `${API_URL}/news/comments/${deleteModal.id}`;
+                const res = await fetch(url, { 
+                    method: 'DELETE',
+                    headers: authHeaders 
+                });
                 if (res.ok) {
                     setComments(comments.filter(c => c.id !== deleteModal.id));
                 } else {
@@ -371,9 +408,15 @@ export default function ForumThread() {
             
             const url = isTopic ? `${API_URL}/forum/thread/${id}/posts` : `${API_URL}/news/${id}/comments`
 
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
             const res = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(body)
             })
 
@@ -430,7 +473,7 @@ export default function ForumThread() {
 
                     <div style={{ padding: '3rem' }}>
                         <div style={{ marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1.5rem' }}>
-                            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
                                 {thread.tag && (
                                     <span style={{ background: 'var(--accent)', color: '#000', padding: '0.3rem 0.8rem', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 'bold' }}>
                                         {thread.tag}
@@ -439,7 +482,7 @@ export default function ForumThread() {
                                 <span style={{ color: 'var(--muted)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <FaCalendarAlt /> {thread.longDate}
                                 </span>
-                                <span style={{ color: 'var(--muted)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
+                                <span style={{ color: 'var(--muted)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <FaEye /> {thread.views} {t('forum_thread.views')}
                                 </span>
                             </div>
@@ -466,7 +509,9 @@ export default function ForumThread() {
                                         {thread.author_avatar ? <img src={thread.author_avatar} alt="author" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <FaUser color="#ccc" />}
                                     </div>
                                     <div>
-                                        <div style={{ color: '#fff', fontWeight: 'bold' }}>{thread.author}</div>
+                                        <Link to={`/u/${thread.author}`} style={{ color: '#fff', fontWeight: 'bold', textDecoration: 'none' }} className="username-link">
+                                            {thread.author}
+                                        </Link>
                                         <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}><RoleBadge role={thread.author_role} username={thread.author} /></div>
                                     </div>
                                 </div>
@@ -547,15 +592,17 @@ export default function ForumThread() {
                                     {comment.avatar ? <img src={comment.avatar} alt="user" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <FaUser color="#888" style={{padding:'8px'}}/>}
                                 </div>
                                 <div style={{ flexGrow: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                                            <span style={{ color: 'var(--accent)', fontWeight: 'bold' }}>{comment.user}</span>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                                            <Link to={`/u/${comment.user}`} style={{ color: 'var(--accent)', fontWeight: 'bold', textDecoration: 'none' }} className="username-link">
+                                                {comment.user}
+                                            </Link>
                                             <RoleBadge role={comment.role} username={comment.user} />
-                                            <span style={{ color: 'var(--muted)', fontSize: '0.8rem' }}>• {comment.date}</span>
+                                            <span style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>• {comment.date}</span>
                                         </div>
                                         {/* Actions for Comment */}
-                                        {isTopic && isOwnerOrAdmin(comment.user_id) && editingPostId !== comment.id && (
-                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        {isOwnerOrAdmin(comment.user_id) && editingPostId !== comment.id && (
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
                                                 <button onClick={() => { setEditingPostId(comment.id); setEditPostContent(comment.content); }} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.8rem' }}>Editar</button>
                                                 <button onClick={() => handleDeletePost(comment.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem' }}>Eliminar</button>
                                             </div>

@@ -2,6 +2,19 @@ import supabase from './supabaseService.js';
 import * as pollService from './pollService.js';
 import * as discordService from './discordService.js';
 
+// Helper function for slug generation
+const slugify = (text: string) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+};
+
 export const getThreads = async (categoryId: number) => {
     // Select * and the count of related posts
     const { data, error } = await supabase
@@ -37,12 +50,18 @@ export const getUserThreads = async (userId: string) => {
     }));
 };
 
-export const getThread = async (id: number) => {
-    const { data: thread, error } = await supabase
-        .from('forum_threads')
-        .select('*')
-        .eq('id', id)
-        .single();
+export const getThread = async (id: number | string) => {
+    const isNumeric = /^\d+$/.test(String(id));
+    
+    let query = supabase.from('forum_threads').select('*');
+    
+    if (isNumeric) {
+        query = query.eq('id', id);
+    } else {
+        query = query.eq('slug', id);
+    }
+    
+    const { data: thread, error } = await query.single();
     
     if(error) throw error;
     
@@ -55,6 +74,8 @@ export const getThread = async (id: number) => {
 };
 
 export const createThread = async ({ category_id, title, content, user_data, poll_data }: any) => {
+    const slug = slugify(title);
+
     // 1. Create Thread
     const { data: thread, error } = await supabase
         .from('forum_threads')
@@ -66,6 +87,7 @@ export const createThread = async ({ category_id, title, content, user_data, pol
             author_role: user_data.role,
             title,
             content,
+            slug,
             views: 0
         }])
         .select()

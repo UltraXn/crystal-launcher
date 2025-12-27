@@ -41,6 +41,7 @@ export default function Footer() {
                         <ul>
                             <li><Link to="/#rules">{t('footer.rules')}</Link></li>
                             <li><Link to="/map">{t('footer.online_map')}</Link></li>
+                            <li><Link to="/support">{t('footer.support', 'Soporte')}</Link></li>
                             <li><Link to="/#suggestions">{t('footer.suggestions')}</Link></li>
                         </ul>
                     </div>
@@ -72,6 +73,10 @@ export default function Footer() {
             </button>
 
             <div className="footer-bottom">
+                <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                    <Link to="/policies/privacy" style={{ color: 'var(--muted)', textDecoration: 'none' }}>{t('footer.privacy', 'Privacidad')}</Link>
+                    <Link to="/policies/tos" style={{ color: 'var(--muted)', textDecoration: 'none' }}>{t('footer.tos', 'Términos')}</Link>
+                </div>
                 <p>&copy; {new Date().getFullYear()} CrystalTides SMP. {t('footer.rights')}</p>
             </div>
         </footer>

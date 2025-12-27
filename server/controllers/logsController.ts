@@ -10,8 +10,9 @@ export const getCommandLogs = async (req: Request, res: Response) => {
         const logs = await coreProtectService.getCommandLogs({ page, limit, search });
         
         res.json(logs);
-    } catch (error: any) {
+    } catch (error) {
         console.error('CoreProtect Error:', error);
-        res.status(500).json({ error: 'Failed to fetch command logs', details: error.message });
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: 'Failed to fetch command logs', details: message });
     }
 };

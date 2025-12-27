@@ -13,6 +13,7 @@ interface ThreadSummary {
     lastActivity: string;
     pinned: boolean;
     tag: string | null;
+    slug?: string;
 }
 
 interface NewsResponse {
@@ -23,6 +24,7 @@ interface NewsResponse {
     created_at: string;
     category: string | null;
     status: string;
+    slug?: string;
 }
 
 interface ThreadResponse {
@@ -33,6 +35,7 @@ interface ThreadResponse {
     views?: number;
     created_at: string;
     pinned?: boolean;
+    slug?: string;
 }
 
 const categorySlugs = {
@@ -41,12 +44,17 @@ const categorySlugs = {
     "support": 3,
     "off-topic": 4
 }
-// Mapping from slug to translation key now, instead of hardcoded strings
+
 const categoryTranslationKeys: Record<string, string> = {
     "announcements": "announcements",
+    "1": "announcements",
+    "news": "announcements",
     "general": "general",
+    "2": "general",
     "support": "support",
-    "off-topic": "offtopic"
+    "3": "support",
+    "off-topic": "offtopic",
+    "4": "offtopic"
 }
 
 export default function ForumCategory() {
@@ -55,69 +63,68 @@ export default function ForumCategory() {
     const [threads, setThreads] = useState<ThreadSummary[]>([])
     const [loading, setLoading] = useState(true)
 
-    // Fallback if slug not found
+    // Fallback if slug not found - try to map slug to ID, or use it as ID if it is one
     const categoryId = slug ? (categorySlugs[slug as keyof typeof categorySlugs] || slug) : null;
     const translationKey = slug ? categoryTranslationKeys[slug] : null;
-    const categoryTitle = translationKey ? t(`forum_page.categories.${translationKey}.title`) : t('forum_page.categories.general.title') // Fallback
+    const categoryTitle = translationKey ? t(`forum_page.categories.${translationKey}.title`) : t('forum_page.categories.general.title')
     const API_URL = import.meta.env.VITE_API_URL
 
     useEffect(() => {
-        // Reset loading on id change not needed if we trust the flow, but good practice if switching categories.
-        // However, triggering state immediately is bad.
-        // Let's just create an async function.
         const fetchData = async () => {
-             setLoading(true)
-             if (!categoryId) {
-                 setLoading(false)
-                 return
-             }
-
-        if (String(categoryId) === "1") {
-            try {
-                // Fetch real news for "Anuncios"
-                const res = await fetch(`${API_URL}/news`)
-                const data = await res.json()
-                const mappedNews: ThreadSummary[] = Array.isArray(data) ? (data as NewsResponse[]).filter(n => n.status === 'Published').map(n => ({
-                    id: n.id,
-                    title: n.title,
-                    author: "Staff",
-                    replies: n.replies || 0,
-                    views: n.views || 0,
-                    lastActivity: new Date(n.created_at).toLocaleDateString(),
-                    pinned: true,
-                    tag: n.category
-                })) : []
-                setThreads(mappedNews)
-            } catch (err) {
-                 console.error("Error loading forum news:", err)
-            } finally {
-                 setLoading(false)
-            }
-        } else {
-            try {
-                // Fetch real user threads
-                const res = await fetch(`${API_URL}/forum/category/${categoryId}`)
-                const data = await res.json()
-                const mappedThreads: ThreadSummary[] = Array.isArray(data) ? (data as ThreadResponse[]).map(t => ({
-                     id: t.id,
-                     title: t.title,
-                     author: t.author_name || "Anónimo",
-                     replies: t.reply_count || 0,
-                     views: t.views || 0,
-                     lastActivity: new Date(t.created_at).toLocaleDateString(),
-                     pinned: t.pinned || false,
-                     tag: null // No tags in users threads for now
-                })) : []
-                setThreads(mappedThreads)
-            } catch (err) {
-                console.error(err)
-            } finally {
+            setLoading(true)
+            if (!categoryId) {
                 setLoading(false)
+                return
+            }
+
+            if (String(categoryId) === "1") {
+                try {
+                    // Fetch real news for "Anuncios"
+                    const res = await fetch(`${API_URL}/news`)
+                    const data = await res.json()
+                    const mappedNews: ThreadSummary[] = Array.isArray(data) ? (data as NewsResponse[]).filter(n => n.status === 'Published').map(n => ({
+                        id: n.id,
+                        title: n.title,
+                        author: "Staff",
+                        replies: n.replies || 0,
+                        views: n.views || 0,
+                        lastActivity: new Date(n.created_at).toLocaleDateString(),
+                        pinned: true,
+                        tag: n.category,
+                        slug: n.slug
+                    })) : []
+                    setThreads(mappedNews)
+                } catch (err) {
+                    console.error("Error loading forum news:", err)
+                } finally {
+                    setLoading(false)
+                }
+            } else {
+                try {
+                    // Fetch real user threads
+                    const res = await fetch(`${API_URL}/forum/category/${categoryId}`)
+                    const data = await res.json()
+                    const mappedThreads: ThreadSummary[] = Array.isArray(data) ? (data as ThreadResponse[]).map(t => ({
+                        id: t.id,
+                        title: t.title,
+                        author: t.author_name || "Anónimo",
+                        replies: t.reply_count || 0,
+                        views: t.views || 0,
+                        lastActivity: new Date(t.created_at).toLocaleDateString(),
+                        pinned: t.pinned || false,
+                        tag: null,
+                        slug: t.slug
+                    })) : []
+                    setThreads(mappedThreads)
+                } catch (err) {
+                    console.error(err)
+                } finally {
+                    setLoading(false)
+                }
             }
         }
-    }
-    
-    fetchData()
+
+        fetchData()
     }, [categoryId, slug, API_URL])
 
     return (
@@ -156,7 +163,7 @@ export default function ForumCategory() {
                 ) : (
                     <div className="threads-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
                         {threads.map(thread => (
-                            <Link to={`/forum/thread/${String(categoryId) === "1" ? 'news' : 'topic'}/${thread.id}`} key={thread.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <Link to={String(categoryId) === "1" ? `/forum/thread/news/${thread.slug || thread.id}` : `/forum/thread/${thread.slug || thread.id}`} key={thread.id} style={{ textDecoration: 'none', color: 'inherit' }}>
                                 <div className="thread-card" style={{
                                     background: 'var(--bg-alt)',
                                     padding: '1.2rem',

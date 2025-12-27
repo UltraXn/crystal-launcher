@@ -1,9 +1,14 @@
 import express from 'express';
 import * as settingsController from '../controllers/settingsController.js';
+import { authenticateToken, optionalAuthenticateToken } from '../middleware/authMiddleware.js';
+import { checkRole, ADMIN_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
 
-router.get('/', settingsController.getSettings);
-router.put('/:key', settingsController.updateSetting);
+// Get settings: uses optional auth to decide if we show full list or public whitelist
+router.get('/', optionalAuthenticateToken, settingsController.getSettings);
+
+// Protected routes: Update settings require admin privileges
+router.put('/:key', authenticateToken, checkRole(ADMIN_ROLES), settingsController.updateSetting);
 
 export default router;

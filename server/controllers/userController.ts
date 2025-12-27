@@ -8,8 +8,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
         const { search } = req.query;
         const users = await userService.getAllUsers(search as string);
         return sendSuccess(res, users, 'Users listed successfully');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -30,8 +31,9 @@ export const updateUserRole = async (req: Request, res: Response) => {
         }).catch(console.error);
 
         return sendSuccess(res, updatedUser, 'User role updated');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -52,8 +54,9 @@ export const updateUserMetadata = async (req: Request, res: Response) => {
         }).catch(console.error);
 
         return sendSuccess(res, updatedUser, 'User metadata updated');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -63,15 +66,17 @@ export const getPublicProfile = async (req: Request, res: Response) => {
         const profile = await userService.getPublicProfile(username);
         if (!profile) return sendError(res, 'User not found', 'USER_NOT_FOUND', 404);
         return sendSuccess(res, profile);
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 export const getStaffUsers = async (req: Request, res: Response) => {
     try {
         const staff = await userService.getStaffUsers();
         return sendSuccess(res, staff, 'Staff users fetched successfully');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };

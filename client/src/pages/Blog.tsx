@@ -13,6 +13,7 @@ interface Article {
     content?: string;
     excerpt?: string;
     status?: string;
+    slug?: string;
     title_en?: string;
     content_en?: string;
 }
@@ -46,7 +47,7 @@ const NewsCard = ({ article }: NewsCardProps) => {
                 <p className="news-excerpt">
                     {content.substring(0, 100) + '...'}
                 </p>
-                <Link to={`/forum/thread/${article.id}`} className="read-more">
+                <Link to={`/forum/thread/news/${article.slug || article.id}`} className="read-more">
                     {t('blog.read_more')} <FaArrowRight />
                 </Link>
             </div>
@@ -132,7 +133,7 @@ export default function Blog() {
 
 
                 <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-                    <Link to="/forum/1" className="btn-primary">
+                    <Link to="/forum/announcements" className="btn-primary">
                         {t('blog.view_all')}
                     </Link>
                 </div>

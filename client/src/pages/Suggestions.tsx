@@ -2,6 +2,10 @@ import { useState, useEffect } from "react"
 import { FaPaperPlane, FaPoll, FaCheckCircle, FaExclamationTriangle, FaSpinner } from "react-icons/fa"
 import Section from "../components/Layout/Section"
 import { useTranslation } from 'react-i18next'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { createSuggestionSchema, CreateSuggestionFormValues } from '../schemas/suggestion'
+
 
 interface PollOption {
     id: number;
@@ -24,8 +28,15 @@ const API_URL = import.meta.env.VITE_API_URL
 export default function Suggestions() {
     const { t } = useTranslation()
     const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
-    const [formData, setFormData] = useState({ nickname: '', type: 'General', message: '' })
-    
+    // Form Hook
+    const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateSuggestionFormValues>({
+        resolver: zodResolver(createSuggestionSchema),
+        defaultValues: {
+            nickname: '',
+            type: 'General',
+            message: ''
+        }
+    })
 
     // Poll State
     const [poll, setPoll] = useState<Poll | null>(null)
@@ -73,20 +84,17 @@ export default function Suggestions() {
         }
     }
 
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setFormStatus('sending')
-        
+    const onSubmit = async (data: CreateSuggestionFormValues) => {
         try {
             const res = await fetch(`${API_URL}/suggestions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(data)
             })
             
             if(res.ok) {
                 setFormStatus('success')
-                setFormData(prev => ({ ...prev, message: '' }))
+                reset()
             } else {
                 setFormStatus('error')
                 setTimeout(() => setFormStatus('idle'), 3000)
@@ -116,25 +124,23 @@ export default function Suggestions() {
                                 <button onClick={() => setFormStatus('idle')} className="btn-secondary" style={{ marginTop: '1.5rem' }}>{t('suggestions.form.send_another')}</button>
                             </div>
                         ) : (
-                            <form className="suggestion-form" onSubmit={handleFormSubmit}>
+                            <form className="suggestion-form" onSubmit={handleSubmit(onSubmit)}>
                                 <div className="form-group">
                                     <label className="form-label">{t('suggestions.form.nick')}</label>
                                     <input 
                                         type="text" 
                                         className="form-input" 
                                         placeholder={t('suggestions.form.nick_placeholder')} 
-                                        value={formData.nickname}
-                                        onChange={e => setFormData({...formData, nickname: e.target.value})}
-                                        required 
+                                        {...register('nickname')}
                                     />
+                                    {errors.nickname && <span style={{color: '#ff6b6b', fontSize: '0.8rem'}}>{errors.nickname.message}</span>}
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">{t('suggestions.form.type')}</label>
                                     <select 
                                         className="form-input" 
                                         style={{ background: 'rgba(0,0,0,0.5)' }}
-                                        value={formData.type}
-                                        onChange={e => setFormData({...formData, type: e.target.value})}
+                                        {...register('type')}
                                     >
                                         <option value="General">{t('suggestions.form.options.general')}</option>
                                         <option value="Bug">{t('suggestions.form.options.bug')}</option>
@@ -148,13 +154,12 @@ export default function Suggestions() {
                                     <textarea 
                                         className="form-textarea" 
                                         placeholder={t('suggestions.form.msg_placeholder')} 
-                                        value={formData.message}
-                                        onChange={e => setFormData({...formData, message: e.target.value})}
-                                        required
+                                        {...register('message')}
                                     ></textarea>
+                                    {errors.message && <span style={{color: '#ff6b6b', fontSize: '0.8rem'}}>{errors.message.message}</span>}
                                 </div>
-                                <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={formStatus === 'sending'}>
-                                    {formStatus === 'sending' ? (
+                                <button type="submit" className="btn-primary" style={{ width: '100%' }} disabled={isSubmitting}>
+                                    {isSubmitting ? (
                                         <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                                             <FaSpinner className="spin" /> {t('suggestions.form.sending')}
                                         </span>

@@ -9,7 +9,6 @@ import ScrollToHash from "./components/Utils/ScrollToHash"
 import TypingBubbles from "./components/Effects/TypingBubbles"
 import AmbientBubbles from "./components/Effects/AmbientBubbles"
 import BroadcastAlert from "./components/UI/BroadcastAlert"
-import TentacleCursor from "./components/Effects/TentacleCursor"
 // Static Pages
 import Home from "./pages/Home"
 
@@ -25,7 +24,6 @@ const Tutorial = lazy(() => import("./components/UI/Tutorial"))
 const CommandPalette = lazy(() => import("./components/UI/CommandPalette"))
 
 // Lazy Pages
-const Staff = lazy(() => import("./pages/Staff"))
 const PublicProfile = lazy(() => import("./pages/PublicProfile"))
 const Account = lazy(() => import("./pages/Account"))
 const Gacha = lazy(() => import("./pages/Gacha"))
@@ -42,6 +40,8 @@ const CreateThread = lazy(() => import("./pages/CreateThread"))
 // Support Lazy
 const Support = lazy(() => import("./pages/Support"))
 const TicketDetail = lazy(() => import("./pages/TicketDetail"))
+const PolicyPage = lazy(() => import("./pages/PolicyPage"))
+const Wiki = lazy(() => import("./pages/Wiki"))
 
 import Footer from "./components/Layout/Footer"
 
@@ -126,7 +126,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <StatusHandler maintenanceActive={maintenanceMode} />
-      <TentacleCursor />
       <ScrollToHash />
       <HeaderWrapper />
 
@@ -134,7 +133,6 @@ export default function App() {
         <Routes>
             <Route path="/" element={<Home />} />
             
-            <Route path="/staff" element={<LazyWrapper minHeight="80vh"><Staff /></LazyWrapper>} />
             <Route path="/u/:username" element={<LazyWrapper><PublicProfile /></LazyWrapper>} />
             <Route path="/account" element={<LazyWrapper minHeight="80vh"><Account /></LazyWrapper>} />
             <Route path="/login" element={<LazyWrapper><Login /></LazyWrapper>} />
@@ -152,6 +150,9 @@ export default function App() {
             
             <Route path="/support" element={<LazyWrapper><Support /></LazyWrapper>} />
             <Route path="/support/:id" element={<LazyWrapper><TicketDetail /></LazyWrapper>} />
+            <Route path="/policies/:slug" element={<LazyWrapper><PolicyPage /></LazyWrapper>} />
+            <Route path="/wiki" element={<LazyWrapper><Wiki /></LazyWrapper>} />
+            <Route path="/wiki/:slug" element={<LazyWrapper><Wiki /></LazyWrapper>} />
 
             <Route path="/verify" element={<LazyWrapper><Verify /></LazyWrapper>} />
             <Route path="/register/success" element={<LazyWrapper><RegisterSuccess /></LazyWrapper>} />
@@ -192,7 +193,7 @@ function HeaderWrapper() {
     <>
       <BroadcastAlert />
       <Navbar />
-      {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/account') && !location.pathname.startsWith('/staff') && location.pathname !== '/status' && <SocialSidebar />}
+      {!location.pathname.startsWith('/admin') && !location.pathname.startsWith('/account') && location.pathname !== '/status' && <SocialSidebar />}
     </>
   )
 }

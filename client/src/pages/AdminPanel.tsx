@@ -24,6 +24,7 @@ import SiteConfig from "../components/Admin/SiteConfig"
 import GamificationManager from "../components/Admin/GamificationManager"
 import StaffCardsManager from "../components/Admin/StaffCardsManager"
 import AdminDocs from "../components/Admin/AdminDocs"
+import WikiManager from "../components/Admin/WikiManager"
 
 export default function AdminPanel() {
     const { t, i18n } = useTranslation()
@@ -205,7 +206,7 @@ export default function AdminPanel() {
                         {t('admin.back_home', 'Volver al Inicio')}
                     </button>
 
-                    <div className="xp-sidebar-header">General</div>
+                    <div className="xp-sidebar-header">{t('admin.sidebar.general')}</div>
                     <SidebarItem active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); if(isMobile) setSidebarOpen(false); }} icon={<FaChartPie />} label={t('admin.tabs.general')} />
                     {hasSecureAccess && (
                         <SidebarItem active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); if(isMobile) setSidebarOpen(false); }} icon={<FaCog />} label={t('admin.tabs.settings')} />
@@ -213,15 +214,16 @@ export default function AdminPanel() {
                     <SidebarItem active={activeTab === 'logs'} onClick={() => { setActiveTab('logs'); if(isMobile) setSidebarOpen(false); }} icon={<FaListUl />} label={t('admin.tabs.logs')} />
                     <SidebarItem active={activeTab === 'docs'} onClick={() => { setActiveTab('docs'); if(isMobile) setSidebarOpen(false); }} icon={<FaBook />} label={t('admin.tabs.docs')} />
 
-                    <div className="xp-sidebar-header">Comunidad</div>
+                    <div className="xp-sidebar-header">{t('admin.sidebar.community')}</div>
                     <SidebarItem active={activeTab === 'users'} onClick={() => { setActiveTab('users'); if(isMobile) setSidebarOpen(false); }} icon={<FaUsers />} label={t('admin.tabs.users')} />
                     <SidebarItem active={activeTab === 'news'} onClick={() => { setActiveTab('news'); if(isMobile) setSidebarOpen(false); }} icon={<FaNewspaper />} label={t('admin.tabs.news')} />
                     <SidebarItem active={activeTab === 'events'} onClick={() => { setActiveTab('events'); if(isMobile) setSidebarOpen(false); }} icon={<FaCalendarAlt />} label={t('admin.tabs.events')} />
                     <SidebarItem active={activeTab === 'gamification'} onClick={() => { setActiveTab('gamification'); if(isMobile) setSidebarOpen(false); }} icon={<FaGamepad />} label={t('admin.tabs.gamification')} />
                     <SidebarItem active={activeTab === 'suggestions'} onClick={() => { setActiveTab('suggestions'); if(isMobile) setSidebarOpen(false); }} icon={<FaLightbulb />} label={t('admin.tabs.suggestions')} />
                     <SidebarItem active={activeTab === 'polls'} onClick={() => { setActiveTab('polls'); if(isMobile) setSidebarOpen(false); }} icon={<FaPoll />} label={t('admin.tabs.polls')} />
+                    <SidebarItem active={activeTab === 'wiki'} onClick={() => { setActiveTab('wiki'); if(isMobile) setSidebarOpen(false); }} icon={<FaBook />} label="Wiki / Gamepedia" />
 
-                    <div className="xp-sidebar-header">Staff & Gestión</div>
+                    <div className="xp-sidebar-header">{t('admin.sidebar.staff_management')}</div>
                     <SidebarItem active={activeTab === 'staff_hub'} onClick={() => { setActiveTab('staff_hub'); if(isMobile) setSidebarOpen(false); }} icon={<FaBriefcase />} label={t('admin.tabs.staff_hub')} />
                     {hasSecureAccess && (
                         <SidebarItem active={activeTab === 'team'} onClick={() => { setActiveTab('team'); if(isMobile) setSidebarOpen(false); }} icon={<FaIdCard />} label={t('admin.tabs.team')} />
@@ -279,7 +281,7 @@ export default function AdminPanel() {
                         </h2>
                     </div>
                     
-// ... (User Role Display)
+
                     <div className="admin-user-profile" style={{ border: 'none', padding: 0, background: 'transparent', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
                         
                         {/* Language Toggle */}
@@ -328,6 +330,7 @@ export default function AdminPanel() {
                     {activeTab === 'gamification' && <GamificationManager />}
                     {activeTab === 'team' && hasSecureAccess && <StaffCardsManager />}
                     {activeTab === 'staff_hub' && <StaffWorkspace />}
+                    {activeTab === 'wiki' && <WikiManager />}
 
                     {activeTab === 'logs' && <AuditLog />}
                     {activeTab === 'settings' && hasSecureAccess && <SiteConfig />}

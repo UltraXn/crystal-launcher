@@ -3,13 +3,14 @@ import express, { Request, Response } from 'express';
 import fetch from 'node-fetch';
 import mysql from 'mysql2/promise';
 import * as userService from '../services/userService.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
+import { checkRole, STAFF_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
 
 // Pterodactyl Config
-const PTERO_URL = "https://panel.holyhosting.net"; // Your panel URL (inferred from host IP but usually domain)
-// Actually, let's assume standard Pterodactyl API URL structure based on host or provided var?
 // Environment has PTERODACTYL_SERVER_ID and API_KEY. Need to know the PANEL URL.
+// Actually, let's assume standard Pterodactyl API URL structure based on host or provided var?
 // User didn't provide PANEL URL in .env, but usually it's passed or known.
 // Let's look at existing code or ask. Assuming https://panel.holyhosting.net based on "HolyHosting".
 // Wait, looking at .env content viewed earlier:
@@ -30,15 +31,38 @@ const dbConfig = {
     database: process.env.DB_NAME 
 };
 
+interface PteroResources {
+    attributes: {
+        current_state: string;
+        resources: {
+            memory_bytes: number;
+            cpu_absolute: number;
+            disk_bytes: number;
+        };
+    };
+}
+
+interface PteroLimits {
+    memory: number;
+    cpu: number;
+    disk: number;
+}
+
+interface PteroServerDetails {
+    attributes: {
+        limits: PteroLimits;
+    };
+}
+
 // Route: Get Server Resources (RAM, CPU, State) + PLAN GLOBAL STATS
-router.get('/resources', async (req: Request, res: Response) => {
+router.get('/resources', authenticateToken, checkRole(STAFF_ROLES), async (req: Request, res: Response) => {
     let connection = null;
     try {
         if (!API_KEY || !SERVER_ID) {
             return res.status(500).json({ error: "Pterodactyl credentials missing" });
         }
 
-        const headers: any = {
+        const headers: Record<string, string> = {
             'Authorization': `Bearer ${API_KEY}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
@@ -58,10 +82,10 @@ router.get('/resources', async (req: Request, res: Response) => {
         };
 
         if (resStats.ok) {
-            const dataStats: any = await resStats.json();
-            const dataDetails: any = resDetails.ok ? await resDetails.json() : null;
+            const dataStats = await resStats.json() as PteroResources;
+            const dataDetails = resDetails.ok ? await resDetails.json() as PteroServerDetails : null;
             const attr = dataStats.attributes;
-            const limits = dataDetails?.attributes?.limits || {};
+            const limits = dataDetails?.attributes?.limits || { cpu: 100, memory: 0, disk: 0 };
 
             const cpuAbsolute = attr.resources.cpu_absolute;
             const cpuLimit = limits.cpu || 100; 
@@ -79,7 +103,7 @@ router.get('/resources', async (req: Request, res: Response) => {
         }
 
         // 2. Fetch Plan Global Stats (MySQL)
-        let planStats: any = {
+        const planStats = {
             online: 0,
             total_players: 0,
             new_players: 0,
@@ -92,7 +116,7 @@ router.get('/resources', async (req: Request, res: Response) => {
             // 24h ago in ms
             const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
             
-            const [rows]: any = await connection.execute(`
+            const [rows] = await connection.execute(`
                 SELECT 
                     (SELECT COUNT(*) FROM plan_sessions WHERE session_end IS NULL) as online_count,
                     (SELECT COUNT(*) FROM plan_users) as total_users,
@@ -101,16 +125,22 @@ router.get('/resources', async (req: Request, res: Response) => {
                 FROM DUAL
             `, [oneDayAgo]);
             
-            if (rows.length > 0) {
-                const r = rows[0];
+            if (Array.isArray(rows) && rows.length > 0) {
+                const r = rows[0] as { 
+                    online_count: number; 
+                    total_users: number; 
+                    new_users: number; 
+                    total_playtime_ms: number | string 
+                };
                 planStats.online = r.online_count || 0;
                 planStats.total_players = r.total_users || 0;
                 planStats.new_players = r.new_users || 0;
                 planStats.total_playtime_hours = Math.floor((Number(r.total_playtime_ms) || 0) / 1000 / 60 / 60);
             }
             
-        } catch (dbErr: any) {
-            console.error("Plan DB Error in Resource Route:", dbErr.message);
+        } catch (dbErr: unknown) {
+            const message = dbErr instanceof Error ? dbErr.message : String(dbErr);
+            console.error("Plan DB Error in Resource Route:", message);
         } finally {
             if (connection) await connection.end();
         }
@@ -163,15 +193,15 @@ router.get('/staff', async (req: Request, res: Response) => {
         // 2. Try Plan DB
         if (!connection) connection = await mysql.createConnection(dbConfig);
         try {
-            const [rows]: any = await connection.execute(`
+            const [rows] = await connection.execute(`
                 SELECT pu.name 
                 FROM plan_sessions ps
                 JOIN plan_users pu ON ps.user_id = pu.id
                 WHERE ps.session_end IS NULL
-            `); 
-            rows.forEach((r: any) => uniqueUsers.add(r.name));
-        } catch (dbErr) {
-            console.error("[Staff Route] DB Fetch Error:", (dbErr as Error).message);
+            }`); 
+            (rows as { name: string }[]).forEach((r) => uniqueUsers.add(r.name));
+        } catch (dbErr: unknown) {
+            console.error("[Staff Route] DB Fetch Error:", dbErr instanceof Error ? dbErr.message : String(dbErr));
         }
 
         onlineUsernames = Array.from(uniqueUsers);
@@ -191,7 +221,7 @@ router.get('/staff', async (req: Request, res: Response) => {
         const placeholders = onlineUsernames.map(() => '?').join(',');
         
         // This query gets the username AND all groups they belong to
-        const [rows]: any = await connection.execute(`
+        const [rows] = await connection.execute(`
             SELECT lp.username, lp.uuid, up.permission as group_name
             FROM luckperms_players lp
             LEFT JOIN luckperms_user_permissions up ON lp.uuid = up.uuid AND up.permission LIKE 'group.%'
@@ -199,10 +229,9 @@ router.get('/staff', async (req: Request, res: Response) => {
         `, onlineUsernames);
 
         // Group rows by username to handle multiple group memberships
-        const userGroupsList: any[] = [];
-        const processedUsers = new Map();
+        const processedUsers = new Map<string, { username: string, uuid: string, groups: string[] }>();
 
-        rows.forEach((r: any) => {
+        (rows as { username: string, uuid: string, group_name: string }[]).forEach((r) => {
             if (!processedUsers.has(r.username)) {
                 processedUsers.set(r.username, { 
                     username: r.username, 
@@ -211,7 +240,7 @@ router.get('/staff', async (req: Request, res: Response) => {
                 });
             }
             if (r.group_name) {
-                processedUsers.get(r.username).groups.push(r.group_name.replace('group.', ''));
+                processedUsers.get(r.username)!.groups.push(r.group_name.replace('group.', ''));
             }
         });
 
@@ -228,32 +257,32 @@ router.get('/staff', async (req: Request, res: Response) => {
         
 
         // Fetch skins
-        let skinMap: any = {};
+        const skinMap: Record<string, string> = {};
         const uuids = finalUsers.map(u => u.uuid);
         
         if (uuids.length > 0) {
             try {
                 const skinPlaceholders = uuids.map(() => '?').join(',');
-                const [skinRows]: any = await connection.execute(`
+                const [skinRows] = await connection.execute(`
                     SELECT uuid, skin_identifier 
                     FROM sr_players 
                     WHERE uuid IN (${skinPlaceholders})
                 `, uuids);
                 
-                skinRows.forEach((sr: any) => {
+                (skinRows as { uuid: string, skin_identifier: string }[]).forEach((sr) => {
                     skinMap[sr.uuid] = sr.skin_identifier;
                 });
-            } catch (err: any) {
-                console.error("Error fetching skins for staff:", err.message);
+            } catch (err: unknown) {
+                console.error("Error fetching skins for staff:", err instanceof Error ? err.message : String(err));
             }
         }
 
         // Fetch Session Start Times
-        let sessionMap: any = {};
+        const sessionMap: Record<string, number> = {};
         if (uuids.length > 0) {
             try {
                 const sessionPlaceholders = uuids.map(() => '?').join(',');
-                const [sessionRows]: any = await connection.execute(`
+                const [sessionRows] = await connection.execute(`
                     SELECT pu.uuid, MAX(ps.session_start) as session_start 
                     FROM plan_sessions ps 
                     JOIN plan_users pu ON ps.user_id = pu.id 
@@ -262,16 +291,16 @@ router.get('/staff', async (req: Request, res: Response) => {
                     GROUP BY pu.uuid
                 `, uuids);
                 
-                sessionRows.forEach((s: any) => {
+                (sessionRows as { uuid: string, session_start: number }[]).forEach((s) => {
                     sessionMap[s.uuid] = s.session_start;
                 });
-            } catch (err: any) {
-                console.error("Error fetching sessions for staff:", err.message);
+            } catch (err: unknown) {
+                console.error("Error fetching sessions for staff:", err instanceof Error ? err.message : String(err));
             }
         }
 
         // Map structure
-        const staff = finalUsers.map((user: any) => {
+        const staff = finalUsers.map((user) => {
             // Determine the "best" role from all their groups
             const staffGroups = ['owner', 'fundador', 'neroferno', 'killu', 'killuwu', 'developer', 'admin', 'ꐽ'];
             let role = user.groups.find((g: string) => staffGroups.includes(g.toLowerCase())) || user.groups[0] || 'default';
@@ -329,9 +358,9 @@ router.get('/all-staff', async (req: Request, res: Response) => {
     try {
         const staff = await userService.getStaffUsers();
         res.json({ success: true, data: staff });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("All Staff Route Error:", error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error instanceof Error ? error.message : String(error) });
     }
 });
 

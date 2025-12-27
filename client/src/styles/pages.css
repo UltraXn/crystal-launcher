@@ -400,3 +400,67 @@
         padding: 1rem !important;
     }
 }
+
+/* =========================================
+   STORIES MODAL
+   ========================================= */
+.story-modal-content {
+    background: #1a1a20;
+    width: 100%;
+    max-width: 900px;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    
+    /* CRITICAL FOR MOBILE SCROLLING */
+    max-height: 85vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.story-inner-content {
+    padding: 2.5rem;
+}
+
+.story-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.story-modal-title-group {
+    flex: 10 1 auto;
+    min-width: 250px;
+}
+
+.story-modal-authors-group {
+    display: flex;
+    gap: 1rem;
+    flex: 1 0 auto;
+    justify-content: flex-end;
+    /* Allow wrapping for small screens */
+    flex-wrap: wrap; 
+}
+
+@media (max-width: 600px) {
+    .story-inner-content {
+        padding: 1.5rem;
+        padding-bottom: 4rem; /* Extra space for scrolling textual content */
+    }
+
+    .story-modal-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .story-modal-authors-group {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}

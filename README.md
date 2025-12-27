@@ -87,4 +87,44 @@ npm start
 
 ---
 
+## 🐳 Docker & Flujo de Trabajo Seguro
+
+El proyecto utiliza Docker para garantizar entornos consistentes y **Docker Scout** para mantener la seguridad.
+
+### 🛠️ Comandos de Desarrollo (Docker)
+
+```powershell
+# Levantar el ecosistema completo (Front, Back, Túnel)
+docker-compose up -d
+
+# Ver logs en tiempo real (útil para debuggear)
+docker logs -f crystaltides-frontend-1
+```
+
+### 🛡️ Verificación de Seguridad (Indispensable antes de subir cambios)
+
+Para garantizar un código libre de vulnerabilidades críticas:
+
+```powershell
+# 1. Reconstruir imágenes (limpieza profunda)
+docker-compose build --no-cache
+
+# 2. Escanear imágenes en busca de CVEs (Vulnerabilidades)
+docker scout cves crystaltides-frontend:latest
+docker scout cves crystaltides-backend:latest
+```
+
+### 🚀 Despliegue Automatizado (CI/CD)
+
+Cualquier cambio empujado a la rama `main` o `master` disparará automáticamente una **GitHub Action** que:
+
+1. Construye el proyecto.
+2. Ejecuta un escaneo de seguridad con **Docker Scout**.
+3. **Cancela el despliegue** automáticamente si se detectan vulnerabilidades Críticas o Altas.
+4. Publica las imágenes seguras en `ghcr.io`.
+
+Para más detalles, consulta la [Documentación de CI/CD](./docs/CI_CD.md).
+
+---
+
 Desarrollado con 💜 y **código de alto nivel** por **Neroferno Ultranix** para la comunidad de CrystalTides SMP.

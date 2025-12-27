@@ -1,5 +1,7 @@
 import express from 'express';
 import * as userController from '../controllers/userController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
+import { checkRole, ADMIN_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
 
@@ -26,7 +28,7 @@ const router = express.Router();
  *       200:
  *         description: Lista de usuarios
  */
-router.get('/', userController.getAllUsers);
+router.get('/', authenticateToken, checkRole(ADMIN_ROLES), userController.getAllUsers);
 router.get('/staff', userController.getStaffUsers);
 
 /**
@@ -75,7 +77,10 @@ router.get('/profile/:username', userController.getPublicProfile);
  *       200:
  *         description: Rol actualizado
  */
-router.patch('/:id/role', userController.updateUserRole);
-router.patch('/:id/metadata', userController.updateUserMetadata);
+import { validate } from '../middleware/validateResource.js';
+import { updateUserSchema } from '../schemas/userSchemas.js';
+
+router.patch('/:id/role', authenticateToken, checkRole(ADMIN_ROLES), userController.updateUserRole);
+router.patch('/:id/metadata', authenticateToken, checkRole(ADMIN_ROLES), validate(updateUserSchema), userController.updateUserMetadata);
 
 export default router;

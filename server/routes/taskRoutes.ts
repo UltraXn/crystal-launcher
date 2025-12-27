@@ -1,7 +1,13 @@
 import express from 'express';
 import * as taskController from '../controllers/taskController.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
+import { checkRole, STAFF_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
+
+// All staff task routes require authentication and staff role
+router.use(authenticateToken);
+router.use(checkRole(STAFF_ROLES));
 
 // GET /api/staff/tasks
 router.get('/', taskController.getTasks);

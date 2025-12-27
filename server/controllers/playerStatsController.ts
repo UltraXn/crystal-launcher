@@ -12,8 +12,9 @@ export const getPlayerStats = async (req: Request, res: Response) => {
         }
 
         return sendSuccess(res, stats);
-    } catch (error: any) {
+    } catch (error) {
         console.error("[PlayerStats] Error:", error);
-        return sendError(res, "Internal Server Error", "INTERNAL_ERROR", 500, error.message);
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, "Internal Server Error", "INTERNAL_ERROR", 500, message);
     }
 };

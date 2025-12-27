@@ -119,13 +119,9 @@ export default function Stories() {
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
                             onClick={(e) => e.stopPropagation()} // Evitar cerrar al hacer clic dentro
-                            className="modal-content"
+                            className="story-modal-content"
                             style={{
-                                background: "#1a1a20", maxWidth: "900px", width: "100%",
-                                borderRadius: "16px", overflow: "hidden",
-                                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                                border: "1px solid rgba(255,255,255,0.1)",
-                                position: "relative"
+                                // Inline overrides removed in favor of CSS class for responsiveness
                             }}
                         >
                             <button
@@ -160,9 +156,9 @@ export default function Stories() {
                                 }}></div>
                             </div>
 
-                            <div style={{ padding: "2.5rem" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", flexWrap: "wrap", gap: "1.5rem" }}>
-                                    <div style={{ flex: "10 1 auto", minWidth: "250px" }}>
+                            <div className="story-inner-content">
+                                <div className="story-modal-header">
+                                    <div className="story-modal-title-group">
                                         <h2 style={{ fontSize: "2.2rem", fontWeight: "800", marginBottom: "0.5rem", lineHeight: 1.1, textTransform: "uppercase", letterSpacing: "-1px" }}>
                                             {selectedPlace.title}
                                         </h2>
@@ -173,7 +169,7 @@ export default function Stories() {
                                     </div>
 
                                     {/* AUTORES TAGS (Lista) */}
-                                    <div style={{ display: "flex", gap: "1rem", flex: "1 0 auto", justifyContent: "flex-end" }}>
+                                    <div className="story-modal-authors-group">
                                         {selectedPlace.authors && selectedPlace.authors.map((auth, idx) => (
                                             <div key={idx} style={{ display: "flex", alignItems: "center", gap: "0.8rem", background: "rgba(255,255,255,0.05)", padding: "0.5rem 1rem", borderRadius: "50px", border: "1px solid rgba(255,255,255,0.1)" }}>
                                                 <img

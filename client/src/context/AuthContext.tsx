@@ -69,43 +69,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }, []);
 
-    // 4. Auto-Sync Discord Username if missing or default
+    // 4. Auto-Sync Discord Username logic removed to prevent overwriting user preferences.
+    // The user should manually set their name if they want it to match Discord.
+    /*
     useEffect(() => {
         if (!user) return;
-
         const syncDiscordProfile = async () => {
-            const metadata = user.user_metadata || {};
-            const emailName = user.email?.split('@')[0];
-
-            // Check if username is missing or exactly matches email prefix (default behavior)
-            // We use loose check or specific check. Here we check strict equality or if missing.
-            if (!metadata.username || (emailName && metadata.username === emailName)) {
-                
-                const discordIdentity = user.identities?.find(id => id.provider === 'discord');
-
-                if (discordIdentity && discordIdentity.identity_data) {
-                    const globalName = discordIdentity.identity_data.custom_claims?.global_name;
-                    const discordUser = discordIdentity.identity_data.full_name || discordIdentity.identity_data.name;
-                    const newName = globalName || discordUser;
-
-                    // If we found a valid Discord name and it's different from current
-                    if (newName && newName !== metadata.username) {
-                        console.log("Auto-syncing Discord username:", newName);
-                        // We use supabase client directly to avoid circular dependency issues with 'updateUser'
-                        const { data: { user: updatedUser } } = await supabase.auth.updateUser({
-                            data: { username: newName }
-                        });
-                        
-                        if (updatedUser) {
-                            setUser(updatedUser);
-                        }
-                    }
-                }
-            }
+             // ... logic removed ...
         };
-
         syncDiscordProfile();
     }, [user]);
+    */
 
     // Función de Login
     const login = async (email: string, password: string): Promise<AuthResponse['data']> => {
@@ -113,7 +87,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email,
             password
         });
-        if (error) throw error;
+        
+        if (error) {
+            // Report Security Alert (Fire and forget)
+            fetch(`${import.meta.env.VITE_API_URL}/api/logs/security/report`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    email, 
+                    details: error.message 
+                })
+            }).catch(console.error); // Ignore reporting errors
+
+            throw error;
+        }
         return data;
     };
 

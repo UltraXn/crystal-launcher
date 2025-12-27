@@ -169,26 +169,44 @@ export const updateUserMetadata = async (userId: string, metadata: any) => {
 /**
  * Get public profile by username
  */
-export const getPublicProfile = async (username: string) => {
+export const getPublicProfile = async (identifier: string) => {
     // Note: In a production app with many users, this is inefficient.
     // We should index username in a separate table.
     const { data: { users }, error } = await supabase.auth.admin.listUsers();
     if (error) throw error;
 
-    const target = users.find((u: any) => 
-        (u.user_metadata?.username && u.user_metadata.username.toLowerCase() === username.toLowerCase()) ||
-        (u.user_metadata?.full_name && u.user_metadata.full_name.toLowerCase() === username.toLowerCase())
-    );
+    const searchTerm = identifier.toLowerCase();
+
+    const target = users.find((u: any) => {
+        const meta = u.user_metadata || {};
+        return (meta.username && meta.username.toLowerCase() === searchTerm) ||
+               (meta.full_name && meta.full_name.toLowerCase() === searchTerm) ||
+               (meta.minecraft_nick && meta.minecraft_nick.toLowerCase() === searchTerm) ||
+               (meta.minecraft_uuid && meta.minecraft_uuid === identifier); // UUID is usually exact
+    });
 
     if (!target) return null;
 
+    // Determine display name: specific Minecraft Nick > Web Username > Full Name
+    const displayName = target.user_metadata?.minecraft_nick || 
+                        target.user_metadata?.username || 
+                        target.user_metadata?.full_name || 
+                        'Usuario';
+
     return {
         id: target.id,
-        username: target.user_metadata?.username || target.user_metadata?.full_name || 'Usuario',
+        username: displayName, // Show Minecraft Name if available
+        original_username: target.user_metadata?.username, // Keep track of login/original name
         role: target.user_metadata?.role || 'user',
         medals: target.user_metadata?.medals || [],
         avatar_url: target.user_metadata?.avatar_url,
         created_at: target.created_at,
-        public_stats: target.user_metadata?.public_stats || false
+        public_stats: target.user_metadata?.public_stats || false,
+        bio: target.user_metadata?.bio,
+        social_discord: target.user_metadata?.social_discord || target.user_metadata?.discord,
+        social_twitter: target.user_metadata?.social_twitter,
+        social_twitch: target.user_metadata?.social_twitch,
+        social_youtube: target.user_metadata?.social_youtube,
+        minecraft_uuid: target.user_metadata?.minecraft_uuid
     };
 };

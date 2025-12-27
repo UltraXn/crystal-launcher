@@ -6,7 +6,7 @@ interface ApiResponse<T> {
     error?: {
         code: string;
         message: string;
-        details?: any;
+        details?: unknown;
     };
     meta?: {
         page?: number;
@@ -25,7 +25,7 @@ export const sendSuccess = <T>(res: Response, data: T, message?: string, meta?: 
     });
 };
 
-export const sendError = (res: Response, message: string, code: string = 'INTERNAL_ERROR', statusCode: number = 500, details?: any) => {
+export const sendError = (res: Response, message: string, code: string = 'INTERNAL_ERROR', statusCode: number = 500, details?: unknown) => {
     return res.status(statusCode).json({
         success: false,
         error: {

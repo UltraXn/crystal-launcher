@@ -12,6 +12,12 @@ async function checkConnection() {
             .order('created_at', { ascending: false })
             .limit(1);
 
+        if (eventsError) {
+            console.error("❌ Error accessing 'events':", eventsError.message);
+        } else {
+            console.log("✅ 'events' table accessible. Count:", events?.length);
+        }
+
     try {
         console.log("Checking 'news' table...");
         const { data: news, error: newsError } = await supabase

@@ -4,13 +4,30 @@ import * as minecraftService from '../services/minecraftService.js';
 import { Request, Response } from 'express';
 import { sendSuccess, sendError } from '../utils/responseHandler.js';
 
+interface AuthenticatedRequest extends Request {
+    user?: {
+        id: string;
+        username?: string;
+        role: string;
+        email?: string;
+        minecraft_uuid?: string;
+    };
+}
+
+const getLogUsername = (req: Request) => {
+    const user = (req as AuthenticatedRequest).user;
+    console.log('DEBUG: getLogUsername - req.user:', user);
+    return user?.username || user?.email || 'Unknown';
+};
+
 // Admin: Get all tickets
 export const getAllTickets = async (req: Request, res: Response) => {
     try {
         const tickets = await ticketService.getAllTickets();
         return sendSuccess(res, tickets);
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -27,15 +44,16 @@ export const createTicket = async (req: Request, res: Response) => {
         
         // Log
         logService.createLog({
-            username: 'User', // TODO: Fetch real username
+            username: getLogUsername(req),
             action: 'CREATE_TICKET',
             details: `Ticket #${ticket.id}: ${subject}`,
             source: 'web'
         }).catch(console.error);
 
         return sendSuccess(res, ticket, 'Ticket created successfully');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -47,16 +65,19 @@ export const updateStatus = async (req: Request, res: Response) => {
 
         const ticket = await ticketService.updateTicketStatus(parseInt(id), status);
         
+        const username = getLogUsername(req);
+        
         logService.createLog({
-            username: 'Staff', // TODO: Get from auth middleware
+            username: username,
             action: 'UPDATE_STATUS',
             details: `Ticket #${id} status changed to ${status}`,
             source: 'web'
         }).catch(console.error);
 
         return sendSuccess(res, ticket, 'Ticket status updated');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -65,8 +86,9 @@ export const getStats = async (req: Request, res: Response) => {
     try {
         const stats = await ticketService.getTicketStats();
         return sendSuccess(res, stats);
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -76,8 +98,9 @@ export const getMessages = async (req: Request, res: Response) => {
         const { id } = req.params;
         const messages = await ticketService.getTicketMessages(parseInt(id));
         return sendSuccess(res, messages);
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -91,8 +114,9 @@ export const addMessage = async (req: Request, res: Response) => {
 
         const newMessage = await ticketService.addTicketMessage(parseInt(id), user_id, message, is_staff);
         return sendSuccess(res, newMessage, 'Message added');
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -106,7 +130,7 @@ export const banUser = async (req: Request, res: Response) => {
 
         if (result.success) {
             logService.createLog({
-                username: 'Staff',
+                username: getLogUsername(req),
                 action: 'BAN_USER',
                 details: `Banned user ${username}. Reason: ${reason || 'N/A'}`,
                 source: 'web'
@@ -116,8 +140,9 @@ export const banUser = async (req: Request, res: Response) => {
         } else {
             return sendError(res, result.error || 'RCON Error', 'RCON_FAILED');
         }
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };
 
@@ -127,14 +152,15 @@ export const deleteTicket = async (req: Request, res: Response) => {
         await ticketService.deleteTicket(parseInt(id));
 
         logService.createLog({
-            username: 'Staff',
+            username: getLogUsername(req),
             action: 'DELETE_TICKET',
             details: `Deleted ticket #${id}`,
             source: 'web'
         }).catch(console.error);
 
         return sendSuccess(res, null, "Ticket deleted successfully");
-    } catch (error: any) {
-        return sendError(res, error.message);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
     }
 };

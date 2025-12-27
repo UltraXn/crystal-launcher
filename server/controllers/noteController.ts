@@ -10,8 +10,9 @@ export const getNotes = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.json(data);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -30,8 +31,9 @@ export const createNote = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.status(201).json(data ? data[0] : null);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -45,7 +47,8 @@ export const deleteNote = async (req: Request, res: Response) => {
 
         if (error) throw error;
         res.json({ message: 'Note deleted successfully' });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };

@@ -1,9 +1,10 @@
 import express from 'express';
 import { translateText } from '../services/translationService.js';
+import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     const { text, targetLang } = req.body;
     
     if (!text) {

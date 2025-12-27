@@ -3,6 +3,7 @@ import { FaUser, FaServer, FaTicketAlt, FaMoneyBillWave, FaMemory, FaMicrochip, 
 import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
 import AnimatedCounter from "../UI/AnimatedCounter"
+import { supabase } from '../../services/supabaseClient'
 
 interface StaffMember {
     username: string;
@@ -17,7 +18,8 @@ const getRoleImage = (role: string) => {
     if (r.includes('developer') || r.includes('ꐽ')) return '/ranks/developer.png';
     if (r.includes('killu')) return '/ranks/rank-killu.png';
     if (r.includes('neroferno')) return '/ranks/rank-neroferno.png';
-    if (r.includes('fundador') || r.includes('owner')) return '/ranks/rank-fundador.png';
+    if (r.includes('fundador')) return '/ranks/rank-fundador.png'; // Decorative Rank
+    if (r.includes('owner')) return '/ranks/rank-fundador.png'; // Map as decorative too if it exists
     if (r.includes('admin')) return '/ranks/admin.png';
     if (r.includes('mod')) return '/ranks/moderator.png';
     if (r.includes('helper')) return '/ranks/helper.png';
@@ -47,10 +49,14 @@ export default function DashboardOverview() {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Get Supabase Session Token
+                const { data: { session } } = await supabase.auth.getSession();
+                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
                 // 1. Fetch Resources (Pterodactyl/Plan) AND Live Status (Query)
                 const [resRes, resLive] = await Promise.all([
-                    fetch(`${API_URL}/server/resources`),
-                    fetch(`${API_URL}/server/status/live`)
+                    fetch(`${API_URL}/server/resources`, { headers }),
+                    fetch(`${API_URL}/server/status/live`) // Live status remains public
                 ]);
 
                 const rawRes = resRes.ok ? await resRes.json() : null;
@@ -83,14 +89,21 @@ export default function DashboardOverview() {
                 }
 
                 // Fetch Staff Online
-                const resStaff = await fetch(`${API_URL}/server/staff`)
+                const resStaff = await fetch(`${API_URL}/server/staff`, { headers })
                 if (resStaff.ok) {
                     const rawStaff = await resStaff.json()
                     const staffList = (rawStaff.success ? rawStaff.data : rawStaff) || []
                     
                     if (Array.isArray(staffList)) {
-                        const allowedRoles = ['neroferno', 'killu', 'killuwu', 'developer', 'admin', 'fundador', 'owner', 'ꐽ'];
-                        const filteredStaff = staffList.filter((s: StaffMember) => allowedRoles.some(role => s.role.toLowerCase().includes(role)));
+                        // Priority administrative roles
+                        const adminRoles = ['neroferno', 'killu', 'killuwu', 'developer', 'admin', 'ꐽ'];
+                        // Decorative/Other roles (fundador is decorative ONLY and should not be here)
+                        const otherStaffRoles = ['moderator', 'mod', 'helper', 'staff'];
+                        const allAllowed = [...adminRoles, ...otherStaffRoles];
+                        
+                        const filteredStaff = staffList.filter((s: StaffMember) => 
+                            allAllowed.some(role => s.role.toLowerCase().includes(role))
+                        );
                         setStaffOnline(filteredStaff)
                     } else {
                         setStaffOnline([])
@@ -98,7 +111,7 @@ export default function DashboardOverview() {
                 }
 
                 // Fetch Ticket Stats
-                const resTickets = await fetch(`${API_URL}/tickets/stats`)
+                const resTickets = await fetch(`${API_URL}/tickets/stats`, { headers })
                 if(resTickets.ok) {
                     const rawTickets = await resTickets.json()
                     const stats = rawTickets.success ? rawTickets.data : rawTickets
@@ -106,7 +119,7 @@ export default function DashboardOverview() {
                 }
 
                 // Fetch Donation Stats
-                const resDonations = await fetch(`${API_URL}/donations/stats`)
+                const resDonations = await fetch(`${API_URL}/donations/stats`, { headers })
                 if(resDonations.ok) {
                     const rawDonations = await resDonations.json()
                     const stats = rawDonations.success ? rawDonations.data : rawDonations
@@ -121,7 +134,7 @@ export default function DashboardOverview() {
         }
 
         fetchData()
-        const interval = setInterval(fetchData, 30000) // Refresh every 30s
+        const interval = setInterval(fetchData, 60000) // Refresh every 60s
         return () => clearInterval(interval)
     }, [API_URL])
 
@@ -145,7 +158,7 @@ export default function DashboardOverview() {
             <div className="admin-kpi-grid">
                 <StatCard
                     title={t('admin.dashboard.stats.server_status')}
-                    value={serverStats.online ? "ONLINE" : (serverStats.status || "OFFLINE").toUpperCase()}
+                    value={serverStats.online ? t('admin.dashboard.stats.server_online') : (serverStats.status ? t(`admin.dashboard.stats.status_${serverStats.status}`) : t('admin.dashboard.stats.server_offline')).toUpperCase()}
                     percent={serverStats.online ? t('admin.dashboard.stats.running_smooth') : t('admin.dashboard.stats.check_console')}
                     icon={<FaServer />}
                     color={serverStats.online ? "#4ade80" : "#ef4444"}
@@ -217,7 +230,7 @@ export default function DashboardOverview() {
                 <div className="admin-card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <h3 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <FaUsers style={{ color: 'var(--accent)' }} /> 
-                        Staff Online
+                        {t('admin.dashboard.staff.title')}
                         {staffOnline.length > 0 && <span style={{ background: '#4ade80', color: '#000', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '10px', marginLeft: 'auto' }}>{staffOnline.length} {t('admin.dashboard.staff.active_badge')}</span>}
                     </h3>
                     
@@ -253,7 +266,7 @@ export default function DashboardOverview() {
                                                                 return `${hours}h ${mins}m`;
                                                             })()}
                                                         </div>
-                                                        <small style={{ opacity: 0.6 }}>Online</small>
+                                                        <small style={{ opacity: 0.6 }}>{t('admin.dashboard.staff.online_status')}</small>
                                                     </div>
                                                 )}
                                             </div>

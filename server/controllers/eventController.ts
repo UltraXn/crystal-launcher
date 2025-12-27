@@ -6,8 +6,9 @@ export const getAllEvents = async (req: Request, res: Response) => {
     try {
         const events = await eventService.getAllEvents();
         res.json(events);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -24,9 +25,10 @@ export const createEvent = async (req: Request, res: Response) => {
         }).catch(console.error);
 
         res.json(event);
-    } catch (error: any) {
+    } catch (error) {
         console.error("Error creating event:", error);
-        res.status(500).json({ error: error.message, stack: error.stack });
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -42,8 +44,9 @@ export const updateEvent = async (req: Request, res: Response) => {
         }).catch(console.error);
 
         res.json(event);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -59,8 +62,9 @@ export const deleteEvent = async (req: Request, res: Response) => {
         }).catch(console.error);
 
         res.json({ message: "Evento eliminado" });
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -80,8 +84,9 @@ export const registerForEvent = async (req: Request, res: Response) => {
         }).catch(console.error);
 
         res.json(registration);
-    } catch (error: any) {
-        res.status(400).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(400).json({ error: message });
     }
 };
 
@@ -92,8 +97,9 @@ export const getUserRegistrations = async (req: Request, res: Response) => {
 
         const registrationIds = await eventService.getUserRegistrations(userId);
         res.json(registrationIds);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };
 
@@ -101,7 +107,8 @@ export const getEventRegistrations = async (req: Request, res: Response) => {
     try {
         const registrations = await eventService.getRegistrations(parseInt(req.params.id));
         res.json(registrations);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
     }
 };

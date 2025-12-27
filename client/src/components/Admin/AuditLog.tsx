@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react"
 import { FaGlobe, FaGamepad, FaUser } from "react-icons/fa"
+import { useTranslation } from "react-i18next"
 import Loader from "../UI/Loader"
+import { supabase } from "../../services/supabaseClient"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -21,6 +23,7 @@ export default function AuditLog() {
     const [limit] = useState(50) // Increased limit to enable scrolling
     const [totalPages, setTotalPages] = useState(1)
 
+    const { t } = useTranslation()
     const [search, setSearch] = useState('')
     const [searchTerm, setSearchTerm] = useState('')
 
@@ -41,9 +44,12 @@ export default function AuditLog() {
 
             if (filterSource === 'all') {
                 // Fetch both in parallel
+                const { data: { session } } = await supabase.auth.getSession();
+                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
                 const [resWeb, resGame] = await Promise.all([
-                    fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=web&search=${searchTerm}`),
-                    fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}&search=${searchTerm}`)
+                    fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=web&search=${searchTerm}`, { headers }),
+                    fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}&search=${searchTerm}`, { headers })
                 ]);
 
                 const dataWeb = resWeb.ok ? await resWeb.json() : { logs: [], total: 0 };
@@ -74,7 +80,10 @@ export default function AuditLog() {
                 total = Math.max(dataWeb.total || 0, dataGame.total || 0); 
 
             } else if (filterSource === 'game') {
-                const res = await fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}&search=${searchTerm}`);
+                const { data: { session } } = await supabase.auth.getSession();
+                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
+                const res = await fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}&search=${searchTerm}`, { headers });
                 if (!res.ok) throw new Error("Error fetching game logs");
                 const data = await res.json();
                 
@@ -90,7 +99,10 @@ export default function AuditLog() {
 
             } else {
                 // Web only
-                const res = await fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=${filterSource}&search=${searchTerm}`);
+                const { data: { session } } = await supabase.auth.getSession();
+                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+
+                const res = await fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=${filterSource}&search=${searchTerm}`, { headers });
                 if (!res.ok) throw new Error("Error fetching web logs");
                 const data = await res.json();
                 fetchedLogs = (data.logs || []).map((l: any) => ({ ...l, source: 'web' }));
@@ -153,7 +165,7 @@ export default function AuditLog() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
                     <input 
                         type="text" 
-                        placeholder="Buscar usuario, comando..." 
+                        placeholder={t('admin.logs.search_placeholder', 'Buscar usuario, comando...')}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="admin-input"
@@ -169,7 +181,7 @@ export default function AuditLog() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{ color: '#aaa', fontSize: '0.85rem', fontWeight: 'bold', marginRight: '5px' }}>FUENTE:</span>
+                    <span style={{ color: '#aaa', fontSize: '0.85rem', fontWeight: 'bold', marginRight: '5px' }}>{t('admin.logs.filter_source', 'FUENTE:')}</span>
                     
                     <button 
                         onClick={() => setFilterSource('all')}
@@ -185,7 +197,7 @@ export default function AuditLog() {
                             transition: 'all 0.2s'
                         }}
                     >
-                        TODOS
+                        {t('admin.logs.filter_all', 'TODOS')}
                     </button>
 
                     <button 
@@ -203,7 +215,7 @@ export default function AuditLog() {
                             transition: 'all 0.2s'
                         }}
                     >
-                        <FaGlobe /> WEB
+                        <FaGlobe /> {t('admin.logs.filter_web', 'WEB')}
                     </button>
 
                     <button 
@@ -221,7 +233,7 @@ export default function AuditLog() {
                             transition: 'all 0.2s'
                         }}
                     >
-                        <FaGamepad /> JUEGO
+                        <FaGamepad /> {t('admin.logs.filter_game', 'JUEGO')}
                     </button>
                 </div>
             </div>

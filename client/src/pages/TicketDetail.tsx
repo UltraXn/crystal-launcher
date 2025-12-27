@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { addTicketMessageSchema, AddTicketMessageFormValues } from '../schemas/ticket'
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
@@ -32,8 +35,11 @@ export default function TicketDetail() {
 
     const [ticket, setTicket] = useState<TicketDetailData | null>(null)
     const [messages, setMessages] = useState<TicketMessage[]>([])
-    const [newMessage, setNewMessage] = useState('')
     const [loading, setLoading] = useState(true)
+
+    const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<AddTicketMessageFormValues>({
+        resolver: zodResolver(addTicketMessageSchema)
+    })
 
     const scrollToBottom = useCallback(() => {
         setTimeout(() => {
@@ -66,7 +72,7 @@ export default function TicketDetail() {
             if (msgsError) throw msgsError
             setMessages(msgs || [])
             setLoading(false)
-            scrollToBottom()
+            // scrollToBottom()
         } catch (error) {
             console.error('Error fetching details:', error)
             navigate('/support') // Fallback if not authorized or not found
@@ -86,8 +92,11 @@ export default function TicketDetail() {
                     table: 'ticket_messages',
                     filter: `ticket_id=eq.${id}`
                 }, (payload: { new: any }) => {
-                    setMessages(prev => [...prev, payload.new as TicketMessage])
-                    scrollToBottom()
+                    setMessages(prev => {
+                        if (prev.some(m => m.id === payload.new.id)) return prev;
+                        return [...prev, payload.new as TicketMessage];
+                    })
+                    // scrollToBottom() - User requested removal
                 })
                 .subscribe()
 
@@ -97,23 +106,32 @@ export default function TicketDetail() {
         }
     }, [id, user, fetchTicketData, scrollToBottom])
 
-    const handleSendMessage = async (e: React.FormEvent) => {
+    const handleSendMessage = async (data: AddTicketMessageFormValues) => {
         if (!user || !id) return
-        e.preventDefault()
-        if (!newMessage.trim()) return
 
         try {
-            await supabase
+            const { data: messageData, error } = await supabase
                 .from('ticket_messages')
                 .insert([{
                     ticket_id: id,
                     user_id: user.id,
-                    message: newMessage,
+                    message: data.message,
                     is_staff: false
                 }])
+                .select()
+                .single()
+
+            if (error) throw error
             
-            setNewMessage('')
-            // UI will update via Realtime subscription
+            reset() // Clear input
+            
+            // Optimistic update (or rather, immediate post-request update)
+            if (messageData) {
+                setMessages(prev => {
+                    if (prev.some(m => m.id === messageData.id)) return prev
+                    return [...prev, messageData as TicketMessage]
+                })
+            }
         } catch (error) {
             console.error('Error sending message:', error)
         }
@@ -207,7 +225,7 @@ export default function TicketDetail() {
                 </div>
 
                 {/* Input Area */}
-                <form onSubmit={handleSendMessage} style={{
+                <form onSubmit={handleSubmit(handleSendMessage)} style={{
                     padding: '1rem', 
                     background: 'var(--card-bg)', 
                     borderTop: '1px solid var(--border)',
@@ -217,9 +235,8 @@ export default function TicketDetail() {
                     <input 
                         type="text" 
                         placeholder={ticket?.status === 'closed' ? t('support.ticket_closed') : t('support.type_message')}
-                        value={newMessage}
-                        onChange={e => setNewMessage(e.target.value)}
-                        disabled={ticket?.status === 'closed'}
+                        {...register('message')}
+                        disabled={ticket?.status === 'closed' || isSubmitting}
                         style={{
                             flex: 1, padding: '0.8rem', borderRadius: '2rem', 
                             background: '#0f0f1a', border: '1px solid #333', color: 'white'
@@ -227,7 +244,7 @@ export default function TicketDetail() {
                     />
                     <button 
                         type="submit" 
-                        disabled={!newMessage.trim() || ticket?.status === 'closed'}
+                        disabled={ticket?.status === 'closed' || isSubmitting}
                         className="cta-button"
                         style={{
                             width: '45px', height: '45px', borderRadius: '50%', 

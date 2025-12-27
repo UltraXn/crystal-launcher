@@ -1,5 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 
+// Centralized role definitions based on project requirements
+export const ADMIN_ROLES = ['admin', 'neroferno', 'killu', 'killuwu', 'developer'];
+export const STAFF_ROLES = [...ADMIN_ROLES, 'moderator', 'mod', 'helper'];
+
 /**
  * Middleware to check if the user has specific roles.
  * @param allowedRoles List of roles allowed to access the route.
@@ -13,5 +17,8 @@ export const checkRole = (allowedRoles: string[]) => {
     };
 };
 
-// Helper for single role checks, though checkRole is usually enough
-export const isAdmin = (role: string) => ['admin', 'head_admin', 'maintainer', 'neroferno', 'killu', 'founder'].includes(role);
+/**
+ * Helper for single role checks
+ */
+export const isAdmin = (role: string) => ADMIN_ROLES.includes(role);
+export const isStaff = (role: string) => STAFF_ROLES.includes(role);
