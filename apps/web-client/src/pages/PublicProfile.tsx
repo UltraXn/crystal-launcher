@@ -9,6 +9,10 @@ import { MEDAL_ICONS } from "../utils/MedalIcons"
 import MarkdownRenderer from "../components/UI/MarkdownRenderer"
 import ProfileWall from "../components/User/ProfileWall"
 import { useAuth } from "../context/AuthContext"
+import { linkDiscordAccount } from "../services/discordService"
+// import { toast } from "sonner"
+
+const API_URL = import.meta.env.VITE_API_URL
 
 interface MedalDefinition {
     id: string | number;
@@ -45,8 +49,66 @@ interface PlayerStats {
     blocks_placed: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL
+const LinkDiscordForm = ({ onLinkSuccess }: { onLinkSuccess: (tag: string) => void }) => {
+    const [code, setCode] = useState('')
+    const [linking, setLinking] = useState(false)
+    const { t } = useTranslation()
 
+    const handleLink = async () => {
+        if (!code) return
+        setLinking(true)
+        try {
+            const res = await linkDiscordAccount(code)
+            window.alert(t('profile.link_success', '¡Cuenta vinculada exitosamente!'))
+            onLinkSuccess(res.discord)
+        } catch (error) {
+            window.alert(error instanceof Error ? error.message : 'Error')
+        } finally {
+            setLinking(false)
+        }
+    }
+
+    return (
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input 
+                type="text" 
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="CÓDIGO"
+                maxLength={6}
+                disabled={linking}
+                style={{
+                    background: 'rgba(0,0,0,0.3)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '8px',
+                    padding: '0.5rem',
+                    color: '#fff',
+                    width: '100px',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    letterSpacing: '2px'
+                }}
+            />
+            <button 
+                onClick={handleLink}
+                disabled={linking || code.length < 6}
+                style={{
+                    background: '#5865F2',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    padding: '0 1rem',
+                    cursor: (linking || code.length < 6) ? 'not-allowed' : 'pointer',
+                    opacity: (linking || code.length < 6) ? 0.7 : 1,
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem'
+                }}
+            >
+                {linking ? '...' : 'OK'}
+            </button>
+        </div>
+    )
+}
 
 export default function PublicProfile() {
     const { username } = useParams()
@@ -346,7 +408,7 @@ export default function PublicProfile() {
                             />
                             {/* Role Badge integrated */}
                             <div style={{ marginTop: '1rem' }}>
-                                <RoleBadge role={profile.role} username={profile.username} uuid={profile.minecraft_uuid} />
+                                <RoleBadge role={profile.role} username={profile.username} />
                             </div>
                         </div>
 
@@ -408,6 +470,21 @@ export default function PublicProfile() {
                             )}
                         </div>
                     )}
+                    
+                    {/* Account Linking Section (Owner Only) */}
+                    {currentUser && currentUser.id === profile.id && !profile.social_discord && (
+                        <div className="profile-card" style={{ marginTop: '1rem', textAlign: 'left', border: '1px dashed rgba(88, 101, 242, 0.5)', background: 'rgba(88, 101, 242, 0.05)' }}>
+                            <h4 style={{ color: '#5865F2', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FaDiscord /> {t('profile.link_discord', 'Vincular Discord')}
+                            </h4>
+                            <p style={{ fontSize: '0.85rem', color: '#ccc', marginBottom: '1rem' }}>
+                                {t('profile.link_discord_desc', 'Usa /link en nuestro Discord y pega el código aquí:')}
+                            </p>
+                            <LinkDiscordForm onLinkSuccess={(discordTag: string) => {
+                                setProfile(prev => prev ? ({ ...prev, social_discord: discordTag }) : null)
+                            }} />
+                        </div>
+                    )}
                 </div>
 
                 {/* Middle Column: Main Content */}
@@ -455,11 +532,10 @@ export default function PublicProfile() {
                         */}
                         
                         {/* 
-                            TODO: Check access. 
-                            Currently userService getPublicProfile returns public_stats boolean.
+                            Access Check: Public Stats enabled OR Viewer is Admin
                         */}
                         
-                        {profile.public_stats ? (
+                        {(profile.public_stats || isAdmin) ? (
                              <div className="stat-grid">
                                 {statsLoading ? (
                                     <div style={{ gridColumn: '1/-1', padding: '2rem', textAlign: 'center' }}>

@@ -38,6 +38,18 @@ services:
       - ./apps/web-server/.env # Load environment variables from this file
     restart: always
 
+  # Discord Bot
+  discord-bot:
+    image: crystaltides-bot:latest
+    build:
+      context: .
+      dockerfile: apps/discord-bot/Dockerfile
+    env_file:
+      - ./apps/web-server/.env # Shared env for DB/API access
+    depends_on:
+      - backend
+    restart: always
+
   # Cloudflare Tunnel (Expose to Internet securely without port forwarding)
   tunnel:
     image: cloudflare/cloudflared:latest

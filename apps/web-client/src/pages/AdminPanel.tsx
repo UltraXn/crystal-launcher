@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { 
     FaShieldAlt, FaChartPie, FaUsers, FaTicketAlt, FaLightbulb, 
     FaPoll, FaCalendarAlt, FaNewspaper, FaGamepad, FaIdCard, FaBars, FaTimes, 
-    FaBriefcase, FaListUl, FaCog, FaArrowLeft, FaBook
+    FaBriefcase, FaListUl, FaCog, FaArrowLeft, FaBook, FaDonate
 } from "react-icons/fa"
 import { useTranslation } from 'react-i18next'
 import Loader from "../components/UI/Loader"
@@ -21,6 +21,7 @@ import EventsManager from "../components/Admin/EventsManager"
 import StaffWorkspace from "../components/Admin/StaffHub/StaffWorkspace"
 import SiteConfig from "../components/Admin/SiteConfig"
 
+import DonationsManager from "../components/Admin/DonationsManager"
 import GamificationManager from "../components/Admin/GamificationManager"
 import StaffCardsManager from "../components/Admin/StaffCardsManager"
 import AdminDocs from "../components/Admin/AdminDocs"
@@ -216,6 +217,7 @@ export default function AdminPanel() {
 
                     <div className="xp-sidebar-header">{t('admin.sidebar.community')}</div>
                     <SidebarItem active={activeTab === 'users'} onClick={() => { setActiveTab('users'); if(isMobile) setSidebarOpen(false); }} icon={<FaUsers />} label={t('admin.tabs.users')} />
+                    <SidebarItem active={activeTab === 'donations'} onClick={() => { setActiveTab('donations'); if(isMobile) setSidebarOpen(false); }} icon={<FaDonate />} label={t('admin.tabs.donations', 'Donaciones')} /> 
                     <SidebarItem active={activeTab === 'news'} onClick={() => { setActiveTab('news'); if(isMobile) setSidebarOpen(false); }} icon={<FaNewspaper />} label={t('admin.tabs.news')} />
                     <SidebarItem active={activeTab === 'events'} onClick={() => { setActiveTab('events'); if(isMobile) setSidebarOpen(false); }} icon={<FaCalendarAlt />} label={t('admin.tabs.events')} />
                     <SidebarItem active={activeTab === 'gamification'} onClick={() => { setActiveTab('gamification'); if(isMobile) setSidebarOpen(false); }} icon={<FaGamepad />} label={t('admin.tabs.gamification')} />
@@ -327,6 +329,7 @@ export default function AdminPanel() {
                     {activeTab === 'polls' && <PollsManager />}
                     {activeTab === 'events' && <EventsManager />}
                     {activeTab === 'news' && <AdminNews user={user} />}
+                    {activeTab === 'donations' && <DonationsManager />}
                     {activeTab === 'gamification' && <GamificationManager />}
                     {activeTab === 'team' && hasSecureAccess && <StaffCardsManager />}
                     {activeTab === 'staff_hub' && <StaffWorkspace />}

@@ -12,6 +12,7 @@ COPY apps/web-client/package*.json ./apps/web-client/
 COPY apps/web-server/package*.json ./apps/web-server/
 COPY packages/shared/package*.json ./packages/shared/
 COPY packages/eslint-config/package*.json ./packages/eslint-config/
+COPY apps/discord-bot/package*.json ./apps/discord-bot/
 
 # Instalar todas las dependencias (necesario para el build de turbo)
 RUN npm install
@@ -34,6 +35,8 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/apps/web-server/package*.json ./apps/web-server/
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web-server/dist ./dist
+# Credentials for Google Calendar
+COPY --from=builder /app/apps/web-server/service-account.json ./service-account.json
 # If you have any other files needed at runtime (like .env or config files), 
 # they should be handled via volumes or COPY here if they are static.
 # Note: .env is usually passed via docker-compose env_file or volumes.

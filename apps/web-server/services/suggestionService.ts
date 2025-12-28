@@ -44,3 +44,15 @@ export const deleteSuggestion = async (id: number) => {
     if (error) throw error;
     return { success: true };
 };
+
+export const updateStatus = async (id: number, status: string) => {
+    const { data, error } = await supabase
+        .from('suggestions')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return data;
+};

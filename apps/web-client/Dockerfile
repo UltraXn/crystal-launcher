@@ -12,6 +12,7 @@ COPY apps/web-client/package*.json ./apps/web-client/
 COPY apps/web-server/package*.json ./apps/web-server/
 COPY packages/shared/package*.json ./packages/shared/
 COPY packages/eslint-config/package*.json ./packages/eslint-config/
+COPY apps/discord-bot/package*.json ./apps/discord-bot/
 
 # Instalar dependencias usando el lockfile de la raíz
 RUN npm install

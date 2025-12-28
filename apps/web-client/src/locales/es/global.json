@@ -612,6 +612,8 @@
                 "server_status": "Estado del Servidor",
                 "server_online": "EN LÍNEA",
                 "server_offline": "OFFLINE",
+                "status_offline": "OFFLINE",
+                "status_error": "ERROR",
                 "server_error": "ERROR",
                 "status_starting": "INICIANDO",
                 "status_stopping": "DETENIENDO",

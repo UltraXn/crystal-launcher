@@ -6,6 +6,7 @@ import newsRoutes from './routes/newsRoutes.js';
 import minecraftRoutes from './routes/minecraftRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import discordRoutes from './routes/discordRoutes.js';
 import logRoutes from './routes/logRoutes.js';
 import donationRoutes from './routes/donationRoutes.js';
 import suggestionRoutes from './routes/suggestionRoutes.js';
@@ -57,6 +58,8 @@ app.use('/api/news', newsRoutes);
 app.use('/api/minecraft', minecraftRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/discord', sensitiveActionLimiter, discordRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/suggestions', sensitiveActionLimiter, suggestionRoutes);
@@ -71,7 +74,7 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/player-stats', playerStatsRoutes);
 app.use('/api/server', serverRoutes);
 app.use('/api/server/status', serverStatusRoutes);
-app.use('/api/bridge', bridgeRoutes); // Secure CrystalBridge
+app.use('/api/bridge', sensitiveActionLimiter, bridgeRoutes); // Secure CrystalBridge
 app.use('/api/gacha', sensitiveActionLimiter, gachaRoutes);
 
 // Staff Hub Routes

@@ -17,7 +17,14 @@ if %errorlevel% neq 0 (
     exit /b %errorlevel%
 )
 
-echo [3/3] Starting Services...
+echo [3/4] Building Discord Bot...
+docker-compose build discord-bot
+if %errorlevel% neq 0 (
+    echo [ERROR] Discord Bot build failed!
+    exit /b %errorlevel%
+)
+
+echo [4/4] Starting Services...
 docker-compose up -d
 
 echo ==========================================

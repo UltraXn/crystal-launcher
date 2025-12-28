@@ -3,9 +3,54 @@ import * as logService from '../services/logService.js';
 import { translateText } from '../services/translationService.js';
 
 import { Request, Response } from 'express';
+import { WebhookClient, EmbedBuilder } from 'discord.js';
 
-// Canal de anuncios de Discord (Debería estar en .env idealmente, aquí hardcodeado o pasado por config, currently unused so removed to fix lint)
-// const DISCORD_ANNOUNCEMENTS_CHANNEL_ID = process.env.DISCORD_ANNOUNCEMENTS_CHANNEL_ID;
+// Canal de anuncios de Discord
+const NEWS_WEBHOOK_URL = process.env.DISCORD_NEWS_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL;
+
+interface NewsWebhookProps {
+    title: string;
+    category: string;
+    content: string;
+    image?: string;
+    slug: string;
+}
+
+const sendNewsWebhook = async (news: NewsWebhookProps) => {
+    if (!NEWS_WEBHOOK_URL) {
+        console.warn('DISCORD_NEWS_WEBHOOK_URL (or fallback) not configured, skipping announcement.');
+        return;
+    }
+
+    try {
+        const webhookClient = new WebhookClient({ url: NEWS_WEBHOOK_URL });
+        
+        // Truncate content for description if too long
+        const description = news.content.length > 200 
+            ? news.content.substring(0, 197) + '...' 
+            : news.content;
+
+        const embed = new EmbedBuilder()
+            .setTitle(`📢 ${news.title}`)
+            .setURL(`https://crystaltides.com/news/${news.slug}`) // Adjust domain if needed
+            .setColor(0x00aabb) // Aqua/Cyan color for CrystalTides
+            .setDescription(description)
+            .addFields({ name: 'Categoría', value: news.category, inline: true })
+            .setTimestamp()
+            .setFooter({ text: 'CrystalTides News' });
+
+        if (news.image) {
+            embed.setImage(news.image);
+        }
+
+        await webhookClient.send({
+            content: '<@&1272263167090626712> <@&1288691873812320349>',
+            embeds: [embed],
+        });
+    } catch (error) {
+        console.error('Error sending news webhook:', error);
+    }
+};
 
 // Helper function for slug generation
 const slugify = (text: string) => {
@@ -298,6 +343,17 @@ export const createNews = async (req: Request, res: Response) => {
             details: `Created news: ${title}`,
             source: 'web'
         }).catch(console.error);
+
+        // Notify Discord
+        if (status === 'Published') {
+            sendNewsWebhook({
+                title,
+                category,
+                content, // Pass content for description
+                image,
+                slug // Pass slug for URL
+            }).catch(console.error);
+        }
 
         res.status(201).json(data[0]);
     } catch (error) {

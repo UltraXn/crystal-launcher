@@ -30,3 +30,21 @@ export const deleteSuggestion = async (req: Request, res: Response) => {
         res.status(500).json({ error: message });
     }
 };
+
+export const updateStatus = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        if (!['pending', 'approved', 'rejected', 'implemented'].includes(status)) {
+            res.status(400).json({ error: 'Invalid status' });
+            return;
+        }
+
+        const result = await suggestionService.updateStatus(parseInt(id), status);
+        res.json(result);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: message });
+    }
+};

@@ -86,7 +86,14 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 
 - [x] **Turborepo**: Estructura de monorepo unificada (`apps/`, `plugins/`, `packages/`).
 - [x] **Unificación de Proyectos**: Web, Launcher y Plugin CrystalCore integrados en el mismo workspace.
-- [/] **Discord Bot**: Carpeta creada e integrada en el monorepo (pendiente implementación lógica).
+- [x] **Unificación de Proyectos**: Web, Launcher y Plugin CrystalCore integrados en el mismo workspace.
+- [ ] **Discord Bot (Premium)**:
+  - [/] Infraestructura base y Docker (Hecho).
+  - [ ] **Anuncio de Donaciones**: Feed automático de nuevos donadores.
+  - [ ] **Asignación de Roles**: Sincronización Web -> Discord.
+  - [ ] **Aviso de Streamings**: Notificaciones de directos.
+  - [ ] **Noticias**: Anuncios automáticos desde el panel web.
+  - [ ] **Comandos Fun**: Sistema de bromas y entretenimiento.
 - [ ] **Mapa Dinámico**: Integración de Dynmap.
 - [ ] **Hosting GCP**: Despliegue en Google Compute Engine con créditos.
 
@@ -104,4 +111,10 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 - [ ] **Monitoreo de Imágenes Base**.
 - [x] **Overrides de Seguridad**: `package.json` protegido.
 
-> Última actualización: 27 de Diciembre, 2025
+### 🔒 Seguridad Avanzada (Fase 9)
+
+- [ ] **Confirmación Destructiva**: Requerir 2FA o contraseña para comandos críticos (ban/stop/op) desde la web.
+- [ ] **Whitelist de Comandos**: Lista blanca estricta para comandos web.
+- [ ] **Auditoría Web**: Logs inmutables de acciones administrativas.
+
+> Última actualización: 28 de Diciembre, 2025

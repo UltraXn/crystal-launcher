@@ -1,21 +1,22 @@
 import { useState, useEffect, useCallback } from "react"
-import { FaSearch, FaSpinner, FaDonate, FaBoxOpen, FaUser, FaClock, FaEdit, FaTrash, FaPlus, FaSave } from "react-icons/fa"
+import { FaSearch, FaSpinner, FaDonate, FaBoxOpen, FaUser, FaClock, FaEdit, FaTrash, FaPlus, FaSave, FaDiscord } from "react-icons/fa"
 import Loader from "../UI/Loader"
 import { useTranslation } from "react-i18next"
 import ConfirmationModal from "../UI/ConfirmationModal"
 import { supabase } from "../../services/supabaseClient"
+import { simulateDonation } from "../../services/donationService"
 
 const API_URL = import.meta.env.VITE_API_URL || '/api'
 
-interface Donation {
-    id?: number;
-    amount: string | number;
+export interface Donation {
+    id: number;
+    amount: number;
     currency: string;
     from_name: string;
     message: string;
     is_public: boolean;
-    email?: string;
-    created_at?: string;
+    buyer_email?: string;
+    created_at: string;
 }
 
 export default function DonationsManager() {
@@ -63,12 +64,14 @@ export default function DonationsManager() {
     // Handlers
     const handleNew = () => {
         setCurrentDonation({ 
-            amount: '', 
+            id: 0, // Placeholder
+            amount: 0, 
             currency: 'USD', 
             from_name: '', 
             message: '', 
             is_public: true,
-            email: ''
+            buyer_email: '',
+            created_at: new Date().toISOString()
         })
         setShowModal(true)
     }
@@ -98,6 +101,25 @@ export default function DonationsManager() {
             }
         } catch (error) {
             console.error(error)
+        }
+    }
+
+    const handleSimulate = async () => {
+        if(!confirm("¿Enviar alerta de prueba a Discord?")) return;
+        setIsSubmitting(true)
+        try {
+            // Randomize data for fun
+            const names = ["Killua", "Gon", "Kurapika", "Leorio", "Hisoka", "Chrollo"];
+            const randomName = names[Math.floor(Math.random() * names.length)];
+            const randomAmount = Math.floor(Math.random() * 100) + 5;
+            
+            await simulateDonation(randomName, randomAmount, 'USD');
+            alert("¡Alerta enviada a Discord!");
+        } catch (error) {
+            console.error(error);
+            alert("Error al enviar alerta");
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -156,6 +178,9 @@ export default function DonationsManager() {
                         />
                         <FaSearch style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
                     </div>
+                    <button className="btn-secondary" onClick={() => handleSimulate()} disabled={isSubmitting} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(88, 101, 242, 0.2)', color: '#5865F2', border: '1px solid rgba(88, 101, 242, 0.5)' }}>
+                        <FaDiscord size={14} /> {t('admin.donations.simulate', 'Test Alerta')}
+                    </button>
                     <button className="btn-primary" onClick={handleNew} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FaPlus size={12} /> {t('admin.donations.new_btn')}
                     </button>
@@ -323,8 +348,8 @@ export default function DonationsManager() {
                                 <label className="form-label">{t('admin.donations.form.email_label')}</label>
                                 <input 
                                     className="form-input" 
-                                    value={currentDonation?.email || ''} 
-                                    onChange={e => setCurrentDonation(prev => prev ? {...prev, email: e.target.value}: null)}
+                                    value={currentDonation?.buyer_email || ''} 
+                                    onChange={e => setCurrentDonation(prev => prev ? {...prev, buyer_email: e.target.value}: null)}
                                     placeholder="email@example.com"
                                 />
                             </div>
@@ -337,7 +362,7 @@ export default function DonationsManager() {
                                         step="0.01"
                                         className="form-input" 
                                         value={currentDonation?.amount || ''} 
-                                        onChange={e => setCurrentDonation(prev => prev ? {...prev, amount: e.target.value}: null)}
+                                        onChange={e => setCurrentDonation(prev => prev ? {...prev, amount: parseFloat(e.target.value) || 0}: null)}
                                         required
                                     />
                                 </div>

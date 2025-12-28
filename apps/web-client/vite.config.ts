@@ -19,10 +19,11 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '/src': path.resolve(__dirname, 'src'),
+      '@crystaltides/shared': path.resolve(__dirname, '../../packages/shared/src/index.ts'),
     }
   },
   server: {
-    allowedHosts: true,
+    allowedHosts: ['crystaltidessmp.net'],
     proxy: {
         '/api': {
             target: 'http://backend:3001',

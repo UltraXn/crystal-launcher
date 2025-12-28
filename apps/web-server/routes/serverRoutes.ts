@@ -20,7 +20,7 @@ const router = express.Router();
 // We need the Panel URL. Usually client knows it. I'll make it an env var or guess.
 // Let's use a placeholder and user can update or I will try to infer.
 
-const PANEL_URL = process.env.PTERODACTYL_URL || "https://panel.holy.gg"; 
+const PANEL_URL = process.env.PTERODACTYL_HOST || "https://panel.holy.gg"; 
 const API_KEY = process.env.PTERODACTYL_API_KEY;
 const SERVER_ID = process.env.PTERODACTYL_SERVER_ID;
 

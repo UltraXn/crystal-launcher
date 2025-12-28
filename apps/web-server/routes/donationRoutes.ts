@@ -1,19 +1,17 @@
 import express from 'express';
-import * as donationController from '../controllers/donationController.js';
+import { testDonation, getDonations, createDonation, updateDonation, deleteDonation, getDonationStats } from '../controllers/donationController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
-import { checkRole, ADMIN_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
 
-router.get('/stats', donationController.getStats);
+// Protected route to trigger test donation (admin/staff only theoretically, but for now just auth)
+router.post('/test', authenticateToken, testDonation);
 
-// Administrative routes
-router.use(authenticateToken);
-router.use(checkRole(ADMIN_ROLES));
-
-router.get('/', donationController.getDonations);
-router.post('/', donationController.createDonation);
-router.put('/:id', donationController.updateDonation);
-router.delete('/:id', donationController.deleteDonation);
+// CRUD Routes
+router.get('/', authenticateToken, getDonations);
+router.post('/', authenticateToken, createDonation);
+router.get('/stats', authenticateToken, getDonationStats); // New stats endpoint
+router.put('/:id', authenticateToken, updateDonation);
+router.delete('/:id', authenticateToken, deleteDonation);
 
 export default router;

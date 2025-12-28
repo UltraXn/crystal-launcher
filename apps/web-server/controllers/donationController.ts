@@ -1,18 +1,52 @@
-import * as donationService from '../services/donationService.js';
 import { Request, Response } from 'express';
-import { sendSuccess, sendError } from '../utils/responseHandler.js';
+import { WebhookClient, EmbedBuilder } from 'discord.js';
+import supabase from '../config/supabaseClient.js';
 
-export const getStats = async (req: Request, res: Response) => {
+const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+
+// Helper to send Discord Webhook
+interface WebhookDonation {
+    from_name: string;
+    amount: number;
+    currency: string;
+    message?: string;
+}
+
+const sendDiscordWebhook = async (donation: WebhookDonation) => {
+    if (!webhookUrl) return;
     try {
-        const stats = await donationService.getMonthlyStats();
-        return sendSuccess(res, stats);
+        const webhookClient = new WebhookClient({ url: webhookUrl });
+        const embed = new EmbedBuilder()
+            .setTitle('🎉 ¡Nueva Donación!')
+            .setColor(0xFFD700)
+            .setDescription(`**${donation.from_name || 'Anónimo'}** ha donado **${donation.amount} ${donation.currency}**!`)
+            .addFields({ name: 'Mensaje', value: donation.message || '¡Muchas gracias por el apoyo! 🌊' })
+            .setTimestamp()
+            .setFooter({ text: 'CrystalTides SMP' });
+
+        await webhookClient.send({
+            embeds: [embed],
+        });
     } catch (error) {
-        // If table doesn't exist, return 0s instead of crashing
-        const message = error instanceof Error ? error.message : String(error);
-        if (message.includes('relation "public.donations" does not exist')) {
-             return sendSuccess(res, { currentMonth: "0.00", previousMonth: "0.00", percentChange: "0.0" }, 'Default stats returned (Table missing)');
-        }
-        return sendError(res, message);
+        console.error('Error sending webhook:', error);
+    }
+}
+
+export const testDonation = async (req: Request, res: Response) => {
+    try {
+        const { username, amount, currency } = req.body;
+        // Mock object for the test
+        const mockDonation: WebhookDonation = {
+            from_name: username || 'Test User',
+            amount: amount || 69,
+            currency: currency || 'USD',
+            message: 'Alerta de prueba'
+        };
+        await sendDiscordWebhook(mockDonation);
+        res.json({ success: true, message: 'Test announcement sent' });
+    } catch {
+        // console.error('Error sending webhook:', error); // Removed unused error
+        res.status(500).json({ success: false, message: 'Failed test' });
     }
 };
 
@@ -20,42 +54,129 @@ export const getDonations = async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 20;
-        const search = (req.query.search as string) || '';
-        
-        const result = await donationService.getDonations({ page, limit, search });
-        return sendSuccess(res, result);
+        const search = req.query.search as string;
+
+        let query = supabase
+            .from('donations')
+            .select('*', { count: 'exact' })
+            .order('created_at', { ascending: false })
+            .range((page - 1) * limit, page * limit - 1);
+
+        if (search) {
+            query = query.ilike('from_name', `%${search}%`);
+        }
+
+        const { data, error, count } = await query;
+
+        if (error) throw error;
+
+        res.json({
+            data: data,
+            total: count || 0,
+            page,
+            totalPages: count ? Math.ceil(count / limit) : 1
+        });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return sendError(res, message);
+        console.error('Error fetching donations:', error);
+        res.status(500).json({ message: 'Error fetching donations' });
     }
 };
 
 export const createDonation = async (req: Request, res: Response) => {
     try {
-        const result = await donationService.createDonation(req.body);
-        return sendSuccess(res, result, 'Donation created successfully');
+        const { from_name, amount, currency, message, is_public, email } = req.body;
+        
+        const { data, error } = await supabase
+            .from('donations')
+            .insert([{ 
+                from_name, 
+                amount, 
+                currency: currency || 'USD', 
+                message, 
+                is_public: is_public ?? true, 
+                buyer_email: email,
+                created_at: new Date()
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Optionally trigger webhook for real manual donations too
+        if (data) await sendDiscordWebhook(data);
+
+        res.status(201).json(data);
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return sendError(res, message);
+        console.error('Error creating donation:', error);
+        res.status(500).json({ message: 'Error creating donation' });
     }
 };
 
 export const updateDonation = async (req: Request, res: Response) => {
     try {
-        const result = await donationService.updateDonation(parseInt(req.params.id), req.body);
-        return sendSuccess(res, result, 'Donation updated successfully');
+        const id = parseInt(req.params.id);
+        const { data, error } = await supabase
+            .from('donations')
+            .update(req.body)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        res.json(data);
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return sendError(res, message);
+        console.error('Error updating donation:', error);
+        res.status(500).json({ message: 'Error updating donation' });
     }
 };
 
 export const deleteDonation = async (req: Request, res: Response) => {
     try {
-        await donationService.deleteDonation(parseInt(req.params.id));
-        return sendSuccess(res, null, 'Donation deleted successfully');
+        const id = parseInt(req.params.id);
+        const { error } = await supabase
+            .from('donations')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.json({ success: true });
     } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        return sendError(res, message);
+        console.error('Error deleting donation:', error);
+        res.status(500).json({ message: 'Error deleting donation' });
+    }
+};
+
+export const getDonationStats = async (req: Request, res: Response) => {
+    try {
+        // Fetch all amounts for calc (warning: heavy if many rows, better to use RPC or created aggregated view later)
+        const { data, error } = await supabase
+            .from('donations')
+            .select('amount, created_at, currency');
+
+        if (error) throw error;
+
+        const totalAmount = data.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+        
+        // Basic monthly aggregation in JS
+        const months: Record<string, number> = {};
+        data.forEach(d => {
+            const date = new Date(d.created_at);
+            const key = `${date.toLocaleString('default', { month: 'short' })}`; // e.g. "Dec"
+            months[key] = (months[key] || 0) + (Number(d.amount) || 0);
+        });
+
+        const monthlyStats = Object.keys(months).map(month => ({
+            month,
+            amount: months[month]
+        }));
+
+        res.json({
+            totalAmount,
+            count: data.length,
+            monthlyStats
+        });
+    } catch (error) {
+        console.error('Error fetching donation stats:', error);
+        res.status(500).json({ message: 'Error fetching stats' });
     }
 };
