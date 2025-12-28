@@ -6,12 +6,13 @@ Este plan detalla cómo llevar **CrystalTides** a producción utilizando una arq
 
 Utilizaremos **Google Cloud Run** para todos los servicios. Es una solución "Serverless" que ejecuta contenedores Docker, escala automáticamente y cobra solo por uso (o por instancia activa).
 
-| Servicio          | Tecnología           | Estrategia GCP | Notas                                                                      |
-| :---------------- | :------------------- | :------------- | :------------------------------------------------------------------------- |
-| **Frontend**      | React + Vite + Nginx | **Cloud Run**  | Servir estáticos con Nginx en contenedor.                                  |
-| **Backend**       | Express (Node.js)    | **Cloud Run**  | API REST pública. Escala a cero si no hay uso.                             |
-| **Discord Bot**   | Bun / Discord.js     | **Cloud Run**  | **Importante**: Configurar "min-instances: 1" para mantenerlo online 24/7. |
-| **Base de Datos** | MySQL / Postgres     | **Externa**    | Supabase (Postgres) y Pterodactyl (MySQL) se mantienen externos.           |
+| Servicio          | Tecnología            | Estrategia GCP     | Notas                                                                      |
+| :---------------- | :-------------------- | :----------------- | :------------------------------------------------------------------------- |
+| **Frontend**      | React + Vite + Nginx  | **Cloud Run**      | Servir estáticos con Nginx en contenedor.                                  |
+| **Backend**       | Express (Node.js)     | **Cloud Run**      | API REST pública. Escala a cero si no hay uso.                             |
+| **Discord Bot**   | Bun / Discord.js      | **Cloud Run**      | **Importante**: Configurar "min-instances: 1" para mantenerlo online 24/7. |
+| **Minecraft**     | Paper / Purpur (Java) | **Compute Engine** | VM Dedicada (`e2-standard-4`) con Disco Persistente. NO Cloud Run.         |
+| **Base de Datos** | MySQL / Postgres      | **Externa/VM**     | Supabase (Web) + Docker MySQL en VM (Juego).                               |
 
 ---
 
