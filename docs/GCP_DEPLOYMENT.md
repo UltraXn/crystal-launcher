@@ -149,7 +149,11 @@ Debemos crear una **Máquina Virtual (VM)** dedicada.
 1.  **Crear VM**: En Compute Engine > Instancias de VM.
 2.  **IP Estática**: Reservar una dirección IP externa estática para que no cambie al reiniciar.
 3.  **Firewall**: Abrir puerto `25565` (TCP/UDP) en la red VPC.
-4.  **Transferencia**: Usar `SFTP` o `Rsync` para subir tu carpeta `server` actual completa.
+4.  **Transferencia (Cloud-to-Cloud)**:
+    - **Pro Tip**: Si tienes poco ancho de banda local, **NO descargues el servidor a tu PC**.
+    - Conéctate por SSH a la VM de Google.
+    - Usa `sftp` o `rclone` desde la consola de la VM para descargar los archivos **directamente desde HolyHosting**.
+    - La red de Google bajará los 40GB en segundos/minutos sin tocar tu internet de casa.
 5.  **Java**: Instalar Java 21/22 (según requiera tu versión de Paper/Purpur).
 
 #### 3. Optimización de Costos (Créditos)
