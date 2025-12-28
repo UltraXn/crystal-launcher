@@ -4,13 +4,13 @@ services:
     # Use the 'builder' stage from the Dockerfile (Node environment)
     build:
       context: .
-      dockerfile: client/Dockerfile
+      dockerfile: apps/web-client/Dockerfile
       target: builder
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
     # Run Vite development server bound to all interfaces
-    command: npm run dev -w client -- --host 0.0.0.0 --port 80
+    command: npm run dev -w @crystaltides/client -- --host 0.0.0.0 --port 80
     volumes:
       - .:/app
       - /app/node_modules
@@ -31,11 +31,11 @@ services:
     image: crystaltides-backend:latest
     build:
       context: .
-      dockerfile: server/Dockerfile
+      dockerfile: apps/web-server/Dockerfile
     ports:
       - "3001:3001"
     env_file:
-      - ./server/.env # Load environment variables from this file
+      - ./apps/web-server/.env # Load environment variables from this file
     restart: always
 
   # Cloudflare Tunnel (Expose to Internet securely without port forwarding)

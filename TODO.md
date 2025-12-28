@@ -10,6 +10,10 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 - [x] **Gestión de Contenido**: Noticias, Eventos, Encuestas (CRUDs).
 - [x] **Staff Cards Manager**: Constructor de cartas de presentación.
 - [x] **Semáforo de Reclutamiento**: Widget de estado.
+- [x] **Calendario Kanban**: Vista de calendario interactiva con gestión de duraciones.
+- [x] **Google Calendar Sync**: Visualización de eventos externos en el Staff Hub.
+- [x] **Notion Integration**: Sincronización de tareas desde espacios de trabajo de Notion.
+- [x] **Premium UI/UX**: Rediseño completo con Glassmorphism y animaciones fluidas.
 
 ### ✅ Web Pública
 
@@ -78,10 +82,19 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 
 ### 🏗️ Mantenimiento Profesional (Fase 7)
 
-- [ ] **Configuración Unificada**: ESLint/Prettier compartido.
+- [x] **Configuración Unificada**: ESLint/Prettier compartido y tipos compartidos en `@crystaltides/shared`.
 
-- [ ] **Turborepo**: Pipeline de build optimizado.
+- [x] **Turborepo**: Estructura de monorepo unificada (`apps/`, `plugins/`, `packages/`).
+- [x] **Unificación de Proyectos**: Web, Launcher y Plugin CrystalCore integrados en el mismo workspace.
+- [/] **Discord Bot**: Carpeta creada e integrada en el monorepo (pendiente implementación lógica).
 - [ ] **Mapa Dinámico**: Integración de Dynmap.
+- [ ] **Hosting GCP**: Despliegue en Google Compute Engine con créditos.
+
+### ☁️ Infraestructura Google Cloud (GCP)
+
+- [ ] **VPS (Compute Engine)**: Configuración de instancia E2 (2vCPU, 8GB RAM).
+- [ ] **Dockerización Pro**: Uso de Google Artifact Registry para imágenes de apps.
+- [ ] **CI/CD**: Automatización de despliegue mediante GitHub Actions.
 
 ---
 
@@ -91,4 +104,4 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 - [ ] **Monitoreo de Imágenes Base**.
 - [x] **Overrides de Seguridad**: `package.json` protegido.
 
-> Última actualización: 26 de Diciembre, 2025
+> Última actualización: 27 de Diciembre, 2025

@@ -1,0 +1,9 @@
+[submodule "plugins/crystalcore"]
+	path = plugins/crystalcore
+	url = https://github.com/UltraXn/CrystalLink.git
+[submodule "apps/discord-bot"]
+	path = apps/discord-bot
+	url = https://github.com/UltraXn/CrystalTidesSMP-Bot-DC.git
+[submodule "apps/launcher"]
+	path = apps/launcher
+	url = https://github.com/UltraXn/CrystalTides-Launcher.git

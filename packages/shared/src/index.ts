@@ -54,3 +54,34 @@ export interface ForumPost {
     content: string;
     created_at: string;
 }
+
+export type TaskPriority = 'High' | 'Medium' | 'Low';
+
+export interface KanbanTask {
+    id: number;
+    title: string;
+    columnId: string;
+    priority?: TaskPriority;
+    type?: string;
+    assignee?: string;
+    date?: string;
+    due_date?: string | null;
+    end_date?: string | null;
+    created_at: string;
+    column_id?: string;
+}
+
+export interface KanbanColumnData {
+    id: string;
+    title: string;
+    color: string;
+}
+
+export const KANBAN_COLUMNS: KanbanColumnData[] = [
+    { id: 'idea', title: 'Ideas / Backlog', color: '#6b21a8' },
+    { id: 'pending', title: 'Pendiente', color: '#92400e' },
+    { id: 'in_progress', title: 'En Progreso', color: '#1e40af' },
+    { id: 'review', title: 'Revisión', color: '#9a3412' },
+    { id: 'done', title: 'Completado', color: '#166534' },
+    { id: 'blocked', title: 'Bloqueado', color: '#991b1b' }
+];

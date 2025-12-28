@@ -101,6 +101,19 @@ docker-compose up -d
 docker logs -f crystaltides-frontend-1
 ```
 
+#### ⚡ Script de Inicio Rápido (Windows)
+
+Si tienes problemas de conexión con Docker Desktop o errores de memoria, usa el script automatizado:
+
+```powershell
+.\start-dev.ps1
+```
+
+Este script:
+
+1. Verifica si Docker está corriendo y lo inicia si es necesario.
+2. Ejecuta `docker-compose up --build -d` con **configuración de memoria optimizada** (Node 4GB) para evitar errores "Heap Out of Memory".
+
 ### 🛡️ Verificación de Seguridad (Indispensable antes de subir cambios)
 
 Para garantizar un código libre de vulnerabilidades críticas:

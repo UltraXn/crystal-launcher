@@ -21,6 +21,8 @@ dist-ssr
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
-.env
 minecraft-plugin/
+.turbo/
+.env*
+!.env.example
+.cloudflared/

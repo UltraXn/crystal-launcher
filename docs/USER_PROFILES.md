@@ -1,18 +1,19 @@
 # 👤 Perfiles y Estadísticas de Jugador
 
-Los perfiles públicos en CrystalTides son la carta de presentación de cada jugador, unificando su identidad web con sus logros dentro del servidor de Minecraft.
+Los perfiles públicos en CrystalTides ([`PublicProfile.tsx`](../client/src/pages/PublicProfile.tsx)) son la carta de presentación de cada jugador, unificando su identidad web con sus logros dentro del servidor de Minecraft (Logic: [`fetchData`](../client/src/pages/PublicProfile.tsx#L67)).
 
 ## 🎨 Visualización de Skin (Preview 3D)
 
 Una de las características premium del frontend es el **Renderizado 3D Interactivo**:
 
 - **Tecnología**: Utiliza `skinview3d` (basado en Three.js).
+- **Componente**: [`SkinViewer.tsx`](../client/src/components/Widgets/SkinViewer.tsx)
 - **Funcionalidad**: Los usuarios pueden rotar, hacer zoom y ver animaciones de sus propias skins de Minecraft directamente en el navegador.
 - **Sincronización**: La skin se recupera automáticamente desde los servidores de Mojang usando el nombre de usuario del jugador.
 
 ## 📊 Estadísticas del Juego (In-Game Stats)
 
-El backend consulta las bases de datos del servidor de Minecraft (MySQL) para mostrar datos en tiempo real:
+El backend consulta las bases de datos del servidor de Minecraft (MySQL) para mostrar datos en tiempo real ([`PlayerStats.tsx`](../client/src/components/Widgets/PlayerStats.tsx)):
 
 - **Combate**: Kills totales, Muertes, Ratio K/D.
 - **Actividad**: Tiempo total de juego, fecha de última conexión.

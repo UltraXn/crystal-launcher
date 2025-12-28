@@ -53,6 +53,7 @@ Para acciones administrativas inmediatas (Baneos, Kicks, Reinicios), la API se c
 - [🏛️ Foro y Comunidad](./FORUM_SYSTEM.md)
 - [👤 Perfiles y Estadísticas](./USER_PROFILES.md)
 - [🎨 Arquitectura Frontend (Forms V2)](./FRONTEND_ARCHITECTURE.md)
+- [🛡️ Calidad de Código y Estándares](./CODE_QUALITY.md)
 
 ---
 
@@ -83,13 +84,13 @@ Para acciones administrativas inmediatas (Baneos, Kicks, Reinicios), la API se c
 
 ```
 /
-├── client/                 # Frontend React
-│   ├── src/pages/          # Vistas principales
-│   └── src/components/     # UI Reutilizable (Admin, Public, UI)
-├── server/                 # Backend Express
-│   ├── controllers/        # Lógica de entrada/salida HTTP
-│   ├── services/           # Lógica de negocio pura (DB calls)
-│   ├── routes/             # Definición de endpoints
-│   └── config/             # Conexiones a BD y Swagger
-└── docs/                   # Documentación del proyecto
+├── client/                 # [Frontend React](../client/)
+│   ├── src/pages/          # [Vistas principales](../client/src/pages/)
+│   └── src/components/     # [UI Reutilizable](../client/src/components/) (Admin, Public, UI)
+├── server/                 # [Backend Express](../server/)
+│   ├── controllers/        # [Lógica de entrada/salida HTTP](../server/controllers/)
+│   ├── services/           # [Lógica de negocio pura](../server/services/) (DB calls)
+│   ├── routes/             # [Definición de endpoints](../server/routes/)
+│   └── config/             # [Conexiones a BD y Swagger](../server/config/)
+└── docs/                   # [Documentación del proyecto](../docs/)
 ```

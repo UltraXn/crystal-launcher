@@ -1,0 +1,44 @@
+/// <reference types="vitest" />
+import { defineConfig } from 'vitest/config'
+import type { PluginOption } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+export default defineConfig({
+  plugins: [react() as unknown as PluginOption],
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: true,
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+      '/src': path.resolve(__dirname, 'src'),
+    }
+  },
+  server: {
+    allowedHosts: true,
+    proxy: {
+        '/api': {
+            target: 'http://backend:3001',
+            changeOrigin: true,
+            secure: false
+        }
+    },
+    fs: {
+      allow: ['..']
+    }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+    include: ['./src/**/*.{test,spec}.{ts,tsx}'],
+    root: '.',
+  }
+})

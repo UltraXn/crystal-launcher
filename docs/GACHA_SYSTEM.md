@@ -16,16 +16,17 @@ El sistema funciona mediante una orquestación de tres capas:
 
     - Valida visualmente si el usuario tiene disponible su tirada diaria.
     - Envía una petición `POST` segura al backend.
-    - Renderiza el premio obtenido tras la validación.
+    - [Renderiza el premio](../client/src/pages/Gacha.tsx) obtenido tras la validación (Logic: [`handleOpen`](../client/src/pages/Gacha.tsx#L91)).
 
 2.  **Backend (Node.js/Express)**:
 
-    - **Servicio**: `gachaService.ts`.
+    - **Servicio**: [`gachaService.ts`](../server/services/gachaService.ts).
+    - **Controlador**: [`gachaController.ts`](../server/controllers/gachaController.ts).
     - **Lógica**:
       - Recupera la lista de premios y sus probabilidades desde Supabase.
-      - Ejecuta un algoritmo de RNG (Random Number Generation) basado en pesos.
-      - Verifica en la base de datos que el usuario no haya tirado en las últimas 24h.
-      - Registra el drop en `gacha_history`.
+      - Ejecuta un algoritmo de RNG (Random Number Generation) basado en pesos (Logic: [`rollGacha`](../server/services/gachaService.ts#L26)).
+      - Verifica en la base de datos que el usuario no haya tirado en las últimas 24h (Logic: [`checkCooldown`](../server/services/gachaService.ts#L87)).
+      - Registra el drop en `gacha_history` via [`saveDrop`](../server/services/gachaService.ts#L107).
 
 3.  **Entrega (CrystalBridge)**:
     - Tras generar el premio, el backend inserta el comando de entrega correspondiente (ej: `give {player} diamond 64`) en la cola de **CrystalBridge**.
@@ -35,10 +36,7 @@ El sistema funciona mediante una orquestación de tres capas:
 
 Los premios se gestionan desde Supabase y se dividen por rareza:
 
-- **Común** (Ej: Comida, Carbón) - Alta probabilidad.
-- **Raro** (Ej: Lingotes de hierro, Oro) - Probabilidad media.
-- **Épico** (Ej: Diamantes, Herramientas encantadas) - Baja probabilidad.
-- **Legendario** (Ej: Llaves de crates, Items custom) - Probabilidad mínima.
+> 🚧 **Próximamente**: Estamos trabajando en definir las categorías y tablas de loot definitivas. La lista oficial de recompensas se publicará pronto.
 
 ---
 

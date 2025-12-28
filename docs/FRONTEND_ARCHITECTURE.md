@@ -27,7 +27,7 @@ Todos los formularios nuevos o refactorizados deben seguir este patrón:
 
 ### 1. Definir Schema (`src/schemas/`)
 
-Creamos un archivo de definición en `client/src/schemas/` que espeje, en lo posible, la validación del servidor.
+Creamos un archivo de definición en [`client/src/schemas/`](../client/src/schemas/) que espeje, en lo posible, la validación del servidor.
 
 ```typescript
 // src/schemas/ejemplo.ts
@@ -80,7 +80,7 @@ export function EjemploForm() {
 Los siguientes módulos ya operan bajo este estándar V2:
 
 1.  **Soporte (Tickets)**:
-    - Creación de Tickets.
+    - [Creación de Tickets](../client/src/components/Support/TicketForm.tsx) (Ejemplo V2: [`useForm + Zod`](../client/src/components/Support/TicketForm.tsx#L22)).
     - Respuestas (Replies).
 2.  **Perfil de Usuario (Account)**:
     - Edición de Bio.
