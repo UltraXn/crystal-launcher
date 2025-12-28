@@ -117,4 +117,31 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 - [ ] **Whitelist de Comandos**: Lista blanca estricta para comandos web.
 - [ ] **Auditoría Web**: Logs inmutables de acciones administrativas.
 
+### 🧪 Futuro: Stack Tecnológico & "Wow" Features (2026)
+
+Esta sección define el "Siguiente Nivel" para profesionalizar el portfolio al máximo.
+
+#### Frontend & UX
+
+- [ ] **TanStack Query**: Migrar data-fetching para mejor caché y UX.
+- [ ] **Zustand**: Gestión de estado global ligera y moderna.
+- [ ] **Live Dashboard**: Implementar **Supabase Realtime** para actualizaciones instantáneas (Chat/Donaciones).
+- [ ] **Mapa 3D Integrado**: Embed de **BlueMap** dentro del dashboard de usuario.
+
+#### DevOps & Mantenimiento
+
+- [ ] **Husky + Commitlint**: Estandarizar commits (`feat:`, `fix:`) antes de subir código.
+- [ ] **Renovate Bot**: Automatización de actualizaciones de dependencias (`npm`).
+- [ ] **Storybook**: Documentación visual de componentes UI (Design System).
+
+#### Observabilidad & Analítica
+
+- [ ] **Sentry**: Monitorización de errores en tiempo real (Backend/Frontend).
+- [ ] **PostHog**: Analítica de producto (Mapas de calor, Grabación de sesiones).
+  - _Nota_: Requiere Banner de Cookies/Privacidad (GDPR).
+
+#### Seguridad
+
+- [ ] **2FA (TOTP)**: Autenticación de dos factores para el Panel de Admin.
+
 > Última actualización: 28 de Diciembre, 2025
