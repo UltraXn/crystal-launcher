@@ -148,7 +148,9 @@ Debemos crear una **Máquina Virtual (VM)** dedicada.
 
 1.  **Crear VM**: En Compute Engine > Instancias de VM.
 2.  **IP Estática**: Reservar una dirección IP externa estática para que no cambie al reiniciar.
-3.  **Firewall**: Abrir puerto `25565` (TCP/UDP) en la red VPC.
+3.  **Firewall (Seguridad)**:
+    - **Puerto**: Se recomienda **NO usar el 25565** (default) para evitar scanners automáticos. Usa un puerto alto no estándar (ej: `25577`).
+    - **Proxy (Recomendado)**: Si usas Velocity o BungeeCord, configura el Firewall de GCP para que **SOLO acepte conexiones desde la IP de tu Proxy** (o servicios como TCPShield). Esto oculta la IP real de tu VM.
 4.  **Transferencia (Cloud-to-Cloud)**:
     - **Pro Tip**: Si tienes poco ancho de banda local, **NO descargues el servidor a tu PC**.
     - Conéctate por SSH a la VM de Google.
