@@ -126,3 +126,37 @@ Recomiendo crear un archivo `.github/workflows/deploy.yml` para que cada vez que
 ---
 
 > **Recomendación Personal**: Si quieres ahorrar los $10/mes del bot en la nube, mantén el bot corriendo en tu VPS actual o donde tengas el servidor de Minecraft, y usa Cloud Run solo para la Web y el Backend (gratis/barato).
+
+---
+
+## 🎮 Futuro: Migración del Servidor de Minecraft
+
+Para mover el servidor de Minecraft a GCP y aprovechar los créditos, **NO podemos usar Cloud Run**, ya que Minecraft requiere persistencia de datos (el mundo) y conexión TCP/UDP directa y constante.
+
+### Estrategia: Google Compute Engine (GCE)
+
+Debemos crear una **Máquina Virtual (VM)** dedicada.
+
+#### 1. Configuración Recomendada (Gama Alta)
+
+- **Tipo de Máquina**: `e2-standard-4` (4 vCPU, 16GB RAM) o `n2-standard-4` (Rendimiento superior).
+- **Disco**: **SSD Persistente** (mínimo 50GB) para carga rápida de chunks.
+- **Sistema Operativo**: Ubuntu 22.04 LTS (o la distro Linux que prefieras).
+
+#### 2. Pasos de Migración
+
+1.  **Crear VM**: En Compute Engine > Instancias de VM.
+2.  **IP Estática**: Reservar una dirección IP externa estática para que no cambie al reiniciar.
+3.  **Firewall**: Abrir puerto `25565` (TCP/UDP) en la red VPC.
+4.  **Transferencia**: Usar `SFTP` o `Rsync` para subir tu carpeta `server` actual completa.
+5.  **Java**: Instalar Java 21/22 (según requiera tu versión de Paper/Purpur).
+
+#### 3. Optimización de Costos (Créditos)
+
+Google Cloud es caro para cómputo 24/7.
+
+- **Spot Instances (Preemptible)**: Son 60-90% más baratas, pero Google puede apagarlas en cualquier momento. _No recomendado para servidores públicos serios_, pero genial para pruebas.
+- **Committed Use Discounts**: Si te quedas 1 o 3 años, obtienes gran descuento.
+- **Apagado Automático**: Si es un servidor privado, programa scripts para apagar la VM cuando no haya jugadores (ahorra muchísimo).
+
+> **Nota**: Al estar en la misma red de Google que tu API (Cloud Run), la latencia entre el Plugin (CrystalCore) y la Web será prácticamente **cero**.
