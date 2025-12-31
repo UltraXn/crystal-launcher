@@ -320,7 +320,14 @@ router.get('/staff', async (req: Request, res: Response) => {
             if (role === 'developer') { role = 'Developer'; roleImage = '/ranks/developer.png'; }
 
             const skinName = skinMap[uuid];
-            const avatarUrl = skinName ? `https://mc-heads.net/avatar/${skinName}/100` : `https://mc-heads.net/avatar/${username}/100`;
+            
+            // Prioridad: Imagen del Panel > Skin Identifier > Skin Username
+            let avatarUrl = panelInfo?.image || (skinName ? `https://mc-heads.net/avatar/${skinName}/100` : `https://mc-heads.net/avatar/${username}/100`);
+            
+            // Si la imagen del panel es solo un nombre de usuario (ej: 'Neroferno'), convertir a URL de cabeza
+            if (avatarUrl && !avatarUrl.startsWith('http') && !avatarUrl.startsWith('/')) {
+                avatarUrl = `https://mc-heads.net/avatar/${avatarUrl}/100`;
+            }
 
             return {
                 username, role, role_image: roleImage, uuid, avatar: avatarUrl,
