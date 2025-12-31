@@ -93,11 +93,10 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
   - [/] Infraestructura base y Docker (Hecho).
   - [x] **Asignación de Roles**: Sincronización Web -> Discord.
 - [ ] **Mapa Dinámico**: Integración de Dynmap.
-- [ ] **Hosting GCP**: Despliegue en Google Compute Engine con créditos.
 
-### ☁️ Infraestructura Google Cloud (GCP)
+### ☁️ Infraestructura Futura (VPS)
 
-- [ ] **VPS (Compute Engine)**: Configuración de instancia E2 (2vCPU, 8GB RAM).
+- [ ] **VPS Dedicado**: Migración del servidor de juego a infraestructura propia (Futuro).
 - [ ] **Dockerización Pro**: Uso de Google Artifact Registry para imágenes de apps.
 - [ ] **CI/CD**: Automatización de despliegue mediante GitHub Actions.
 
