@@ -14,7 +14,7 @@ interface StaffMember {
     avatar: string;
     role: string;
     role_image?: string;
-    login_time: number;
+    login_time: number | null;
     mc_status: string;
     discord_status: string;
 }
@@ -292,7 +292,7 @@ export default function DashboardOverview() {
                     </h3>
                     
                     <div style={{ flex: 1 }}>
-                        {serverStats.online ? (
+                        {(serverStats.online || staffOnline.length > 0) ? (
                             <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '5px' }} className="custom-scrollbar">
                                 {staffOnline.length > 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>

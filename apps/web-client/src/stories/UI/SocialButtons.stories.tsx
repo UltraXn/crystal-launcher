@@ -10,22 +10,49 @@ const meta = {
     layout: 'centered',
   },
   tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className="border border-white/10 p-4 rounded-xl inline-block">
+        <Story />
+      </div>
+    ),
+  ],
 } satisfies Meta<typeof DiscordButton>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const SingleDecorator = (Story: any) => (
+    <div className="w-full max-w-[400px]">
+        <Story />
+    </div>
+);
+
 // Discord
 export const Discord: Story = {
-    render: () => <DiscordButton />
+    render: () => <DiscordButton />,
+    decorators: [SingleDecorator]
 };
 
 // Twitch
 export const Twitch: StoryObj<typeof TwitchButton> = {
-    render: () => <TwitchButton />
+    render: () => <TwitchButton />,
+    decorators: [SingleDecorator]
 };
 
 // Twitter
 export const Twitter: StoryObj<typeof TwitterButton> = {
-    render: () => <TwitterButton />
+    render: () => <TwitterButton />,
+    decorators: [SingleDecorator]
+};
+
+// All (Grouped)
+export const All: Story = {
+    render: () => (
+        <div className="flex flex-col md:flex-row gap-4 w-full max-w-5xl">
+            <div className="flex-1"><DiscordButton /></div>
+            <div className="flex-1"><TwitchButton /></div>
+            <div className="flex-1"><TwitterButton /></div>
+        </div>
+    )
 };

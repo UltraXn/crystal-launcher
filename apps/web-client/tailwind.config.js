@@ -8,7 +8,7 @@ export default {
     extend: {},
   },
   corePlugins: {
-    preflight: false,
+    // preflight: false, // Re-enabling preflight for correct button styling
   },
   plugins: [],
 }

@@ -331,14 +331,14 @@ router.get('/staff', async (req: Request, res: Response) => {
 
             return {
                 username, role, role_image: roleImage, uuid, avatar: avatarUrl,
-                login_time: sessionMap[uuid] || Date.now(),
+                login_time: sessionMap[uuid] || null,
                 mc_status: statusObj.mc ? 'online' : 'offline',
                 discord_status: statusObj.discord
             };
         });
 
         // Solo devolver Staff real
-        const allowedRoles = ['founder', 'owner', 'neroferno', 'killuwu', 'developer', 'admin', 'moderator', 'mod', 'helper', 'staff'];
+        const allowedRoles = ['owner', 'neroferno', 'killuwu', 'developer', 'admin', 'moderator', 'mod', 'helper', 'staff'];
         res.json(staff.filter(s => allowedRoles.includes(s.role.toLowerCase())));
 
     } catch (error) {
