@@ -386,7 +386,9 @@ export default function DashboardOverview() {
                                                         <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                                                             <FaClock size={10} />
                                                             {(() => {
-                                                                const diff = Date.now() - staff.login_time;
+                                                                // Handle potential server/client time drift preventing -1h -1m
+                                                                const loginTime = new Date(staff.login_time).getTime();
+                                                                const diff = Math.max(0, Date.now() - loginTime);
                                                                 const hours = Math.floor(diff / 3600000);
                                                                 const mins = Math.floor((diff % 3600000) / 60000);
                                                                 return `${hours}h ${mins}m`;

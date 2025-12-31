@@ -26,12 +26,22 @@ const mockStaffData = [
     },
     {
         id: 3,
+        name: 'Nanurin',
+        mc_nickname: 'nana_fubuki',
+        role: 'Staff',
+        description: 'Testing custom skin URL logic.',
+        image: 'https://textures.minecraft.net/texture/1a4af718455d4aab528e7a61f86fa25e6a369d1768dcb13f7df319a713eb810b',
+        color: '#db7700',
+        socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+    },
+    {
+        id: 4,
         name: 'Steve',
         mc_nickname: 'Steve',
         role: 'Usuario',
         description: 'Un usuario normal del servidor.',
         image: '',
-        color: '#db7700',
+        color: '#555555',
         socials: { twitter: '', discord: '', youtube: '', twitch: '' }
     }
 ];
@@ -39,6 +49,7 @@ const mockStaffData = [
 const mockOnlineStatus = [
     { username: 'Neroferno', mc_status: 'online', discord_status: 'online' },
     { username: 'Killuwu', mc_status: 'offline', discord_status: 'dnd' },
+    { username: 'Nanurin', mc_status: 'online', discord_status: 'online' },
     { username: 'Steve', mc_status: 'online', discord_status: 'offline' }
 ];
 
@@ -95,6 +106,35 @@ export const Loading: Story = {
             useEffect(() => {
                 const originalFetch = window.fetch;
                 window.fetch = async () => new Promise(() => {}); // Never resolves
+                return () => { window.fetch = originalFetch; };
+            }, []);
+            return <Story />;
+        }
+    ]
+};
+
+export const RecruitmentHidden: Story = {
+    decorators: [
+        (Story) => {
+            useEffect(() => {
+                const originalFetch = window.fetch;
+                window.fetch = async (input, init) => {
+                    const url = typeof input === 'string' ? input : input.toString();
+                    if (url.includes('/settings')) {
+                        return new Response(JSON.stringify({
+                            staff_cards: mockStaffData,
+                            recruitment_status: 'false',
+                            recruitment_link: ''
+                        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                    }
+                    if (url.includes('/server/staff')) {
+                        return new Response(JSON.stringify(mockOnlineStatus), { 
+                            status: 200, 
+                            headers: { 'Content-Type': 'application/json' } 
+                        });
+                    }
+                    return originalFetch(input, init);
+                };
                 return () => { window.fetch = originalFetch; };
             }, []);
             return <Story />;
