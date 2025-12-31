@@ -306,14 +306,14 @@ router.get('/staff', async (req: Request, res: Response) => {
             const uuid = dbRef?.uuid || '00000000-0000-0000-0000-000000000000';
             const groups = dbRef?.groups || ['default'];
             
-            const staffGroups = ['owner', 'fundador', 'neroferno', 'killu', 'killuwu', 'developer', 'admin', 'moderator', 'helper'];
+            const staffGroups = ['owner', 'founder', 'fundador', 'neroferno', 'killuwu', 'developer', 'admin', 'moderator', 'helper'];
             let role = groups.find(g => staffGroups.includes(g.toLowerCase())) || groups[0] || 'default';
             let roleImage = null;
 
             if (username.toLowerCase() === 'ultraxn') { role = 'Founder'; roleImage = '/ranks/rank-neroferno.png'; }
-            if (role === 'neroferno' || role === '§f§r') { role = 'Founder'; roleImage = '/ranks/rank-neroferno.png'; }
+            if (role === 'neroferno') { role = 'Founder'; roleImage = '/ranks/rank-neroferno.png'; }
             if (role === 'killuwu') { role = 'Owner'; roleImage = '/ranks/rank-killu.png'; }
-            if (role === 'ꐽ' || role === 'developer') { role = 'Developer'; roleImage = '/ranks/developer.png'; }
+            if (role === 'developer') { role = 'Developer'; roleImage = '/ranks/developer.png'; }
 
             const skinName = skinMap[uuid];
             const avatarUrl = skinName ? `https://mc-heads.net/avatar/${skinName}/100` : `https://mc-heads.net/avatar/${username}/100`;
@@ -326,7 +326,9 @@ router.get('/staff', async (req: Request, res: Response) => {
             };
         });
 
-        res.json(staff);
+        // Solo devolver Staff real
+        const allowedRoles = ['founder', 'owner', 'neroferno', 'killuwu', 'developer', 'admin', 'moderator', 'mod', 'helper', 'staff'];
+        res.json(staff.filter(s => allowedRoles.includes(s.role.toLowerCase())));
 
     } catch (error) {
         console.error("Staff Route Error:", error);

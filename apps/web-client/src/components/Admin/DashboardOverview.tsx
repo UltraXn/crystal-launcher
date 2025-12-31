@@ -19,11 +19,11 @@ interface StaffMember {
 
 const getRoleImage = (role: string) => {
     const r = role.toLowerCase();
-    if (r.includes('developer') || r.includes('ꐽ')) return '/ranks/developer.png';
-    if (r.includes('killu')) return '/ranks/rank-killu.png';
+    if (r.includes('developer')) return '/ranks/developer.png';
+    if (r.includes('killuwu')) return '/ranks/rank-killu.png';
+    if (r.includes('owner')) return '/ranks/rank-killu.png';
     if (r.includes('neroferno')) return '/ranks/rank-neroferno.png';
-    if (r.includes('fundador')) return '/ranks/rank-fundador.png'; 
-    if (r.includes('owner')) return '/ranks/rank-fundador.png'; 
+    if (r.includes('founder') || r.includes('fundador')) return '/ranks/rank-fundador.png'; 
     if (r.includes('admin')) return '/ranks/admin.png';
     if (r.includes('mod')) return '/ranks/moderator.png';
     if (r.includes('helper')) return '/ranks/helper.png';
@@ -111,7 +111,7 @@ export default function DashboardOverview() {
                     
                     if (Array.isArray(staffList)) {
                         // Priority administrative roles
-                        const adminRoles = ['neroferno', 'killu', 'killuwu', 'developer', 'admin', 'ꐽ'];
+                        const adminRoles = ['founder', 'owner', 'neroferno', 'killuwu', 'developer', 'admin'];
                         // Decorative/Other roles (fundador is decorative ONLY and should not be here)
                         const otherStaffRoles = ['moderator', 'mod', 'helper', 'staff'];
                         const allAllowed = [...adminRoles, ...otherStaffRoles];
