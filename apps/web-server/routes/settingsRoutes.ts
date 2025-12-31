@@ -7,6 +7,7 @@ const router = express.Router();
 
 // Get settings: uses optional auth to decide if we show full list or public whitelist
 router.get('/', optionalAuthenticateToken, settingsController.getSettings);
+router.get('/:key', optionalAuthenticateToken, settingsController.getSetting);
 
 // Protected routes: Update settings require admin privileges
 router.put('/:key', authenticateToken, checkRole(ADMIN_ROLES), settingsController.updateSetting);

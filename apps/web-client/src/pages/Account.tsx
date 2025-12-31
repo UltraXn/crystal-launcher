@@ -16,6 +16,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { updateUserSchema, UpdateUserFormValues } from '../schemas/user'
 import Toast, { ToastType } from "../components/UI/Toast"
+import TwoFactorSetup from '../components/Profile/Security/TwoFactorSetup'
 
 interface Thread {
     id: string | number;
@@ -396,6 +397,7 @@ export default function Account() {
     })
 
     const [isSavingProfile, setIsSavingProfile] = useState(false)
+    const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
 
     // Auto-fill social links from connected identities
     useEffect(() => {
@@ -419,6 +421,7 @@ export default function Account() {
     const handleUpdatePassword = async () => {
         if(passwords.new !== passwords.confirm) return showToast("Las contraseñas no coinciden", "error")
         if(passwords.new.length < 6) return showToast("Mínimo 6 caracteres", "error")
+        setIsUpdatingPassword(true)
         try {
             const { error } = await supabase.auth.updateUser({ password: passwords.new })
             if(error) throw error
@@ -427,6 +430,8 @@ export default function Account() {
         } catch(e) {
             const message = e instanceof Error ? e.message : String(e);
             showToast("Error: " + message, "error")
+        } finally {
+            setIsUpdatingPassword(false)
         }
     }
 
@@ -496,30 +501,49 @@ export default function Account() {
 
     return (
         <div className="account-page" style={{ paddingTop: '6rem', minHeight: '100vh', paddingBottom: '4rem', background: '#080808' }}>
-            <div className="dashboard-container animate-fade-in" style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '280px 1fr', gap: '2rem', padding: '0 2rem' }}>
+            <div className="dashboard-container animate-fade-in" style={{ padding: '0 2rem' }}>
 
                 {/* Sidebar */}
-                <aside className="dashboard-sidebar" style={{ background: 'rgba(30,30,35,0.6)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', height: 'fit-content' }}>
-                    <div className="user-snippet" style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                        <div className="user-avatar-large" onClick={handleAvatarClick} title={t('account.avatar.change_photo')} style={{ width: '100px', height: '100px', margin: '0 auto 1rem', borderRadius: '50%', overflow: 'hidden', cursor: 'pointer', position: 'relative', border: '3px solid var(--accent)' }}>
-                            {uploading ? (
-                                <div style={{ height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#333' }}>...</div>
-                            ) : (
-                                <img 
-                                    src={
-                                        (user.user_metadata?.avatar_preference === 'social' && user.user_metadata?.avatar_url) 
-                                            ? user.user_metadata.avatar_url 
-                                            : (isLinked ? `https://mc-heads.net/avatar/${statsData?.username || mcUsername}/100` : "https://ui-avatars.com/api/?name=" + (user.user_metadata?.full_name || "User"))
-                                    } 
-                                    alt="Avatar" 
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                />
-                            )}
-                            <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', background: 'rgba(0,0,0,0.6)', fontSize: '0.7rem', padding: '2px 0' }}><FaCamera /></div>
+                <aside className="dashboard-sidebar" style={{ background: 'rgba(30,30,35,0.6)' }}>
+                    <div className="user-snippet">
+                        <div className="user-avatar-premium-wrapper" style={{ position: 'relative', marginBottom: '1.2rem' }}>
+                            <div className="user-avatar-large" style={{ 
+                                width: '100px', 
+                                height: '100px', 
+                                border: '3px solid rgba(255,255,255,0.05)',
+                                background: 'rgba(255,255,255,0.02)',
+                                boxShadow: '0 10px 25px rgba(0,0,0,0.4)',
+                                position: 'relative',
+                                zIndex: 1,
+                                cursor: 'pointer',
+                                margin: '0 auto',
+                                borderRadius: '50%',
+                                overflow: 'hidden'
+                            }} onClick={handleAvatarClick}>
+                                {uploading ? (
+                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
+                                        <Loader minimal />
+                                    </div>
+                                ) : (
+                                    <>
+                                        <img 
+                                            src={
+                                                (user.user_metadata?.avatar_preference === 'social' && user.user_metadata?.avatar_url) 
+                                                    ? user.user_metadata.avatar_url 
+                                                    : (isLinked ? `https://mc-heads.net/avatar/${statsData?.username || mcUsername}/100` : "https://ui-avatars.com/api/?name=" + (user.user_metadata?.full_name || "User"))
+                                            } 
+                                            alt="Avatar" 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                        />
+                                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', opacity: 0, transition: '0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }} className="avatar-hover-overlay" onMouseOver={e => e.currentTarget.style.opacity = '1'} onMouseOut={e => e.currentTarget.style.opacity = '0'}><FaCamera /></div>
+                                    </>
+                                )}
+                            </div>
+                            <div className="avatar-frame-placeholder" style={{ position: 'absolute', inset: '-8px', border: '2px dashed rgba(255,255,255,0.05)', borderRadius: '50%', pointerEvents: 'none', width: '116px', height: '116px', left: '50%', transform: 'translateX(-50%)' }}></div>
                         </div>
                         <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} style={{ display: 'none' }} accept="image/*" />
                         
-                        <div className="user-info-group" style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ textAlign: 'center', width: '100%' }}>
                             {isEditingName ? (
                                 <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginBottom: '0.5rem' }}>
                                     <input 
@@ -527,22 +551,22 @@ export default function Account() {
                                         value={newName} 
                                         onChange={e => setNewName(e.target.value)}
                                         placeholder={user.user_metadata?.full_name}
-                                        style={{ background: '#222', border: '1px solid #444', color: '#fff', padding: '4px', borderRadius: '4px', width: '140px' }}
+                                        style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '6px 10px', borderRadius: '8px', width: '140px', outline: 'none' }}
                                     />
-                                    <button onClick={handleNameUpdate} style={{ background: 'var(--accent)', border: 'none', borderRadius: '4px', cursor:'pointer' }}>💾</button>
+                                    <button onClick={handleNameUpdate} style={{ background: 'var(--accent)', border: 'none', borderRadius: '8px', cursor:'pointer', padding: '0 8px' }}>💾</button>
                                 </div>
                             ) : (
-                                <h3 className="user-name" style={{ color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <h3 className="user-name" style={{ color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: 800 }}>
                                     {user.user_metadata?.full_name || mcUsername}
-                                    <FaPen size={12} style={{ cursor: 'pointer', color: 'var(--muted)' }} onClick={() => { setNewName(user.user_metadata?.full_name || ""); setIsEditingName(true); }} />
+                                    <FaPen size={12} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.3)' }} onClick={() => { setNewName(user.user_metadata?.full_name || ""); setIsEditingName(true); }} />
                                 </h3>
                             )}
-                            <span className="user-email" style={{ color: 'var(--muted)', fontSize: '0.9rem', display: 'block', wordBreak: 'break-all' }}>{user.email}</span>
-                            {isAdmin && <Link to="/admin" className="btn-small" style={{ marginTop: '0.5rem', display: 'inline-block', background: '#e74c3c', padding: '0.3rem 0.8rem', fontSize: '0.8rem', borderRadius: '4px' }}><FaShieldAlt /> {t('account.admin_panel')}</Link>}
+                            <span className="user-email" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', display: 'block', wordBreak: 'break-all' }}>{user.email}</span>
+                            {isAdmin && <Link to="/admin" className="btn-small" style={{ marginTop: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(231, 76, 60, 0.1)', color: '#ff6b6b', border: '1px solid rgba(231, 76, 60, 0.2)', padding: '0.4rem 1rem', fontSize: '0.75rem', borderRadius: '8px', textDecoration: 'none', fontWeight: 700 }}><FaShieldAlt /> {t('account.admin_panel')}</Link>}
                         </div>
                     </div>
 
-                    <nav className="sidebar-nav" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <nav className="sidebar-nav">
                         <NavButton active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<FaServer />} label={t('account.nav.overview')} />
                         <NavButton active={activeTab === 'posts'} onClick={() => setActiveTab('posts')} icon={<FaComment />} label={t('account.nav.posts')} />
                         <NavButton active={activeTab === 'medals'} onClick={() => setActiveTab('medals')} icon={<FaMedal />} label="Medallas" />
@@ -571,15 +595,36 @@ export default function Account() {
                                     error={statsError} 
                                 />
                             ) : (
-                                <div className="dashboard-card animate-fade-in" style={{ background: 'rgba(231, 76, 60, 0.1)', padding: '2rem', borderRadius: '16px', border: '1px solid rgba(231, 76, 60, 0.3)', textAlign:'center', marginBottom: '2rem' }}>
-                                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔗</div>
-                                    <h3 style={{ color: '#ff6b6b', marginBottom: '1rem', fontSize: '1.5rem' }}>{t('account.overview.not_linked_title', '¡Vincula tu cuenta!')}</h3>
-                                    <p style={{ color: '#ccc', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                                        {t('account.overview.not_linked_msg', 'Para ver tus estadísticas en tiempo real (dinero, tiempo de juego, KDR), necesitas verificar que eres el dueño de la cuenta de Minecraft.')}
+                                <div className="dashboard-card animate-fade-in" style={{ 
+                                    background: 'rgba(231, 76, 60, 0.03)', 
+                                    padding: '3rem 2rem', 
+                                    borderRadius: '24px', 
+                                    border: '1px solid rgba(231, 76, 60, 0.1)', 
+                                    textAlign:'center', 
+                                    marginBottom: '2rem',
+                                    backdropFilter: 'blur(10px)'
+                                }}>
+                                    <div style={{ fontSize: '3.5rem', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 10px rgba(231, 76, 60, 0.3))' }}>🔗</div>
+                                    <h3 style={{ color: '#ff6b6b', marginBottom: '1rem', fontSize: '1.8rem', fontWeight: 800 }}>{t('account.overview.not_linked_title', '¡Vincula tu cuenta!')}</h3>
+                                    <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '2rem', lineHeight: '1.8', maxWidth: '500px', margin: '0 auto 2rem' }}>
+                                        {t('account.overview.not_linked_msg', 'Para ver tus estadísticas en tiempo real (dinero, tiempo de juego, muertes), necesitas verificar que eres el dueño de la cuenta de Minecraft.')}
                                     </p>
                                     <button 
                                         onClick={() => setActiveTab('connections')}
-                                        style={{ background: 'var(--accent)', border: 'none', padding: '0.8rem 2rem', cursor: 'pointer', borderRadius: '50px', color: '#000', fontWeight: 'bold', fontSize: '1rem', boxShadow: '0 4px 15px rgba(109, 165, 192, 0.4)' }}
+                                        style={{ 
+                                            background: '#ff6b6b', 
+                                            border: 'none', 
+                                            padding: '1rem 2.5rem', 
+                                            cursor: 'pointer', 
+                                            borderRadius: '16px', 
+                                            color: '#fff', 
+                                            fontWeight: 800, 
+                                            fontSize: '1rem', 
+                                            boxShadow: '0 10px 25px rgba(231, 76, 60, 0.2)',
+                                            transition: '0.2s'
+                                        }}
+                                        onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                        onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                                     >
                                         {t('account.overview.verify_btn', 'Verificar Ahora')}
                                     </button>
@@ -738,7 +783,17 @@ export default function Account() {
                             
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
                                 {/* Minecraft Card */}
-                                <div className="connection-card" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                                <div className="connection-card" style={{ 
+                                    background: 'rgba(255,255,255,0.02)', 
+                                    border: '1px solid rgba(255,255,255,0.05)', 
+                                    borderRadius: '20px', 
+                                    padding: '1.8rem', 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    minHeight: '220px',
+                                    backdropFilter: 'blur(10px)',
+                                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                                }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                                         {/* Logo Left */}
                                         <div style={{ background: '#44bd32', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
@@ -780,7 +835,7 @@ export default function Account() {
                                                         disabled={linkLoading}
                                                         style={{ width: '100%', background: 'var(--accent)', border: 'none', padding: '10px', borderRadius: '6px', color: '#1a1a1a', fontWeight: 'bold', cursor: 'pointer', transition: 'opacity 0.2s', opacity: linkLoading ? 0.7 : 1 }}
                                                     >
-                                                        {linkLoading ? t('account.connections.generating') : t('account.connections.get_code')}
+                                                        {linkLoading ? <Loader minimal /> : t('account.connections.get_code')}
                                                     </button>
                                                 ) : (
                                                     <div className="link-code-box animate-pop" style={{ background: '#222', border: '1px dashed var(--accent)', padding: '1rem', borderRadius: '8px', textAlign: 'center' }}>
@@ -798,7 +853,17 @@ export default function Account() {
                                 </div>
 
                                 {/* Discord Card */}
-                                <div className="connection-card" style={{ background: 'rgba(88, 101, 242, 0.1)', border: '1px solid rgba(88, 101, 242, 0.2)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                                <div className="connection-card" style={{ 
+                                    background: 'rgba(88, 101, 242, 0.05)', 
+                                    border: '1px solid rgba(88, 101, 242, 0.15)', 
+                                    borderRadius: '20px', 
+                                    padding: '1.8rem', 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    minHeight: '220px',
+                                    backdropFilter: 'blur(10px)',
+                                    boxShadow: '0 8px 32px rgba(88, 101, 242, 0.05)'
+                                }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                                         {/* Logo Left */}
                                         <div style={{ background: '#5865F2', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
@@ -849,7 +914,17 @@ export default function Account() {
                                 </div>
 
                                 {/* Twitch Card */}
-                                <div className="connection-card" style={{ background: 'rgba(145, 70, 255, 0.1)', border: '1px solid rgba(145, 70, 255, 0.2)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', minHeight: '220px' }}>
+                                <div className="connection-card" style={{ 
+                                    background: 'rgba(145, 70, 255, 0.05)', 
+                                    border: '1px solid rgba(145, 70, 255, 0.15)', 
+                                    borderRadius: '20px', 
+                                    padding: '1.8rem', 
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    minHeight: '220px',
+                                    backdropFilter: 'blur(10px)',
+                                    boxShadow: '0 8px 32px rgba(145, 70, 255, 0.05)'
+                                }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                                         {/* Logo Left */}
                                         <div style={{ background: '#9146FF', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
@@ -931,8 +1006,8 @@ export default function Account() {
                                                     transition: '0.2s'
                                                 }}
                                             >
-                                                <img src={`https://mc-heads.net/avatar/${mcUsername}/48`} alt="MC" style={{ width: '40px', height: '40px' }} />
-                                                <span style={{ fontSize: '0.85rem', color: watch('avatar_preference') === 'minecraft' ? '#fff' : '#888', fontWeight: '600' }}>Minecraft</span>
+                                                <img src={`https://mc-heads.net/avatar/${mcUsername}/48`} alt="MC" style={{ width: '48px', height: '48px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.1)' }} />
+                                                <span style={{ fontSize: '0.85rem', color: watch('avatar_preference') === 'minecraft' ? '#fff' : '#888', fontWeight: '600' }}>Minecraft Head</span>
                                             </div>
 
                                             <div 
@@ -950,7 +1025,7 @@ export default function Account() {
                                                     transition: '0.2s'
                                                 }}
                                             >
-                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#333' }}>
+                                                <div style={{ width: '48px', height: '48px', borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
                                                     <img 
                                                         src={user?.user_metadata?.avatar_url || "https://ui-avatars.com/api/?name=" + (user?.user_metadata?.full_name || "User")} 
                                                         alt="Social" 
@@ -964,60 +1039,133 @@ export default function Account() {
                                             * Selecciona qué imagen prefieres ver en tu perfil público y barra de navegación.
                                         </p>
                                     </div>
+
+                                    {/* Profile Banner */}
+                                    <div style={{ marginBottom: '2.5rem', position: 'relative' }}>
+                                        <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', marginBottom: '1.2rem', fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px' }}>
+                                            {t('account.settings.banner', 'Banner del Perfil')}
+                                        </label>
+                                        
+                                        <div style={{ 
+                                            width: '100%', 
+                                            height: '200px', 
+                                            borderRadius: '20px', 
+                                            overflow: 'hidden', 
+                                            background: '#111',
+                                            border: '1px solid rgba(255,255,255,0.05)',
+                                            position: 'relative',
+                                            marginBottom: '1.5rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            {watch('profile_banner_url') ? (
+                                                <>
+                                                    <img src={watch('profile_banner_url')} alt="Banner Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)' }} />
+                                                </>
+                                            ) : (
+                                                <div style={{ color: '#444', textAlign: 'center' }}>
+                                                    <FaCamera size={40} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                                                    <p style={{ fontSize: '0.9rem' }}>Sin Banner</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div style={{ 
+                                            display: 'flex', 
+                                            gap: '1rem', 
+                                            background: 'rgba(255,255,255,0.03)', 
+                                            padding: '1rem', 
+                                            borderRadius: '16px',
+                                            border: '1px solid rgba(255,255,255,0.05)'
+                                        }}>
+                                            <div style={{ flex: 1 }}>
+                                                <input 
+                                                    {...register('profile_banner_url')}
+                                                    placeholder="URL de la imagen (ej: https://imgur.com/...)"
+                                                    style={{ 
+                                                        width: '100%', 
+                                                        padding: '12px 16px', 
+                                                        borderRadius: '12px', 
+                                                        border: '1px solid rgba(255,255,255,0.1)', 
+                                                        background: 'rgba(0,0,0,0.2)', 
+                                                        color: '#fff',
+                                                        outline: 'none',
+                                                        fontSize: '0.9rem'
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <p style={{ marginTop: '0.8rem', fontSize: '0.75rem', color: '#666', paddingLeft: '0.5rem' }}>
+                                            {t('account.settings.banner_hint', 'Introduce una URL de imagen (Imgur, Discord, etc). Recomendado: 1200x400px.')}
+                                        </p>
+                                    </div>
                                     
                                     <form onSubmit={handleSubmit(handleSaveProfile)} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
                                         <div>
                                             <label style={{ display: 'block', color: '#ccc', marginBottom: '8px', fontSize: '0.9rem' }}>Biografía (Markdown opcional)</label>
                                             <textarea 
                                                 {...register('bio')}
-                                                rows={6}
+                                                rows={4}
                                                 maxLength={500}
                                                 placeholder="Cuéntanos un poco sobre ti..."
-                                                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', resize: 'vertical' }}
+                                                style={{ 
+                                                    width: '100%', 
+                                                    padding: '16px', 
+                                                    borderRadius: '16px', 
+                                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                                    background: 'rgba(0,0,0,0.3)', 
+                                                    color: '#fff', 
+                                                    resize: 'vertical',
+                                                    outline: 'none',
+                                                    fontSize: '0.95rem',
+                                                    lineHeight: '1.6'
+                                                }}
                                             />
-                                            <span style={{ fontSize: '0.7rem', color: '#666', marginTop: '4px', display: 'block' }}>Max 500 caracteres</span>
+                                            <span style={{ fontSize: '0.7rem', color: '#555', marginTop: '8px', display: 'block', textAlign: 'right', fontWeight: 600 }}>MAX 500 CHARS</span>
                                         </div>
                                         
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                             <label style={{ color: '#ccc', fontSize: '0.9rem', marginBottom: '-0.5rem' }}>Redes Sociales</label>
                                             
                                             {/* Discord Input Group */}
-                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0 16px', transition: '0.2s' }}>
                                                 <FaDiscord style={{ color: '#5865F2', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
                                                     {...register('social_discord')}
                                                     placeholder="Usuario#0000"
-                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
+                                                    style={{ flex: 1, padding: '14px', background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
                                                 />
                                             </div>
 
                                             {/* Twitter Input Group */}
-                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0 16px', transition: '0.2s' }}>
                                                 <FaTwitter style={{ color: '#1da1f2', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
                                                     {...register('social_twitter')}
                                                     placeholder="Twitter (ej: @miusuario)"
-                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
+                                                    style={{ flex: 1, padding: '14px', background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
                                                 />
                                             </div>
 
                                             {/* Twitch Input Group */}
-                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0 16px', transition: '0.2s' }}>
                                                 <FaTwitch style={{ color: '#9146FF', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
                                                     {...register('social_twitch')}
                                                     placeholder="Canal de Twitch"
-                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
+                                                    style={{ flex: 1, padding: '14px', background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
                                                 />
                                             </div>
 
                                             {/* Ko-Fi Input Group */}
-                                            <div style={{ display: 'flex', alignItems: 'center', background: '#222', border: '1px solid #444', borderRadius: '8px', padding: '0 12px', transition: '0.2s' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0 16px', transition: '0.2s' }}>
                                                 <SiKofi style={{ color: '#00AF96', fontSize: '1.2rem', minWidth: '24px' }} />
                                                 <input 
                                                     {...register('social_kofi')}
                                                     placeholder="URL de Ko-Fi"
-                                                    style={{ flex: 1, padding: '12px', background: 'transparent', border: 'none', color: '#fff', outline: 'none' }}
+                                                    style={{ flex: 1, padding: '14px', background: 'transparent', border: 'none', color: '#fff', outline: 'none', fontSize: '0.9rem' }}
                                                 />
                                             </div>
                                             
@@ -1025,9 +1173,21 @@ export default function Account() {
                                                 type="submit"
                                                 disabled={isSavingProfile}
                                                 className="btn-primary"
-                                                style={{ marginTop: '0.5rem', padding: '12px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}
+                                                style={{ 
+                                                    marginTop: '1.5rem', 
+                                                    padding: '14px', 
+                                                    display: 'flex', 
+                                                    justifyContent: 'center', 
+                                                    alignItems: 'center', 
+                                                    gap: '12px',
+                                                    borderRadius: '14px',
+                                                    fontWeight: 800,
+                                                    fontSize: '1rem',
+                                                    letterSpacing: '0.5px',
+                                                    boxShadow: '0 8px 20px rgba(109, 165, 192, 0.2)'
+                                                }}
                                             >
-                                                {isSavingProfile ? <Loader style={{height: '20px', minHeight: 'auto'}} /> : <><FaUser /> Guardar Información</>}
+                                                {isSavingProfile ? <Loader minimal /> : <><FaUser /> {t('account.settings.save_info', 'Actualizar Perfil')}</>}
                                             </button>
                                         </div>
                                     </form>
@@ -1057,31 +1217,48 @@ export default function Account() {
                                     
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                                         <div>
-                                            <label style={{ display: 'block', color: '#ccc', marginBottom: '5px', fontSize: '0.9rem' }}>{t('account.settings.new_password', 'Nueva Contraseña')}</label>
+                                            <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>{t('account.settings.new_password', 'Nueva Contraseña')}</label>
                                             <input 
                                                 type="password" 
                                                 value={passwords.new}
                                                 onChange={e => setPasswords({...passwords, new: e.target.value})}
-                                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', outline: 'none' }}
                                             />
                                         </div>
                                         <div>
-                                            <label style={{ display: 'block', color: '#ccc', marginBottom: '5px', fontSize: '0.9rem' }}>{t('account.settings.confirm_password', 'Confirmar Contraseña')}</label>
+                                            <label style={{ display: 'block', color: 'rgba(255,255,255,0.4)', marginBottom: '8px', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>{t('account.settings.confirm_password', 'Confirmar Contraseña')}</label>
                                             <input 
                                                 type="password" 
                                                 value={passwords.confirm}
                                                 onChange={e => setPasswords({...passwords, confirm: e.target.value})}
-                                                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #444', background: '#222', color: '#fff' }}
+                                                style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', outline: 'none' }}
                                             />
                                         </div>
                                         <button 
                                             onClick={handleUpdatePassword}
-                                            style={{ background: 'var(--accent)', border: 'none', padding: '10px', borderRadius: '6px', color: '#fff', fontWeight: 'bold', cursor: 'pointer', marginTop: '0.5rem' }}
+                                            disabled={isUpdatingPassword}
+                                            style={{ 
+                                                background: 'rgba(255,255,255,0.05)', 
+                                                border: '1px solid rgba(255,255,255,0.1)', 
+                                                padding: '12px', 
+                                                borderRadius: '12px', 
+                                                color: '#fff', 
+                                                fontWeight: 'bold', 
+                                                cursor: 'pointer', 
+                                                marginTop: '0.5rem', 
+                                                display: 'flex', 
+                                                justifyContent: 'center', 
+                                                alignItems: 'center',
+                                                transition: '0.2s'
+                                            }}
+                                            onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                                            onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                                         >
-                                            {t('account.settings.update_password', 'Actualizar Contraseña')}
+                                            {isUpdatingPassword ? <Loader minimal /> : t('account.settings.update_password', 'Actualizar Contraseña')}
                                         </button>
                                     </div>
                                 </div>
+                                <TwoFactorSetup />
                             </div>
                         </div>
                     )}

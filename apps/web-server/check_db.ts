@@ -8,7 +8,7 @@ async function checkTables() {
         
         // Check if donations table exists and describe it
         const [tables] = await pool.query("SHOW TABLES LIKE 'donations'");
-        if ((tables as any[]).length > 0) {
+        if ((tables as unknown[]).length > 0) {
             console.log("Found 'donations' table. Describing...");
             const [columns] = await pool.query("DESCRIBE donations");
             console.log("Columns:", columns);

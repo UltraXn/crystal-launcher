@@ -66,7 +66,9 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 ### 👤 Perfiles y Social (Fase 6)
 
 - [x] **Perfiles Avanzados**: Estadísticas reales y personalización (Bio/Redes).
+- [x] **Premium Social UI**: Banner personalizable, posado dinámico en skin 3D y sistema de reputación.
 - [x] **Muro de Comentarios**: Mensajes en perfiles.
+- [ ] **Marcos de Perfil (Avatar Frames)**: Cosméticos circulares para el avatar del usuario.
 - [x] **Selector de Avatar**: Opción para elegir entre Avatar Web (Discord) o Skin de Minecraft.
 - [x] **Wiki / Gamepedia**: Sección de guías.
 
@@ -76,7 +78,7 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 
 ### 🔗 Integración Profunda (Fase 8)
 
-- [ ] **Sincronización de Rangos**: MC <-> Discord.
+- [x] **Sincronización de Rangos**: MC <-> Discord.
 - [ ] **Requisito de Cuenta Vinculada**: Para tickets o gacha.
 - [ ] **Integración Economía Real**: Vault bidireccional.
 
@@ -86,14 +88,10 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 
 - [x] **Turborepo**: Estructura de monorepo unificada (`apps/`, `plugins/`, `packages/`).
 - [x] **Unificación de Proyectos**: Web, Launcher y Plugin CrystalCore integrados en el mismo workspace.
-- [x] **Unificación de Proyectos**: Web, Launcher y Plugin CrystalCore integrados en el mismo workspace.
 - [ ] **Discord Bot (Premium)**:
+  - 📄 Ver roadmap detallado en [`TODO_DISCORD_BOT.md`](./TODO_DISCORD_BOT.md)
   - [/] Infraestructura base y Docker (Hecho).
-  - [ ] **Anuncio de Donaciones**: Feed automático de nuevos donadores.
-  - [ ] **Asignación de Roles**: Sincronización Web -> Discord.
-  - [ ] **Aviso de Streamings**: Notificaciones de directos.
-  - [ ] **Noticias**: Anuncios automáticos desde el panel web.
-  - [ ] **Comandos Fun**: Sistema de bromas y entretenimiento.
+  - [x] **Asignación de Roles**: Sincronización Web -> Discord.
 - [ ] **Mapa Dinámico**: Integración de Dynmap.
 - [ ] **Hosting GCP**: Despliegue en Google Compute Engine con créditos.
 
@@ -125,7 +123,8 @@ Esta sección define el "Siguiente Nivel" para profesionalizar el portfolio al m
 
 - [ ] **TanStack Query**: Migrar data-fetching para mejor caché y UX.
 - [ ] **Zustand**: Gestión de estado global ligera y moderna.
-- [ ] **Live Dashboard**: Implementar **Supabase Realtime** para actualizaciones instantáneas (Chat/Donaciones).
+- [x] **Live Dashboard**: Implementar **Supabase Realtime** para actualizaciones instantáneas (Chat/Donaciones).
+- [ ] **Live Activity Feed ("El Pulso")**: Stream en tiempo real de logros, eventos y donaciones en la web.
 - [ ] **Mapa 3D Integrado**: Embed de **BlueMap** dentro del dashboard de usuario.
 
 #### DevOps & Mantenimiento

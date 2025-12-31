@@ -108,7 +108,7 @@ export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
                                 alignItems: 'center' 
                             }}
                         >
-                            {sending ? <Loader size={14} /> : <><FaPaperPlane size={12} /> {t('profile.wall.post', 'Publicar')}</>}
+                            {sending ? <Loader size={14} minimal={true} text="" /> : <><FaPaperPlane size={12} /> {t('profile.wall.post', 'Publicar')}</>}
                         </button>
                     </div>
                 </form>
@@ -154,10 +154,10 @@ export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
                             >
                                 {/* Author Avatar */}
                                 <div style={{ flexShrink: 0 }}>
-                                    {comment.profiles?.avatar_url ? (
+                                    {comment.author?.avatar_url ? (
                                         <img 
-                                            src={comment.profiles.avatar_url} 
-                                            alt={comment.profiles.username} 
+                                            src={comment.author.avatar_url} 
+                                            alt={comment.author.username} 
                                             style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.1)' }}
                                         />
                                     ) : (
@@ -169,8 +169,8 @@ export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
                                 <div style={{ flex: 1 }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', alignItems: 'center' }}>
                                         <span style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--accent)' }}>
-                                            {comment.profiles?.username || t('common.anonymous', 'Anónimo')}
-                                            {comment.profiles?.role && (
+                                            {comment.author?.username || t('common.anonymous', 'Anónimo')}
+                                            {comment.author?.role && (
                                                 <span style={{ 
                                                     fontSize: '0.65rem', 
                                                     marginLeft: '0.5rem', 
@@ -180,7 +180,7 @@ export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
                                                     color: '#888',
                                                     textTransform: 'uppercase'
                                                 }}>
-                                                    {comment.profiles.role}
+                                                    {comment.author.role}
                                                 </span>
                                             )}
                                         </span>

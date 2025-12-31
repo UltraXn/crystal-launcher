@@ -98,103 +98,78 @@ export default function GamificationManager() {
 
     if (loading) {
         return (
-            <div className="admin-card" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5rem' }}>
-                <Loader style={{ height: 'auto', minHeight: '150px' }} />
+            <div style={{ padding: '8rem', display: 'flex', justifyContent: 'center' }}>
+                <Loader />
             </div>
         );
     }
 
     return (
-        <div className="admin-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
-                    <FaTrophy style={{ color: '#fbbf24' }} /> {t('admin.gamification.medals.title')}
+        <div className="gamification-manager-container">
+            <div className="gamification-header">
+                <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'1rem', fontSize: '1.5rem', fontWeight: 900, color: '#fff' }}>
+                    <div style={{ padding: '8px', background: 'rgba(251, 191, 36, 0.1)', borderRadius: '12px', display: 'flex' }}>
+                        <FaTrophy style={{ color: '#fbbf24' }} />
+                    </div>
+                    {t('admin.gamification.medals.title')}
                 </h3>
-                <button onClick={handleSave} className="btn-primary" disabled={saving === 'medal_definitions'}>
-                    <FaSave /> {saving === 'medal_definitions' ? t('admin.gamification.medals.saving') : t('admin.gamification.medals.save')}
+                <button onClick={handleSave} className="poll-new-btn btn-primary" disabled={saving === 'medal_definitions'} style={{ height: '48px', padding: '0 2rem' }}>
+                    {saving === 'medal_definitions' ? <FaSave className="spin" /> : <FaSave />}
+                    {saving === 'medal_definitions' ? t('admin.gamification.medals.saving') : t('admin.gamification.medals.save')}
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
+            <div className="gamification-grid">
                 {medals.map((medal) => (
-                    <div key={medal.id} style={{ 
-                        background: 'rgba(255,255,255,0.03)', 
-                        border: `1px solid ${medal.color}`,
-                        borderRadius: '8px', 
-                        padding: '1rem',
-                        position: 'relative'
-                    }}>
+                    <div key={medal.id} className="medal-card-premium">
+                        <div className="medal-card-accent" style={{ background: medal.color }}></div>
+                        
                         <button 
                             onClick={() => handleDelete(medal.id)}
-                            style={{ position: 'absolute', top: '10px', right: '10px', background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                            className="medal-delete-btn"
+                            title={t('common.delete', 'Eliminar')}
                         >
-                            <FaTrash />
+                            <FaTrash size={14} />
                         </button>
 
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                            {/* Icon Preview & Color Picker */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ 
-                                    fontSize: '2rem', 
-                                    color: medal.color,
-                                    background: 'rgba(0,0,0,0.3)',
-                                    borderRadius: '50%',
-                                    width: '60px',
-                                    height: '60px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    boxShadow: `0 0 10px ${medal.color}40`
-                                }}>
-                                    {renderIcon(medal.icon)}
+                        <div className="medal-visual-section">
+                            <div className="medal-icon-preview-wrapper" style={{ color: medal.color, boxShadow: `0 10px 30px ${medal.color}20` }}>
+                                {renderIcon(medal.icon)}
+                                <div className="medal-color-picker-wrapper" style={{ background: medal.color }}>
+                                    <input 
+                                        type="color" 
+                                        value={medal.color} 
+                                        onChange={(e) => handleChange(medal.id, 'color', e.target.value)} 
+                                    />
                                 </div>
-                                <input 
-                                    type="color" 
-                                    value={medal.color} 
-                                    onChange={(e) => handleChange(medal.id, 'color', e.target.value)} 
-                                    style={{ width: '40px', height: '25px', padding: 0, border: 'none', background: 'none' }}
-                                />
                             </div>
 
-                            {/* Info Inputs */}
-                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <div className="medal-info-section">
                                 <input 
-                                    className="admin-input" 
+                                    className="admin-input-premium" 
                                     value={medal.name} 
                                     onChange={(e) => handleChange(medal.id, 'name', e.target.value)}
                                     placeholder={t('admin.gamification.medals.name_placeholder')}
-                                    style={{ fontWeight: 'bold' }}
+                                    style={{ padding: '0.6rem 1rem', fontSize: '1rem', fontWeight: 800 }}
                                 />
                                 <textarea 
-                                    className="admin-input" 
+                                    className="admin-textarea-premium" 
                                     value={medal.description} 
                                     onChange={(e) => handleChange(medal.id, 'description', e.target.value)}
                                     placeholder={t('admin.gamification.medals.desc_placeholder')}
                                     rows={2}
-                                    style={{ fontSize: '0.85rem' }}
+                                    style={{ padding: '0.6rem 1rem', fontSize: '0.85rem', minHeight: '60px' }}
                                 />
                             </div>
                         </div>
 
-                        {/* Icon Selector */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem', borderTop: '1px solid #333', paddingTop: '0.5rem' }}>
+                        {/* Icon Selector Grid */}
+                        <div className="medal-icon-selector">
                             {Object.keys(MEDAL_ICONS).map(iconKey => (
                                 <button 
                                     key={iconKey}
                                     onClick={() => handleChange(medal.id, 'icon', iconKey)}
-                                    style={{
-                                        background: medal.icon === iconKey ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
-                                        color: medal.icon === iconKey ? '#000' : '#fff',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        width: '24px',
-                                        height: '24px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        fontSize: '0.8rem'
-                                    }}
+                                    className={`icon-select-btn ${medal.icon === iconKey ? 'active' : ''}`}
                                     title={iconKey}
                                 >
                                     {renderIcon(iconKey)}
@@ -204,26 +179,14 @@ export default function GamificationManager() {
                     </div>
                 ))}
 
-                {/* Add Button */}
-                <div 
-                    onClick={handleAdd}
-                    style={{ 
-                        border: '2px dashed #444', 
-                        borderRadius: '8px', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        flexDirection: 'column',
-                        cursor: 'pointer',
-                        padding: '2rem',
-                        color: '#666',
-                        minHeight: '200px'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#666'}
-                    onMouseLeave={(e) => e.currentTarget.style.borderColor = '#444'}
-                >
-                    <FaPlus size={32} />
-                    <span style={{ marginTop: '1rem', fontWeight: 'bold' }}>{t('admin.gamification.medals.create_btn')}</span>
+                {/* Add Button Premium Card */}
+                <div className="medal-add-card" onClick={handleAdd}>
+                    <div className="medal-add-icon-wrapper">
+                        <FaPlus />
+                    </div>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        {t('admin.gamification.medals.create_btn')}
+                    </span>
                 </div>
             </div>
         </div>

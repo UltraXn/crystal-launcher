@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
-import anime from "animejs/lib/anime.js"
+import { gsap } from "gsap"
 import { useTranslation } from "react-i18next"
 
 export default function NotFound() {
@@ -8,41 +8,40 @@ export default function NotFound() {
     const titleRef = useRef<HTMLDivElement>(null)
     const buttonRef = useRef<HTMLDivElement>(null)
     const logoRef = useRef<HTMLImageElement>(null)
-    const logoAnimRef = useRef<anime.AnimeInstance | null>(null)
+    const logoAnimRef = useRef<gsap.core.Tween | null>(null)
 
     useEffect(() => {
-        // Glitch/Float animation for the title
-        anime({
-            targets: titleRef.current,
-            translateY: [-10, 10],
-            direction: 'alternate',
-            loop: true,
-            easing: 'easeInOutSine',
-            duration: 2000
-        })
+        // Floating animation for the title using GSAP
+        gsap.to(titleRef.current, {
+            y: 10,
+            duration: 2,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut"
+        });
 
-        // Pop in button
-        anime({
-            targets: buttonRef.current,
-            scale: [0, 1],
-            opacity: [0, 1],
-            easing: 'spring(1, 80, 10, 0)',
-            delay: 500
-        })
+        // Pop in button with elastic ease
+        gsap.fromTo(buttonRef.current,
+            { scale: 0, opacity: 0 },
+            {
+                scale: 1,
+                opacity: 1,
+                duration: 1.2,
+                ease: "elastic.out(1, 0.75)",
+                delay: 0.5
+            }
+        );
     }, [])
 
     const handleLogoHover = () => {
-        if (logoAnimRef.current) logoAnimRef.current.pause()
+        if (logoAnimRef.current) logoAnimRef.current.kill()
 
-        logoAnimRef.current = anime({
-            targets: logoRef.current,
-            translateY: [
-                { value: -10, duration: 200, easing: 'easeOutQuad' },
-                { value: 0, duration: 200, easing: 'easeInQuad' },
-                { value: -5, duration: 200, easing: 'easeOutQuad' },
-                { value: 0, duration: 200, easing: 'easeInQuad' }
-            ],
-            duration: 800
+        logoAnimRef.current = gsap.to(logoRef.current, {
+            y: -10,
+            duration: 0.2,
+            ease: 'power2.out',
+            yoyo: true,
+            repeat: 3
         });
     }
 

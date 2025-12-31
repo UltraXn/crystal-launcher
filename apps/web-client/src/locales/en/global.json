@@ -391,7 +391,8 @@
             "helper": "Helper",
             "donor": "Donor",
             "neroferno": "Neroferno",
-            "killu": "Killu"
+            "killu": "Killu",
+            "developer": "Developer"
         },
         "nav": {
             "overview": "Overview",
@@ -496,6 +497,26 @@
             "public_stats_desc": "Allow other users to see your gameplay stats.",
             "success_password": "Password updated successfully!",
             "success_privacy": "Privacy settings saved."
+        },
+        "security": {
+            "2fa_title": "Two-Factor Authentication",
+            "2fa_active": "Your account is protected with 2FA.",
+            "2fa_inactive": "Add an extra layer of security to your account.",
+            "setup_2fa": "Setup 2FA",
+            "activate": "Activate",
+            "disable_2fa": "Disable 2FA",
+            "2fa_enabled": "2FA Enabled Successfully!",
+            "2fa_disabled": "2FA Disabled",
+            "2fa_disable_confirm": "Are you sure you want to disable 2FA?",
+            "cant_scan": "Can't scan the QR code?",
+            "copied": "Copied!",
+            "enter_code": "Enter Code",
+            "scan_qr": "Scan QR Code",
+            "invalid_code": "Invalid code",
+            "verify_failed": "Verification failed",
+            "setup_failed": "Failed to start setup",
+            "secret_error": "Error generating secret",
+            "disable_failed": "Failed to disable"
         }
     },
     "profile": {
@@ -553,7 +574,9 @@
             "gamification": "Gamification",
             "team": "Team",
             "staff_hub": "Staff Hub",
-            "docs": "Documentation"
+            "docs": "Documentation",
+            "donations": "Donations",
+            "wiki": "Wiki / Gamepedia"
         },
         "headers": {
             "general": "General Dashboard",
@@ -568,7 +591,74 @@
             "gamification": "Gamification System",
             "team": "Team Management",
             "staff_hub": "Staff Workspace",
-            "docs": "Internal Documentation"
+            "docs": "Internal Documentation",
+            "donations": "Donation Management",
+            "wiki": "Wiki / Gamepedia Editor"
+        },
+        "polls": {
+            "title": "Poll Manager",
+            "active_title": "Active Poll",
+            "create_title": "New Poll",
+            "status_active": "IN PROGRESS",
+            "ends_in": "Ends in: ",
+            "votes": "votes",
+            "total_votes": "Total: {{count}} votes",
+            "close_btn": "End Poll",
+            "no_active": "No active poll.",
+            "no_active_desc": "No active polls at this time. Create one to interact with the community!",
+            "create_now_btn": "Create a poll now",
+            "history_title": "Poll History",
+            "loading_history": "Loading history...",
+            "new_btn": "NEW POLL",
+            "edit_btn": "Edit",
+            "delete_tooltip": "Delete Poll",
+            "delete_confirm_title": "Delete Poll?",
+            "delete_confirm_desc": "This action cannot be undone and all accumulated votes will be permanently lost.",
+            "delete_btn": "Delete",
+            "pagination": "Page {{page}} of {{total}}",
+            "tabs": {
+                "active": "Active",
+                "history": "History"
+            },
+            "table": {
+                "title": "Title",
+                "date": "Date",
+                "votes": "Votes",
+                "status": "Status"
+            },
+            "status_chip": {
+                "active": "ACTIVE",
+                "closed": "CLOSED"
+            },
+            "no_history": "No history found",
+            "form": {
+                "title": "Title",
+                "title_ph": "Ex: Weekly Vote",
+                "question": "Question",
+                "question_ph": "Which gamemode do you prefer?",
+                "options": "Options",
+                "option_ph": "Option ",
+                "add_option": "Add Option",
+                "duration": "Duration (Days)",
+                "days": "days",
+                "warning_active": "⚠️ When creating a new poll, the current one will be automatically closed.",
+                "submit": "Launch Poll",
+                "success": "Poll launched!",
+                "error_options": "You need at least 2 options",
+                "error_create": "Error creating poll"
+            },
+            "form_extras": {
+                "title_es": "Title (Spanish)",
+                "title_en": "Title (English)",
+                "question_es": "Question (Spanish)",
+                "question_en": "Question (English)",
+                "option_es": "Option (ES)",
+                "option_en": "Option (EN)",
+                "translate": "Translate with AI",
+                "delete_option": "Delete option",
+                "cancel": "Cancel"
+            },
+            "confirm_close": "Are you sure you want to end the active poll?"
         },
         "docs": {
             "titles": {
@@ -580,7 +670,10 @@
                 "console_bridge": "Remote Console (Secure Bridge)",
                 "content": "Content Management",
                 "content_web": "Web Content",
-                "gamification": "Gamification"
+                "gamification": "Gamification",
+                "security": "Security (2FA)",
+                "discord": "Discord Integration",
+                "audit": "Audit Logs"
             },
             "content": {
                 "intro_msg": "Welcome to the control center. From here you can manage almost all aspects of the server and community.",
@@ -610,9 +703,89 @@
                 "gacha_config": "Gacha Configuration",
                 "gacha_cooldown": "24 hours per user.",
                 "prizes": "Prizes",
-                "gacha_prizes": "Automatic in-game delivery."
+                "gacha_prizes": "Automatic in-game delivery.",
+                "security_desc": "Admin panel access protection.",
+                "security_2fa": "The panel requires Two-Factor Authentication (TOTP) to access critical functions.",
+                "security_tokens": "A temporary Admin Token is issued after valid verification.",
+                "discord_desc": "Sync between the web and Discord community.",
+                "discord_linking": "Account linking via /link.",
+                "discord_announcements": "Automatic Discord announcements when news are published.",
+                "audit_desc": "Historical record of all administrative actions in the web and game."
+            },
+            "index": "Index",
+            "edit_section": "Edit Section",
+            "reset": "Reset",
+            "saving": "Saving...",
+            "placeholder": "Write the documentation using Markdown...",
+            "save_error": "Error saving documentation",
+            "reset_confirm": "Are you sure you want to reset this section to the default values?",
+            "loading": "Loading documentation..."
+        },
+        "staff_hub": {
+            "title": "Staff Hub",
+            "kanban": {
+                "title": "Board",
+                "new_task_btn": "New Task",
+                "view_board": "Board",
+                "view_calendar": "Calendar",
+                "sync_calendar": "Sync Calendar",
+                "add_to_calendar": "Add to my Calendar",
+                "sync_notion": "Sync Notion",
+                "syncing": "Syncing...",
+                "create_modal": {
+                    "title_new": "New Task",
+                    "title_edit": "Edit Task",
+                    "subtitle_new": "Plan a new activity for the team",
+                    "subtitle_edit": "Update your task details",
+                    "task_title": "TASK TITLE",
+                    "task_placeholder": "What are we working on?",
+                    "priority": "Priority",
+                    "type": "Type",
+                    "assignee": "Assignee",
+                    "assignee_placeholder": "Staff name...",
+                    "start_date": "Start",
+                    "end_date": "End",
+                    "optional_dates": "Optional dates for backlog",
+                    "cancel": "CANCEL",
+                    "create": "CREATE TASK",
+                    "save": "SAVE CHANGES",
+                    "date_error": "End date cannot be before start date"
+                },
+                "delete_modal": {
+                    "title": "Delete Task",
+                    "msg": "Are you sure you want to delete this task permanently?",
+                    "confirm": "Delete",
+                    "cancel": "Cancel"
+                },
+                "priorities": {
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High"
+                },
+                "types": {
+                    "general": "General",
+                    "bug": "Bug",
+                    "feature": "Feature",
+                    "maintenance": "Maintenance"
+                }
+            },
+            "notes": {
+                "title": "Quick Notes",
+                "new_note_btn": "New Note",
+                "create_modal": {
+                    "title": "New Note",
+                    "placeholder": "Write your note here...",
+                    "cancel": "Cancel",
+                    "save": "Save Note"
+                },
+                "delete_modal": {
+                    "title": "Delete Note?",
+                    "msg": "This action cannot be undone.",
+                    "confirm": "Yes, Delete"
+                }
             }
         },
+
         "dashboard": {
             "stats": {
                 "server_status": "Server Status",
@@ -705,6 +878,10 @@
                 "reopen": "Reopen Ticket",
                 "delete": "Delete"
             },
+            "delete_selected": "Delete Selected",
+            "searching": "Searching...",
+            "bulk_delete_confirm": "Are you sure you want to delete the selected tickets?",
+            "bulk_delete_success": "Tickets deleted successfully",
             "ban_modal": {
                 "title": "Sanction User",
                 "nick_ph": "Ex: Steve",
@@ -728,62 +905,59 @@
                 "mo": "Months"
             }
         },
-        "staff": {
-            "manager_title": "Staff Manager",
-            "sync_btn": "Sync Staff",
-            "syncing": "Syncing...",
-            "add_member": "Add Member",
-            "add_manual": "Add Manually",
-            "empty": "No staff members configured.",
-            "drag_tooltip": "Drag to move",
-            "edit_btn": "EDIT",
-            "delete_tooltip": "Delete",
-            "no_desc": "No description",
-            "no_socials": "No social media",
-            "linked_account": "Linked Account",
-            "confirm_modal": {
-                "title": "Confirm Team",
-                "detected_msg": "Detected <b>{{count}}</b> active staff members.",
-                "warning": "This action will replace the current list.",
-                "cancel": "Cancel",
-                "save": "Save Staff"
-            },
-            "form": {
-                "new_title": "New Profile",
-                "edit_title": "Edit Profile",
-                "name_label": "Name (Minecraft Nick)",
-                "name_ph": "Ex: Notch",
-                "role_label": "Role",
-                "custom_role_ph": "Custom Role Name",
-                "color_label": "Role Color",
-                "avatar_label": "Custom Avatar (Optional)",
-                "avatar_ph": "Leave empty to use Minecraft head",
-                "bio_label": "Description / Bio",
-                "bio_ph": "Brief description of staff member...",
-                "cancel": "Cancel",
-                "save_changes": "Save Changes",
-                "preview_name": "Name",
-                "preview_role": "Role"
-            },
-            "roles": {
-                "admin": "Admin",
-                "moderator": "Moderator",
-                "helper": "Helper",
-                "user": "User",
-                "developer": "Developer",
-                "custom": "Custom"
+
+
+        "wiki": {
+            "manager_title": "Wiki Manager",
+            "search_placeholder": "Search articles...",
+            "create_btn": "Create Article",
+            "loading": "Loading library...",
+            "no_articles": "No articles found.",
+            "public": "Public",
+            "char_count": "characters",
+            "edit_title": "Edit Article",
+            "new_title": "New Wiki Article",
+            "title_label": "Article Title",
+            "title_placeholder": "e.g. Enchantment Guide",
+            "slug_label": "URL Slug (Unique)",
+            "slug_placeholder": "enchantment-guide",
+            "category_label": "Category",
+            "content_label": "Content (Markdown)",
+            "content_placeholder": "# Main Title\n\nContent here...",
+            "img_label": "Cover Image (Optional)",
+            "update_btn": "Update",
+            "publish_btn": "Publish",
+            "cancel": "Cancel",
+            "delete_confirm": "Are you sure you want to delete this article?",
+            "categories": {
+                "general": "General",
+                "mechanics": "Mechanics",
+                "economy": "Economy",
+                "commands": "Commands",
+                "ranks": "Ranks"
             }
+        },
+        "2fa": {
+            "title": "Security Verification",
+            "desc": "Enter your 2FA code to access the Admin Panel.",
+            "verify": "Verify Access"
         },
         "donations": {
             "title": "Donations Management",
-            "search_ph": "Search by user...",
-            "new_btn": "New Donation",
+            "manager_desc": "View and manage the community contribution history.",
+            "search_ph": "Search by name or description...",
+            "new_btn": "Add Donation",
             "edit_title": "Edit Donation",
-            "empty": "No donations registered.",
+            "empty": "No donations registered yet.",
             "anonymous": "Anonymous",
             "no_msg": "No message",
             "public": "Public",
             "private": "Private",
+            "stats": {
+                "total": "Total Raised",
+                "count": "Total Donations",
+                "avg": "Average"
+            },
             "form": {
                 "donor_name": "Donor Name",
                 "name_ph": "Ex: John Doe",
@@ -791,23 +965,62 @@
                 "amount": "Amount",
                 "currency": "Currency",
                 "message": "Message",
-                "is_public": "Make donation public",
+                "is_public": "Make public in carousel",
                 "cancel": "Cancel",
-                "save": "Save"
+                "save": "Save Changes"
             },
             "delete_confirm": {
                 "title": "Confirm Deletion",
                 "msg": "Are you sure you want to delete this donation? This action cannot be undone.",
-                "btn": "Delete"
+                "btn": "Yes, Delete"
+            },
+            "simulate": "Test Alert",
+            "alert_sent": "Alert sent to Discord!",
+            "error_alert": "Error sending alert",
+            "confirm_simulate": "Send test alert to Discord?",
+            "error_delete": "Error deleting donation",
+            "error_save": "Error saving donation",
+            "error_conn": "Connection error"
+        },
+        "suggestions": {
+            "title": "Suggestions Box",
+            "subtitle": "Manage community feedback",
+            "filter_by_type": "Type:",
+            "filter_all": "All",
+            "filter_by_status": "Status:",
+            "types": {
+                "general": "General",
+                "bug": "Bugs",
+                "mod": "Mods",
+                "complaint": "Complaints",
+                "poll": "Polls"
+            },
+            "status": {
+                "all": "All",
+                "pending": "Pending",
+                "approved": "Approved",
+                "rejected": "Rejected"
+            },
+            "read_more": "Read more",
+            "show_less": "Show less",
+            "empty": "No suggestions",
+            "empty_desc": "No suggestions match current filters.",
+            "delete_modal": {
+                "title": "Delete suggestion?",
+                "desc": "Are you sure you want to delete this suggestion permanently? This action cannot be undone.",
+                "cancel": "Cancel",
+                "confirm": "Delete"
             }
         },
         "donors": {
             "manager_title": "Donors Manager",
+            "manager_desc": "Manage the honor list and customize each donor's profile.",
             "add_btn": "Add Donor",
             "empty_msg": "The list is empty. Default donors will be used on the public page.",
             "import_btn": "Import Original Donors",
             "new_title": "New Donor",
             "edit_title": "Edit Donor",
+            "delete_btn": "Delete",
             "form": {
                 "nick": "Nickname (Minecraft)",
                 "nick_ph": "Ex: Notch",
@@ -823,24 +1036,25 @@
                 "translate_es": "Translate to Spanish",
                 "ranks": "Selected Ranks",
                 "cancel": "Cancel",
-                "save": "Save"
+                "save": "Save Changes"
             },
             "delete_confirm": {
                 "title": "Delete Donor?",
-                "msg": "This action will permanently remove the donor from the list.",
+                "msg": "This action will permanently remove the donor from the list and cannot be undone.",
                 "btn": "Yes, Delete"
             },
             "import_confirm": {
                 "title": "Import Defaults?",
                 "msg": "Are you sure? This will replace your current list with the server's original donors.",
-                "btn": "Import"
+                "btn": "Import Now"
             },
             "validation": {
                 "name_req": "Name is required",
                 "skin_req": "Skin URL is required for non-premium",
                 "desc_req": "Description is required",
                 "save_error": "Error saving changes",
-                "translate_error": "Error translating"
+                "translate_error": "Error translating",
+                "success_save": "Donor list updated successfully"
             },
             "profiles": {
                 "killu": "Administrator, Builder, and Interface Designer.",
@@ -937,6 +1151,60 @@
                 "cancel": "Cancel"
             }
         },
+        "staff": {
+            "manager_title": "Staff Manager",
+            "sync_btn": "Sync from Server",
+            "syncing": "Syncing...",
+            "add_member": "Add Member",
+            "add_manual": "Add Manual Member",
+            "empty": "No staff cards found.",
+            "no_desc": "No description.",
+            "edit_btn": "Edit",
+            "delete_tooltip": "Delete Card",
+            "drag_tooltip": "Drag to reorder",
+            "linked_account": "Linked Account",
+            "no_socials": "No socials",
+            "form": {
+                "new_title": "New Staff Member",
+                "edit_title": "Edit Staff Member",
+                "preview_name": "Name",
+                "preview_role": "Role",
+                "name_label": "Name (Username)",
+                "name_ph": "Minecraft Username",
+                "role_label": "Role",
+                "custom_role_ph": "Custom Role Name...",
+                "color_label": "Role Color",
+                "avatar_label": "Avatar URL",
+                "avatar_ph": "Leave empty for default skin",
+                "bio_label": "Description / Bio",
+                "bio_ph": "Short description...",
+                "save_changes": "Save Changes",
+                "cancel": "Cancel"
+            },
+            "confirm_modal": {
+                "title": "Confirm Sync",
+                "detected_msg": "Detected <strong>{{count}} users</strong> with staff rank.",
+                "warning": "This will overwrite your current list! Changes like custom colors or descriptions for existing users will be preserved, but manual entries might be lost if they don't match.",
+                "cancel": "Cancel",
+                "save": "Confirm & Sync"
+            },
+            "save_error": "Error saving staff cards",
+            "sync_error": "Error syncing: ",
+            "sync_no_users": "No staff users found in sync.",
+            "sync_success": "Sync complete",
+            "default_desc": "Staff Member",
+            "confirm_delete_profile": "Delete this profile?",
+            "roles": {
+                "neroferno": "Neroferno",
+                "killuwu": "Killuwu",
+                "developer": "Developer",
+                "admin": "Admin",
+                "moderator": "Moderator",
+                "helper": "Helper",
+                "user": "User",
+                "custom": "Custom"
+            }
+        },
         "gamification": {
             "medals": {
                 "title": "Medals Management",
@@ -953,6 +1221,7 @@
         "settings": {
             "loading": "Loading settings...",
             "error_save": "Error saving settings",
+            "saving": "Saving...",
             "theme": {
                 "title": "Global Site Settings",
                 "desc": "Customize CrystalTides appearance. This will affect all visitors!",
@@ -1052,76 +1321,7 @@
             "filter_web": "WEB",
             "filter_game": "GAME"
         },
-        "suggestions": {
-            "title": "Suggestion Box",
-            "filter_all": "All",
-            "filter_bug": "Bugs",
-            "filter_feature": "Features",
-            "filter_mod": "Mods/Plugins",
-            "filter_other": "Other",
-            "loading": "Loading suggestions...",
 
-            "actions_disciplinaries": "Disciplinary Actions"
-        },
-        "polls": {
-            "active_title": "Active Poll",
-            "create_title": "New Poll",
-            "status_active": "IN PROGRESS",
-            "ends_in": "Ends in: ",
-            "votes": "votes",
-            "total_votes": "Total: {{count}} votes",
-            "close_btn": "End Poll",
-            "no_active": "No active poll.",
-            "form": {
-                "title": "Title",
-                "title_ph": "Ex: Weekly Vote",
-                "question": "Question",
-                "question_ph": "Which gamemode do you prefer?",
-                "options": "Options",
-                "option_ph": "Option ",
-                "add_option": "Add Option",
-                "duration": "Duration (Days)",
-                "warning_active": "⚠️ Creating a new poll will automatically close the current one.",
-                "submit": "Launch Poll",
-                "success": "Poll launched!",
-                "error_options": "You need at least 2 options",
-                "error_create": "Error creating poll"
-            },
-            "confirm_close": "Are you sure you want to end the active poll?",
-            "tabs": {
-                "active": "Active",
-                "history": "History"
-            },
-            "new_btn": "NEW POLL",
-            "edit_btn": "Edit",
-            "create_now_btn": "Create a poll now",
-            "history_title": "Poll History",
-            "loading_history": "Loading history...",
-            "table": {
-                "title": "Title",
-                "date": "Date",
-                "votes": "Votes",
-                "status": "Status"
-            },
-
-            "status_chip": {
-                "active": "ACTIVE",
-                "closed": "CLOSED"
-            },
-            "no_history": "No history",
-            "pagination": "Page {{page}} of {{total}}",
-            "form_extras": {
-                "title_es": "Title (Spanish)",
-                "title_en": "Title (English)",
-                "question_es": "Question (Spanish)",
-                "question_en": "Question (English)",
-                "option_es": "Option (ES)",
-                "option_en": "Option (EN)",
-                "translate": "Translate",
-                "delete_option": "Delete option",
-                "cancel": "Cancel"
-            }
-        },
 
         "events": {
             "title": "Events & Contests Management",
@@ -1207,30 +1407,7 @@
             "player": "🚫 Player Report",
             "billing": "💰 Billing/Store",
             "unban": "🔓 Unban Request",
-            "wiki": {
-                "search_placeholder": "Search articles...",
-                "create_btn": "Create Article",
-                "loading": "Loading library...",
-                "no_articles": "No articles found.",
-                "public": "Public",
-                "char_count": "characters",
-                "edit_title": "Edit Article",
-                "new_title": "New Wiki Article",
-                "title_label": "Article Title",
-                "title_placeholder": "e.g. Enchantment Guide",
-                "slug_label": "URL Slug (Unique)",
-                "category_label": "Category",
-                "content_label": "Content (Markdown)",
-                "update_btn": "Update",
-                "publish_btn": "Publish",
-                "categories": {
-                    "general": "General",
-                    "mechanics": "Mechanics",
-                    "economy": "Economy",
-                    "commands": "Commands",
-                    "ranks": "Ranks"
-                }
-            }
+            "wiki": "Wiki Related"
         },
         "priorities": {
             "low": "Low",
@@ -1317,5 +1494,11 @@
         "platform": "Platform",
         "offline_title": "Server Unavailable",
         "offline_desc": "The server appears to be offline or under maintenance. Please check our Discord for more information."
+    },
+    "calendar": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "agenda": "Agenda"
     }
 }

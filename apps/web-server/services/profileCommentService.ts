@@ -1,52 +1,60 @@
 import supabase from './supabaseService.js';
 
 export const getCommentsByProfile = async (profileId: string) => {
-    // We join with profiles twice (one for author metadata) 
-    // but dynamic select in Supabase might be tricky with same table join
-    // We use public.profiles for names
-    const { data, error } = await supabase
+    // 1. Fetch comments (No Join)
+    const { data: comments, error: commentError } = await supabase
         .from('profile_comments')
-        .select(`
-            id,
-            content,
-            created_at,
-            author_id,
-            profiles:author_id (
-                username,
-                avatar_url,
-                role
-            )
-        `)
+        .select('id, content, created_at, author_id')
         .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return data;
+    if (commentError) throw commentError;
+    if (!comments || comments.length === 0) return [];
+
+    // 2. Fetch Profiles Manually (to avoid FK issues)
+    const authorIds = [...new Set(comments.map(c => c.author_id))];
+    
+    const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url, role')
+        .in('id', authorIds);
+
+    if (profileError) throw profileError;
+
+    // 3. Map & Merge
+    const profileMap = new Map(profiles?.map(p => [p.id, p]));
+    
+    return comments.map(c => ({
+        ...c,
+        profiles: profileMap.get(c.author_id)
+    }));
 };
 
 export const createComment = async (profileId: string, authorId: string, content: string) => {
-    const { data, error } = await supabase
+    // 1. Insert Comment
+    const { data: comment, error: insertError } = await supabase
         .from('profile_comments')
         .insert([{
             profile_id: profileId,
             author_id: authorId,
             content: content
         }])
-        .select(`
-            id,
-            content,
-            created_at,
-            author_id,
-            profiles:author_id (
-                username,
-                avatar_url,
-                role
-            )
-        `)
+        .select('id, content, created_at, author_id')
         .single();
 
-    if (error) throw error;
-    return data;
+    if (insertError) throw insertError;
+
+    // 2. Fetch Author Profile
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, role')
+        .eq('id', authorId)
+        .single();
+
+    return {
+        ...comment,
+        profiles: profile
+    };
 };
 
 export const deleteComment = async (commentId: number) => {

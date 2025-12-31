@@ -17,16 +17,19 @@ export const getCommandLogs = async ({ page = 1, limit = 50, search = '' }: Comm
         
         // Filter for specific suspicious commands
         const suspiciousCommands = [
-            '/gm ', '/gamemode', 
+            '/gm', '/gamemode', 
             '/give', '/item', 
             '/xp', '/experience',
             '/enchant', 
-            '/tp ', '/teleport',
+            '/tp', '/teleport',
             '//', // WorldEdit
             '/fly', '/god', '/heal', '/feed',
             '/op', '/deop',
             '/fill', '/setblock', '/clone',
-            '/effect', '/attribute'
+            '/effect', '/attribute',
+            '/ban', '/tempban', '/kick', '/mute', '/tempmute', '/unban', '/pardon',
+            '/whitelist', '/vanish', '/v', '/invsee', '/endersee', '/sudo',
+            '/stop', '/restart', '/reload', '/rl'
         ];
 
         // Construct dynamic OR clause for LIKE

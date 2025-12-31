@@ -24,14 +24,21 @@ export const getSettings = async (req: Request, res: Response) => {
             .from('site_settings')
             .select('*');
 
-        if (error) throw error;
+        if (error) {
+            // Manejar caso de tabla no existente (PostgREST error code: PGRST116 or similar)
+            if (error.code === 'PGRST116' || error.message.includes('not found')) {
+                console.warn("[Settings] 'site_settings' table not found in Supabase.");
+                return res.json({});
+            }
+            throw error;
+        }
 
         const isAdmin = req.user && ['admin', 'neroferno', 'killu', 'killuwu', 'developer'].includes(req.user.role);
 
         // Convertir array a objeto y filtrar si no es admin
-        const settings: Record<string, string> = {};
+        const settings: Record<string, unknown> = {};
         if (data) {
-            data.forEach((item: { key: string, value: string }) => {
+            data.forEach((item: { key: string, value: unknown }) => {
                 if (isAdmin || PUBLIC_SETTINGS_WHITELIST.includes(item.key)) {
                     settings[item.key] = item.value;
                 }
@@ -39,6 +46,34 @@ export const getSettings = async (req: Request, res: Response) => {
         }
 
         res.json(settings);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("[Settings Controller Error]:", message);
+        res.status(500).json({ error: message });
+    }
+};
+
+// Obtener una configuración específica
+export const getSetting = async (req: Request, res: Response) => {
+    try {
+        const { key } = req.params;
+        const { data, error } = await supabase
+            .from('site_settings')
+            .select('*')
+            .eq('key', key)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        const isAdmin = req.user && ['admin', 'neroferno', 'killu', 'killuwu', 'developer'].includes(req.user.role);
+
+        if (!data) return res.json(null);
+
+        if (!isAdmin && !PUBLIC_SETTINGS_WHITELIST.includes(key)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        res.json(data);
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         res.status(500).json({ error: message });
@@ -60,8 +95,8 @@ export const updateSetting = async (req: Request, res: Response) => {
                 if (Array.isArray(cards)) {
                     const translatedCards = await Promise.all(cards.map(async (card: { role?: string, role_en?: string, description?: string, description_en?: string }) => ({
                         ...card,
-                        role_en: card.role ? await translateText(card.role, 'en') : card.role_en,
-                        description_en: card.description ? await translateText(card.description, 'en') : card.description_en
+                        role_en: card.role ? await translateText(card.role, 'en').catch(() => card.role_en) : card.role_en,
+                        description_en: card.description ? await translateText(card.description, 'en').catch(() => card.description_en) : card.description_en
                     })));
                     finalValue = JSON.stringify(translatedCards);
                 }
@@ -77,7 +112,8 @@ export const updateSetting = async (req: Request, res: Response) => {
                 if (Array.isArray(donors)) {
                     const translatedDonors = await Promise.all(donors.map(async (donor: { description?: string, description_en?: string }) => ({
                         ...donor,
-                        description_en: donor.description ? await translateText(donor.description, 'en') : donor.description_en
+                        description_en: donor.description_en
+                        // description_en: donor.description ? await translateText(donor.description, 'en') : donor.description_en
                     })));
                     finalValue = JSON.stringify(translatedDonors);
                 }

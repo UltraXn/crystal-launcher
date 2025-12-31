@@ -26,10 +26,12 @@ import ruleRoutes from './routes/ruleRoutes.js';
 import policyRoutes from './routes/policyRoutes.js';
 import profileCommentRoutes from './routes/profileCommentRoutes.js';
 import wikiRoutes from './routes/wikiRoutes.js';
+import locationRoutes from './routes/locationRoutes.js';
 import { initCleanupJob } from './services/cleanupService.js';
 
 import helmet from 'helmet';
 import { apiLimiter, sensitiveActionLimiter } from './middleware/rateLimitMiddleware.js';
+import authRoutes from './routes/authRoutes.js';
 
 const app = express();
 
@@ -58,7 +60,7 @@ app.use('/api/news', newsRoutes);
 app.use('/api/minecraft', minecraftRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/discord', sensitiveActionLimiter, discordRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/donations', donationRoutes);
@@ -70,6 +72,7 @@ app.use('/api/rules', ruleRoutes); // Interactive Rules
 app.use('/api/policies', policyRoutes);
 app.use('/api/profiles/comments', profileCommentRoutes);
 app.use('/api/wiki', wikiRoutes);
+app.use('/api/locations', locationRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/player-stats', playerStatsRoutes);
 app.use('/api/server', serverRoutes);

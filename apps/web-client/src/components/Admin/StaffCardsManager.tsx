@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaUsers, FaPlus, FaTrash, FaTwitter, FaDiscord, FaYoutube, FaTwitch, FaSave, FaTimes, FaCheckCircle, FaSync, FaGripVertical, FaEdit } from 'react-icons/fa';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import Loader from "../UI/Loader";
+import MinecraftAvatar from "../UI/MinecraftAvatar";
+import { supabase } from '../../services/supabaseClient';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 interface StaffCard {
     id: number | string;
     name: string;
+    mc_nickname?: string;
     role: string;
     description: string;
     image: string;
@@ -25,17 +28,6 @@ interface ServerStaffUser {
     discord?: { username: string };
     twitch?: { username: string };
 }
-
-const PRESET_ROLES = [
-    { value: 'Neroferno', label: 'Neroferno', color: '#8b5cf6', badge: '/ranks/rank-neroferno.png' },
-    { value: 'Killuwu', label: 'Killuwu', color: '#0ea5e9', badge: '/ranks/rank-killu.png' },
-    { value: 'Developer', label: 'Developer', color: '#ec4899', badge: '/ranks/developer.png' },
-    { value: 'Admin', label: 'Admin', color: '#ef4444', badge: '/ranks/admin.png' },
-    { value: 'Moderator', label: 'Moderador', color: '#21cb20', badge: '/ranks/moderator.png' },
-    { value: 'Helper', label: 'Ayudante', color: '#6bfa16', badge: '/ranks/helper.png' },
-    { value: 'Usuario', label: 'Usuario', color: '#db7700', badge: '/ranks/user.png' },
-    { value: 'Custom', label: 'Personalizado', color: '#ffffff', badge: null }
-];
 
 const DEFAULT_STAFF = [
     {
@@ -80,19 +72,32 @@ export default function StaffCardsManager() {
     const [foundStaff, setFoundStaff] = useState<StaffCard[]>([]);
 
     // Online Status State
-    const [onlineStaff, setOnlineStaff] = useState<string[]>([]);
+    const [onlineStaff, setOnlineStaff] = useState<Record<string, { mc: string, discord: string }>>({});
 
     // Form State
     const [editingId, setEditingId] = useState<number | string | null>(null);
     const [formData, setFormData] = useState<StaffCard>({
         id: 0,
         name: '',
+        mc_nickname: '',
         role: 'Usuario',
         description: '',
         image: '',
         color: '#9ca3af',
         socials: { twitter: '', discord: '', youtube: '', twitch: '' }
     });
+
+    const PRESET_ROLES = useMemo(() => [
+        { value: 'Neroferno', label: t('admin.staff.roles.neroferno'), color: '#8b5cf6', badge: '/ranks/rank-neroferno.png' },
+        { value: 'Killuwu', label: t('admin.staff.roles.killuwu'), color: '#0ea5e9', badge: '/ranks/rank-killu.png' },
+        { value: 'Developer', label: t('admin.staff.roles.developer'), color: '#ec4899', badge: '/ranks/developer.png' },
+        { value: 'Admin', label: t('admin.staff.roles.admin'), color: '#ef4444', badge: '/ranks/admin.png' },
+        { value: 'Moderator', label: t('admin.staff.roles.moderator'), color: '#21cb20', badge: '/ranks/moderator.png' },
+        { value: 'Helper', label: t('admin.staff.roles.helper'), color: '#6bfa16', badge: '/ranks/helper.png' },
+        { value: 'Staff', label: 'Staff', color: '#89c606', badge: '/ranks/staff.png' },
+        { value: 'Usuario', label: t('admin.staff.roles.user'), color: '#db7700', badge: '/ranks/user.png' },
+        { value: 'Custom', label: t('admin.staff.roles.custom'), color: '#ffffff', badge: null }
+    ], [t]);
 
     useEffect(() => {
         fetch(`${API_URL}/settings`)
@@ -125,15 +130,20 @@ export default function StaffCardsManager() {
         return () => clearInterval(interval);
     }, []);
 
+
     const fetchOnlineStatus = () => {
         fetch(`${API_URL}/server/staff`)
-            .then(res => {
-                if(res.ok) return res.json();
-                return [];
-            })
+            .then(res => res.ok ? res.json() : [])
             .then(data => {
                 if(Array.isArray(data)) {
-                    setOnlineStaff(data.map((u: ServerStaffUser) => u.username.toLowerCase()));
+                    const statusMap: Record<string, { mc: string, discord: string }> = {};
+                    data.forEach((u: any) => {
+                        statusMap[u.username.toLowerCase()] = {
+                            mc: u.mc_status || 'offline',
+                            discord: u.discord_status || 'offline'
+                        };
+                    });
+                    setOnlineStaff(statusMap);
                 }
             })
             .catch(err => console.error("Error fetching online staff:", err));
@@ -142,15 +152,21 @@ export default function StaffCardsManager() {
     const handleSave = async (newCards: StaffCard[]) => {
         setSaving(true);
         try {
-            await fetch(`${API_URL}/settings/staff_cards`, {
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(`${API_URL}/settings/staff_cards`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify({ value: JSON.stringify(newCards) })
             });
+
+            if (!res.ok) throw new Error('Failed to save');
             setCards(newCards);
         } catch (error) {
             console.error(error);
-            alert("Error saving staff cards");
+            alert(t('admin.staff.save_error'));
         } finally {
             setSaving(false);
         }
@@ -168,7 +184,7 @@ export default function StaffCardsManager() {
             const staffUsers = json.data || [];
             
             if (staffUsers.length === 0) {
-                alert("No se encontraron usuarios con rango de Staff en sincronización.");
+                alert(t('admin.staff.sync_no_users'));
                 setSyncing(false);
                 return;
             }
@@ -185,7 +201,7 @@ export default function StaffCardsManager() {
                     id: u.uuid || u.web_id || Date.now(),
                     name: u.username,
                     role: finalRole,
-                    description: existing?.description || `Miembro del Staff`,
+                    description: existing?.description || t('admin.staff.default_desc'),
                     image: u.avatar_url || (existing?.image?.startsWith('http') ? existing.image : u.username),
                     color: roleConfig?.color || '#fff',
                     socials: {
@@ -203,7 +219,7 @@ export default function StaffCardsManager() {
         } catch (error) {
             console.error("Sync error:", error);
             const msg = error instanceof Error ? error.message : "Desconocido";
-            alert(`Error al sincronizar: ${msg}`);
+            alert(`${t('admin.staff.sync_error')} ${msg}`);
         } finally {
             setSyncing(false);
         }
@@ -233,7 +249,7 @@ export default function StaffCardsManager() {
     };
 
     const handleDelete = (id: number | string) => {
-        if(!confirm("¿Eliminar este perfil?")) return;
+        if(!confirm(t('admin.staff.confirm_delete_profile'))) return;
         const newCards = cards.filter(c => c.id !== id);
         handleSave(newCards);
     };
@@ -275,8 +291,6 @@ export default function StaffCardsManager() {
     };
 
     // Helper to get badge
-
-    // Helper to get badge
     const getRoleBadge = (roleName: string) => {
         const role = PRESET_ROLES.find(r => r.value === roleName);
         return role?.badge;
@@ -284,114 +298,69 @@ export default function StaffCardsManager() {
 
     if (loading) {
         return (
-             <div className="admin-card" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '5rem' }}>
-                <Loader style={{ height: 'auto', minHeight: '150px' }} />
+            <div style={{ padding: '6rem 0' }}>
+                <Loader />
             </div>
         );
     }
 
     return (
-        <div className="admin-card">
+        <div className="staff-manager-container">
             {/* Sync Modal GUI - Redesigned */}
             {showSyncModal && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 9999,
-                    background: 'rgba(5, 5, 10, 0.85)', backdropFilter: 'blur(12px)',
-                    display: 'flex', justifyContent: 'center', alignItems: 'center',
-                    animation: 'fadeIn 0.2s ease-out'
-                }}>
-                    <div style={{
-                        background: '#09090b', width: '550px', maxWidth: '95%', maxHeight: '85vh',
-                        borderRadius: '24px', border: '1px solid rgba(139, 92, 246, 0.2)',
-                        display: 'flex', flexDirection: 'column',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
-                        position: 'relative', overflow: 'hidden'
-                    }}>
+                <div className="sync-modal-overlay">
+                    <div className="sync-modal-content">
                         {/* Decorative Top Line */}
-                        <div style={{ height: '4px', width: '100%', background: 'linear-gradient(90deg, var(--bg-soft), var(--accent))', boxShadow: '0 0 10px var(--accent-soft)' }}></div>
+                        <div className="modal-accent-line"></div>
 
-                        <div style={{ padding: '2rem 2rem 1rem', textAlign: 'center' }}>
-                            <div style={{ 
-                                width: '64px', height: '64px', borderRadius: '50%', background: 'var(--accent-soft)', 
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem',
-                                color: 'var(--accent)', fontSize: '1.5rem', border: '1px solid rgba(137, 217, 209, 0.2)',
-                                boxShadow: '0 0 15px var(--accent-soft)'
-                            }}>
+                        <div className="sync-modal-header">
+                            <div className="sync-modal-icon">
                                 <FaUsers />
                             </div>
-                            <h3 style={{ margin: 0, color: '#fff', fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.02em' }}>{t('admin.staff.confirm_modal.title')}</h3>
-                            <p style={{ margin: '0.5rem 0 0', color: '#a1a1aa', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                            <h3>{t('admin.staff.confirm_modal.title')}</h3>
+                            <p>
                                 <span dangerouslySetInnerHTML={{ __html: t('admin.staff.confirm_modal.detected_msg', { count: foundStaff.length, interpolation: { escapeValue: false } }) }}></span> <br/>
-                                <span style={{ color: '#f43f5e', fontSize: '0.85rem' }}>{t('admin.staff.confirm_modal.warning')}</span>
+                                <span className="warning-text">{t('admin.staff.confirm_modal.warning')}</span>
                             </p>
                         </div>
 
-                        <div style={{ 
-                            flex: 1, overflowY: 'auto', padding: '0 2rem 1rem', 
-                            display: 'flex', flexDirection: 'column', gap: '0.8rem',
-                            scrollBehavior: 'smooth'
-                        }}>
-                             <style>{`
-                                ::-webkit-scrollbar { width: 6px; }
-                                ::-webkit-scrollbar-track { background: transparent; }
-                                ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); borderRadius: 3px; }
-                                ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-                            `}</style>
+                        <div className="sync-list-container">
                             {foundStaff.map((s, i) => (
-                                <div key={i} style={{ 
-                                    display: 'flex', alignItems: 'center', gap: '1rem', 
-                                    padding: '1rem', 
-                                    background: '#18181b', 
-                                    borderRadius: '16px', 
-                                    border: '1px solid rgba(255,255,255,0.05)',
-                                    transition: 'all 0.2s ease',
-                                    position: 'relative'
-                                }}>
-                                    <div style={{ position: 'relative' }}>
+                                <div key={i} className="sync-item-row">
+                                    <div className="sync-avatar-status">
                                         <img 
                                             src={s.image?.startsWith('http') ? s.image : `https://mc-heads.net/avatar/${s.name}/56`}
                                             onError={(e) => e.currentTarget.src = `https://mc-heads.net/avatar/MHF_Steve/56`}
-                                            style={{ width: '48px', height: '48px', borderRadius: '14px', objectFit: 'cover', background: '#000' }}
+                                            alt={s.name}
                                         />
-                                        {/* Status Dot */}
-                                        <div style={{ position: 'absolute', bottom: -2, right: -2, width: '12px', height: '12px', background: '#22c55e', borderRadius: '50%', border: '2px solid #18181b' }}></div>
+                                        <div className="status-dot-mini"></div>
                                     </div>
                                     
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: '600', color: '#fff', fontSize: '1rem', marginBottom: '2px' }}>{s.name}</div>
-                                        <div style={{ 
-                                            display: 'inline-flex', alignItems: 'center', 
-                                            fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em',
-                                            color: s.color, background: `${s.color}15`, padding: '2px 8px', borderRadius: '6px', border: `1px solid ${s.color}20` 
-                                        }}>
+                                    <div className="sync-item-info">
+                                        <div className="sync-item-name">{s.name}</div>
+                                        <div className="staff-role-badge" style={{ color: s.color, background: `${s.color}15`, border: `1px solid ${s.color}20` }}>
                                             {s.role}
                                         </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: '8px', opacity: 0.7 }}>
-                                        {s.socials.discord && <div title={s.socials.discord} style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#5865F220', color: '#5865F2', display:'flex', alignItems:'center', justifyContent:'center' }}><FaDiscord size={14} /></div>} 
-                                        {s.socials.twitch && <div title={s.socials.twitch} style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#9146FF20', color: '#9146FF', display:'flex', alignItems:'center', justifyContent:'center' }}><FaTwitch size={14} /></div>}
+                                    <div className="sync-socials-preview">
+                                        {s.socials.discord && <div title={s.socials.discord} className="social-pill discord"><FaDiscord size={14} /></div>} 
+                                        {s.socials.twitch && <div title={s.socials.twitch} className="social-pill twitch"><FaTwitch size={14} /></div>}
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid rgba(255,255,255,0.05)', background: '#09090b', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <div className="modal-footer-premium">
                             <button 
                                 onClick={() => setShowSyncModal(false)} 
-                                className="btn-secondary"
-                                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa' }}
+                                className="modal-btn-secondary"
                             >
                                 {t('admin.staff.confirm_modal.cancel')}
                             </button>
                             <button 
                                 onClick={confirmSync} 
-                                className="btn-primary" 
-                                style={{ 
-                                    border: 'none', padding: '0.8rem 1.5rem', 
-                                    background: 'var(--accent)', color: '#000',
-                                    boxShadow: '0 4px 20px var(--accent-soft)' 
-                                }}
+                                className="modal-btn-primary" 
                             >
                                 <FaCheckCircle style={{ marginRight: '8px' }} /> {t('admin.staff.confirm_modal.save')}
                             </button>
@@ -400,23 +369,22 @@ export default function StaffCardsManager() {
                 </div>
             )}
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', gap: '1rem' }}>
-                <h3 style={{ margin: 0, display:'flex', alignItems:'center', gap:'0.5rem' }}>
+            <div className="staff-manager-header">
+                <h3>
                     <FaUsers style={{ color: '#fbbf24' }} /> {t('admin.staff.manager_title')}
                 </h3>
                 {!editingId && (
-                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                        <button onClick={startSync} className="btn-secondary" disabled={syncing} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                    <div className="staff-header-actions">
+                        <button onClick={startSync} className="btn-secondary" disabled={syncing}>
                              {syncing ? (
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <FaSync className="spin-icon" /> {t('admin.staff.syncing')}
-                                    <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } .spin-icon { animation: spin 1s linear infinite; }`}</style>
                                 </span>
                              ) : (
                                 <><FaSync style={{ marginRight: '5px' }} /> {t('admin.staff.sync_btn')}</>
                              )}
                         </button>
-                        <button onClick={handleAdd} className="btn-primary" style={{ whiteSpace: 'nowrap' }}>
+                        <button onClick={handleAdd} className="btn-primary">
                             <FaPlus size={12} style={{ marginRight: '5px' }} /> {t('admin.staff.add_member')}
                         </button>
                     </div>
@@ -424,51 +392,48 @@ export default function StaffCardsManager() {
             </div>
 
             {editingId && (
-                <div style={{ marginBottom: '2rem', padding: '1.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                         <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div className="staff-form-container">
+                    <div className="staff-form-header">
+                         <h4>
                             {editingId === 'new' ? t('admin.staff.form.new_title') : t('admin.staff.form.edit_title')}
-                            {formData.name && <span style={{ fontSize: '0.8em', color: '#aaa', fontWeight: 'normal' }}>- {formData.name}</span>}
+                            {formData.name && <span className="preview-label">- {formData.name}</span>}
                          </h4>
-                         <button onClick={() => setEditingId(null)} style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer' }}><FaTimes /></button>
+                         <button onClick={() => setEditingId(null)} className="btn-close-mini"><FaTimes /></button>
                     </div>
 
-                    <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <form onSubmit={handleFormSubmit} className="staff-form-grid">
                         
                         {/* Left Column: Preview & Avatar */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', flex: '0 0 auto', width: '100%', maxWidth: '200px', margin: '0 auto' }}>
-                            <div style={{ 
-                                width: '120px', 
-                                height: '120px', 
-                                borderRadius: '50%', 
-                                overflow: 'hidden', 
-                                border: `4px solid ${formData.color}`,
-                                boxShadow: `0 0 20px ${formData.color}40`,
-                                background: '#1a1a1a'
-                            }}>
-                                <img 
-                                    src={formData.image?.startsWith('http') ? formData.image : `https://mc-heads.net/avatar/${formData.image || formData.name || 'MHF_Steve'}/120`} 
-                                    alt="Preview" 
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                    onError={(e) => e.currentTarget.src = `https://mc-heads.net/avatar/MHF_Steve/120`}
-                                />
+                        <div className="staff-form-preview">
+                            <div className="staff-avatar-ring" style={{ borderColor: formData.color, boxShadow: `0 0 30px ${formData.color}30` }}>
+                                <div className="staff-avatar-content">
+                                    <MinecraftAvatar 
+                                        src={formData.image || formData.mc_nickname || formData.name} 
+                                        alt="Preview" 
+                                        size={120}
+                                    />
+                                </div>
                             </div>
-                            <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{formData.name || t('admin.staff.form.preview_name')}</div>
+                            <div className="staff-preview-info">
+                                <div className="preview-name">{formData.name || t('admin.staff.form.preview_name')}</div>
                                 {getRoleBadge(formData.role) ? (
-                                    <img src={getRoleBadge(formData.role) || undefined} alt={formData.role} style={{ height: 'auto', maxWidth: '100%', objectFit: 'contain' }} />
+                                    <div className="preview-badge-wrapper">
+                                        <img src={getRoleBadge(formData.role) || undefined} alt={formData.role} />
+                                    </div>
                                 ) : (
-                                    <div style={{ color: formData.color, fontSize: '0.9rem', fontWeight: 'bold' }}>{formData.role || t('admin.staff.form.preview_role')}</div>
+                                    <div className="staff-role-badge" style={{ color: formData.color, background: `${formData.color}15` }}>
+                                        {formData.role || t('admin.staff.form.preview_role')}
+                                    </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Right Column: Inputs */}
-                        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', flex: '1 1 300px' }}>
-                            <div style={{ gridColumn: '1/-1' }}>
-                                <label className="form-label">{t('admin.staff.form.name_label')}</label>
+                        <div className="staff-form-inputs">
+                            <div className="full-width">
+                                <label className="admin-label-premium">{t('admin.staff.form.name_label')}</label>
                                 <input 
-                                    className="admin-input" 
+                                    className="admin-input-premium" 
                                     required 
                                     value={formData.name} 
                                     onChange={e => setFormData({...formData, name: e.target.value})} 
@@ -476,10 +441,20 @@ export default function StaffCardsManager() {
                                 />
                             </div>
 
+                            <div className="full-width">
+                                <label className="admin-label-premium">Nick MC (Opcional - Para Skin/Status)</label>
+                                <input 
+                                    className="admin-input-premium" 
+                                    value={formData.mc_nickname || ''} 
+                                    onChange={e => setFormData({...formData, mc_nickname: e.target.value})} 
+                                    placeholder="Ej: Neroferno (Dejar vacío si es igual al nombre)"
+                                />
+                            </div>
+
                             <div>
-                                <label className="form-label">{t('admin.staff.form.role_label')}</label>
+                                <label className="admin-label-premium">{t('admin.staff.form.role_label')}</label>
                                 <select 
-                                    className="admin-input" 
+                                    className="admin-select-premium" 
                                     value={PRESET_ROLES.some(r => r.value === formData.role) ? formData.role : 'Custom'} 
                                     onChange={onRoleChange}
                                 >
@@ -489,7 +464,7 @@ export default function StaffCardsManager() {
                                 </select>
                                 {!PRESET_ROLES.some(r => r.value === formData.role && r.value !== 'Custom') && (
                                     <input 
-                                        className="admin-input" 
+                                        className="admin-input-premium" 
                                         style={{ marginTop: '0.5rem' }}
                                         value={formData.role} 
                                         onChange={e => setFormData({...formData, role: e.target.value})}
@@ -499,32 +474,37 @@ export default function StaffCardsManager() {
                             </div>
 
                             <div>
-                                <label className="form-label">{t('admin.staff.form.color_label')}</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <input 
-                                        type="color" 
-                                        value={formData.color} 
-                                        onChange={e => setFormData({...formData, color: e.target.value})} 
-                                        style={{ width:'50px', height:'40px', background:'none', border:'none', padding: 0, cursor: 'pointer' }} 
-                                    />
-                                    <span style={{ color: '#aaa', fontFamily: 'monospace' }}>{formData.color}</span>
+                                <label className="admin-label-premium">{t('admin.staff.form.color_label')}</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div style={{ position: 'relative', width: '40px', height: '40px', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <input 
+                                            type="color" 
+                                            value={formData.color} 
+                                            onChange={e => setFormData({...formData, color: e.target.value})} 
+                                            style={{ position: 'absolute', top: '-50%', left: '-50%', width: '200%', height: '200%', cursor: 'pointer', border: 'none' }} 
+                                        />
+                                    </div>
+                                    <span style={{ color: '#aaa', fontFamily: 'monospace', fontWeight: '800' }}>{formData.color.toUpperCase()}</span>
                                 </div>
                             </div>
 
-                            <div style={{ gridColumn: '1/-1' }}>
-                                <label className="form-label">{t('admin.staff.form.avatar_label')}</label>
+                            <div className="full-width">
+                                <label className="admin-label-premium">{t('admin.staff.form.avatar_label')}</label>
                                 <input 
-                                    className="admin-input" 
+                                    className="admin-input-premium" 
                                     value={formData.image} 
                                     onChange={e => setFormData({...formData, image: e.target.value})} 
-                                    placeholder={t('admin.staff.form.avatar_ph')} 
+                                    placeholder={t('admin.staff.form.avatar_ph', "Nick de Minecraft o URL de imagen")} 
                                 />
+                                <div className="input-tip-premium">
+                                    {t('admin.staff.avatar_tip', 'Usa un Nickname (Premium) o una URL directa al avatar/cabeza.')}
+                                </div>
                             </div>
 
-                            <div style={{ gridColumn: '1/-1' }}>
-                                <label className="form-label">{t('admin.staff.form.bio_label')}</label>
+                            <div className="full-width">
+                                <label className="admin-label-premium">{t('admin.staff.form.bio_label')}</label>
                                 <textarea 
-                                    className="admin-input" 
+                                    className="admin-textarea-premium" 
                                     rows={3} 
                                     value={formData.description} 
                                     onChange={e => setFormData({...formData, description: e.target.value})} 
@@ -532,29 +512,27 @@ export default function StaffCardsManager() {
                                 />
                             </div>
                             
-                            <div style={{ gridColumn: '1/-1', display: 'flex', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', flexWrap: 'wrap' }}>
-                                <div style={{ flex: '1 1 40%' }}>
-                                    <label className="form-label"><FaDiscord /> Discord (User)</label>
-                                    <input className="admin-input" value={formData.socials?.discord || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, discord: e.target.value}})} placeholder="Usuario#0000" />
-                                </div>
-                                <div style={{ flex: '1 1 40%' }}>
-                                    <label className="form-label"><FaTwitch /> Twitch (User)</label>
-                                    <input className="admin-input" value={formData.socials?.twitch || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, twitch: e.target.value}})} placeholder="Nombre de usuario" />
-                                </div>
-                                <div style={{ flex: '1 1 40%' }}>
-                                    <label className="form-label"><FaTwitter /> Twitter (Link)</label>
-                                    <input className="admin-input" value={formData.socials?.twitter || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, twitter: e.target.value}})} placeholder="https://twitter.com/..." />
-                                </div>
-                                <div style={{ flex: '1 1 40%' }}>
-                                    <label className="form-label"><FaYoutube /> YouTube (Link)</label>
-                                    <input className="admin-input" value={formData.socials?.youtube || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, youtube: e.target.value}})} placeholder="https://youtube.com/..." />
-                                </div>
+                            <div>
+                                <label className="admin-label-premium"><FaDiscord /> Discord (User/IDs)</label>
+                                <input className="admin-input-premium" value={formData.socials?.discord || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, discord: e.target.value}})} placeholder="Usuario o IDs" />
+                            </div>
+                            <div>
+                                <label className="admin-label-premium"><FaTwitch /> Twitch (User)</label>
+                                <input className="admin-input-premium" value={formData.socials?.twitch || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, twitch: e.target.value}})} placeholder="twitch.tv/..." />
+                            </div>
+                            <div>
+                                <label className="admin-label-premium"><FaTwitter /> Twitter (Link)</label>
+                                <input className="admin-input-premium" value={formData.socials?.twitter || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, twitter: e.target.value}})} placeholder="https://x.com/..." />
+                            </div>
+                            <div>
+                                <label className="admin-label-premium"><FaYoutube /> YouTube (Link)</label>
+                                <input className="admin-input-premium" value={formData.socials?.youtube || ''} onChange={e => setFormData({...formData, socials: {...formData.socials, youtube: e.target.value}})} placeholder="https://youtube.com/..." />
                             </div>
 
-                            <div style={{ gridColumn: '1/-1', display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1rem' }}>
+                            <div className="staff-form-footer">
                                 <button type="button" className="btn-secondary" onClick={() => setEditingId(null)}>{t('admin.staff.form.cancel')}</button>
                                 <button type="submit" className="btn-primary" disabled={saving}>
-                                    {saving ? <Loader style={{ width: '20px', height: '20px' }} /> : <><FaSave style={{ marginRight: '5px' }} /> {t('admin.staff.form.save_changes')}</>}
+                                    {saving ? <Loader style={{ width: '20px', height: '20px' }} /> : <><FaSave style={{ marginRight: '8px' }} /> {t('admin.staff.form.save_changes')}</>}
                                 </button>
                             </div>
                         </div>
@@ -568,7 +546,7 @@ export default function StaffCardsManager() {
                         <div 
                             {...provided.droppableProps}
                             ref={provided.innerRef}
-                            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}
+                            className="staff-cards-grid"
                         >
                             {cards.map((card, index) => (
                                 <Draggable key={card.id} draggableId={card.id.toString()} index={index}>
@@ -576,121 +554,94 @@ export default function StaffCardsManager() {
                                         <div 
                                             ref={provided.innerRef}
                                             {...provided.draggableProps}
+                                            className="staff-card-premium"
                                             style={{ 
-                                                background: `linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.2) 100%)`, 
-                                                borderRadius: '12px', 
-                                                padding: '1.5rem',
-                                                position: 'relative',
-                                                transition: 'transform 0.2s, box-shadow 0.2s',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                borderLeft: '1px solid rgba(255,255,255,0.05)',
-                                                borderRight: '1px solid rgba(255,255,255,0.05)',
-                                                borderTop: `3px solid ${card.color}`,
+                                                borderTopColor: card.color,
                                                 ...provided.draggableProps.style
                                             }}
                                         >
                                             <div 
                                                 {...provided.dragHandleProps}
-                                                style={{ position: 'absolute', top: '10px', right: '10px', opacity: 0.5, cursor: 'grab', padding: '5px', color: '#fff' }}
+                                                className="staff-card-drag-handle"
                                                 title={t('admin.staff.drag_tooltip')}
                                             >
                                                 <FaGripVertical />
                                             </div>
 
-                                            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                                                <div style={{ position: 'relative', display: 'inline-block', margin: '0 auto 1rem' }}>
-                                                    <div style={{ 
-                                                        width: '90px', 
-                                                        height: '90px', 
-                                                        borderRadius: '50%', 
-                                                        overflow: 'hidden', 
-                                                        border: `3px solid ${card.color}`,
-                                                        boxShadow: `0 0 15px ${card.color}30`,
-                                                        pointerEvents: 'none' // Prevent dragging image ghost
-                                                    }}>
-                                                    <img 
-                                                        src={card.image?.startsWith('http') ? card.image : `https://mc-heads.net/avatar/${card.image || card.name}/128`} 
-                                                        alt={card.name} 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                                                        onError={(e) => e.currentTarget.src = `https://mc-heads.net/avatar/MHF_Steve/128`}
+                                            <div className="staff-avatar-wrapper">
+                                                <div className="staff-avatar-ring" style={{ boxShadow: `0 0 20px ${card.color}20` }}>
+                                                    <div className="staff-avatar-content">
+                                                        <MinecraftAvatar 
+                                                            src={card.image || card.mc_nickname || card.name} 
+                                                            alt={card.name} 
+                                                            size={128}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {/* Online Status Indicator (Double) */}
+                                                <div className="staff-status-indicators">
+                                                    <div 
+                                                        className={`status-orb-mini mc ${onlineStaff[(card.mc_nickname || card.name).toLowerCase()]?.mc === 'online' ? 'online' : 'offline'}`}
+                                                        title={`MC: ${onlineStaff[(card.mc_nickname || card.name).toLowerCase()]?.mc || 'offline'}`}
+                                                    />
+                                                    <div 
+                                                        className={`status-orb-mini discord ${onlineStaff[(card.mc_nickname || card.name).toLowerCase()]?.discord || 'offline'}`}
+                                                        title={`Discord: ${onlineStaff[(card.mc_nickname || card.name).toLowerCase()]?.discord || 'offline'}`}
                                                     />
                                                 </div>
-                                                {/* Online Status Indicator */}
-                                                <div 
-                                                    title={onlineStaff.includes(card.name.toLowerCase()) ? "Online" : "Offline"}
-                                                    style={{ 
-                                                        position: 'absolute', 
-                                                        bottom: '2px', 
-                                                        right: '2px', 
-                                                        width: '18px', 
-                                                        height: '18px', 
-                                                        borderRadius: '50%', 
-                                                        background: onlineStaff.includes(card.name.toLowerCase()) ? '#22c55e' : '#52525b', 
-                                                        border: '3px solid #1a1a1a', 
-                                                        zIndex: 2,
-                                                        boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                                                    }} 
-                                                />
                                             </div>
-                                                <h4 style={{ margin: '0 0 0.4rem 0', fontSize: '1.3rem', color: '#fff' }}>{card.name}</h4>
+
+                                            <div className="staff-info-section">
+                                                <h4>{card.name}</h4>
                                                 
                                                 {getRoleBadge(card.role) ? (
-                                                    <div style={{ height: '32px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                                        <img src={getRoleBadge(card.role) || undefined} alt={card.role} style={{ maxHeight: '100%', maxWidth: '100%' }} />
+                                                    <div className="role-badge-img">
+                                                        <img src={getRoleBadge(card.role) || undefined} alt={card.role} />
                                                     </div>
                                                 ) : (
-                                                    <span style={{ 
-                                                        color: card.color, 
-                                                        fontSize: '0.8rem', 
-                                                        fontWeight: 'bold', 
-                                                        textTransform: 'uppercase',
-                                                        background: `${card.color}15`,
-                                                        padding: '4px 10px',
-                                                        borderRadius: '20px',
-                                                        border: `1px solid ${card.color}30`
-                                                    }}>
+                                                    <span className="staff-role-badge" style={{ color: card.color, background: `${card.color}15`, border: `1px solid ${card.color}30` }}>
                                                         {card.role}
                                                     </span>
                                                 )}
                                             </div>
 
-                                            <p style={{ fontSize: '0.95rem', color: '#ccc', textAlign: 'center', marginBottom: '1.5rem', lineHeight: '1.5', minHeight: '3em' }}>
-                                                {card.description || <i style={{ opacity: 0.5 }}>{t('admin.staff.no_desc')}</i>}
+                                            <p className="staff-description">
+                                                {card.description || t('admin.staff.no_desc')}
                                             </p>
 
-                                            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginBottom: '1.5rem' }}>
+                                            <div className="staff-social-strip">
                                                 {card.socials?.discord && (
-                                                    <div title={`Discord: ${card.socials.discord}`} style={{ position: 'relative', color: '#aaa', cursor: 'help', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#5865F2'} onMouseOut={e => e.currentTarget.style.color = '#aaa'}>
+                                                    <div title={`Discord: ${card.socials.discord}`} className="staff-social-link discord">
                                                         <FaDiscord size={20} />
-                                                        {card.socials?.discord && <FaCheckCircle size={10} style={{ position: 'absolute', bottom: -2, right: -2, color: '#22c55e', background: '#000', borderRadius: '50%' }} title={t('admin.staff.linked_account')} />}
+                                                        <FaCheckCircle className="verified-dot" />
                                                     </div>
                                                 )}
                                                 {card.socials?.twitch && (
-                                                    <a href={`https://twitch.tv/${card.socials.twitch}`} target="_blank" rel="noopener noreferrer" style={{ position: 'relative', color: '#aaa', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#9146FF'} onMouseOut={e => e.currentTarget.style.color = '#aaa'}>
+                                                    <a href={`https://twitch.tv/${card.socials.twitch}`} target="_blank" rel="noopener noreferrer" className="staff-social-link twitch">
                                                         <FaTwitch size={20} />
-                                                        {card.socials?.twitch && <FaCheckCircle size={10} style={{ position: 'absolute', bottom: -2, right: -2, color: '#22c55e', background: '#000', borderRadius: '50%' }} title={t('admin.staff.linked_account')} />}
+                                                        <FaCheckCircle className="verified-dot" />
                                                     </a>
                                                 )}
                                                 {card.socials?.twitter && (
-                                                    <a href={card.socials.twitter} target="_blank" rel="noopener noreferrer" style={{ color: '#aaa', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#1DA1F2'} onMouseOut={e => e.currentTarget.style.color = '#aaa'}>
+                                                    <a href={card.socials.twitter} target="_blank" rel="noopener noreferrer" className="staff-social-link twitter">
                                                         <FaTwitter size={20} />
                                                     </a>
                                                 )}
                                                 {card.socials?.youtube && (
-                                                    <a href={card.socials.youtube} target="_blank" rel="noopener noreferrer" style={{ color: '#aaa', transition: 'color 0.2s' }} onMouseOver={e => e.currentTarget.style.color = '#FF0000'} onMouseOut={e => e.currentTarget.style.color = '#aaa'}>
+                                                    <a href={card.socials.youtube} target="_blank" rel="noopener noreferrer" className="staff-social-link youtube">
                                                         <FaYoutube size={20} />
                                                     </a>
                                                 )}
                                                 {(!card.socials?.twitter && !card.socials?.discord && !card.socials?.youtube && !card.socials?.twitch) && (
-                                                    <span style={{ opacity: 0.3, fontSize: '0.8rem' }}>{t('admin.staff.no_socials')}</span>
+                                                    <span className="no-socials-msg">{t('admin.staff.no_socials')}</span>
                                                 )}
                                             </div>
 
-                                            <div style={{ display: 'flex', gap: '0.8rem' }}>
-                                                <button onClick={() => handleEdit(card)} className="btn-secondary" style={{ flex: 1, fontSize: '0.85rem', padding: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                                            <div className="staff-card-actions">
+                                                <button onClick={() => handleEdit(card)} className="staff-btn-edit">
                                                     <FaEdit /> {t('admin.staff.edit_btn')}
                                                 </button>
-                                                <button onClick={() => handleDelete(card.id)} className="btn-danger" style={{ padding: '0.7rem 1rem' }} title={t('admin.staff.delete_tooltip')}>
+                                                <button onClick={() => handleDelete(card.id)} className="staff-btn-delete" title={t('admin.staff.delete_tooltip')}>
                                                     <FaTrash />
                                                 </button>
                                             </div>
@@ -712,7 +663,7 @@ export default function StaffCardsManager() {
                         <button onClick={startSync} className="btn-secondary" disabled={syncing} style={{ minWidth: '160px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                              {syncing ? (
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <FaSync className="spin-icon" /> Sincronizando...
+                                    <FaSync className="spin-icon" /> {t('admin.staff.syncing')}
                                 </span>
                              ) : (
                                 t('admin.staff.sync_btn')

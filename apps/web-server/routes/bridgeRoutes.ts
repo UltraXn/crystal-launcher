@@ -1,12 +1,12 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { authenticateToken, require2FA } from '../middleware/authMiddleware.js';
 import * as commandService from '../services/commandService.js';
 import { checkRole, ADMIN_ROLES } from '../utils/roleUtils.js';
 
 const router = express.Router();
 
-// POST /api/bridge/queue - Queue a command (Admin only)
-router.post('/queue', authenticateToken, checkRole(ADMIN_ROLES), async (req, res) => {
+// POST /api/bridge/queue - Queue a command (Admin only + 2FA)
+router.post('/queue', authenticateToken, checkRole(ADMIN_ROLES), require2FA, async (req, res) => {
     const { command } = req.body;
     if (!command) {
         return res.status(400).json({ error: 'Command is required' });

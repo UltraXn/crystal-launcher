@@ -4,7 +4,7 @@ import { FaCopy, FaCheck } from "react-icons/fa"
 import { SiKofi } from "react-icons/si"
 import HeroBackgroundCarousel from "./Carousel"
 import HeroParticles from "./Particles"
-import anime from "animejs/lib/anime.js"
+import { gsap } from "gsap"
 import { useTranslation } from 'react-i18next'
 
 export default function Hero() {
@@ -17,6 +17,7 @@ export default function Hero() {
     const descRef = useRef<HTMLParagraphElement>(null)
     const containerRef = useRef<HTMLDivElement>(null)
     const countRef = useRef<HTMLSpanElement>(null)
+    const actionGroupRef = useRef<HTMLDivElement>(null)
 
     // State for player count
     const [playerCount, setPlayerCount] = useState(0)
@@ -52,84 +53,92 @@ export default function Hero() {
     }, [API_URL]);
 
     useEffect(() => {
-        // Timeline for organized animation
-        const tl = anime.timeline({
-            easing: 'easeOutExpo',
-            duration: 1000
+        // GSAP Timeline for organized premium animation
+        const ctx = gsap.context(() => {
+            const tl = gsap.timeline({
+                defaults: { ease: "power4.out", duration: 1.2 }
+            });
+
+            // Initial state for brand chars to avoid flicker
+            gsap.set('.hero-brand-char', { opacity: 0, y: 50, filter: 'blur(10px)', scale: 0.8 });
+
+            tl.fromTo(welcomeRef.current, 
+                { opacity: 0, y: 30 },
+                { opacity: 1, y: 0, duration: 1 }
+            )
+            .to('.hero-brand-char', {
+                opacity: 1,
+                y: 0,
+                filter: 'blur(0px)',
+                scale: 1,
+                stagger: 0.03,
+                duration: 1.5,
+                ease: "elastic.out(1, 0.75)"
+            }, "-=0.7")
+            .fromTo([descRef.current, containerRef.current],
+                { opacity: 0, y: 40 },
+                { opacity: 1, y: 0, stagger: 0.2, duration: 1 },
+                "-=1"
+            );
+
+            // Magnetic Button Effect Logic
+            const buttons = actionGroupRef.current?.querySelectorAll('.action-btn');
+            buttons?.forEach(btnElement => {
+                const btn = btnElement as HTMLElement;
+                btn.addEventListener('mousemove', (e: MouseEvent) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    
+                    gsap.to(btn, {
+                        x: x * 0.3,
+                        y: y * 0.3,
+                        duration: 0.4,
+                        ease: "power2.out"
+                    });
+                });
+
+                btn.addEventListener('mouseleave', () => {
+                    gsap.to(btn, {
+                        x: 0,
+                        y: 0,
+                        duration: 0.6,
+                        ease: "elastic.out(1, 0.3)"
+                    });
+                });
+            });
         });
 
-        tl.add({
-            targets: welcomeRef.current,
-            opacity: [0, 1],
-            translateY: [20, 0],
-            duration: 300,
-            begin: () => {
-                if (welcomeRef.current) welcomeRef.current.style.opacity = '1';
-            }
-        })
-            .add({
-                targets: '.hero-brand-char',
-                opacity: [0, 1],
-                translateY: [50, 0],
-                rotateZ: [-5, 0],
-                delay: anime.stagger(20),
-                duration: 600
-            }, '-=200')
-            .add({
-                targets: [descRef.current, containerRef.current],
-                opacity: [0, 1],
-                translateY: [30, 0],
-                delay: anime.stagger(100),
-                duration: 400
-            }, '-=300');
-
         // Player Count Animation Logic
-        let countAnimation: anime.AnimeInstance | null = null;
-
         const fetchPlayerCount = async () => {
             try {
                 const res = await fetch(`${API_URL}/minecraft/status`)
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 const data = await res.json()
 
-                if (data.online) {
+                if (data && data.online) {
                     setIsOnline(true)
                     const counter = { val: 0 };
-                    countAnimation = anime({
-                        targets: counter,
+                    gsap.to(counter, {
                         val: data.players.online,
-                        round: 1,
-                        easing: 'easeInOutQuad',
-                        duration: 2000,
-                        delay: 500,
-                        update: function () {
-                            if (countRef.current) {
-                                setPlayerCount(counter.val);
-                            }
-                        }
+                        roundProps: "val",
+                        duration: 2.5,
+                        delay: 0.5,
+                        ease: "power2.out",
+                        onUpdate: () => setPlayerCount(Math.floor(counter.val))
                     });
                 } else {
                     setIsOnline(false)
                 }
             } catch (err) {
-                console.error("Failed to fetch server status", err)
+                console.warn("Hero: Failed to fetch server status", err instanceof Error ? err.message : err)
                 setIsOnline(false)
             }
         };
 
         fetchPlayerCount();
 
-        // Capture current refs for cleanup
-        const welcomeEl = welcomeRef.current;
-        const descEl = descRef.current;
-        const containerEl = containerRef.current;
-
-        // Cleanup
-        return () => {
-            tl.pause();
-            if (countAnimation) countAnimation.pause();
-            anime.remove([welcomeEl, descEl, containerEl]);
-            anime.remove('.hero-brand-char');
-        };
+        return () => ctx.revert(); // Cleanup GSAP context
 
     }, [API_URL])
 
@@ -220,7 +229,7 @@ export default function Hero() {
                         </button>
                     </div>
 
-                    <div className="hero-action-group">
+                    <div className="hero-action-group" ref={actionGroupRef}>
                         <a href="https://ko-fi.com/G2G03Y8FL" target="_blank" rel="noreferrer" className="action-btn kofi-btn">
                             <SiKofi size={20} color="#000" />
                             <span>{t('hero.kofi_btn', 'Ko-Fi')}</span>

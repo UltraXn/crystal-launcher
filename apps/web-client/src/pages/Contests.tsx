@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import Section from "../components/Layout/Section"
 import { FaHammer, FaDiceD20, FaMapMarkedAlt, FaRunning, FaCheckCircle, FaHourglassStart, FaFlagCheckered, FaSignInAlt } from "react-icons/fa"
-import anime from "animejs/lib/anime.js"
+import { gsap } from "gsap"
 import { useTranslation } from 'react-i18next'
 import { useAuth } from "../context/AuthContext"
 import { useNavigate } from "react-router-dom"
@@ -145,14 +145,21 @@ export default function Contests() {
              } finally {
                  setLoading(false)
                  setTimeout(() => {
-                    anime({
-                        targets: '.contest-card',
-                        opacity: [0, 1],
-                        translateY: [20, 0],
-                        delay: anime.stagger(150, { start: 100 }),
-                        easing: 'spring(1, 80, 10, 0)',
-                        duration: 800
-                    })
+                    const targets = document.querySelectorAll('.contest-card');
+                    if (targets.length > 0) {
+                        gsap.fromTo('.contest-card', 
+                            { opacity: 0, y: 30, scale: 0.9 },
+                            {
+                                opacity: 1,
+                                y: 0,
+                                scale: 1,
+                                stagger: 0.1,
+                                duration: 1.2,
+                                ease: "elastic.out(1, 0.75)",
+                                delay: 0.2
+                            }
+                        );
+                    }
                 }, 100)
              }
         }

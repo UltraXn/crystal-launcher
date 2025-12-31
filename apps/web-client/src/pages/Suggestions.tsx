@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createSuggestionSchema, CreateSuggestionFormValues } from '../schemas/suggestion'
-
+import { gsap } from "gsap"
 
 interface PollOption {
     id: number;
@@ -28,6 +28,7 @@ const API_URL = import.meta.env.VITE_API_URL
 export default function Suggestions() {
     const { t } = useTranslation()
     const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+
     // Form Hook
     const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CreateSuggestionFormValues>({
         resolver: zodResolver(createSuggestionSchema),
@@ -60,6 +61,19 @@ export default function Suggestions() {
             }
         }
         fetchPoll()
+
+        // Entrance animation
+        gsap.fromTo('.suggestion-column, .polls-column', 
+            { opacity: 0, y: 30 },
+            { 
+                opacity: 1, 
+                y: 0, 
+                stagger: 0.2, 
+                duration: 1, 
+                ease: "power3.out",
+                delay: 0.3
+            }
+        );
     }, [])
 
     const handleVote = async (optionId: number) => {
@@ -196,7 +210,7 @@ export default function Suggestions() {
                                 </h4>
 
                                 <div className="poll-options">
-                                    {(poll.options || []).map((option) => (
+                                    {(poll.options || []).map((option: PollOption) => (
                                         <div 
                                             key={option.id} 
                                             className={`poll-option ${voted ? 'voted' : ''}`} 

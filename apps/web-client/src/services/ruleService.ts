@@ -4,7 +4,10 @@ export interface Rule {
     id: number;
     category: string;
     title: string;
+    title_en?: string;
     content: string;
+    content_en?: string;
+    color?: string;
     sort_order: number;
 }
 
@@ -25,7 +28,9 @@ export const createRule = async (rule: Omit<Rule, 'id'>, token: string): Promise
         body: JSON.stringify(rule)
     });
     const json = await response.json();
-    if (!response.ok) throw new Error(json.error || 'Failed to create rule');
+    if (!response.ok) {
+        throw new Error(json.error?.message || json.message || 'Failed to create rule');
+    }
     return json.data;
 };
 
@@ -39,7 +44,9 @@ export const updateRule = async (id: number, updates: Partial<Rule>, token: stri
         body: JSON.stringify(updates)
     });
     const json = await response.json();
-    if (!response.ok) throw new Error(json.error || 'Failed to update rule');
+    if (!response.ok) {
+        throw new Error(json.error?.message || json.message || 'Failed to update rule');
+    }
     return json.data;
 };
 
@@ -52,6 +59,6 @@ export const deleteRule = async (id: number, token: string): Promise<void> => {
     });
     if (!response.ok) {
         const json = await response.json();
-        throw new Error(json.error || 'Failed to delete rule');
+        throw new Error(json.error?.message || json.message || 'Failed to delete rule');
     }
 };

@@ -18,12 +18,44 @@ import { useTranslation } from 'react-i18next'
 import DiscordButton from "../components/UI/DiscordButton"
 import TwitchButton from "../components/UI/TwitchButton"
 import TwitterButton from "../components/UI/TwitterButton"
+import { useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 export default function Home() {
     const { t } = useTranslation()
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const ctx = gsap.context(() => {
+            // Animate each section container
+            const sections = containerRef.current?.querySelectorAll('section, .SectionDivider, #rules, #donors, #staff, #contests, #news, #stories, #suggestions');
+            
+            sections?.forEach((section) => {
+                gsap.fromTo(section, 
+                    { opacity: 0, y: 50 },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 1,
+                        ease: "power3.out",
+                        scrollTrigger: {
+                            trigger: section,
+                            start: "top 85%",
+                            toggleActions: "play none none none"
+                        }
+                    }
+                );
+            });
+        });
+
+        return () => ctx.revert();
+    }, []);
 
     return (
-        <>
+        <div ref={containerRef}>
             <Hero />
             
             <Section title={t('home.title')}>
@@ -103,7 +135,7 @@ export default function Home() {
                     <Suggestions />
                 </LazyWrapper>
             </div>
-        </>
+        </div>
     )
 }
 

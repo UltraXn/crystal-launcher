@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import KanbanColumn from './KanbanColumn';
 import { KanbanTask, KANBAN_COLUMNS, TaskPriority } from '@crystaltides/shared';
 import CalendarView, { GoogleEvent } from './CalendarView';
@@ -6,12 +7,14 @@ import { FaPlus, FaTimes, FaLayerGroup, FaTag, FaUser, FaCalendar, FaList, FaGoo
 import Loader from '../../UI/Loader';
 import ConfirmationModal from '../../UI/ConfirmationModal';
 import { supabase } from '../../../services/supabaseClient';
+import { getAuthHeaders } from '../../../services/adminAuth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const COLUMNS = KANBAN_COLUMNS;
 
 export default function KanbanBoard() {
+    const { t } = useTranslation();
     const [tasks, setTasks] = useState<KanbanTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'board' | 'calendar'>('board');
@@ -25,11 +28,9 @@ export default function KanbanBoard() {
     const fetchGoogleEvents = async () => {
         setSyncing(true);
         try {
-            const { data: session } = await supabase.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/staff/tasks/calendar`, {
-                headers: {
-                    Authorization: `Bearer ${session?.session?.access_token}`
-                }
+                headers: getAuthHeaders(session?.access_token || null)
             });
             if (!response.ok) throw new Error('Failed to fetch calendar');
             const events = await response.json();
@@ -44,11 +45,9 @@ export default function KanbanBoard() {
 
     const subscribeToCalendar = async () => {
         try {
-            const { data: session } = await supabase.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/staff/tasks/calendar/subscribe`, {
-                headers: {
-                    Authorization: `Bearer ${session?.session?.access_token}`
-                }
+                headers: getAuthHeaders(session?.access_token || null)
             });
             if (!response.ok) throw new Error('Failed to get subscribe link');
             const { url } = await response.json();
@@ -61,11 +60,9 @@ export default function KanbanBoard() {
     const fetchNotionTasks = async () => {
         setNotionSyncing(true);
         try {
-            const { data: session } = await supabase.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/staff/tasks/notion`, {
-                headers: {
-                    Authorization: `Bearer ${session?.session?.access_token}`
-                }
+                headers: getAuthHeaders(session?.access_token || null)
             });
             if (!response.ok) throw new Error('Failed to fetch Notion tasks');
             const tasks = await response.json();
@@ -107,7 +104,7 @@ export default function KanbanBoard() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/tasks`, {
-               headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+               headers: getAuthHeaders(session?.access_token || null)
             });
             if (res.ok) {
                 const data = await res.json() as KanbanTask[];
@@ -129,7 +126,7 @@ export default function KanbanBoard() {
         if (!newTask.title.trim()) return;
 
         if (newTask.due_date && newTask.end_date && new Date(newTask.end_date) < new Date(newTask.due_date)) {
-            setDateError('La fecha de fin no puede ser anterior a la de inicio');
+            setDateError(t('admin.staff_hub.kanban.create_modal.date_error', 'La fecha de fin no puede ser anterior a la de inicio'));
             return;
         }
         setDateError(null);
@@ -149,7 +146,7 @@ export default function KanbanBoard() {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                    ...getAuthHeaders(session?.access_token || null)
                 },
                 body: JSON.stringify(taskPayload)
             });
@@ -172,7 +169,7 @@ export default function KanbanBoard() {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                    ...getAuthHeaders(session?.access_token || null)
                 },
                 body: JSON.stringify({ 
                     due_date: newDate.toISOString(),
@@ -196,7 +193,7 @@ export default function KanbanBoard() {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                    ...getAuthHeaders(session?.access_token || null)
                 },
                 body: JSON.stringify({ 
                     due_date: start.toISOString(),
@@ -231,7 +228,7 @@ export default function KanbanBoard() {
         if (!editingTask) return;
 
         if (newTask.due_date && newTask.end_date && new Date(newTask.end_date) < new Date(newTask.due_date)) {
-            setDateError('La fecha de fin no puede ser anterior a la de inicio');
+            setDateError(t('admin.staff_hub.kanban.create_modal.date_error', 'La fecha de fin no puede ser anterior a la de inicio'));
             return;
         }
         setDateError(null);
@@ -249,7 +246,7 @@ export default function KanbanBoard() {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                    ...getAuthHeaders(session?.access_token || null)
                 },
                 body: JSON.stringify(taskPayload)
             });
@@ -277,7 +274,7 @@ export default function KanbanBoard() {
             const { data: { session } } = await supabase.auth.getSession();
             await fetch(`${API_URL}/staff/tasks/${id}`, { 
                 method: 'DELETE',
-                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+                headers: getAuthHeaders(session?.access_token || null)
              });
         } catch (error) {
             console.error("Error deleting task:", error);
@@ -311,7 +308,7 @@ export default function KanbanBoard() {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                    ...getAuthHeaders(session?.access_token || null)
                 },
                 body: JSON.stringify({ column_id: columnId })
             });
@@ -328,41 +325,22 @@ export default function KanbanBoard() {
     );
 
     return (
-        <div className="kanban-board-container" style={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column',
-            overflow: 'hidden'
-        }}>
-            <div style={{ padding: '0 0 1rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    Tablero
-                </h3>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '4px', borderRadius: '8px', display: 'flex', gap: '4px' }}>
+        <div className="kanban-board-container">
+            <div className="kanban-header">
+                <h3>{t('admin.staff_hub.kanban.title', 'Tablero')}</h3>
+                <div className="kanban-controls">
+                    <div className="view-mode-toggle">
                         <button 
                             onClick={() => setViewMode('board')}
-                            style={{ 
-                                background: viewMode === 'board' ? 'var(--accent)' : 'transparent',
-                                border: 'none', 
-                                color: viewMode === 'board' ? '#000' : '#888',
-                                padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold'
-                            }}
+                            className={viewMode === 'board' ? 'active' : ''}
                         >
-                            <FaList /> Board
+                            <FaList /> {t('admin.staff_hub.kanban.view_board', 'Board')}
                         </button>
                         <button 
                             onClick={() => setViewMode('calendar')}
-                            style={{ 
-                                background: viewMode === 'calendar' ? 'var(--accent)' : 'transparent',
-                                border: 'none', 
-                                color: viewMode === 'calendar' ? '#000' : '#888',
-                                padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold'
-                            }}
+                            className={viewMode === 'calendar' ? 'active' : ''}
                         >
-                            <FaCalendar /> Calendar
+                            <FaCalendar /> {t('admin.staff_hub.kanban.view_calendar', 'Calendar')}
                         </button>
                     </div>
 
@@ -371,68 +349,38 @@ export default function KanbanBoard() {
                             <button 
                                 onClick={fetchGoogleEvents}
                                 disabled={syncing}
-                                style={{ 
-                                    background: 'rgba(66, 133, 244, 0.2)', // Google Blue tint
-                                    border: '1px solid rgba(66, 133, 244, 0.4)',
-                                    color: '#4285F4',
-                                    padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold'
-                                }}
+                                className="sync-btn google"
                             >
-                                <FaGoogle /> {syncing ? 'Syncing...' : 'Sync Calendar'}
+                                <FaGoogle /> {syncing ? t('admin.staff_hub.kanban.syncing', 'Syncing...') : t('admin.staff_hub.kanban.sync_calendar', 'Sync Calendar')}
                             </button>
                             <button 
                                 onClick={subscribeToCalendar}
-                                style={{ 
-                                    background: 'transparent',
-                                    border: '1px solid #444',
-                                    color: '#ccc',
-                                    padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold'
-                                }}
+                                className="sync-btn secondary"
                                 title="Add CrystalTides Calendar to your Google Calendar"
                             >
-                                <FaPlus /> Add to My Calendar
+                                <FaPlus /> {t('admin.staff_hub.kanban.add_to_calendar', 'Add to My Calendar')}
+                            </button>
+                            <button 
+                                onClick={fetchNotionTasks}
+                                disabled={notionSyncing}
+                                className="sync-btn notion"
+                            >
+                                 <FaBullseye /> {notionSyncing ? t('admin.staff_hub.kanban.syncing', 'Syncing...') : t('admin.staff_hub.kanban.sync_notion', 'Sync Notion')}
                             </button>
                         </>
                     )}
 
-                    {viewMode === 'calendar' && (
-                        <button 
-                            onClick={fetchNotionTasks}
-                            disabled={notionSyncing}
-                            style={{ 
-                                background: 'rgba(0, 0, 0, 0.2)', // Notion Black tint
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                color: '#fff',
-                                padding: '6px 12px', borderRadius: '6px', cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 'bold'
-                            }}
-                        >
-                             <FaBullseye /> {notionSyncing ? 'Syncing...' : 'Sync Notion'}
-                        </button>
-                    )}
-
                     <button 
                         onClick={() => setShowCreateModal(true)}
-                        className="btn-primary" 
-                        style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '8px', background: 'var(--accent)', border: 'none', color:'#000', fontWeight:'bold' }}
+                        className="new-task-btn"
                     >
-                        <FaPlus /> Nueva Tarea
+                        <FaPlus /> {t('admin.staff_hub.kanban.new_task_btn', 'Nueva Tarea')}
                     </button>
                 </div>
             </div>
 
             {viewMode === 'board' ? (
-                <div style={{ 
-                    flex: 1, 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                    gridAutoRows: 'minmax(0, 1fr)',
-                    gap: '1rem', 
-                    overflow: 'auto', // Allow scroll if columns stack
-                    paddingBottom: '0.5rem'
-                }}>
+                <div className="kanban-grid">
                     {COLUMNS.map(col => (
                         <KanbanColumn 
                             key={col.id} 
@@ -458,45 +406,34 @@ export default function KanbanBoard() {
 
             {/* Create Modal */}
             {showCreateModal && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
-                    animation: 'fadeIn 0.3s ease'
-                }}>
-                    <div className="premium-modal" style={{
-                        background: 'rgba(15, 15, 20, 0.95)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        padding: '2.5rem',
-                        borderRadius: '32px',
-                        width: '90%', maxWidth: '500px',
-                        boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7)',
-                        position: 'relative',
-                        animation: 'modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}>
-                        <button 
-                            onClick={() => { setShowCreateModal(false); setEditingTask(null); }}
-                            style={{ position: 'absolute', top: '24px', right: '24px', background: 'transparent', border: 'none', color: '#666', cursor: 'pointer', fontSize: '1.2rem' }}
-                        >
-                            <FaTimes />
-                        </button>
-
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                {editingTask ? <FaBullseye color="var(--accent)" /> : <FaPlus color="var(--accent)" />}
-                                {editingTask ? 'Editar Tarea' : 'Nueva Tarea'}
-                            </h2>
-                            <p style={{ color: '#666', fontSize: '0.85rem', marginTop: '4px' }}>
-                                {editingTask ? 'Actualiza los detalles de tu tarea' : 'Planifica una nueva actividad para el equipo'}
-                            </p>
+                <div className="premium-modal-overlay">
+                    <div className="premium-modal-content">
+                        <div className="modal-accent-line" />
+                        
+                        <div className="modal-header-premium">
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: '950', color: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {editingTask ? <FaBullseye color="var(--accent)" /> : <FaPlus color="var(--accent)" />}
+                                    {editingTask ? t('admin.staff_hub.kanban.create_modal.title_edit', 'Editar Tarea') : t('admin.staff_hub.kanban.create_modal.title_new', 'Nueva Tarea')}
+                                </h2>
+                                <p style={{ margin: '0.5rem 0 0', color: 'rgba(255,255,255,0.4)', fontSize: '0.9rem', fontWeight: 500 }}>
+                                    {editingTask ? t('admin.staff_hub.kanban.create_modal.subtitle_edit', 'Actualiza los detalles de tu tarea') : t('admin.staff_hub.kanban.create_modal.subtitle_new', 'Planifica una nueva actividad para el equipo')}
+                                </p>
+                            </div>
+                            <button 
+                                onClick={() => { setShowCreateModal(false); setEditingTask(null); }}
+                                className="btn-close-premium"
+                            >
+                                <FaTimes />
+                            </button>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label className="admin-label-premium">TÍTULO DE LA TAREA</label>
+                        <div className="modal-body-premium">
+                            <div className="form-group">
+                                <label className="admin-label-premium"><FaBullseye size={12} /> {t('admin.staff_hub.kanban.create_modal.task_title', 'TÍTULO DE LA TAREA')}</label>
                                 <input 
                                     className="admin-input-premium" 
-                                    placeholder="¿En qué vamos a trabajar?"
+                                    placeholder={t('admin.staff_hub.kanban.create_modal.task_placeholder', '¿En qué vamos a trabajar?')}
                                     value={newTask.title}
                                     onChange={e => { setNewTask({...newTask, title: e.target.value}); setDateError(null); }}
                                 />
@@ -506,66 +443,65 @@ export default function KanbanBoard() {
                                 <div style={{ 
                                     background: 'rgba(255, 68, 68, 0.1)', 
                                     color: '#ff4444', 
-                                    padding: '10px', 
-                                    borderRadius: '8px', 
-                                    fontSize: '0.8rem', 
-                                    marginBottom: '1rem',
-                                    fontWeight: 'bold',
+                                    padding: '12px 16px', 
+                                    borderRadius: '14px', 
+                                    fontSize: '0.85rem', 
+                                    fontWeight: '700',
                                     border: '1px solid rgba(255, 68, 68, 0.2)',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: '8px'
+                                    gap: '10px'
                                 }}>
                                     <FaTimes /> {dateError}
                                 </div>
                             )}
 
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ flex: 1 }}>
-                                    <label className="admin-label-premium"><FaTag size={10} /> Prioridad</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                <div className="form-group">
+                                    <label className="admin-label-premium"><FaTag size={12} /> {t('admin.staff_hub.kanban.create_modal.priority', 'Prioridad')}</label>
                                     <select 
-                                        className="admin-input-premium"
+                                        className="admin-select-premium"
                                         value={newTask.priority}
                                         onChange={e => setNewTask({...newTask, priority: e.target.value as TaskPriority})}
                                     >
-                                        <option value="Low">Baja</option>
-                                        <option value="Medium">Media</option>
-                                        <option value="High">Alta</option>
+                                        <option value="Low">{t('admin.staff_hub.kanban.priorities.low', 'Baja')}</option>
+                                        <option value="Medium">{t('admin.staff_hub.kanban.priorities.medium', 'Media')}</option>
+                                        <option value="High">{t('admin.staff_hub.kanban.priorities.high', 'Alta')}</option>
                                     </select>
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <label className="admin-label-premium"><FaLayerGroup size={10} /> Tipo</label>
+                                <div className="form-group">
+                                    <label className="admin-label-premium"><FaLayerGroup size={12} /> {t('admin.staff_hub.kanban.create_modal.type', 'Tipo')}</label>
                                     <select 
-                                        className="admin-input-premium"
+                                        className="admin-select-premium"
                                         value={newTask.type}
                                         onChange={e => setNewTask({...newTask, type: e.target.value})}
                                     >
-                                        <option value="General">General</option>
-                                        <option value="Bug">Bug</option>
-                                        <option value="Feature">Feature</option>
-                                        <option value="Maintenance">Mantenimiento</option>
+                                        <option value="General">{t('admin.staff_hub.kanban.types.general', 'General')}</option>
+                                        <option value="Bug">{t('admin.staff_hub.kanban.types.bug', 'Bug')}</option>
+                                        <option value="Feature">{t('admin.staff_hub.kanban.types.feature', 'Feature')}</option>
+                                        <option value="Maintenance">{t('admin.staff_hub.kanban.types.maintenance', 'Mantenimiento')}</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '1rem', position: 'relative' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', position: 'relative' }}>
                                 {(!editingTask || editingTask.columnId === 'idea') && (
                                     <div style={{ 
                                         position: 'absolute', 
-                                        top: '-18px', 
-                                        right: '4px', 
-                                        fontSize: '0.62rem', 
+                                        top: '-22px', 
+                                        right: '0', 
+                                        fontSize: '0.65rem', 
                                         color: 'var(--accent)', 
-                                        opacity: 0.7,
+                                        opacity: 0.8,
                                         fontWeight: '900',
-                                        letterSpacing: '1px',
+                                        letterSpacing: '0.5px',
                                         textTransform: 'uppercase'
                                     }}>
-                                       Fechas opcionales para backlog
+                                       {t('admin.staff_hub.kanban.create_modal.optional_dates', 'Fechas opcionales para backlog')}
                                     </div>
                                 )}
-                                <div style={{ flex: 1 }}>
-                                    <label className="admin-label-premium"><FaCalendarAlt size={10} /> Inicio</label>
+                                <div className="form-group">
+                                    <label className="admin-label-premium"><FaCalendarAlt size={12} /> {t('admin.staff_hub.kanban.create_modal.start_date', 'Inicio')}</label>
                                     <input 
                                         type="datetime-local"
                                         className="admin-input-premium" 
@@ -573,8 +509,8 @@ export default function KanbanBoard() {
                                         onChange={e => { setNewTask({...newTask, due_date: e.target.value}); setDateError(null); }}
                                     />
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <label className="admin-label-premium"><FaClock size={10} /> Fin</label>
+                                <div className="form-group">
+                                    <label className="admin-label-premium"><FaClock size={12} /> {t('admin.staff_hub.kanban.create_modal.end_date', 'Fin')}</label>
                                     <input 
                                         type="datetime-local"
                                         className="admin-input-premium" 
@@ -586,104 +522,32 @@ export default function KanbanBoard() {
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="admin-label-premium"><FaUser size={10} /> Asignado a</label>
+                            <div className="form-group">
+                                <label className="admin-label-premium"><FaUser size={12} /> {t('admin.staff_hub.kanban.create_modal.assignee', 'Asignado a')}</label>
                                 <input 
                                     className="admin-input-premium" 
-                                    placeholder="Nombre del staff..."
+                                    placeholder={t('admin.staff_hub.kanban.create_modal.assignee_placeholder', 'Nombre del staff...')}
                                     value={newTask.assignee}
                                     onChange={e => setNewTask({...newTask, assignee: e.target.value})}
                                 />
                             </div>
+                        </div>
 
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                                <button 
-                                    className="modal-btn-secondary"
-                                    onClick={() => { setShowCreateModal(false); setEditingTask(null); }}
-                                >
-                                    CANCELAR
-                                </button>
-                                <button 
-                                    className="modal-btn-primary"
-                                    onClick={editingTask ? handleSaveTask : handleCreateTask}
-                                >
-                                    {editingTask ? 'GUARDAR CAMBIOS' : 'CREAR TAREA'}
-                                </button>
-                            </div>
+                        <div className="modal-footer-premium">
+                            <button 
+                                className="modal-btn-secondary"
+                                onClick={() => { setShowCreateModal(false); setEditingTask(null); }}
+                            >
+                                {t('admin.staff_hub.kanban.create_modal.cancel', 'CANCELAR')}
+                            </button>
+                            <button 
+                                className="modal-btn-primary"
+                                onClick={editingTask ? handleSaveTask : handleCreateTask}
+                            >
+                                {editingTask ? t('admin.staff_hub.kanban.create_modal.save', 'GUARDAR CAMBIOS') : t('admin.staff_hub.kanban.create_modal.create', 'CREAR TAREA')}
+                            </button>
                         </div>
                     </div>
-
-                    <style>{`
-                        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                        @keyframes modalSlideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-                        
-                        .admin-label-premium {
-                            display: flex;
-                            align-items: center;
-                            gap: 8px;
-                            color: #888;
-                            font-size: 0.75rem;
-                            font-weight: 800;
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                            margin-bottom: 8px;
-                        }
-
-                        .admin-input-premium {
-                            width: 100%;
-                            background: rgba(255, 255, 255, 0.03);
-                            border: 1px solid rgba(255, 255, 255, 0.08);
-                            padding: 12px 16px;
-                            border-radius: 12px;
-                            color: #fff;
-                            font-size: 0.9rem;
-                            transition: all 0.3s;
-                            outline: none;
-                        }
-
-                        .admin-input-premium:focus {
-                            border-color: var(--accent);
-                            background: rgba(255, 255, 255, 0.05);
-                            box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.1);
-                        }
-
-                        .modal-btn-secondary {
-                            flex: 1;
-                            background: transparent;
-                            border: 1px solid rgba(255, 255, 255, 0.1);
-                            color: #666;
-                            padding: 14px;
-                            border-radius: 16px;
-                            font-weight: 800;
-                            cursor: pointer;
-                            transition: all 0.3s;
-                            letter-spacing: 1px;
-                        }
-
-                        .modal-btn-secondary:hover {
-                            background: rgba(255, 255, 255, 0.05);
-                            color: #fff;
-                        }
-
-                        .modal-btn-primary {
-                            flex: 1.5;
-                            background: var(--accent);
-                            border: none;
-                            color: #000;
-                            padding: 14px;
-                            border-radius: 16px;
-                            font-weight: 900;
-                            cursor: pointer;
-                            transition: all 0.3s;
-                            letter-spacing: 1px;
-                            box-shadow: 0 10px 20px rgba(var(--accent-rgb), 0.2);
-                        }
-
-                        .modal-btn-primary:hover {
-                            transform: translateY(-2px);
-                            box-shadow: 0 15px 30px rgba(var(--accent-rgb), 0.3);
-                        }
-                    `}</style>
                 </div>
             )}
 
@@ -691,9 +555,9 @@ export default function KanbanBoard() {
                 isOpen={!!deleteConfirm}
                 onClose={() => setDeleteConfirm(null)}
                 onConfirm={confirmDelete}
-                title="Eliminar Tarea"
-                message="¿Estás seguro de que quieres eliminar esta tarea permanentemente?"
-                confirmText="Eliminar"
+                title={t('admin.staff_hub.kanban.delete_modal.title', 'Eliminar Tarea')}
+                message={t('admin.staff_hub.kanban.delete_modal.msg', '¿Estás seguro de que quieres eliminar esta tarea permanentemente?')}
+                confirmText={t('admin.staff_hub.kanban.delete_modal.confirm', 'Eliminar')}
                 isDanger={true}
             />
         </div>

@@ -60,7 +60,7 @@ export default function WikiManager() {
     }
 
     const handleDelete = async (id: number) => {
-        if (!confirm(t('common.confirm_delete', '¿Estás seguro de que quieres eliminar este artículo?'))) return
+        if (!confirm(t('admin.wiki.delete_confirm'))) return
         try {
             await deleteWikiArticle(id)
             fetchArticles()
@@ -166,7 +166,7 @@ export default function WikiManager() {
                         <FaSearch className="text-white/20" />
                         <input 
                             type="text" 
-                            placeholder={t('admin.tickets.wiki.search_placeholder', 'Buscar artículos...')} 
+                            placeholder={t('admin.wiki.search_placeholder')} 
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                             style={{ background: 'none', border: 'none', color: '#fff', outline: 'none' }}
@@ -174,16 +174,16 @@ export default function WikiManager() {
                     </div>
                 </div>
                 <button className="btn-primary" onClick={startNew}>
-                    <FaPlus /> {t('admin.tickets.wiki.create_btn', 'Crear Artículo')}
+                    <FaPlus /> {t('admin.wiki.create_btn')}
                 </button>
             </div>
 
             {loading ? (
-                <Loader text={t('admin.tickets.wiki.loading', 'Cargando biblioteca...')} />
+                <Loader text={t('admin.wiki.loading')} />
             ) : filteredArticles.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '4rem', opacity: 0.3 }}>
                     <FaBook size={48} style={{ marginBottom: '1rem' }} />
-                    <p>{t('admin.tickets.wiki.no_articles', 'No se encontraron artículos.')}</p>
+                    <p>{t('admin.wiki.no_articles')}</p>
                 </div>
             ) : (
                 <div className="article-grid">
@@ -201,8 +201,8 @@ export default function WikiManager() {
                             <h3 style={{ fontSize: '1.2rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{article.title}</h3>
                             <p style={{ fontSize: '0.8rem', color: '#555', marginBottom: '1rem' }}>/{article.slug}</p>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.75rem', color: '#444' }}>
-                                <span className="flex items-center gap-1"><FaGlobe /> {t('admin.tickets.wiki.public', 'Público')}</span>
-                                <span className="flex items-center gap-1"><FaTag /> {article.content.length} {t('admin.tickets.wiki.char_count', 'caracteres')}</span>
+                                <span className="flex items-center gap-1"><FaGlobe /> {t('admin.wiki.public')}</span>
+                                <span className="flex items-center gap-1"><FaTag /> {article.content.length} {t('admin.wiki.char_count')}</span>
                             </div>
                         </div>
                     ))}
@@ -224,64 +224,64 @@ export default function WikiManager() {
                             className="form-container"
                         >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                                <h2>{editingId ? t('admin.tickets.wiki.edit_title', 'Editar Artículo') : t('admin.tickets.wiki.new_title', 'Nuevo Artículo Wiki')}</h2>
+                                <h2>{editingId ? t('admin.wiki.edit_title') : t('admin.wiki.new_title')}</h2>
                                 <button onClick={() => setIsEditing(false)} style={{ background: 'none', border: 'none', color: '#555' }}><FaTimes size={20} /></button>
                             </div>
 
                             <form onSubmit={handleSave}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                                     <div className="input-group">
-                                        <label>{t('admin.tickets.wiki.title_label', 'Título del Artículo')}</label>
+                                        <label>{t('admin.wiki.title_label')}</label>
                                         <input 
                                             type="text" 
                                             required
                                             value={formData.title} 
                                             onChange={e => setFormData({...formData, title: e.target.value})}
-                                            placeholder={t('admin.tickets.wiki.title_placeholder', 'Ej: Guía de Encantamientos')}
+                                            placeholder={t('admin.wiki.title_placeholder')}
                                         />
                                     </div>
                                     <div className="input-group">
-                                        <label>{t('admin.tickets.wiki.slug_label', 'URL Slug (Único)')}</label>
+                                        <label>{t('admin.wiki.slug_label')}</label>
                                         <input 
                                             type="text" 
                                             required
                                             value={formData.slug} 
                                             onChange={e => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/ /g, '-')})}
-                                            placeholder="guia-encantamientos"
+                                            placeholder={t('admin.wiki.slug_placeholder')}
                                         />
                                     </div>
                                 </div>
 
                                 <div className="input-group">
-                                    <label>{t('admin.tickets.wiki.category_label', 'Categoría')}</label>
+                                    <label>{t('admin.wiki.category_label')}</label>
                                     <select 
                                         value={formData.category} 
                                         onChange={e => setFormData({...formData, category: e.target.value})}
                                     >
-                                        <option value="General">{t('admin.tickets.wiki.categories.general', 'General')}</option>
-                                        <option value="Mecánicas">{t('admin.tickets.wiki.categories.mechanics', 'Mecánicas')}</option>
-                                        <option value="Economía">{t('admin.tickets.wiki.categories.economy', 'Economía')}</option>
-                                        <option value="Comandos">{t('admin.tickets.wiki.categories.commands', 'Comandos')}</option>
-                                        <option value="Rangos">{t('admin.tickets.wiki.categories.ranks', 'Rangos')}</option>
+                                        <option value="General">{t('admin.wiki.categories.general')}</option>
+                                        <option value="Mecánicas">{t('admin.wiki.categories.mechanics')}</option>
+                                        <option value="Economía">{t('admin.wiki.categories.economy')}</option>
+                                        <option value="Comandos">{t('admin.wiki.categories.commands')}</option>
+                                        <option value="Rangos">{t('admin.wiki.categories.ranks')}</option>
                                     </select>
                                 </div>
 
                                 <div className="input-group">
-                                    <label>{t('admin.tickets.wiki.content_label', 'Contenido (Markdown)')}</label>
+                                    <label>{t('admin.wiki.content_label')}</label>
                                     <textarea 
                                         required
                                         rows={12}
                                         value={formData.content} 
                                         onChange={e => setFormData({...formData, content: e.target.value})}
                                         style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}
-                                        placeholder="# Título Principal\n\nEscribe el contenido aquí..."
+                                        placeholder={t('admin.wiki.content_placeholder')}
                                     />
                                 </div>
 
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                                    <button type="button" onClick={() => setIsEditing(false)} style={{ padding: '0.8rem 2rem', color: '#666' }}>{t('common.cancel', 'Cancelar')}</button>
+                                    <button type="button" onClick={() => setIsEditing(false)} style={{ padding: '0.8rem 2rem', color: '#666' }}>{t('admin.wiki.cancel')}</button>
                                     <button type="submit" disabled={saving} className="btn-primary" style={{ padding: '0.8rem 3rem' }}>
-                                        {saving ? <Loader size={16} /> : <>{editingId ? <><FaSave /> {t('admin.tickets.wiki.update_btn', 'Actualizar')}</> : <><FaSave /> {t('admin.tickets.wiki.publish_btn', 'Publicar')}</>}</>}
+                                        {saving ? <Loader size={16} /> : <>{editingId ? <><FaSave /> {t('admin.wiki.update_btn')}</> : <><FaSave /> {t('admin.wiki.publish_btn')}</>}</>}
                                     </button>
                                 </div>
                             </form>

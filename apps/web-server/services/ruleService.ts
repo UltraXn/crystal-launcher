@@ -4,7 +4,10 @@ export interface Rule {
     id: number;
     category: string;
     title: string;
+    title_en?: string;
     content: string;
+    content_en?: string;
+    color?: string;
     sort_order: number;
     created_at?: string;
     updated_at?: string;

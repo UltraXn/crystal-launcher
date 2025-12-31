@@ -2,7 +2,7 @@ import { useRef, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FaDiscord, FaUserPlus, FaCalendarAlt, FaShieldAlt } from "react-icons/fa";
 import { motion as Motion, useInView } from "framer-motion";
-import anime from "animejs/lib/anime.js";
+import { gsap } from "gsap";
 
 export default function StatsRow() {
     const { t } = useTranslation();
@@ -91,16 +91,14 @@ export default function StatsRow() {
         if (isInView) {
             stats.forEach((stat, index) => {
                 const counter = { val: 0 };
-                anime({
-                    targets: counter,
+                gsap.to(counter, {
                     val: stat.value,
-                    round: 1,
-                    easing: 'easeOutExpo',
-                    duration: 2000,
-                    delay: index * 200,
-                    update: function() {
+                    duration: 2,
+                    delay: index * 0.2,
+                    ease: "power2.out",
+                    onUpdate: () => {
                         const el = document.getElementById(`stat-counter-${stat.id}`);
-                        if (el) el.innerHTML = counter.val + stat.suffix;
+                        if (el) el.innerHTML = Math.floor(counter.val) + stat.suffix;
                     }
                 });
             });

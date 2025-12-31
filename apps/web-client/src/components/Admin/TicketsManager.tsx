@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { FaSearch, FaPlus, FaTimes, FaSpinner, FaPaperPlane, FaGavel, FaCheckCircle, FaLock, FaEye, FaTicketAlt, FaExclamationCircle, FaExclamationTriangle, FaTrash } from "react-icons/fa"
+import { FaSearch, FaPlus, FaTimes, FaSpinner, FaPaperPlane, FaGavel, FaCheckCircle, FaLock, FaEye, FaTicketAlt, FaExclamationCircle, FaExclamationTriangle, FaTrash, FaUsers } from "react-icons/fa"
 import { useAuth } from "../../context/AuthContext"
 import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
 import { supabase } from "../../services/supabaseClient"
+import { getAuthHeaders } from "../../services/adminAuth"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -71,7 +72,7 @@ export default function TicketsManager() {
         try {
             setLoading(true)
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+            const headers: HeadersInit = getAuthHeaders(session?.access_token || null);
 
             const res = await fetch(`${API_URL}/tickets`, { headers })
             if (res.status === 429) {
@@ -112,8 +113,10 @@ export default function TicketsManager() {
         try {
             setIsSubmitting(true)
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const headers = { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(session?.access_token || null)
+            };
 
             const res = await fetch(`${API_URL}/tickets`, {
                 method: 'POST',
@@ -158,8 +161,10 @@ export default function TicketsManager() {
         try {
             setLoading(true)
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const headers = { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(session?.access_token || null)
+            };
 
             // Since we don't have a bulk delete API yet, we'll do parallel requests
             // Ideally this should be a single API call /tickets/bulk-delete
@@ -170,7 +175,7 @@ export default function TicketsManager() {
                 })
             ));
 
-            setAlert({ message: t('admin.tickets.bulk_delete_success', 'Tickets eliminados correctamente'), type: 'success' })
+            setAlert({ message: t('admin.tickets.bulk_delete_success'), type: 'success' })
             setSelectedTicketIds([])
             fetchTickets()
         } catch (error) {
@@ -183,154 +188,239 @@ export default function TicketsManager() {
     }
 
     return (
-        <div className="admin-card">
+        <div className="admin-card" style={{ 
+            background: 'rgba(10, 10, 15, 0.6)', 
+            backdropFilter: 'blur(20px)', 
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+            borderRadius: '24px',
+            padding: '2rem'
+        }}>
             {/* CARD HEADER */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ position: 'relative', width: '100%', maxWidth: '300px', flex: '1 1 auto' }}>
-                    <FaSearch style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
-                    <input type="text" placeholder={t('admin.tickets.search_placeholder')} style={{ width: '100%', padding: '0.8rem 1rem 0.8rem 2.5rem', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', borderRadius: '8px', color: '#fff' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem', alignItems: 'center' }}>
+                <div style={{ position: 'relative', width: '100%', maxWidth: '400px', flex: '1 1 auto' }}>
+                    <FaSearch style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+                    <input 
+                        type="text" 
+                        placeholder={t('admin.tickets.search_placeholder')} 
+                        style={{ 
+                            width: '100%', 
+                            padding: '1rem 1rem 1rem 3rem', 
+                            background: 'rgba(255,255,255,0.03)', 
+                            border: '1px solid rgba(255,255,255,0.1)', 
+                            borderRadius: '12px', 
+                            color: '#fff',
+                            fontSize: '0.95rem',
+                            outline: 'none',
+                            transition: 'all 0.2s ease'
+                        }} 
+                        className="admin-input-premium"
+                    />
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
                     {selectedTicketIds.length > 0 && (
                         <button
-                            className="btn-primary"
+                            className="hover-lift"
                             onClick={() => setConfirmBulkDelete(true)}
-                            style={{ fontSize: '0.9rem', padding: '0.6rem 1.2rem', display: 'flex', gap: '0.5rem', alignItems: 'center', background: '#ef4444', color: 'white' }}
+                            style={{ 
+                                fontSize: '0.9rem', 
+                                padding: '0.8rem 1.5rem', 
+                                display: 'flex', 
+                                gap: '0.5rem', 
+                                alignItems: 'center', 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                color: '#ef4444',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                borderRadius: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
                         >
-                            <FaTrash size={12} /> {t('admin.tickets.delete_selected', 'Eliminar')} ({selectedTicketIds.length})
+                            <FaTrash size={14} /> {t('admin.tickets.delete_selected')} ({selectedTicketIds.length})
                         </button>
                     )}
                     <button
-                        className="btn-primary"
+                        className="modal-btn-primary hover-lift"
                         onClick={() => setShowCreateModal(true)}
-                        style={{ fontSize: '0.9rem', padding: '0.6rem 1.2rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}
+                        style={{ 
+                            fontSize: '0.95rem', 
+                            padding: '0.8rem 1.5rem', 
+                            display: 'flex', 
+                            gap: '0.5rem', 
+                            alignItems: 'center',
+                            borderRadius: '12px'
+                        }}
                     >
-                        <FaPlus size={12} /> {t('admin.tickets.new_ticket')}
+                        <FaPlus size={14} /> {t('admin.tickets.new_ticket')}
                     </button>
                 </div>
             </div>
 
             {/* TICKETS TABLE */}
-            <div className="admin-table-container" style={{ overflow: 'auto' }}>
+            <div className="admin-table-container" style={{ 
+                overflow: 'hidden', 
+                borderRadius: '16px', 
+                border: '1px solid rgba(255,255,255,0.05)',
+                background: 'rgba(0,0,0,0.2)'
+            }}>
                 {loading ? (
-                    <Loader 
-                        text={t('admin.tickets.searching', 'Cargando tickets...')}
-                        style={{ height: 'auto', minHeight: '150px' }} 
-                    />
+                   <div style={{ padding: '4rem', display: 'flex', justifyContent: 'center' }}>
+                       <Loader text={t('admin.tickets.searching')} minimal size={40} />
+                   </div>
                 ) : tickets.length === 0 ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#666' }}>
-                        <p>{t('admin.tickets.empty')}</p>
+                    <div style={{ padding: '4rem', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+                        <FaTicketAlt size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                        <p style={{ fontSize: '1.1rem' }}>{t('admin.tickets.empty')}</p>
                     </div>
                 ) : (
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th style={{width: '30px'}}>
-                                    <input 
-                                        type="checkbox" 
-                                        checked={tickets.length > 0 && selectedTicketIds.length === tickets.length}
-                                        onChange={toggleSelectAll}
-                                        style={{cursor:'pointer'}}
-                                    />
-                                </th>
-                                <th style={{width: '50px'}}>{t('admin.tickets.table.id')}</th>
-                                <th>{t('admin.tickets.table.user')}</th>
-                                <th>{t('admin.tickets.table.subject')}</th>
-                                <th style={{width: '100px'}}>{t('admin.tickets.table.priority')}</th>
-                                <th style={{width: '100px'}}>{t('admin.tickets.table.status')}</th>
-                                <th style={{width: '120px'}}>{t('admin.tickets.table.date')}</th>
-                                <th style={{width: '80px'}}>{t('admin.tickets.table.action')}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Array.isArray(tickets) && tickets.map(ticketItem => (
-                                <tr key={ticketItem.id} onClick={() => setSelectedTicket(ticketItem)} style={{ cursor: 'pointer', background: selectedTicketIds.includes(ticketItem.id) ? 'rgba(255,255,255,0.05)' : 'transparent' }}>
-                                    <td onClick={e => e.stopPropagation()}>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.02)' }}>
+                                    <th style={{width: '50px', padding: '1.5rem 1rem', textAlign: 'center'}}>
                                         <input 
                                             type="checkbox" 
-                                            checked={selectedTicketIds.includes(ticketItem.id)}
-                                            onChange={() => toggleSelectTicket(ticketItem.id)}
-                                            style={{cursor:'pointer'}}
+                                            checked={tickets.length > 0 && selectedTicketIds.length === tickets.length}
+                                            onChange={toggleSelectAll}
+                                            style={{cursor:'pointer', accentColor: 'var(--accent)'}}
                                         />
-                                    </td>
-                                    <td style={{ fontFamily: 'monospace', color: 'var(--accent)' }}>#{ticketItem.id}</td>
-                                    <td style={{ color: '#aaa', fontSize: '0.9rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            {ticketItem.profiles?.avatar_url && (
-                                                <img src={ticketItem.profiles.avatar_url} alt="" style={{ width: '20px', height: '20px', borderRadius: '50%' }} />
-                                            )}
-                                            {ticketItem.profiles?.username || ticketItem.user_id?.substring(0, 8) || 'Anon'}
-                                        </div>
-                                    </td>
-                                    <td style={{ fontWeight: '500', color: '#fff' }}>{ticketItem.subject}</td>
-                                    <td><PriorityBadge priority={ticketItem.priority} /></td>
-                                    <td><StatusBadge status={ticketItem.status} /></td>
-                                    <td style={{ color: '#888', fontSize: '0.85rem' }}>{new Date(ticketItem.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedTicket(ticketItem); }}
-                                            className="btn-secondary"
-                                            style={{ padding: '0.3rem 0.6rem', border: '1px solid #333', background: 'transparent' }}
-                                            title={t('admin.tickets.view_details_tooltip')}
-                                        >
-                                            <FaEye color="var(--accent)" size={16} />
-                                        </button>
-                                    </td>
+                                    </th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px'}}>{t('admin.tickets.table.id')}</th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px'}}>{t('admin.tickets.table.user')}</th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px'}}>{t('admin.tickets.table.subject')}</th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', width: '120px'}}>{t('admin.tickets.table.priority')}</th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', width: '120px'}}>{t('admin.tickets.table.status')}</th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'left', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', width: '150px'}}>{t('admin.tickets.table.date')}</th>
+                                    <th style={{padding: '1.5rem 1rem', textAlign: 'right', color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', width: '80px'}}>{t('admin.tickets.table.action')}</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {Array.isArray(tickets) && tickets.map(ticketItem => (
+                                    <tr 
+                                        key={ticketItem.id} 
+                                        onClick={() => setSelectedTicket(ticketItem)} 
+                                        className="hover-bg-glass"
+                                        style={{ 
+                                            cursor: 'pointer', 
+                                            borderBottom: '1px solid rgba(255,255,255,0.03)',
+                                            background: selectedTicketIds.includes(ticketItem.id) ? 'rgba(var(--accent-rgb), 0.05)' : 'transparent',
+                                            transition: 'background 0.2s'
+                                        }}
+                                    >
+                                        <td onClick={e => e.stopPropagation()} style={{textAlign: 'center', padding: '1rem'}}>
+                                            <input 
+                                                type="checkbox" 
+                                                checked={selectedTicketIds.includes(ticketItem.id)}
+                                                onChange={() => toggleSelectTicket(ticketItem.id)}
+                                                style={{cursor:'pointer', accentColor: 'var(--accent)'}}
+                                            />
+                                        </td>
+                                        <td style={{ fontFamily: 'monospace', color: 'var(--accent)', fontWeight: 'bold', padding: '1rem' }}>#{ticketItem.id}</td>
+                                        <td style={{ color: '#ccc', fontSize: '0.95rem', padding: '1rem' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                                {ticketItem.profiles?.avatar_url ? (
+                                                    <img src={ticketItem.profiles.avatar_url} alt="" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
+                                                ) : (
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <FaUsers size={14} color="#666" />
+                                                    </div>
+                                                )}
+                                                <span style={{ fontWeight: '500' }}>{ticketItem.profiles?.username || ticketItem.user_id?.substring(0, 8) || 'Anon'}</span>
+                                            </div>
+                                        </td>
+                                        <td style={{ fontWeight: '600', color: '#fff', padding: '1rem' }}>{ticketItem.subject}</td>
+                                        <td style={{ padding: '1rem' }}><PriorityBadge priority={ticketItem.priority} /></td>
+                                        <td style={{ padding: '1rem' }}><StatusBadge status={ticketItem.status} /></td>
+                                        <td style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', padding: '1rem' }}>{new Date(ticketItem.created_at).toLocaleDateString()}</td>
+                                        <td style={{ padding: '1rem', textAlign: 'right' }}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setSelectedTicket(ticketItem); }}
+                                                className="hover-scale"
+                                                style={{ 
+                                                    padding: '0.5rem', 
+                                                    border: '1px solid rgba(255,255,255,0.1)', 
+                                                    background: 'rgba(255,255,255,0.05)', 
+                                                    borderRadius: '8px', 
+                                                    cursor: 'pointer',
+                                                    color: 'var(--accent)'
+                                                }}
+                                                title={t('admin.tickets.view_details_tooltip')}
+                                            >
+                                                <FaEye size={16} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
 
             {/* MODAL: CREATE TICKET */}
             {showCreateModal && (
-                <div className="modal-overlay" style={{ backdropFilter: 'blur(5px)' }}>
-                    <div className="admin-card modal-content" style={{ width: '500px', maxWidth: '90%', border: '1px solid var(--accent-dim)', boxShadow: '0 0 20px rgba(0,0,0,0.5)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <FaTicketAlt color="var(--accent)" /> {t('admin.tickets.create_modal.title')}
+                <div className="modal-overlay" style={{ backdropFilter: 'blur(10px)', background: 'rgba(0,0,0,0.7)' }}>
+                    <div className="admin-card modal-content" style={{ 
+                        width: '500px', 
+                        maxWidth: '90%', 
+                        border: '1px solid rgba(255,255,255,0.1)', 
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                        background: '#111',
+                        borderRadius: '24px',
+                        padding: '0'
+                    }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            marginBottom: '0', 
+                            borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                            padding: '1.5rem', 
+                            alignItems: 'center',
+                            background: 'rgba(255,255,255,0.02)'
+                        }}>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.8rem', fontSize: '1.2rem', color: '#fff' }}>
+                                <FaTicketAlt style={{ color: 'var(--accent)' }} /> {t('admin.tickets.create_modal.title')}
                             </h3>
                             <button 
                                 onClick={() => setShowCreateModal(false)} 
-                                style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1.2rem', transition: 'color 0.2s' }}
-                                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.color = '#fff'}
-                                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.color = '#aaa'}
+                                className="hover-rotate"
+                                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '1.2rem' }}
                             >
                                 <FaTimes />
                             </button>
                         </div>
-                        <form onSubmit={handleCreateTicket} className="admin-form">
-                            <div style={{marginBottom: '1.2rem'}}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#ddd', fontSize: '0.9rem', fontWeight: '600' }}>{t('admin.tickets.create_modal.subject')}</label>
+                        
+                        <form onSubmit={handleCreateTicket} style={{ padding: '2rem' }}>
+                            <div style={{marginBottom: '1.5rem'}}>
+                                <label style={{ display: 'block', marginBottom: '0.8rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: '700' }}>{t('admin.tickets.create_modal.subject')}</label>
                                 <input 
-                                    className="admin-input" 
+                                    className="admin-input-premium" 
                                     value={newTicket.subject} 
                                     onChange={e => setNewTicket({ ...newTicket, subject: e.target.value })} 
                                     autoFocus 
                                     placeholder={t('admin.tickets.subject_ph')} 
-
+                                    style={{ width: '100%', padding: '1rem', fontSize: '1rem', borderRadius: '12px' }}
                                 />
                             </div>
 
-                            <div style={{marginBottom: '1.2rem'}}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#ddd', fontSize: '0.9rem', fontWeight: '600' }}>{t('admin.tickets.create_modal.description')}</label>
+                            <div style={{marginBottom: '1.5rem'}}>
+                                <label style={{ display: 'block', marginBottom: '0.8rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: '700' }}>{t('admin.tickets.create_modal.description')}</label>
                                 <textarea 
-                                    className="admin-input" 
+                                    className="admin-input-premium" 
                                     rows={5} 
                                     value={newTicket.description}  
                                     onChange={e => setNewTicket({ ...newTicket, description: e.target.value })} 
                                     placeholder={t('admin.tickets.create_modal.desc_placeholder')}
-
+                                    style={{ width: '100%', padding: '1rem', fontSize: '0.95rem', borderRadius: '12px', resize: 'vertical' }}
                                 />
                             </div>
 
                             <div style={{marginBottom: '2rem'}}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#ddd', fontSize: '0.9rem', fontWeight: '600' }}>{t('admin.tickets.table.priority')}</label>
+                                <label style={{ display: 'block', marginBottom: '0.8rem', color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', fontWeight: '700' }}>{t('admin.tickets.table.priority')}</label>
                                 <div style={{ position: 'relative' }}>
                                     <select 
-                                         className="admin-input" 
-                                         style={{ backgroundColor: '#1a1b20', color: 'white', cursor: 'pointer' }}
+                                         className="admin-input-premium" 
+                                         style={{ width: '100%', padding: '1rem', fontSize: '1rem', borderRadius: '12px', cursor: 'pointer', appearance: 'none' }}
                                          value={newTicket.priority} 
                                          onChange={e => setNewTicket({ ...newTicket, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
                                      >
@@ -342,33 +432,30 @@ export default function TicketsManager() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid #333', paddingTop: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1rem' }}>
                                 <button 
                                     type="button" 
                                     onClick={() => setShowCreateModal(false)} 
-                                    className="btn-secondary"
-                                    style={{ padding: '0.7rem 1.5rem', background: 'transparent', border: '1px solid #555', color: '#ccc', borderRadius: '6px', cursor: 'pointer' }}
+                                    className="hover-lift"
+                                    style={{ 
+                                        padding: '1rem 2rem', 
+                                        background: 'transparent', 
+                                        border: '1px solid rgba(255,255,255,0.1)', 
+                                        color: '#ccc', 
+                                        borderRadius: '12px', 
+                                        cursor: 'pointer',
+                                        fontWeight: '600'
+                                    }}
                                 >
                                     {t('admin.tickets.create_modal.cancel')}
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="btn-primary" 
+                                    className="modal-btn-primary hover-lift" 
                                     disabled={isSubmitting}
-                                    style={{ 
-                                        padding: '0.7rem 2rem', 
-                                        background: 'var(--accent)', 
-                                        color: '#000', 
-                                        border: 'none', 
-                                        borderRadius: '6px', 
-                                        cursor: 'pointer', 
-                                        fontWeight: 'bold',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}
+                                    style={{ padding: '1rem 3rem', borderRadius: '12px' }}
                                 >
-                                    {isSubmitting ? <><FaSpinner className="spin" /> {t('admin.tickets.create_modal.saving')}</> : <><FaPaperPlane /> {t('admin.tickets.create_modal.submit')}</>}
+                                    {isSubmitting ? <Loader minimal size={20} /> : <><FaPaperPlane /> {t('admin.tickets.create_modal.submit')}</>}
                                 </button>
                             </div>
                         </form>
@@ -387,7 +474,7 @@ export default function TicketsManager() {
             )}
             {confirmBulkDelete && (
                 <CustomConfirm 
-                    message={t('admin.tickets.bulk_delete_confirm', `¿Seguro que quieres eliminar ${selectedTicketIds.length} tickets seleccionados? Esta acción es irreversible.`)}
+                    message={t('admin.tickets.bulk_delete_confirm')}
                     onConfirm={handleBulkDelete}
                     onCancel={() => setConfirmBulkDelete(false)}
                 />
@@ -418,7 +505,7 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
     const fetchMessages = useCallback(async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+            const headers: HeadersInit = getAuthHeaders(session?.access_token || null);
 
             const res = await fetch(`${API_URL}/tickets/${ticket.id}/messages`, { headers })
             if (res.ok) {
@@ -480,8 +567,10 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
         setSending(true)
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const headers = { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(session?.access_token || null)
+            };
 
             const res = await fetch(`${API_URL}/tickets/${ticket.id}/messages`, {
                 method: 'POST',
@@ -532,8 +621,10 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
 
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const headers = { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(session?.access_token || null)
+            };
 
             const res = await fetch(url, {
                 method: method,
@@ -682,8 +773,10 @@ function BanUserModal({ onClose, onSuccess }: BanUserModalProps) {
         setLoading(true)
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-            if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
+            const headers = { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(session?.access_token || null)
+            };
 
             await fetch(`${import.meta.env.VITE_API_URL}/tickets/ban`, {
                 method: 'POST',

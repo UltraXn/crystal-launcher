@@ -1,5 +1,4 @@
 import supabase from '../config/supabaseClient.js';
-
 import * as commandService from './commandService.js';
 
 // Estructura de un Premio
@@ -7,30 +6,50 @@ export interface GachaReward {
     id: string;
     name: string;
     rarity: 'common' | 'rare' | 'epic' | 'legendary';
-    type: 'currency' | 'item' | 'rank' | 'xp';
+    type: 'currency' | 'item' | 'rank' | 'xp' | 'crate';
     value: string | number; // Ej: 100 (monedas), "vip_rank" (id)
     chance: number; // Porcentaje 0-100 (ej: 0.5 para legendario)
     image_url?: string;
 }
 
-// Configuración Hardcoded (Idealmente iría en DB)
+// Configuración de Premios Mejorada
 const REWARDS_POOL: GachaReward[] = [
-    { id: 'xp_small', name: '100 XP', rarity: 'common', type: 'xp', value: 100, chance: 40 },
-    { id: 'coins_small', name: '50 KilluCoins', rarity: 'common', type: 'currency', value: 50, chance: 30 },
-    { id: 'coins_med', name: '200 KilluCoins', rarity: 'rare', type: 'currency', value: 200, chance: 15 },
-    { id: 'item_diamond', name: 'Pack Diamantes', rarity: 'rare', type: 'item', value: 'diamond_pack', chance: 10 },
-    { id: 'rank_vip_3d', name: 'VIP (3 Días)', rarity: 'epic', type: 'rank', value: 'vip_3d', chance: 4 },
-    { id: 'rank_mvp_1d', name: 'MVP (1 Día)', rarity: 'legendary', type: 'rank', value: 'mvp_1d', chance: 1 },
+    // COMMON (70% total)
+    { id: 'xp_small', name: '100 XP', rarity: 'common', type: 'xp', value: 100, chance: 35 },
+    { id: 'coins_small', name: '50 KilluCoins', rarity: 'common', type: 'currency', value: 50, chance: 35 },
+    
+    // RARE (20% total)
+    { id: 'coins_med', name: '500 KilluCoins', rarity: 'rare', type: 'currency', value: 500, chance: 10 },
+    { id: 'item_diamond', name: 'x5 Diamantes', rarity: 'rare', type: 'item', value: 'diamond 5', chance: 10 },
+    
+    // EPIC (8% total)
+    { id: 'rank_vip_3d', name: 'Rango VIP (3 Días)', rarity: 'epic', type: 'rank', value: 'vip_3d', chance: 4 },
+    { id: 'coins_large', name: '2000 KilluCoins', rarity: 'epic', type: 'currency', value: 2000, chance: 3 },
+    { id: 'item_gold_apple', name: 'x3 Manzanas de Oro', rarity: 'epic', type: 'item', value: 'golden_apple 3', chance: 1 },
+    
+    // LEGENDARY (2% total)
+    { id: 'rank_mvp_1d', name: 'Rango MVP (1 Día)', rarity: 'legendary', type: 'rank', value: 'mvp_1d', chance: 1 },
+    { id: 'item_netherite', name: 'Lingote de Netherite', rarity: 'legendary', type: 'item', value: 'netherite_ingot 1', chance: 0.8 },
+    { id: 'crate_premium', name: 'Llave Caja Premium', rarity: 'legendary', type: 'crate', value: 'premium_key', chance: 0.2 },
 ];
 
 export const rollGacha = async (userId: string) => {
-    // 1. Check Cooldown (1 free roll per 24 hours)
+    // 1. Resolve Minecraft Identity
+    const { data: { user }, error: authError } = await supabase.auth.admin.getUserById(userId);
+    if (authError || !user) throw new Error("USER_NOT_FOUND");
+
+    const mcNick = user.user_metadata?.minecraft_nick;
+    if (!mcNick) {
+        throw new Error("ACCOUNT_NOT_LINKED");
+    }
+
+    // 2. Check Cooldown (1 free roll per 24 hours)
     const canRoll = await checkCooldown(userId);
     if (!canRoll) {
         throw new Error("COOLDOWN_ACTIVE");
     }
 
-    // 2. Logic: Probability (Weighted Random)
+    // 3. Logic: Probability (Weighted Random)
     const random = Math.random() * 100;
     let currentWeight = 0;
     let selectedReward: GachaReward | null = null;
@@ -46,14 +65,11 @@ export const rollGacha = async (userId: string) => {
     // Fallback
     if (!selectedReward) selectedReward = REWARDS_POOL[0];
 
-    // 3. Deliver Reward (Save to history)
+    // 4. Deliver Reward (Save to history)
     await saveDrop(userId, selectedReward);
 
-    // 4. Queue Command in CrystalCore Bridge
-    // Assuming userId is linked to a MC username, or we queue by UUID if supported.
-    // For now, let's assume we need the username. We might need to fetch it.
-    // This is a simplification. Ideally, pass username or fetch it.
-    const command = getCommandForReward(selectedReward, userId); 
+    // 5. Queue Command in CrystalCore Bridge
+    const command = getCommandForReward(selectedReward, mcNick); 
     if (command) {
         await commandService.queueCommand(command);
     }
@@ -62,23 +78,20 @@ export const rollGacha = async (userId: string) => {
 };
 
 // Helper to generate commands based on reward type
-const getCommandForReward = (reward: GachaReward, target: string): string | null => {
-    // NOTE: 'target' should ideally be the Minecraft Username.
-    // If 'userId' is a UUID, the command needs to support UUIDs or we need to resolve it.
-    // For this implementation, we assume the frontend sends the MC Username as 'userId' 
-    // OR that the plugin supports "uuid:<uuid>".
-    
+const getCommandForReward = (reward: GachaReward, targetNick: string): string | null => {
     switch (reward.type) {
         case 'currency':
-             return `eco give ${target} ${reward.value}`;
+             return `eco give ${targetNick} ${reward.value}`;
         case 'rank':
              // vault/luckperms command
-             return `lp user ${target} parent add ${reward.value}`;
+             // Assuming rank ids match what we defined or have a mapping
+             return `lp user ${targetNick} parent addtemp ${reward.value} 3d`; // Simplified
         case 'item':
-             // custom plugin command or give
-             return `give ${target} ${reward.value} 1`;
+             return `give ${targetNick} minecraft:${reward.value}`;
         case 'xp':
-             return `xp give ${target} ${reward.value}`;
+             return `xp give ${targetNick} ${reward.value}`;
+        case 'crate':
+             return `crate give ${targetNick} ${reward.value} 1`;
         default:
              return null;
     }
@@ -112,7 +125,7 @@ const saveDrop = async (userId: string, reward: GachaReward) => {
             reward_id: reward.id, 
             reward_name: reward.name,
             rarity: reward.rarity,
-            created_at: new Date() 
+            created_at: new Date().toISOString()
         });
     
     if (error) console.error("Error saving drop:", error);
@@ -130,3 +143,4 @@ export const getHistory = async (userId: string) => {
     if (error) throw error;
     return data || [];
 };
+

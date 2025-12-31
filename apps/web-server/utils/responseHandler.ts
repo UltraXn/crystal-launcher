@@ -26,12 +26,21 @@ export const sendSuccess = <T>(res: Response, data: T, message?: string, meta?: 
 };
 
 export const sendError = (res: Response, message: string, code: string = 'INTERNAL_ERROR', statusCode: number = 500, details?: unknown) => {
+    // Sanitize details to avoid circular references (common in Error objects)
+    let safeDetails = details;
+    if (details instanceof Error) {
+        safeDetails = {
+            message: details.message,
+            stack: process.env.NODE_ENV === 'development' ? details.stack : undefined
+        };
+    }
+
     return res.status(statusCode).json({
         success: false,
         error: {
             code,
             message,
-            details
+            details: safeDetails
         }
     });
 };

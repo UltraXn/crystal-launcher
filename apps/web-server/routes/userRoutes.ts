@@ -82,5 +82,6 @@ import { updateUserSchema } from '../schemas/userSchemas.js';
 
 router.patch('/:id/role', authenticateToken, checkRole(ADMIN_ROLES), userController.updateUserRole);
 router.patch('/:id/metadata', authenticateToken, checkRole(ADMIN_ROLES), validate(updateUserSchema), userController.updateUserMetadata);
+router.post('/:id/karma', authenticateToken, userController.giveKarma);
 
 export default router;

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FaPlus, FaTrash } from 'react-icons/fa';
 import Loader from '../../UI/Loader';
 import ConfirmationModal from '../../UI/ConfirmationModal';
 import { supabase } from '../../../services/supabaseClient';
+import { getAuthHeaders } from '../../../services/adminAuth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const COLORS = [
@@ -21,6 +23,7 @@ interface Note {
 }
 
 export default function StaffNotes() {
+    const { t } = useTranslation();
     const [notes, setNotes] = useState<Note[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -31,13 +34,24 @@ export default function StaffNotes() {
 
     useEffect(() => {
         fetchNotes();
+
+        // Real-time subscription for notes
+        const channel = supabase.channel('public:staff_notes')
+            .on('postgres_changes', { event: '*', table: 'staff_notes', schema: 'public' }, () => {
+                fetchNotes();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const fetchNotes = async () => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/notes`, {
-                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+                headers: getAuthHeaders(session?.access_token || null)
             });
             if (res.ok) {
                 const data = await res.json();
@@ -66,7 +80,7 @@ export default function StaffNotes() {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': session ? `Bearer ${session.access_token}` : ''
+                    ...getAuthHeaders(session?.access_token || null)
                  },
                 body: JSON.stringify(newNoteData)
             });
@@ -93,7 +107,7 @@ export default function StaffNotes() {
             const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/notes/${deleteConfirmId}`, {
                 method: 'DELETE',
-                headers: session ? { 'Authorization': `Bearer ${session.access_token}` } : undefined
+                headers: getAuthHeaders(session?.access_token || null)
             });
             if (!res.ok) throw new Error('Failed to delete');
         } catch (error) {
@@ -111,34 +125,21 @@ export default function StaffNotes() {
     );
 
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '0 0 1rem 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.2rem', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                    Notas Rápidas
+        <div className="staff-notes-container">
+            <div className="notes-header-premium">
+                <h3 className="admin-page-title-small">
+                    {t('admin.staff_hub.notes.title', 'Notas Rápidas')}
                 </h3>
                 <button 
                     onClick={() => setShowCreateModal(true)}
-                    className="btn-secondary"
-                    style={{ 
-                        padding: '0.4rem 0.8rem', 
-                        fontSize: '0.8rem',
-                        display: 'flex', alignItems: 'center', gap: '5px'
-                    }}
+                    className="new-task-btn"
+                    style={{ padding: '8px 16px', fontSize: '0.75rem' }}
                 >
-                    <FaPlus /> Nueva Nota
+                    <FaPlus /> {t('admin.staff_hub.notes.new_note_btn', 'Nueva Nota')}
                 </button>
             </div>
 
-            <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', 
-                gap: '1rem', 
-                overflowY: 'auto',
-                paddingRight: '10px',
-                paddingBottom: '1rem',
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(255,255,255,0.05) transparent'
-            }}>
+            <div className="staff-notes-grid">
                 {notes.map(note => {
                     // Fallback for old light-theme notes (legacy hex colors)
                     // If the color starts with '#', we map it to one of the new dark colors
@@ -147,71 +148,23 @@ export default function StaffNotes() {
                     const displayColor = isLegacyColor ? COLORS[note.id % COLORS.length] : note.color;
 
                     return (
-                        <div key={note.id} style={{
-                            background: displayColor,
-                            border: '1px solid rgba(255,255,255,0.05)',
-                            backdropFilter: 'blur(5px)',
-                            color: '#eee',
-                            padding: '1.25rem',
-                            borderRadius: '12px',
-                            minHeight: '160px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            justifyContent: 'space-between',
-                            position: 'relative',
-                            transition: 'box-shadow 0.2s',
-                        }}
-                        // Hover handlers removed
-                        >
-                        <p style={{ 
-                            margin: 0, 
-                            fontSize: '0.9rem', 
-                            whiteSpace: 'pre-wrap', 
-                            lineHeight: '1.5',
-                            color: 'rgba(255,255,255,0.9)'
-                        }}>
-                            {note.text}
-                        </p>
-                        
-                        <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            marginTop: '1rem', 
-                            paddingTop: '0.75rem', 
-                            borderTop: '1px solid rgba(255,255,255,0.05)' 
-                        }}>
-                            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', fontWeight: '600' }}>{note.date}</span>
-                            <button 
-                                onClick={() => setDeleteConfirmId(note.id)}
-                                style={{ 
-                                    background: 'rgba(255,255,255,0.05)', 
-                                    border: 'none', 
-                                    cursor: 'pointer', 
-                                    color: '#ccc',
-                                    width: '28px',
-                                    height: '28px',
-                                    borderRadius: '8px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.2s'
-                                }}
-                                title="Borrar"
-                                onMouseOver={e => {
-                                    e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
-                                    e.currentTarget.style.color = '#ef4444';
-                                }}
-                                onMouseOut={e => {
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                                    e.currentTarget.style.color = '#ccc';
-                                }}
-                            >
-                                <FaTrash size={12} />
-                            </button>
+                        <div key={note.id} className="staff-note-card" style={{ background: displayColor }}>
+                            <p className="note-text-premium">
+                                {note.text}
+                            </p>
+                            
+                            <div className="note-footer-premium">
+                                <span className="note-date-premium">{note.date}</span>
+                                <button 
+                                    onClick={() => setDeleteConfirmId(note.id)}
+                                    className="note-delete-btn"
+                                    title={t('common.delete', 'Borrar')}
+                                >
+                                    <FaTrash size={12} />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                );
+                    );
             })}
         </div>
 
@@ -238,14 +191,14 @@ export default function StaffNotes() {
                                 alignItems: 'center',
                                 gap: '10px'
                             }}>
-                                <span style={{ color: 'var(--accent)', display:'flex' }}><FaPlus size={16}/></span> Nueva Nota
+                                <span style={{ color: 'var(--accent)', display:'flex' }}><FaPlus size={16}/></span> {t('admin.staff_hub.notes.create_modal.title', 'Nueva Nota')}
                             </h3>
                             
                             <textarea
                                 autoFocus
                                 value={newNoteText}
                                 onChange={(e) => setNewNoteText(e.target.value)}
-                                placeholder="Escribe tu nota aquí..."
+                                placeholder={t('admin.staff_hub.notes.create_modal.placeholder', 'Escribe tu nota aquí...')}
                                 style={{
                                     width: '100%',
                                     background: 'rgba(255,255,255,0.05)',
@@ -274,14 +227,14 @@ export default function StaffNotes() {
                                     className="btn-secondary"
                                     style={{ padding: '0.6rem 1.2rem' }}
                                 >
-                                    Cancelar
+                                    {t('admin.staff_hub.notes.create_modal.cancel', 'Cancelar')}
                                 </button>
                                 <button 
                                     onClick={handleCreateNote}
                                     className="btn-primary"
                                     style={{ padding: '0.6rem 1.5rem' }}
                                 >
-                                    Guardar Nota
+                                    {t('admin.staff_hub.notes.create_modal.save', 'Guardar Nota')}
                                 </button>
                             </div>
                         </div>
@@ -293,9 +246,9 @@ export default function StaffNotes() {
                 isOpen={!!deleteConfirmId}
                 onClose={() => setDeleteConfirmId(null)}
                 onConfirm={confirmDelete}
-                title="¿Eliminar Nota?"
-                message="Esta acción no se puede deshacer."
-                confirmText="Sí, Eliminar"
+                title={t('admin.staff_hub.notes.delete_modal.title', '¿Eliminar Nota?')}
+                message={t('admin.staff_hub.notes.delete_modal.msg', 'Esta acción no se puede deshacer.')}
+                confirmText={t('admin.staff_hub.notes.delete_modal.confirm', 'Sí, Eliminar')}
                 isDanger={true}
             />
         </div>

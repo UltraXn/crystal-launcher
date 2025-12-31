@@ -2,9 +2,10 @@ import Menu from "./Menu"
 import NotificationCenter from "../../components/UI/NotificationCenter"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
-import { FaTrophy, FaEdit, FaShieldAlt, FaSignOutAlt, FaCog, FaServer, FaLink, FaGift } from "react-icons/fa"
+import { isAdmin as checkAdmin } from "../../utils/roleUtils"
+import { FaTrophy, FaEdit, FaShieldAlt, FaSignOutAlt, FaCog, FaServer, FaLink } from "react-icons/fa"
 import { useRef, useState, useEffect } from "react"
-import anime from 'animejs/lib/anime.js'
+import { gsap } from 'gsap'
 
 import { useTranslation } from 'react-i18next'
 
@@ -13,7 +14,7 @@ export default function Navbar() {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
     const logoRef = useRef<HTMLImageElement>(null)
-    const animationRef = useRef<anime.AnimeInstance | null>(null)
+    const animationRef = useRef<gsap.core.Tween | null>(null)
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const [scrolled, setScrolled] = useState(false)
 
@@ -59,52 +60,53 @@ export default function Navbar() {
         }
     };
 
-    // ANIMATION LOGIC FOR USER DROPDOWN (Copied from Menu.jsx)
+    // ANIMATION LOGIC FOR USER DROPDOWN (Migrated to GSAP)
     useEffect(() => {
-        // Reset refs on render to avoid duplication
-        userItemsRef.current = [];
-
         if (dropdownOpen) {
             // OPEN ANIMATION
             if (userDropdownRef.current) {
-                anime.remove(userDropdownRef.current);
-                anime.set(userDropdownRef.current, { visibility: 'visible', opacity: 1 });
+                gsap.killTweensOf(userDropdownRef.current);
+                gsap.set(userDropdownRef.current, { visibility: 'visible', opacity: 1 });
 
-                anime({
-                    targets: userDropdownRef.current,
-                    scale: [0.9, 1],
-                    opacity: [0, 1],
-                    translateY: [10, 0],
-                    easing: 'spring(1, 80, 10, 0)',
-                    duration: 600
-                });
+                gsap.fromTo(userDropdownRef.current,
+                    { scale: 0.9, opacity: 0, y: 10 },
+                    {
+                        scale: 1,
+                        opacity: 1,
+                        y: 0,
+                        ease: 'elastic.out(1, 0.75)',
+                        duration: 0.8
+                    }
+                );
             }
 
             if (userItemsRef.current.length > 0) {
-                anime.remove(userItemsRef.current);
-                anime({
-                    targets: userItemsRef.current,
-                    translateX: [20, 0],
-                    opacity: [0, 1],
-                    delay: anime.stagger(50, { start: 100 }), // Faster stagger for smaller menu
-                    easing: 'easeOutExpo'
-                });
+                gsap.killTweensOf(userItemsRef.current);
+                gsap.fromTo(userItemsRef.current,
+                    { x: 20, opacity: 0 },
+                    {
+                        x: 0,
+                        opacity: 1,
+                        stagger: 0.05,
+                        delay: 0.1,
+                        ease: 'power3.out',
+                        duration: 0.5
+                    }
+                );
             }
         } else {
             // CLOSE ANIMATION
             if (userDropdownRef.current) {
-                anime.remove(userDropdownRef.current);
-                anime.remove(userItemsRef.current);
-
-                anime({
-                    targets: userDropdownRef.current,
+                gsap.killTweensOf(userDropdownRef.current);
+                gsap.to(userDropdownRef.current, {
                     opacity: 0,
-                    translateY: 10,
-                    duration: 200,
-                    easing: 'easeInQuad',
-                    complete: () => {
-                        if (!dropdownOpen && userDropdownRef.current) {
-                            anime.set(userDropdownRef.current, { visibility: 'hidden' });
+                    y: 10,
+                    scale: 0.95,
+                    duration: 0.3,
+                    ease: 'power2.in',
+                    onComplete: () => {
+                        if (userDropdownRef.current) {
+                            gsap.set(userDropdownRef.current, { visibility: 'hidden' });
                         }
                     }
                 });
@@ -113,17 +115,14 @@ export default function Navbar() {
     }, [dropdownOpen]);
 
     const handleLogoHover = () => {
-        if (animationRef.current) animationRef.current.pause()
+        if (animationRef.current) animationRef.current.kill()
 
-        animationRef.current = anime({
-            targets: logoRef.current,
-            translateY: [
-                { value: -10, duration: 200, easing: 'easeOutQuad' },
-                { value: 0, duration: 200, easing: 'easeInQuad' },
-                { value: -5, duration: 200, easing: 'easeOutQuad' },
-                { value: 0, duration: 200, easing: 'easeInQuad' }
-            ],
-            duration: 800
+        animationRef.current = gsap.to(logoRef.current, {
+            y: -10,
+            duration: 0.2,
+            ease: 'power2.out',
+            yoyo: true,
+            repeat: 3
         });
     }
 
@@ -139,12 +138,12 @@ export default function Navbar() {
     }
 
     const location = useLocation()
-    // Exact match for home, since other pages like /forum need to be treated as "internal"
     const isHome = location.pathname === '/'
 
-    // Check if admin (Allowed roles: admin, neroferno, killu, helper, developer)
-    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper', 'developer']
-    const isAdmin = allowedRoles.includes(user?.user_metadata?.role?.toLowerCase())
+    const isAdmin = checkAdmin(user)
+
+    // Hide navbar on policy pages if requested
+    if (location.pathname.startsWith('/policies')) return null;
 
     return (
         <header className={`navbar ${scrolled ? 'scrolled' : ''} ${isHome ? 'is-home' : ''}`}>
@@ -299,15 +298,7 @@ export default function Navbar() {
                                     display: 'block' // Ensure it's reachable for animation
                                 }}
                             >
-                                <div className="dropdown-header" ref={addToUserRefs}>
-                                        <div style={{ display:'flex', justifyContent:'center', marginBottom: '0.5rem' }}>
-                                            <UserRoleDisplay role={user.user_metadata?.role || 'user'} />
-                                        </div>
-                                    </div>
-                                <Link to="/gacha" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
-                                    <FaGift /> {t('gacha.title', 'Recompensa Diaria')}
-                                </Link>
-                                <div className="dropdown-divider"></div>
+
                                 <Link to="/account?tab=overview" className="menu-item" onClick={closeUserDropdown} ref={addToUserRefs}>
                                     <FaServer /> {t('account.nav.overview', 'Resumen')}
                                 </Link>
@@ -349,40 +340,5 @@ export default function Navbar() {
                 </div>
             </div>
         </header>
-    )
-}
-
-function UserRoleDisplay({ role }: { role: string }) {
-    const { t } = useTranslation()
-    const roles = {
-        neroferno: { label: t('account.roles.neroferno'), img: '/ranks/rank-neroferno.png' },
-        killu: { label: t('account.roles.killu'), img: '/ranks/rank-killu.png' },
-        founder: { label: t('account.roles.founder'), img: '/ranks/rank-fundador.png' },
-        admin: { label: t('account.roles.admin'), img: '/ranks/admin.png' },
-        developer: { label: t('account.roles.developer'), img: '/ranks/developer.png' },
-        helper: { label: t('account.roles.helper'), img: '/ranks/helper.png' },
-        donor: { label: t('account.roles.donor'), img: '/ranks/rank-donador.png' },
-        user: { label: t('account.roles.user'), img: '/ranks/user.png' }
-    }
-
-    const rolesMap: Record<string, { label: string; img: string; color?: string; icon?: React.ReactElement }> = roles
-    const current = rolesMap[role] || roles.user
-
-    if(current.img) {
-        return <img src={current.img} alt={role} style={{ height: 'auto', width: 'auto' }} />
-    }
-
-    return (
-        <span style={{
-            background: current.color || '#333',
-            color: '#fff',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            textTransform: 'uppercase'
-        }}>
-            {current.icon} {current.label}
-        </span>
     )
 }

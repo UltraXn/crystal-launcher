@@ -227,9 +227,11 @@ export const getPublicProfile = async (identifier: string) => {
         role: target.user_metadata?.role || 'user',
         medals: target.user_metadata?.medals || [],
         avatar_url: target.user_metadata?.avatar_url,
+        profile_banner_url: target.user_metadata?.profile_banner_url,
         created_at: target.created_at,
         public_stats: target.user_metadata?.public_stats || false,
         bio: target.user_metadata?.bio,
+        reputation: target.user_metadata?.reputation || 0,
         social_discord: target.user_metadata?.social_discord || target.user_metadata?.discord,
         social_twitter: target.user_metadata?.social_twitter,
         social_twitch: target.user_metadata?.social_twitch,
@@ -237,4 +239,31 @@ export const getPublicProfile = async (identifier: string) => {
         minecraft_uuid: target.user_metadata?.minecraft_uuid,
         avatar_preference: target.user_metadata?.avatar_preference || 'minecraft'
     };
+};
+
+/**
+ * Give Karma to a user
+ */
+export const giveKarma = async (userId: string, voterId: string): Promise<number> => {
+    const { data: { user }, error: fetchError } = await supabase.auth.admin.getUserById(userId);
+    if (fetchError || !user) throw new Error('User not found');
+
+    const metadata = user.user_metadata || {};
+    const currentReputation = metadata.reputation || 0;
+    const voters = metadata.voters || [];
+
+    if (voters.includes(voterId)) {
+        throw new Error('Ya le has dado karma a este usuario');
+    }
+
+    const newReputation = currentReputation + 1;
+    voters.push(voterId);
+
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+        userId,
+        { user_metadata: { ...metadata, reputation: newReputation, voters } }
+    );
+
+    if (updateError) throw updateError;
+    return newReputation;
 };

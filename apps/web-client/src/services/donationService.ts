@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { getAuthHeaders } from './adminAuth';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -12,7 +13,7 @@ export const simulateDonation = async (username: string, amount: number, currenc
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            ...getAuthHeaders(token || null)
         },
         body: JSON.stringify({ username, amount, currency })
     });

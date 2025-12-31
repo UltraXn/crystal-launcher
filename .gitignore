@@ -25,4 +25,6 @@ minecraft-plugin/
 .turbo/
 .env*
 !.env.example
-.cloudflared/
+
+# Documentation
+docs/

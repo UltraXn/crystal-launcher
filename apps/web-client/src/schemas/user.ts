@@ -27,6 +27,7 @@ export const updateUserSchema = z.object({
     social_youtube: z.string().optional(),
     social_kofi: z.string().optional(),
     avatar_preference: z.enum(['minecraft', 'social']).optional(),
+    profile_banner_url: z.string().optional(),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

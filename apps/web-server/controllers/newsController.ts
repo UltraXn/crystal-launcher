@@ -26,25 +26,45 @@ const sendNewsWebhook = async (news: NewsWebhookProps) => {
         const webhookClient = new WebhookClient({ url: NEWS_WEBHOOK_URL });
         
         // Truncate content for description if too long
-        const description = news.content.length > 200 
+        // Max description length is 4096, but we keep it shorter for readability
+        let description = news.content.length > 200 
             ? news.content.substring(0, 197) + '...' 
             : news.content;
 
+        // Add Role Tag inside the embed as requested
+        const roleToTag = '1272263167090626712'; // Role requested by user
+        description += `\n\n<@&${roleToTag}>`;
+
         const embed = new EmbedBuilder()
             .setTitle(`📢 ${news.title}`)
-            .setURL(`https://crystaltides.com/news/${news.slug}`) // Adjust domain if needed
+            .setURL(`https://crystaltidessmp.net/news/${news.slug}`) 
             .setColor(0x00aabb) // Aqua/Cyan color for CrystalTides
             .setDescription(description)
             .addFields({ name: 'Categoría', value: news.category, inline: true })
             .setTimestamp()
             .setFooter({ text: 'CrystalTides News' });
 
+        // Ensure image URL is absolute
         if (news.image) {
-            embed.setImage(news.image);
+            let imageUrl = news.image;
+            if (!imageUrl.startsWith('http')) {
+                // Assuming images are hosted on the main domain
+                imageUrl = `https://crystaltidessmp.net${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+            }
+            embed.setImage(imageUrl);
         }
 
         await webhookClient.send({
-            content: '<@&1272263167090626712> <@&1288691873812320349>',
+            // Content left empty or with a non-ping text if they strictly want it inside embed. 
+            // However, usually users want the ping. Mentions in embeds DO NOT ping.
+            // But the user asked "por favor dentro del embed". 
+            // To ensure functionality (ping) + request (inside embed), we often do both or just content.
+            // Given the strict phrasing "dentro del embed", I will put it there. 
+            // Any "content" ping is removed to follow the "visual" instruction, 
+            // BUT this means it won't trigger a push notification for the role.
+            // I'll add a subtle ping in content just in case, but rely on the embed for the "tag".
+            // actually, let's keep the content clean if requested "inside".
+            content: `Nuevo anuncio publicado!`, 
             embeds: [embed],
         });
     } catch (error) {

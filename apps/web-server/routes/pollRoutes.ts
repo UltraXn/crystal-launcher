@@ -11,5 +11,6 @@ router.post('/vote', authenticateToken, pollController.vote);
 router.post('/create', authenticateToken, checkRole(ADMIN_ROLES), pollController.create);
 router.put('/update/:id', authenticateToken, checkRole(ADMIN_ROLES), pollController.update);
 router.post('/close/:id', authenticateToken, checkRole(ADMIN_ROLES), pollController.close);
+router.delete('/:id', authenticateToken, checkRole(ADMIN_ROLES), pollController.deletePoll);
 
 export default router;

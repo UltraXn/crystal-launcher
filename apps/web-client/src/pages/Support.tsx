@@ -8,6 +8,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import SectionDivider from '../components/Layout/SectionDivider'
 import TicketForm from '../components/Support/TicketForm'
 import { CreateTicketFormValues } from '../schemas/ticket'
+import Loader from '../components/UI/Loader'
 
 interface Ticket {
     id: string;
@@ -106,12 +107,9 @@ export default function Support() {
         return t(`admin.tickets.status.${status}`, status.toUpperCase())
     }
 
-    if (loading) return (
-        <div className="support-page loading" style={{ paddingTop: '8rem', textAlign: 'center' }}>
-            <div className="loader"></div>
-            <p>{t('common.loading')}</p>
-        </div>
-    )
+
+
+    if (loading) return <Loader fullScreen text={t('common.loading')} />
 
     return (
         <div className="support-page" style={{ marginBottom: '4rem', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

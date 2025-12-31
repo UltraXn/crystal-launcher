@@ -1,13 +1,75 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTwitter, FaDiscord, FaYoutube, FaBriefcase, FaUsers } from 'react-icons/fa';
+import { FaTwitter, FaDiscord, FaYoutube, FaBriefcase, FaUsers, FaTwitch, FaCheckCircle } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import Section from '../Layout/Section';
 import Loader from '../UI/Loader';
+import MinecraftAvatar from '../UI/MinecraftAvatar';
+
+// Pixel Art Bubble SVG Data URI
+const BUBBLE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M2 0h4v1H2zM1 1h1v1H1zM6 1h1v1H6zM0 2h1v4H0zM7 2h1v4H7zM1 6h1v1H1zM6 6h1v1H6zM2 7h4v1H2z'/%3E%3C/svg%3E";
+const HIGHLIGHT_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath d='M2 2h2v1H2zM2 3h1v1H2z'/%3E%3C/svg%3E";
+
+const CardBubbles = ({ color }: { color: string }) => {
+    // Generate random bubbles with stable IDs
+    const [bubbles] = useState(() => Array.from({ length: 5 }).map((_, i) => ({
+        id: i,
+        size: Math.random() * 10 + 10, // 10-20px
+        left: Math.random() * 80 + 10, // 10-90%
+        delay: Math.random() * 5,
+        duration: Math.random() * 5 + 8 // 8-13s
+    })));
+
+    return (
+        <div style={{ 
+            position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: '20px', 
+            pointerEvents: 'none', zIndex: 0 
+        }}>
+            {bubbles.map(b => (
+                <div key={b.id} style={{
+                    position: 'absolute',
+                    left: `${b.left}%`,
+                    bottom: '-20%',
+                    width: `${b.size}px`,
+                    height: `${b.size}px`,
+                    animation: `card-float ${b.duration}s linear infinite`,
+                    animationDelay: `${b.delay}s`,
+                    opacity: 0
+                }}>
+                    {/* Colored Body */}
+                    <div style={{
+                        position: 'absolute', inset: 0,
+                        backgroundColor: color,
+                        maskImage: `url("${BUBBLE_SVG}")`,
+                        maskSize: 'contain',
+                        maskRepeat: 'no-repeat',
+                        WebkitMaskImage: `url("${BUBBLE_SVG}")`,
+                        WebkitMaskSize: 'contain',
+                        WebkitMaskRepeat: 'no-repeat',
+                        opacity: 0.2
+                    }} />
+                    {/* White Highlight */}
+                    <div style={{
+                        position: 'absolute', inset: 0,
+                        backgroundColor: 'white',
+                        maskImage: `url("${HIGHLIGHT_SVG}")`,
+                        maskSize: 'contain',
+                        maskRepeat: 'no-repeat',
+                        WebkitMaskImage: `url("${HIGHLIGHT_SVG}")`,
+                        WebkitMaskSize: 'contain',
+                        WebkitMaskRepeat: 'no-repeat',
+                        opacity: 0.4
+                    }} />
+                </div>
+            ))}
+        </div>
+    );
+};
 
 interface StaffMember {
     id: string | number;
     name: string;
+    mc_nickname?: string; // Added field
     role: string;
     role_en?: string;
     image: string;
@@ -18,10 +80,11 @@ interface StaffMember {
         twitter?: string;
         discord?: string;
         youtube?: string;
+        twitch?: string;
     };
 }
 
-const API_URL = '/api'; // import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const RANK_BADGES: Record<string, string> = {
     'Neroferno': '/ranks/rank-neroferno.png',
@@ -30,7 +93,8 @@ const RANK_BADGES: Record<string, string> = {
     'Admin': '/ranks/admin.png',
     'Moderator': '/ranks/moderator.png',
     'Helper': '/ranks/helper.png',
-    'Usuario': '/ranks/user.png'
+    'Usuario': '/ranks/user.png',
+    'Staff': '/ranks/staff.png'
 };
 
 export default function StaffShowcase() {
@@ -45,39 +109,68 @@ export default function StaffShowcase() {
     };
     const [recruitment, setRecruitment] = useState<{ status: string; link: string }>({ status: 'false', link: '' });
     const [loading, setLoading] = useState(true);
-    const [onlineStaff, setOnlineStaff] = useState<string[]>([]);
+    // Store separated statuses
+    const [onlineStaff, setOnlineStaff] = useState<Record<string, { mc: string, discord: string }>>({});
+    const [hoveredDiscord, setHoveredDiscord] = useState<string | null>(null);
+
+    const resolveUrl = (url: string, platform: 'twitter' | 'youtube' | 'twitch') => {
+        if (!url) return '#';
+        if (url.startsWith('http')) return url;
+        if (platform === 'twitter') return `https://x.com/${url.replace('@', '')}`;
+        if (platform === 'youtube') return `https://youtube.com/@${url}`;
+        if (platform === 'twitch') return `https://twitch.tv/${url}`;
+        return url;
+    };
 
     useEffect(() => {
         // Fetch Settings (Staff Cards & Recruitment)
         fetch(`${API_URL}/settings?t=${new Date().getTime()}`)
             .then(res => {
-                if(!res.ok) throw new Error("Fetch failed");
+                if(!res.ok) throw new Error(`Fetch settings failed with status: ${res.status}`);
                 return res.json();
             })
             .then(data => {
-                if(data.staff_cards) {
+                if(data && data.staff_cards) {
                     try {
                         const parsed = typeof data.staff_cards === 'string' ? JSON.parse(data.staff_cards) : data.staff_cards;
                         setStaff(Array.isArray(parsed) ? parsed : []);
                     } catch { setStaff([]); }
                 }
-                setRecruitment({
-                    status: data.recruitment_status || 'false',
-                    link: data.recruitment_link || ''
-                });
+                if (data) {
+                    setRecruitment({
+                        status: data.recruitment_status || 'false',
+                        link: data.recruitment_link || ''
+                    });
+                }
             })
-            .catch(console.warn)
+            .catch(err => {
+                console.warn("StaffShowcase: Settings fetch error:", err.message);
+                setStaff([]);
+            })
             .finally(() => setLoading(false));
 
         // Fetch Online Staff
-        fetch(`${API_URL}/server/staff`)
-            .then(res => res.ok ? res.json() : [])
-            .then(data => {
-                if(Array.isArray(data)) {
-                    setOnlineStaff(data.map((u: { username: string }) => u.username.toLowerCase()));
-                }
-            })
-            .catch(() => {});
+        const fetchStatus = () => {
+            fetch(`${API_URL}/server/staff`)
+                .then(res => res.ok ? res.json() : [])
+                .then(data => {
+                    if(Array.isArray(data)) {
+                        const statusMap: Record<string, { mc: string, discord: string }> = {};
+                        data.forEach((u: { username: string; mc_status?: string; discord_status?: string }) => {
+                             statusMap[u.username.toLowerCase()] = {
+                                 mc: u.mc_status || 'offline',
+                                 discord: u.discord_status || 'offline'
+                             };
+                        });
+                        setOnlineStaff(statusMap);
+                    }
+                })
+                .catch(() => {});
+        };
+
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 30000); // 30s refresh
+        return () => clearInterval(interval);
     }, []);
 
     if (loading) return (
@@ -91,6 +184,15 @@ export default function StaffShowcase() {
             </div>
         </Section>
     );
+
+    const getStatusColor = (status: string) => {
+        switch(status) {
+            case 'online': return '#22c55e'; // Green
+            case 'dnd': return '#ef4444';    // Red
+            case 'idle': return '#eab308';   // Yellow
+            default: return '#52525b';       // Gray
+        }
+    };
 
     return (
         <Section title={<span><FaUsers style={{ color: 'var(--accent)', marginRight: '0.5rem', verticalAlign: 'middle' }} /> {t('staff.title', 'Nuestro Equipo')}</span>}>
@@ -137,7 +239,11 @@ export default function StaffShowcase() {
                     padding: '0 1rem'
                 }}
             >
-                {staff.map((member) => (
+                {staff.map((member) => {
+                    const status = onlineStaff[(member.mc_nickname || member.name).toLowerCase()] || { mc: 'offline', discord: 'offline' };
+                    const discordColor = getStatusColor(status.discord);
+                    
+                    return (
                     <motion.div 
                         key={member.id} 
                         initial={{ opacity: 0, y: 30 }}
@@ -145,49 +251,86 @@ export default function StaffShowcase() {
                         viewport={{ once: true }}
                         className="staff-card-home"
                         style={{ 
-                            background: 'rgba(255,255,255,0.03)', 
+                            '--staff-color': member.color,
                             borderRadius: '20px', 
                             padding: '2rem',
-                            border: '1px solid rgba(255,255,255,0.05)',
                             display: 'flex',
                             flexDirection: 'column',
                             alignItems: 'center',
                             textAlign: 'center',
                             position: 'relative',
-                            overflow: 'hidden',
+                            // overflow: 'hidden', // Removed to allow tooltips
                             transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                        }}
+                        } as React.CSSProperties}
                     >
-                        {/* Accent Top Border */}
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: member.color }}></div>
+                        {/* Accent Top Border removed (now part of background) */}
+                        
+                        {/* Internal Bubbles */}
+                        <CardBubbles color={member.color} />
 
-                        <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                        <div style={{ position: 'relative', marginBottom: '1.5rem', zIndex: 2 }}>
                             <div style={{ 
                                 width: '100px', 
                                 height: '100px', 
                                 borderRadius: '50%', 
-                                padding: '4px',
-                                background: `linear-gradient(135deg, ${member.color}, rgba(255,255,255,0.1))`,
-                                boxShadow: `0 10px 25px ${member.color}20`
+                                overflow: 'hidden',
+                                border: `3px solid ${member.color}`,
+                                boxShadow: `0 0 15px ${member.color}30`
                             }}>
-                                <img 
-                                    src={member.image?.startsWith('http') ? member.image : `https://mc-heads.net/avatar/${member.image || member.name}/100`} 
+                                <MinecraftAvatar 
+                                    src={member.image || member.mc_nickname || member.name} 
                                     alt={member.name} 
-                                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', background: '#000' }} 
+                                    size={120} 
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />
                             </div>
-                            {onlineStaff.includes(member.name.toLowerCase()) && (
+
+                             {/* Status Stack - Bottom Right */}
+                             <div style={{ 
+                                 position: 'absolute', 
+                                 bottom: '4px', 
+                                 right: '4px', 
+                                 display: 'flex', 
+                                 flexDirection: 'column-reverse', 
+                                 gap: '6px',
+                                 zIndex: 10
+                             }}>
+                                {status.mc === 'online' && (
+                                    <div 
+                                        title="Jugando en Minecraft"
+                                        style={{ 
+                                            width: '24px', height: '24px', 
+                                            borderRadius: '50%',
+                                            background: '#18181b', 
+                                            border: '3px solid #22c55e',
+                                            boxShadow: '0 0 10px #22c55e',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        }} 
+                                    >
+                                        <img src="/images/ui/minecraft_logo_icon_168974.png" alt="MC" style={{ width: '14px', height: '14px' }} />
+                                    </div>
+                                 )}
+
                                 <div 
-                                    title="Online"
-                                    style={{ 
-                                        position: 'absolute', bottom: 5, right: 5, 
-                                        width: '14px', height: '14px', 
-                                        background: '#22c55e', borderRadius: '50%', 
-                                        border: '2px solid #18181b',
-                                        boxShadow: '0 0 5px #22c55e'
-                                    }} 
-                                />
-                            )}
+                                    title={`Discord: ${status.discord.toUpperCase()}`}
+                                    style={{
+                                        width: '24px', height: '24px',
+                                        borderRadius: '50%',
+                                        background: '#5865F2',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        border: `3px solid ${discordColor}`, // Status as Border
+                                        boxShadow: `0 0 10px ${discordColor}`,
+                                    }}
+                                >
+                                    <FaDiscord style={{ color: '#fff', fontSize: '12px' }} /> 
+                                </div>
+                             </div>
+                            
+                            {/* Fallback Dot (if no Discord but we want to show something? No, user asked for split status) 
+                                Use generic dot only if MC is online and no discord? 
+                                User asked for: "uno con icono minecraft y otro con icono discord".
+                                Implementation above does exactly that.
+                            */}
                         </div>
 
                         <h3 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: '#fff' }}>{member.name}</h3>
@@ -212,22 +355,114 @@ export default function StaffShowcase() {
                             })()}
                         </p>
 
-                        <div style={{ display: 'flex', gap: '1rem', marginTop: 'auto', opacity: 0.8 }}>
-                            {member.socials?.twitter && <a href={member.socials.twitter} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', transition: 'color 0.2s' }}><FaTwitter size={18} /></a>}
-                            {member.socials?.discord && <div title={member.socials.discord} style={{ color: '#fff', cursor: 'help' }}><FaDiscord size={18} /></div>}
-                            {member.socials?.youtube && <a href={member.socials.youtube} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', transition: 'color 0.2s' }}><FaYoutube size={18} /></a>}
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: 'auto', opacity: 0.8, position: 'relative' }}>
+                            {member.socials?.twitter && <a href={resolveUrl(member.socials.twitter, 'twitter')} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', transition: 'color 0.2s' }}><FaTwitter size={18} /></a>}
+                            
+                            {member.socials?.discord && (
+                                <div 
+                                    style={{ position: 'relative', display: 'flex', alignItems: 'center', zIndex: 20 }}
+                                    onMouseEnter={() => setHoveredDiscord(String(member.id))}
+                                    onMouseLeave={() => setHoveredDiscord(null)}
+                                >
+                                    <div style={{ color: '#fff', cursor: 'help', position: 'relative' }}>
+                                        <FaDiscord size={18} />
+                                        {status.discord !== 'offline' && (
+                                            <FaCheckCircle 
+                                                size={10} 
+                                                style={{ 
+                                                    position: 'absolute', 
+                                                    bottom: -3, 
+                                                    right: -3, 
+                                                    color: discordColor, 
+                                                    background: '#18181b', 
+                                                    borderRadius: '50%',
+                                                    border: '1px solid #18181b'
+                                                }} 
+                                            />
+                                        )}
+                                    </div>
+                                    <AnimatePresence>
+                                        {hoveredDiscord === String(member.id) && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.9, x: '-50%' }}
+                                                animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.9, x: '-50%' }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    bottom: '100%',
+                                                    left: '50%',
+                                                    marginBottom: '10px',
+                                                    background: '#18181b',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: '8px',
+                                                    whiteSpace: 'nowrap',
+                                                    zIndex: 100, // Boost z-index for tooltips
+                                                    boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: 600,
+                                                    color: '#fff',
+                                                    pointerEvents: 'none'
+                                                }}
+                                            >
+                                                {member.socials.discord.split(',')[0].trim()}
+                                                <div style={{ 
+                                                    position: 'absolute', bottom: '-4px', left: '50%', 
+                                                    width: '8px', height: '8px', background: '#18181b', 
+                                                    borderRight: '1px solid rgba(255,255,255,0.1)', 
+                                                    borderBottom: '1px solid rgba(255,255,255,0.1)', 
+                                                    transform: 'translateX(-50%) rotate(45deg)' 
+                                                }}></div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            )}
+
+                            {member.socials?.twitch && (
+                                <a href={resolveUrl(member.socials.twitch, 'twitch')} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', transition: 'color 0.2s', position: 'relative' }}>
+                                    <FaTwitch size={18} />
+                                    {onlineStaff[member.name.toLowerCase()]?.mc === 'online' && (
+                                        <FaCheckCircle 
+                                            size={10} 
+                                            style={{ 
+                                                position: 'absolute', 
+                                                bottom: -3, 
+                                                right: -3, 
+                                                color: '#22c55e', 
+                                                background: '#18181b', 
+                                                borderRadius: '50%',
+                                                border: '1px solid #18181b'
+                                            }} 
+                                        />
+                                    )}
+                                </a>
+                            )}
+                            
+                            {member.socials?.youtube && <a href={resolveUrl(member.socials.youtube, 'youtube')} target="_blank" rel="noopener noreferrer" style={{ color: '#fff', transition: 'color 0.2s' }}><FaYoutube size={18} /></a>}
                         </div>
                     </motion.div>
-                ))}
+                    );
+                })}
                 <style>{`
+                    .staff-card-home {
+                        background: linear-gradient(to bottom, var(--staff-color) 4px, transparent 4px), rgba(255, 255, 255, 0.03);
+                        border: 1px solid rgba(255, 255, 255, 0.05);
+                    }
                     .staff-card-home:hover {
                         transform: translateY(-10px);
-                        background: rgba(255,255,255,0.05) !important;
+                         background: linear-gradient(to bottom, var(--staff-color) 4px, transparent 4px), rgba(255, 255, 255, 0.08) !important;
                         box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
                     }
                     .btn-hiring:hover {
                         background: rgba(16, 185, 129, 0.2) !important;
                         transform: scale(1.05);
+                    }
+                    @keyframes card-float {
+                        0% { transform: translateY(0) translateX(0); opacity: 0; }
+                        20% { opacity: 1; }
+                        50% { transform: translateY(-150px) translateX(10px); }
+                        100% { transform: translateY(-300px) translateX(-10px); opacity: 0; }
                     }
                 `}</style>
             </div>

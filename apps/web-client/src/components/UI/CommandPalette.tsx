@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion as Motion } from 'framer-motion';
-import { FaSearch, FaHome, FaUser, FaUsers, FaMap, FaDiscord, FaCog, FaShieldAlt, FaQuestionCircle, FaBoxOpen } from 'react-icons/fa';
+import { FaSearch, FaHome, FaUser, FaUsers, FaMap, FaDiscord, FaCog, FaShieldAlt, FaQuestionCircle } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 
@@ -50,7 +50,6 @@ export default function CommandPalette() {
                 { id: 'account', label: t('nav.account', 'Mi Cuenta'), icon: <FaUser />, action: () => navigate('/account') },
                 { id: 'staff', label: t('nav.staff', 'Staff'), icon: <FaUsers />, action: () => navigate('/#staff') },
                 { id: 'map', label: t('nav.map', 'Mapa'), icon: <FaMap />, action: () => navigate('/map') },
-                { id: 'gacha', label: 'KilluCoin Gacha', icon: <FaBoxOpen />, action: () => navigate('/gacha') },
                 { id: 'forum', label: 'Foro', icon: <FaQuestionCircle />, action: () => navigate('/forum') },
                 { id: 'support', label: 'Soporte', icon: <FaQuestionCircle />, action: () => navigate('/support') },
             ] 

@@ -22,7 +22,7 @@ export default function NewsForm({ initialData, onSave, onCancel }: NewsFormProp
     const [uploadError, setUploadError] = useState<string | null>(null)
     const [translating, setTranslating] = useState(false)
     
-    const API_URL = '/api'; 
+    const API_URL = import.meta.env.VITE_API_URL || '/api'; 
 
     const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<NewsFormValues>({
         resolver: zodResolver(newsSchema),
@@ -152,189 +152,216 @@ export default function NewsForm({ initialData, onSave, onCancel }: NewsFormProp
     }
 
     return (
-        <div className="admin-card">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-                <h3 style={{ fontSize: "1.2rem" }}>{initialData?.id ? t('admin.news.edit_title') : t('admin.news.create_title')}</h3>
-                <button className="btn-secondary" onClick={onCancel}>{t('admin.news.cancel')}</button>
+        <div className="news-form-container">
+            <div className="news-header" style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 900, color: '#fff' }}>
+                    {initialData?.id ? t('admin.news.edit_title') : t('admin.news.create_title')}
+                </h3>
+                <button className="btn-secondary" onClick={onCancel} style={{ borderRadius: '12px', height: '42px', flex: '1 1 auto', minWidth: '120px' }}>
+                    {t('admin.news.cancel')}
+                </button>
             </div>
 
-            <form onSubmit={handleSubmit(onSave)} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                <div className="form-group">
-                    <label className="form-label">{t('admin.news.form.title')}</label>
-                    <input
-                        type="text"
-                        className="form-input"
-                        {...register("title")}
-                    />
-                    {errors.title && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.title.message}</span>}
+            <div className="poll-active-card" style={{ padding: '3rem', maxWidth: '100%', borderRadius: '32px' }}>
+                <div className="modal-accent-line"></div>
+                <form onSubmit={handleSubmit(onSave)} className="news-form-grid">
                     
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            <button
-                            type="button"
-                            className="btn-secondary"
-                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={() => handleTranslate(title, 'en', 'title_en')}
-                            disabled={translating || !title}
-                        >
-                            {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_en_title')}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label className="form-label">{t('admin.news.form.title')} {t('admin.news.english_suffix')}</label>
-                    <input
-                        type="text"
-                        className="form-input"
-                        {...register("title_en")}
-                        placeholder={t('admin.news.english_placeholder')}
-                    />
-                    {errors.title_en && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.title_en.message}</span>}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            <button
-                            type="button"
-                            className="btn-secondary"
-                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={() => handleTranslate(title_en || '', 'es', 'title')}
-                            disabled={translating || !title_en}
-                        >
-                            {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_es_title')}
-                        </button>
-                    </div>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                    <div className="form-group">
-                        <label className="form-label">{t('admin.news.form.category')}</label>
-                        <select className="form-input" {...register("category")}>
-                            <option value="General">General</option>
-                            <option value="Evento">Evento</option>
-                            <option value="Update">Update</option>
-                            <option value="Sistema">Sistema</option>
-                            <option value="Comunidad">Comunidad</option>
-                        </select>
-                        {errors.category && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.category.message}</span>}
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">{t('admin.news.form.status')}</label>
-                        <select className="form-input" {...register("status")}>
-                            <option value="Draft">{t('admin.news.form.draft')}</option>
-                            <option value="Published">{t('admin.news.form.published')}</option>
-                        </select>
-                        {errors.status && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.status.message}</span>}
-                    </div>
-                </div>
-
-                <div className="form-group">
-                    <label className="form-label">{t('admin.news.form.image')}</label>
-                    <div style={{ display: "flex", gap: "0.5rem", flexDirection: 'column' }}>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
-                            <div style={{ background: "#333", width: "40px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "4px" }}>
-                                <FaImage color="#888" />
-                            </div>
+                    {/* LEFT COLUMN: Spanish & Settings */}
+                    <div className="news-form-section">
+                        <h4><img src="/images/ui/logo.webp" width="20" style={{ verticalAlign: 'middle', marginRight: '8px' }} /> {t('admin.news.form_extras.config_es', 'Contenido en Español')}</h4>
+                        
+                        <div className="form-group">
+                            <label className="admin-label-premium">{t('admin.news.form.title')}</label>
                             <input
                                 type="text"
-                                className="form-input"
-                                placeholder="https://..."
-                                {...register("image")}
+                                className="admin-input-premium"
+                                {...register("title")}
+                                placeholder="Escribe un título impactante..."
                             />
-                        </div>
-                        {errors.image && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.image.message}</span>}
-                        
-                        <input 
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleImageUpload} 
-                            style={{color: '#aaa', fontSize: '0.9rem'}}
-                            disabled={uploading}
-                        />
-                        {uploading && <span style={{fontSize: '0.8rem', color: 'var(--accent)'}}>{t('admin.news.uploading')}</span>}
-                        {uploadError && (
-                            <div style={{ 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                color: '#ef4444', 
-                                padding: '0.5rem', 
-                                borderRadius: '4px',
-                                fontSize: '0.8rem',
-                                marginTop: '0.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}>
-                                <FaExclamationTriangle /> {uploadError}
+                            {errors.title && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '5px', display: 'block'}}>{errors.title.message}</span>}
+                            
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn-translate-premium"
+                                    onClick={() => handleTranslate(title, 'en', 'title_en')}
+                                    disabled={translating || !title}
+                                >
+                                    {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_en_title')}
+                                </button>
                             </div>
-                        )}
-                    </div>
-                </div>
+                        </div>
 
-                <div className="form-group">
-                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <label className="form-label">{t('admin.news.form.content')}</label>
-                        <button 
-                            type="button" 
-                            onClick={() => contentFileInputRef.current?.click()} 
-                            className="btn-secondary" 
-                            style={{fontSize: '0.8rem', padding: '0.2rem 0.5rem'}}
-                            disabled={uploading}
-                        >
-                            <FaImage style={{marginRight: '5px'}}/> {t('admin.news.insert_image')}
-                        </button>
-                        <input 
-                            type="file" 
-                            ref={contentFileInputRef} 
-                            style={{display: 'none'}} 
-                            accept="image/*" 
-                            onChange={handleContentImageUpload}
-                        />
-                    </div>
-                    <textarea
-                        className="form-textarea"
-                        rows={10}
-                        {...register("content")}
-                    ></textarea>
-                    {errors.content && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.content.message}</span>}
-                    
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            <button
-                            type="button"
-                            className="btn-secondary"
-                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={() => handleTranslate(content, 'en', 'content_en')}
-                            disabled={translating || !content}
-                        >
-                            {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_en_content')}
-                        </button>
-                    </div>
-                </div>
+                        <div className="form-group">
+                            <label className="admin-label-premium">{t('admin.news.form.content')}</label>
+                            <div style={{ position: 'relative' }}>
+                                <textarea
+                                    className="admin-textarea-premium"
+                                    rows={12}
+                                    {...register("content")}
+                                    placeholder="Desarrolla la noticia aquí..."
+                                ></textarea>
+                                <button 
+                                    type="button" 
+                                    onClick={() => contentFileInputRef.current?.click()} 
+                                    className="btn-translate-premium" 
+                                    style={{ position: 'absolute', bottom: '1rem', right: '1rem', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)' }}
+                                    disabled={uploading}
+                                >
+                                    <FaImage /> {t('admin.news.insert_image')}
+                                </button>
+                                <input 
+                                    type="file" 
+                                    ref={contentFileInputRef} 
+                                    style={{display: 'none'}} 
+                                    accept="image/*" 
+                                    onChange={handleContentImageUpload}
+                                />
+                            </div>
+                            {errors.content && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '5px', display: 'block'}}>{errors.content.message}</span>}
+                            
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn-translate-premium"
+                                    onClick={() => handleTranslate(content, 'en', 'content_en')}
+                                    disabled={translating || !content}
+                                >
+                                    {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_en_content')}
+                                </button>
+                            </div>
+                        </div>
 
-                <div className="form-group">
-                    <label className="form-label">{t('admin.news.form.content')} {t('admin.news.english_suffix')}</label>
-                    <textarea
-                        className="form-textarea"
-                        rows={10}
-                        {...register("content_en")}
-                    ></textarea>
-                    {errors.content_en && <span style={{color: 'red', fontSize: '0.8rem'}}>{errors.content_en.message}</span>}
-                    
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                            <button
-                            type="button"
-                            className="btn-secondary"
-                            style={{ fontSize: '0.8rem', padding: '0.3rem 0.6rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={() => handleTranslate(content_en || '', 'es', 'content')}
-                            disabled={translating || !content_en}
-                        >
-                            {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_es_content')}
+                        <div className="news-selectors-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.5rem" }}>
+                            <div className="form-group">
+                                <label className="admin-label-premium">{t('admin.news.form.category')}</label>
+                                <select className="admin-select-premium" {...register("category")}>
+                                    <option value="General">General</option>
+                                    <option value="Evento">Evento</option>
+                                    <option value="Update">Update</option>
+                                    <option value="Sistema">Sistema</option>
+                                    <option value="Comunidad">Comunidad</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="admin-label-premium">{t('admin.news.form.status')}</label>
+                                <select className="admin-select-premium" {...register("status")}>
+                                    <option value="Draft">{t('admin.news.form.draft')}</option>
+                                    <option value="Published">{t('admin.news.form.published')}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: English & Image */}
+                    <div className="news-form-section">
+                        <h4><FaLanguage /> {t('admin.news.form_extras.config_en', 'English Version')}</h4>
+
+                        <div className="form-group">
+                            <label className="admin-label-premium">{t('admin.news.form.title')} {t('admin.news.english_suffix')}</label>
+                            <input
+                                type="text"
+                                className="admin-input-premium"
+                                {...register("title_en")}
+                                placeholder="Catchy title in English..."
+                            />
+                            {errors.title_en && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '5px', display: 'block'}}>{errors.title_en.message}</span>}
+                            
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn-translate-premium"
+                                    onClick={() => handleTranslate(title_en || '', 'es', 'title')}
+                                    disabled={translating || !title_en}
+                                >
+                                    {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_es_title')}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="admin-label-premium">{t('admin.news.form.content')} {t('admin.news.english_suffix')}</label>
+                            <textarea
+                                className="admin-textarea-premium"
+                                rows={12}
+                                {...register("content_en")}
+                                placeholder="Develop the news content in English..."
+                            ></textarea>
+                            {errors.content_en && <span style={{color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '5px', display: 'block'}}>{errors.content_en.message}</span>}
+                            
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn-translate-premium"
+                                    onClick={() => handleTranslate(content_en || '', 'es', 'content')}
+                                    disabled={translating || !content_en}
+                                >
+                                    {translating ? <FaSpinner className="spin" /> : <FaLanguage />} {t('admin.news.translate_to_es_content')}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="admin-label-premium">{t('admin.news.form.image')}</label>
+                            <div className="news-img-preview-wrapper" style={{ marginBottom: '1rem' }}>
+                                {watch("image") ? (
+                                    <img src={watch("image")} className="news-img-preview" alt="Preview" />
+                                ) : (
+                                    <div style={{ textAlign: 'center', opacity: 0.3 }}>
+                                        <FaImage size={40} style={{ marginBottom: '10px' }} />
+                                        <p style={{ fontSize: '0.8rem', fontWeight: 800 }}>SIN IMAGEN PORTADA</p>
+                                    </div>
+                                )}
+                                {uploading && (
+                                    <div className="news-upload-loading">
+                                        <FaSpinner className="spin" size={24} />
+                                        <span>SUBIENDO...</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <input
+                                    type="text"
+                                    className="admin-input-premium"
+                                    placeholder="https://su-imagen.webp"
+                                    {...register("image")}
+                                    style={{ flex: 1 }}
+                                />
+                                <button 
+                                    type="button"
+                                    className="modal-btn-primary"
+                                    style={{ width: '54px', height: '54px', borderRadius: '14px', flexShrink: 0 }}
+                                    onClick={() => {
+                                        const input = document.createElement('input');
+                                        input.type = 'file';
+                                        input.accept = 'image/*';
+                                        input.onchange = (e: Event) => handleImageUpload(e as unknown as React.ChangeEvent<HTMLInputElement>);
+                                        input.click();
+                                    }}
+                                    disabled={uploading}
+                                >
+                                    <FaImage size={20} />
+                                </button>
+                            </div>
+                            {uploadError && (
+                                <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '1rem', borderRadius: '12px', fontSize: '0.8rem', fontWeight: 700, marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <FaExclamationTriangle /> {uploadError}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="news-form-footer" style={{ gridColumn: '1 / -1', marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '2.5rem', flexWrap: 'wrap' }}>
+                        <button type="button" onClick={onCancel} className="modal-btn-secondary" style={{ flex: '1 1 auto', minWidth: '140px', height: '54px', padding: '0 2rem' }}>
+                            {t('admin.news.cancel')}
+                        </button>
+                        <button type="submit" className="modal-btn-primary" style={{ flex: '1 1 auto', minWidth: '140px', height: '54px', padding: '0 2rem' }} disabled={isSubmitting}>
+                            {isSubmitting ? <FaSpinner className="spin" /> : (initialData?.id ? t('admin.news.form.save') : t('admin.news.form.publish'))}
                         </button>
                     </div>
-                </div>
-
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
-                    <button type="submit" className="btn-primary" disabled={isSubmitting}>
-                        {isSubmitting ? <FaSpinner className="spin" /> : (initialData?.id ? t('admin.news.form.save') : t('admin.news.form.publish'))}
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     )
 }

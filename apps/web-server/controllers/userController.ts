@@ -80,3 +80,20 @@ export const getStaffUsers = async (req: Request, res: Response) => {
         return sendError(res, message);
     }
 };
+
+export const giveKarma = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const voterId = (req as Request & { user: { id: string } }).user.id; // From authenticateToken middleware
+
+        if (id === voterId) {
+            return sendError(res, 'No puedes darte karma a ti mismo', 'SELF_VOTE', 400);
+        }
+
+        const newReputation = await userService.giveKarma(id, voterId);
+        return sendSuccess(res, { newReputation }, 'Karma dado exitosamente');
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
+    }
+};

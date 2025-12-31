@@ -157,13 +157,48 @@ export const getDonationStats = async (req: Request, res: Response) => {
 
         const totalAmount = data.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
         
+        // Detailed Month Calc
+        const now = new Date();
+        const currentMonthIdx = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const prevDate = new Date();
+        prevDate.setMonth(now.getMonth() - 1);
+        const prevMonthIdx = prevDate.getMonth();
+        const prevYear = prevDate.getFullYear();
+
+        let currentMonthParams = 0;
+        let prevMonthParams = 0;
+
         // Basic monthly aggregation in JS
         const months: Record<string, number> = {};
+        
         data.forEach(d => {
             const date = new Date(d.created_at);
+            const amt = Number(d.amount) || 0;
+            
+            // Monthly Agg
             const key = `${date.toLocaleString('default', { month: 'short' })}`; // e.g. "Dec"
-            months[key] = (months[key] || 0) + (Number(d.amount) || 0);
+            months[key] = (months[key] || 0) + amt;
+
+            // Current Month Calc
+            if (date.getMonth() === currentMonthIdx && date.getFullYear() === currentYear) {
+                currentMonthParams += amt;
+            }
+
+            // Prev Month Calc
+            if (date.getMonth() === prevMonthIdx && date.getFullYear() === prevYear) {
+                prevMonthParams += amt;
+            }
         });
+
+        // Calculate Percent Change
+        let percentChange = 0;
+        if (prevMonthParams === 0) {
+            percentChange = currentMonthParams > 0 ? 100 : 0;
+        } else {
+            percentChange = ((currentMonthParams - prevMonthParams) / prevMonthParams) * 100;
+        }
 
         const monthlyStats = Object.keys(months).map(month => ({
             month,
@@ -172,6 +207,8 @@ export const getDonationStats = async (req: Request, res: Response) => {
 
         res.json({
             totalAmount,
+            currentMonth: currentMonthParams.toFixed(2),
+            percentChange: Math.round(percentChange),
             count: data.length,
             monthlyStats
         });

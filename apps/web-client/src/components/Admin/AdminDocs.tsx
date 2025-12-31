@@ -1,9 +1,29 @@
-import { useState } from 'react';
-import { FaBook, FaBullhorn, FaUserShield, FaClipboardList, FaTerminal, FaGamepad, FaChevronDown } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { IconType } from 'react-icons';
+import { 
+    FaBook, FaBullhorn, FaUserShield, FaClipboardList, FaTerminal, 
+    FaGamepad, FaChevronDown, FaEdit, FaSave, FaTimes, FaListUl, FaUndo
+} from 'react-icons/fa';
 import MarkdownRenderer from '../UI/MarkdownRenderer';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../../services/supabaseClient';
+import { getAuthHeaders } from '../../services/adminAuth';
 
-const useDocsData = () => {
+const API_URL = import.meta.env.VITE_API_URL;
+
+const ICON_MAP: Record<string, IconType> = {
+    'intro': FaBook,
+    'security': FaUserShield,
+    'staff-hub': FaClipboardList,
+    'moderation': FaUserShield,
+    'discord': FaBullhorn,
+    'audit': FaListUl,
+    'console': FaTerminal,
+    'content': FaBullhorn,
+    'gamification': FaGamepad
+};
+
+const useDocsDefaults = () => {
     const { t } = useTranslation();
     
     return [
@@ -20,11 +40,25 @@ ${t('admin.docs.content.intro_msg', 'Bienvenido al centro de control. Desde aqu�
         `
     },
     {
+        id: 'security',
+        title: t('admin.docs.titles.security', 'Seguridad (2FA)'),
+        icon: FaUserShield,
+        content: `
+# 🛡️ ${t('admin.docs.titles.security', 'Seguridad (2FA)')}
+
+${t('admin.docs.content.security_desc', 'Protección de acceso al panel administrativo.')}
+
+### 🔐 ${t('admin.docs.titles.security', '2FA')}
+- **TOTP**: ${t('admin.docs.content.security_2fa', 'El Panel requiere Autenticación de Dos Factores (TOTP) para acceder a funciones críticas.')}
+- **Tokens**: ${t('admin.docs.content.security_tokens', 'Se emite un Token de Admin temporal tras la verificación válida.')}
+        `
+    },
+    {
         id: 'staff-hub',
-        title: 'Staff Hub',
+        title: t('admin.docs.titles.staff_hub', 'Staff Hub'),
         icon: FaClipboardList,
         content: `
-# 🛡️ Staff Hub
+# 📋 ${t('admin.docs.titles.staff_hub', 'Staff Hub')}
 
 ${t('admin.docs.content.staff_intro', 'Herramientas para la organización interna del equipo.')}
 
@@ -52,6 +86,35 @@ ${t('admin.docs.content.users_desc', 'Lista completa de usuarios registrados.')}
 
 ### Tickets System
 ${t('admin.docs.content.tickets_desc', 'Centro de soporte. Prioriza y responde tickets de usuarios.')}
+        `
+    },
+    {
+        id: 'discord',
+        title: t('admin.docs.titles.discord', 'Integración Discord'),
+        icon: FaBullhorn,
+        content: `
+# 🤖 ${t('admin.docs.titles.discord', 'Integración Discord')}
+
+${t('admin.docs.content.discord_desc', 'Sincronización entre la web y la comunidad de Discord.')}
+
+### 🔗 ${t('admin.docs.content.discord_linking', 'Vinculación')}
+- **CrystalLink**: ${t('admin.docs.content.discord_linking', 'Vinculación de cuentas mediante /link.')}
+
+### 📢 ${t('admin.docs.content.discord_announcements', 'Anuncios')}
+- **Webhooks**: ${t('admin.docs.content.discord_announcements', 'Anuncios automáticos en el servidor de Discord al publicar noticias.')}
+        `
+    },
+    {
+        id: 'audit',
+        title: t('admin.docs.titles.audit', 'Logs de Auditoría'),
+        icon: FaListUl,
+        content: `
+# 📝 ${t('admin.docs.titles.audit', 'Logs de Auditoría')}
+
+${t('admin.docs.content.audit_desc', 'Registro histórico de todas las acciones administrativas realizadas en la web y el juego.')}
+
+- **Filtros**: ${t('admin.docs.tabs.logs', 'Logs')} permite filtrar por origen (Web/Juego) y usuario.
+- **Acciones**: ${t('admin.docs.content.audit_desc', 'Registra cambios en configuración, bans, tickets y más.')}
         `
     },
     {
@@ -101,11 +164,101 @@ ${t('admin.docs.content.polls_desc', 'Crea votaciones para la comunidad.')}
 ];
 };
 
+interface AdminDoc {
+    id: string;
+    title: string;
+    content: string;
+}
+
 export default function AdminDocs() {
-    const DOCS_DATA = useDocsData(); // Use the hook
+    const { t } = useTranslation();
+    const defaults = useDocsDefaults();
+    const [docs, setDocs] = useState<AdminDoc[]>([]);
     const [activeTab, setActiveTab] = useState('intro');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const activeDoc = DOCS_DATA.find(d => d.id === activeTab) || DOCS_DATA[0];
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    // Fetch docs from DB
+    useEffect(() => {
+        const fetchDocs = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const res = await fetch(`${API_URL}/settings/admin_docs`, {
+                    headers: getAuthHeaders(session?.access_token || null)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.value) {
+                        const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+                        setDocs(parsed);
+                    } else {
+                        setDocs(defaults);
+                    }
+                } else {
+                    setDocs(defaults);
+                }
+            } catch (err) {
+                console.error("Error fetching docs:", err);
+                setDocs(defaults);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDocs();
+    }, [defaults]);
+
+    const activeDoc = docs.find(d => d.id === activeTab) || docs[0] || defaults[0];
+
+    useEffect(() => {
+        if (activeDoc) setEditContent(activeDoc.content);
+    }, [activeDoc]);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const updatedDocs = docs.map(d => 
+                d.id === activeTab ? { ...d, content: editContent } : d
+            );
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const res = await fetch(`${API_URL}/settings/admin_docs`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeaders(session?.access_token || null)
+                },
+                body: JSON.stringify({ 
+                    value: JSON.stringify(updatedDocs),
+                    userId: session?.user?.id,
+                    username: session?.user?.user_metadata?.username || 'Admin'
+                })
+            });
+
+            if (!res.ok) throw new Error('Failed to save');
+            
+            setDocs(updatedDocs);
+            setIsEditing(false);
+        } catch (err) {
+            console.error("Error saving docs:", err);
+            alert(t('admin.docs.save_error'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleReset = () => {
+        if (window.confirm(t('admin.docs.reset_confirm'))) {
+            const defaultDoc = defaults.find(d => d.id === activeTab);
+            if (defaultDoc) setEditContent(defaultDoc.content);
+        }
+    };
+
+    if (loading) return <div style={{ color: '#aaa', padding: '2rem' }}>{t('admin.docs.loading')}</div>;
+
+    const ActiveIcon = ICON_MAP[activeDoc?.id] || FaBook;
 
     return (
         <div className="admin-docs-container">
@@ -128,12 +281,17 @@ export default function AdminDocs() {
                     flex: 1;
                     overflow-y: auto;
                     padding-right: 2rem;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .docs-card {
                     background: rgba(0,0,0,0.2);
                     padding: 2rem;
                     border-radius: 12px;
                     border: 1px solid rgba(255,255,255,0.05);
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
                 }
                 .sidebar-btn {
                     display: flex;
@@ -158,6 +316,24 @@ export default function AdminDocs() {
                     background: var(--accent);
                     color: #000;
                     font-weight: bold;
+                }
+                
+                .docs-editor {
+                    width: 100%;
+                    min-height: 400px;
+                    background: #111;
+                    color: #eee;
+                    border: 1px solid #333;
+                    border-radius: 8px;
+                    padding: 1rem;
+                    font-family: monospace;
+                    font-size: 1rem;
+                    line-height: 1.5;
+                    resize: vertical;
+                    outline: none;
+                }
+                .docs-editor:focus {
+                    border-color: var(--accent);
                 }
 
                 /* Mobile Dropdown Styles */
@@ -205,46 +381,64 @@ export default function AdminDocs() {
                 .mobile-dropdown-item:last-child { border-bottom: none; }
                 .mobile-dropdown-item.active { background: var(--accent); color: #000; }
 
-                /* MOBILE RESPONSIVE MEDIA QUERY */
+                /* Mobile Responsive Improvements */
+                .docs-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 2rem;
+                    border-bottom: 1px solid var(--accent);
+                    padding-bottom: 1rem;
+                }
+                
                 @media (max-width: 768px) {
                     .admin-docs-container {
                         flex-direction: column;
                         height: auto;
                         gap: 1rem;
-                        overflow: visible; /* Allow absolute dropdown to show */
+                        overflow: visible;
                     }
-                    .docs-sidebar {
-                        display: none; /* Hide Desktop Sidebar */
-                    }
-                    .mobile-dropdown-container {
-                        display: block; /* Show Mobile Dropdown */
-                    }
-                    .docs-content {
-                        padding-right: 0;
-                        overflow-y: visible;
-                    }
-                    .docs-card {
-                        padding: 1.5rem;
-                    }
+                    .docs-sidebar { display: none; }
+                    .mobile-dropdown-container { display: block; }
+                    .docs-content { padding-right: 0; overflow-y: visible; }
+                    .docs-card { padding: 1.5rem; }
                     h2 { font-size: 1.5rem !important; }
+
+                    /* Header Stacking */
+                    .docs-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 1rem;
+                    }
+                    .docs-header > div {
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+                    .btn-primary, .btn-secondary {
+                        width: 100%;
+                        justify-content: center;
+                    }
                 }
                 @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
             `}</style>
             
             {/* Desktop Sidebar */}
             <div className="docs-sidebar">
-                <h3 style={{ padding: '0 1rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--muted)' }}>Índice</h3>
+                <h3 style={{ padding: '0 1rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--muted)' }}>{t('admin.docs.index')}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem 0' }}>
-                    {DOCS_DATA.map(doc => (
-                        <button
-                            key={doc.id}
-                            onClick={() => setActiveTab(doc.id)}
-                            className={`sidebar-btn ${activeTab === doc.id ? 'active' : ''}`}
-                        >
-                            <doc.icon />
-                            {doc.title}
-                        </button>
-                    ))}
+                    {docs.map(doc => {
+                        const Icon = ICON_MAP[doc.id] || FaBook;
+                        return (
+                            <button
+                                key={doc.id}
+                                onClick={() => { setActiveTab(doc.id); setIsEditing(false); }}
+                                className={`sidebar-btn ${activeTab === doc.id ? 'active' : ''}`}
+                            >
+                                <Icon />
+                                {doc.title}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -255,25 +449,29 @@ export default function AdminDocs() {
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 >
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                        <activeDoc.icon color="var(--accent)" /> {activeDoc.title}
+                        <ActiveIcon color="var(--accent)" /> {activeDoc.title}
                     </span>
                     <FaChevronDown style={{ transform: mobileMenuOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
                 </button>
                 
                 {mobileMenuOpen && (
                     <div className="mobile-dropdown-list">
-                        {DOCS_DATA.map(doc => (
-                            <div 
-                                key={doc.id}
-                                className={`mobile-dropdown-item ${activeTab === doc.id ? 'active' : ''}`}
-                                onClick={() => {
-                                    setActiveTab(doc.id);
-                                    setMobileMenuOpen(false);
-                                }}
-                            >
-                                <doc.icon /> {doc.title}
-                            </div>
-                        ))}
+                        {docs.map(doc => {
+                            const Icon = ICON_MAP[doc.id] || FaBook;
+                            return (
+                                <div 
+                                    key={doc.id}
+                                    className={`mobile-dropdown-item ${activeTab === doc.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab(doc.id);
+                                        setMobileMenuOpen(false);
+                                        setIsEditing(false);
+                                    }}
+                                >
+                                    <Icon /> {doc.title}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -281,16 +479,48 @@ export default function AdminDocs() {
             {/* Área de Contenido */}
             <div className="docs-content">
                 <div className="docs-card">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--accent)', paddingBottom: '1rem' }}>
-                        <activeDoc.icon size={30} color="var(--accent)" />
-                        <h2 style={{ margin: 0, fontSize: '2rem' }}>{activeDoc.title}</h2>
+                    <div className="docs-header">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <ActiveIcon size={30} color="var(--accent)" />
+                            <h2 style={{ margin: 0, fontSize: '1.8rem' }}>{activeDoc.title}</h2>
+                        </div>
+                        
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            {isEditing ? (
+                                <>
+                                    <button onClick={handleReset} className="btn-secondary" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)' }} title={t('admin.docs.reset')}>
+                                        <FaUndo />
+                                    </button>
+                                    <button onClick={() => setIsEditing(false)} className="btn-secondary" style={{ color: '#ef4444' }}>
+                                        <FaTimes /> {t('admin.actions.cancel')}
+                                    </button>
+                                    <button onClick={handleSave} className="btn-primary" disabled={saving}>
+                                        <FaSave /> {saving ? t('admin.docs.saving') : t('admin.actions.save')}
+                                    </button>
+                                </>
+                            ) : (
+                                <button onClick={() => setIsEditing(true)} className="btn-primary" style={{ background: 'rgba(22, 140, 128, 0.2)', border: '1px solid var(--accent)', color: 'var(--accent)' }}>
+                                    <FaEdit /> {t('admin.docs.edit_section')}
+                                </button>
+                            )}
+                        </div>
                     </div>
                     
-                    <div className="markdown-body" style={{ color: '#ddd', lineHeight: 1.6 }}>
-                        <MarkdownRenderer content={activeDoc.content} />
-                    </div>
+                    {isEditing ? (
+                        <textarea 
+                            className="docs-editor"
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            placeholder={t('admin.docs.placeholder')}
+                        />
+                    ) : (
+                        <div className="markdown-body" style={{ color: '#ddd', lineHeight: 1.6 }}>
+                            <MarkdownRenderer content={activeDoc.content} />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+

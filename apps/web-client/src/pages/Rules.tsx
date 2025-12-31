@@ -1,52 +1,71 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import Section from "../components/Layout/Section"
-import { FaHandshake, FaUserShield, FaCity, FaHammer, FaLeaf, FaPaintBrush, FaVideo, FaShieldAlt, FaPlus, FaEdit, FaTrash, FaSave } from "react-icons/fa"
-import anime from "animejs/lib/anime.js"
+import { 
+    FaUserShield, FaCommentDots, FaHammer, FaTree, 
+    FaPaintBrush, FaVideo, FaShieldAlt, FaPlus, FaEdit, 
+    FaTrash, FaSave, FaGavel, FaInfoCircle, FaTimes,
+    FaBalanceScale, FaUserSecret, FaGlobeAmericas, FaBullhorn,
+    FaLanguage, FaSpinner
+} from "react-icons/fa"
+import { gsap } from "gsap"
 import { useTranslation } from 'react-i18next'
 import { useAuth } from "../context/AuthContext"
 import { getRules, createRule, updateRule, deleteRule, Rule } from "../services/ruleService"
 import { supabase } from "../services/supabaseClient"
+import Loader from "../components/UI/Loader"
+import "../styles/rules.css" // Import custom premium styles
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Icon mapping based on Category
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-    'General': <FaHandshake />,
-    'Comportamiento': <FaUserShield />,
-    'Chat': <FaCity />,
-    'PvP': <FaHammer />,
-    'Construcción': <FaLeaf />,
-    'Clientes': <FaPaintBrush />,
-    'Staff': <FaVideo />,
-    'Cuenta': <FaShieldAlt />
+// Icon mapping based on Category - Enhanced for beauty
+const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode, color: string }> = {
+    'General': { icon: <FaInfoCircle />, color: '#6366f1' }, // Indigo
+    'Comportamiento': { icon: <FaUserShield />, color: '#f87171' }, // Red
+    'Chat': { icon: <FaCommentDots />, color: '#4ade80' }, // Green
+    'PvP': { icon: <FaHammer />, color: '#fb923c' }, // Orange
+    'Construcción': { icon: <FaTree />, color: '#2dd4bf' }, // Teal
+    'Modificaciones': { icon: <FaPaintBrush />, color: '#a78bfa' }, // Purple
+    'Staff': { icon: <FaBalanceScale />, color: '#f472b6' }, // Pink
+    'Seguridad': { icon: <FaShieldAlt />, color: '#10b981' }, // Emerald
+    'Contenido': { icon: <FaVideo />, color: '#fcd34d' }, // Amber
+    'Economía': { icon: <FaBalanceScale />, color: '#34d399' }, // Emerald
+    'Mundo': { icon: <FaGlobeAmericas />, color: '#60a5fa' }, // Blue
+    'Cuenta': { icon: <FaUserSecret />, color: '#94a3b8' }, // Gray
+    'Discord': { icon: <FaBullhorn />, color: '#5865F2' }, // Discord Blue
 }
 
-const DEFAULT_ICON = <FaShieldAlt />;
+const DEFAULT_ICON_CONFIG = { icon: <FaGavel />, color: '#94a3b8' };
 
 export default function Rules() {
-    const listRef = useRef<HTMLDivElement | null>(null)
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { user } = useAuth()
     const [rules, setRules] = useState<Rule[]>([])
     const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
+    const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
     // Admin State
     const [isEditing, setIsEditing] = useState(false)
     const [editRuleId, setEditRuleId] = useState<number | null>(null)
-    // Form State
-    const [formData, setFormData] = useState<Partial<Rule>>({ category: 'General', title: '', content: '', sort_order: 0 })
+    const [formData, setFormData] = useState<Partial<Rule>>({ 
+        category: 'General', 
+        title: '', 
+        title_en: '', 
+        content: '', 
+        content_en: '', 
+        color: '', 
+        sort_order: 0 
+    })
+    const [translating, setTranslating] = useState<string | null>(null);
 
-    const isStaff = user?.user_metadata?.role === 'admin' || user?.user_metadata?.role === 'owner' || user?.user_metadata?.role === 'developer';
+    const allowedRoles = ['admin', 'owner', 'developer', 'neroferno', 'killu', 'helper'];
+    const isStaff = allowedRoles.includes(user?.user_metadata?.role?.toLowerCase() || '');
 
     const fetchRules = async () => {
         setLoading(true)
         try {
             const data = await getRules();
             setRules(data);
-            setError(null);
         } catch (err) {
             console.error("Failed to load rules:", err);
-            // Fallback to empty or error message, don't use hardcoded defaults to encourage fixing DB
-            setError("No se pudieron cargar las reglas. Intente más tarde.");
         } finally {
             setLoading(false)
         }
@@ -56,21 +75,69 @@ export default function Rules() {
         fetchRules();
     }, []);
 
-    useEffect(() => {
-        if (rules.length === 0) return;
-        
-        anime({
-            targets: '.rule-card',
-            opacity: [0, 1],
-            translateX: [-20, 0],
-            translateY: [20, 0],
-            delay: anime.stagger(100, { start: 200 }),
-            easing: 'easeOutExpo',
-            duration: 800
+    // Process rules: Global Sort & Indexing
+    const processedRules = useMemo(() => {
+        const sorted = [...rules].sort((a, b) => {
+            // Sort by sort_order first, then by category
+            if ((a.sort_order || 0) !== (b.sort_order || 0)) {
+                return (a.sort_order || 0) - (b.sort_order || 0);
+            }
+            return (a.category || '').localeCompare(b.category || '');
         });
+
+        return sorted.map((rule, idx) => ({
+            ...rule,
+            globalIndex: idx + 1
+        }));
     }, [rules]);
 
-    // Admin Actions
+    const filteredRules = useMemo(() => {
+        if (!activeFilter) return processedRules;
+        return processedRules.filter(r => r.category === activeFilter);
+    }, [processedRules, activeFilter]);
+
+    const handleTranslate = async (text: string, toLang: 'es' | 'en', field: 'title' | 'content' | 'title_en' | 'content_en') => {
+        if (!text) return;
+        setTranslating(field);
+        try {
+            const token = (await supabase.auth.getSession()).data.session?.access_token;
+            const res = await fetch(`${API_URL}/translation`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ text, targetLang: toLang })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setFormData(prev => ({ ...prev, [field]: data.translatedText }));
+            }
+        } catch (error) {
+            console.error("Translation fail", error);
+        } finally {
+            setTranslating(null);
+        }
+    };
+
+    // UI Animations
+    useEffect(() => {
+        if (filteredRules.length === 0) return;
+        
+        gsap.fromTo('.rule-card-premium', 
+            { opacity: 0, scale: 0.95, y: 30 },
+            {
+                opacity: 1,
+                scale: 1,
+                y: 0,
+                stagger: 0.08,
+                duration: 0.6,
+                ease: "power3.out",
+                clearProps: "all"
+            }
+        );
+    }, [filteredRules]);
+
     const handleSave = async () => {
         if (!user) return;
         try {
@@ -78,15 +145,20 @@ export default function Rules() {
             if (!token) throw new Error("No token");
 
             if (editRuleId) {
-                // Update
                 await updateRule(editRuleId, formData, token);
             } else {
-                // Create
                 await createRule(formData as Omit<Rule, 'id'>, token);
             }
             
-            // Reset and Refresh
-            setFormData({ category: 'General', title: '', content: '', sort_order: 0 });
+            setFormData({ 
+                category: 'General', 
+                title: '', 
+                title_en: '', 
+                content: '', 
+                content_en: '', 
+                color: '', 
+                sort_order: 0 
+            });
             setEditRuleId(null);
             setIsEditing(false);
             fetchRules();
@@ -118,146 +190,288 @@ export default function Rules() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    // Grouping logic
-    const groupedRules = rules.reduce((acc, rule) => {
-        const cat = rule.category || 'Varios';
-        if (!acc[cat]) acc[cat] = [];
-        acc[cat].push(rule);
-        return acc;
-    }, {} as Record<string, Rule[]>);
+    const categories = Array.from(new Set(rules.map(r => r.category || 'General')));
 
     return (
-        <Section title={t('rules.title')}>
-            
-            {/* Header / Intro */}
-            <div className="flex flex-col items-center mb-12">
-                <p className="text-center max-w-2xl text-white/60 mb-6">
-                    {t('rules.intro')}
-                </p>
-                {isStaff && !isEditing && (
-                    <button 
-                        onClick={() => { setIsEditing(true); setEditRuleId(null); setFormData({ category: 'General', title: '', content: '', sort_order: 0 }); }}
-                        className="px-6 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 rounded-lg hover:bg-emerald-500/30 transition-all flex items-center gap-2"
-                    >
-                        <FaPlus /> Nueva Regla
-                    </button>
-                )}
-            </div>
+        <Section title={t('rules.title') || "Normas del Servidor"}>
+            <div className="rules-page">
+                {/* Header Section */}
+                <div className="rules-header">
+                    <p className="rules-intro">
+                        {t('rules.intro') || "Nuestra comunidad se basa en el respeto y el juego limpio. Por favor, lee atentamente nuestras normas para asegurar una convivencia pacífica."}
+                    </p>
 
-            {/* Editor Form */}
-            {isEditing && (
-                <div className="bg-slate-900/80 border border-white/10 rounded-xl p-6 mb-12 max-w-3xl mx-auto backdrop-blur-md shadow-2xl animate-fade-in-down">
-                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                        {editRuleId ? <FaEdit className="text-amber-400"/> : <FaPlus className="text-emerald-400"/>}
-                        {editRuleId ? 'Editar Regla' : 'Crear Nueva Regla'}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label className="block text-xs uppercase tracking-wider text-white/50 mb-1">Categoría</label>
-                            <input 
-                                type="text" 
-                                list="categories"
-                                value={formData.category}
-                                onChange={e => setFormData({...formData, category: e.target.value})}
-                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white focus:border-indigo-500 outline-none"
-                            />
-                            <datalist id="categories">
-                                {Object.keys(CATEGORY_ICONS).map(c => <option key={c} value={c} />)}
-                            </datalist>
-                        </div>
-                        <div>
-                            <label className="block text-xs uppercase tracking-wider text-white/50 mb-1">Orden (Prioridad)</label>
-                            <input 
-                                type="number" 
-                                value={formData.sort_order}
-                                onChange={e => setFormData({...formData, sort_order: parseInt(e.target.value) || 0})}
-                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white focus:border-indigo-500 outline-none"
-                            />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-xs uppercase tracking-wider text-white/50 mb-1">Título</label>
-                            <input 
-                                type="text" 
-                                value={formData.title}
-                                onChange={e => setFormData({...formData, title: e.target.value})}
-                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white focus:border-indigo-500 outline-none"
-                            />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-xs uppercase tracking-wider text-white/50 mb-1">Contenido (Markdown soportado)</label>
-                            <textarea 
-                                rows={4}
-                                value={formData.content}
-                                onChange={e => setFormData({...formData, content: e.target.value})}
-                                className="w-full bg-black/40 border border-white/10 rounded p-2 text-white focus:border-indigo-500 outline-none font-mono text-sm"
-                            />
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-3">
-                        <button onClick={() => setIsEditing(false)} className="px-4 py-2 rounded text-white/60 hover:text-white hover:bg-white/5">Cancelar</button>
-                        <button onClick={handleSave} className="px-6 py-2 bg-indigo-600 rounded text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-500 transition-all flex items-center gap-2">
-                            <FaSave /> Guardar Regla
+                    {/* Filter Bar */}
+                    <div className="rules-filter-bar">
+                        <button 
+                            onClick={() => setActiveFilter(null)}
+                            className={`filter-btn ${!activeFilter ? 'active' : ''}`}
+                        >
+                            <FaBalanceScale /> Todas
                         </button>
+                        {categories.map(cat => {
+                            const config = CATEGORY_CONFIG[cat] || DEFAULT_ICON_CONFIG;
+                            return (
+                                <button 
+                                    key={cat}
+                                    onClick={() => setActiveFilter(cat)}
+                                    className={`filter-btn ${activeFilter === cat ? 'active' : ''}`}
+                                >
+                                    {config.icon} {cat}
+                                </button>
+                            );
+                        })}
                     </div>
+
+                    {isStaff && !isEditing && (
+                        <button 
+                            onClick={() => { 
+                                setIsEditing(true); 
+                                setEditRuleId(null); 
+                                setFormData({ 
+                                    category: 'General', 
+                                    title: '', 
+                                    title_en: '', 
+                                    content: '', 
+                                    content_en: '', 
+                                    color: '', 
+                                    sort_order: 0 
+                                }); 
+                            }}
+                            className="btn-primary"
+                            style={{ padding: '1rem 2.5rem', borderRadius: '100px' }}
+                        >
+                            <FaPlus /> Nueva Normativa
+                        </button>
+                    )}
                 </div>
-            )}
 
-            {/* Rules Display (Grouped) */}
-            <div className="max-w-5xl mx-auto space-y-12" ref={listRef}>
-                {loading && <p className="text-center text-white/40 animate-pulse">Cargando normativas...</p>}
-                
-                {!loading && rules.length === 0 && !error && (
-                    <div className="text-center p-12 border border-dashed border-white/10 rounded-xl text-white/30">
-                        <FaLeaf className="text-4xl mx-auto mb-4 opacity-50"/>
-                        <p>No hay reglas definidas todavía.</p>
-                    </div>
-                )}
-
-                {Object.entries(groupedRules).map(([category, catRules]) => (
-                    <div key={category} className="category-group">
-                        <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-2">
-                            <span className="text-2xl text-indigo-400/80">
-                                {CATEGORY_ICONS[category] || DEFAULT_ICON}
-                            </span>
-                            <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
-                                {category}
-                            </h2>
+                {/* Admin Editor Form */}
+                {isEditing && (
+                    <div className="rules-admin-form">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                            <h3 style={{ margin: 0, color: 'var(--accent)' }}>
+                                {editRuleId ? 'Editando Norma' : 'Nueva Norma'}
+                            </h3>
+                            <button onClick={() => setIsEditing(false)} className="filter-btn">
+                                <FaTimes /> Cerrar
+                            </button>
                         </div>
                         
-                        <div className="grid grid-cols-1 gap-4">
-                            {catRules.map(rule => (
-                                <div key={rule.id} className="rule-card relative group bg-gradient-to-br from-white/5 to-transparent border border-white/10 p-6 rounded-xl hover:border-indigo-500/30 transition-all duration-300">
+                        <div className="form-grid">
+                            <div>
+                                <label>Categoría</label>
+                                <input 
+                                    type="text" 
+                                    list="category-suggestions"
+                                    value={formData.category}
+                                    onChange={e => setFormData({...formData, category: e.target.value})}
+                                    placeholder="Ej: PvP, Chat, Construcción..."
+                                />
+                                <datalist id="category-suggestions">
+                                    {Object.keys(CATEGORY_CONFIG).map(c => <option key={c} value={c} />)}
+                                </datalist>
+                            </div>
+                            
+                            <div>
+                                <label>Orden de Visualización</label>
+                                <input 
+                                    type="number" 
+                                    value={formData.sort_order}
+                                    onChange={e => setFormData({...formData, sort_order: parseInt(e.target.value) || 0})}
+                                />
+                            </div>
+
+                            <div className="form-full">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label>Título (Español)</label>
+                                    <button 
+                                        type="button" 
+                                        className="btn-translate-premium" 
+                                        style={{ padding: '0.2rem 0.8rem', fontSize: '0.7rem' }}
+                                        onClick={() => handleTranslate(formData.title || '', 'en', 'title_en')}
+                                        disabled={!!translating || !formData.title}
+                                    >
+                                        {translating === 'title_en' ? <FaSpinner className="spin" /> : <FaLanguage />} Traducir a EN
+                                    </button>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={formData.title}
+                                    onChange={e => setFormData({...formData, title: e.target.value})}
+                                    placeholder="Título en español"
+                                />
+                            </div>
+
+                            <div className="form-full">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label>Título (Inglés) <span style={{ opacity: 0.5 }}>(Opcional)</span></label>
+                                    <button 
+                                        type="button" 
+                                        className="btn-translate-premium" 
+                                        style={{ padding: '0.2rem 0.8rem', fontSize: '0.7rem' }}
+                                        onClick={() => handleTranslate(formData.title_en || '', 'es', 'title')}
+                                        disabled={!!translating || !formData.title_en}
+                                    >
+                                        {translating === 'title' ? <FaSpinner className="spin" /> : <FaLanguage />} Traducir a ES
+                                    </button>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={formData.title_en}
+                                    onChange={e => setFormData({...formData, title_en: e.target.value})}
+                                    placeholder="English title"
+                                />
+                            </div>
+
+                            <div className="form-full">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label>Contenido (Español)</label>
+                                    <button 
+                                        type="button" 
+                                        className="btn-translate-premium" 
+                                        style={{ padding: '0.2rem 0.8rem', fontSize: '0.7rem' }}
+                                        onClick={() => handleTranslate(formData.content || '', 'en', 'content_en')}
+                                        disabled={!!translating || !formData.content}
+                                    >
+                                        {translating === 'content_en' ? <FaSpinner className="spin" /> : <FaLanguage />} Traducir a EN
+                                    </button>
+                                </div>
+                                <textarea 
+                                    rows={4}
+                                    value={formData.content}
+                                    onChange={e => setFormData({...formData, content: e.target.value})}
+                                    placeholder="Contenido en español..."
+                                />
+                            </div>
+
+                            <div className="form-full">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <label>Contenido (Inglés) <span style={{ opacity: 0.5 }}>(Opcional)</span></label>
+                                    <button 
+                                        type="button" 
+                                        className="btn-translate-premium" 
+                                        style={{ padding: '0.2rem 0.8rem', fontSize: '0.7rem' }}
+                                        onClick={() => handleTranslate(formData.content_en || '', 'es', 'content')}
+                                        disabled={!!translating || !formData.content_en}
+                                    >
+                                        {translating === 'content' ? <FaSpinner className="spin" /> : <FaLanguage />} Traducir a ES
+                                    </button>
+                                </div>
+                                <textarea 
+                                    rows={4}
+                                    value={formData.content_en}
+                                    onChange={e => setFormData({...formData, content_en: e.target.value})}
+                                    placeholder="English content..."
+                                />
+                            </div>
+
+                            <button onClick={handleSave} className="rules-save-btn" disabled={!!translating}>
+                                <FaSave /> {editRuleId ? 'ACTUALIZAR NORMA' : 'PUBLICAR NORMA'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Rules Display Grid */}
+                {loading ? (
+                    <div className="rules-empty">
+                        <Loader />
+                        <p style={{ marginTop: '2rem' }}>Cargando normativas...</p>
+                    </div>
+                ) : (
+                    <div className="rules-grid">
+                        {filteredRules.map((rule) => {
+                            const config = CATEGORY_CONFIG[rule.category || 'General'] || DEFAULT_ICON_CONFIG;
+                            const accent = rule.color || config.color;
+                            
+                            return (
+                                <div key={rule.id} className="rule-card-premium">
+                                    <div className="rule-card-number">#{String(rule.globalIndex).padStart(2, '0')}</div>
                                     
-                                    {/* Admin Controls */}
                                     {isStaff && (
-                                        <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => startEdit(rule)} className="p-2 bg-black/50 hover:bg-amber-500/20 text-white/50 hover:text-amber-400 rounded transition-colors" title="Editar">
+                                        <div className="rule-admin-actions">
+                                            <button onClick={() => startEdit(rule)} className="admin-action-btn btn-edit-rule">
                                                 <FaEdit />
                                             </button>
-                                            <button onClick={() => handleDelete(rule.id)} className="p-2 bg-black/50 hover:bg-red-500/20 text-white/50 hover:text-red-400 rounded transition-colors" title="Borrar">
+                                            <button onClick={() => handleDelete(rule.id)} className="admin-action-btn btn-delete-rule">
                                                 <FaTrash />
                                             </button>
                                         </div>
                                     )}
 
-                                    <div className="flex gap-4">
-                                        <div className="flex-shrink-0 mt-1 text-indigo-400/50">
-                                            <div className="w-2 h-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
-                                        </div>
-                                        <div className="flex-grow">
-                                            <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-indigo-300 transition-colors">
-                                                {rule.title}
-                                            </h3>
-                                            <div className="text-white/70 leading-relaxed text-sm whitespace-pre-line">
-                                                {rule.content}
-                                            </div>
-                                        </div>
+                                    <div className="rule-category-badge" style={{ color: accent }}>
+                                        {config.icon} {rule.category}
                                     </div>
+
+                                    <h3 className="rule-title-premium">
+                                        {(i18n.language === 'en' && rule.title_en) ? rule.title_en : rule.title}
+                                    </h3>
+
+                                    <div className="rule-content-premium">
+                                        {(i18n.language === 'en' && rule.content_en) ? rule.content_en : rule.content}
+                                    </div>
+
+                                    <div className="rule-footer-premium">
+                                        <div className="rule-icon-wrapper" style={{ color: accent }}>
+                                            {config.icon}
+                                        </div>
+                                        <div style={{ flexGrow: 1, height: '1px', background: 'rgba(255,255,255,0.05)', margin: '0 1rem' }}></div>
+                                    </div>
+                                    
+                                    {/* Accent Bar */}
+                                    <div style={{ 
+                                        position: 'absolute', 
+                                        left: 0, 
+                                        top: 0, 
+                                        bottom: 0, 
+                                        width: '4px', 
+                                        backgroundColor: accent 
+                                    }}></div>
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })}
                     </div>
-                ))}
+                )}
+
+                {!loading && filteredRules.length === 0 && (
+                    <div className="rules-empty">
+                        No se encontraron normas en esta categoría.
+                    </div>
+                )}
+            </div>
+
+            {/* Background Decoration */}
+            <div style={{ 
+                position: 'fixed', 
+                top: 0, 
+                left: 0, 
+                right: 0, 
+                bottom: 0, 
+                pointerEvents: 'none', 
+                zIndex: -1,
+                overflow: 'hidden'
+            }}>
+                <div style={{ 
+                    position: 'absolute', 
+                    top: '20%', 
+                    right: '-5%', 
+                    width: '600px', 
+                    height: '600px', 
+                    borderRadius: '50%', 
+                    background: 'rgba(99, 102, 241, 0.05)', 
+                    filter: 'blur(120px)' 
+                }}></div>
+                <div style={{ 
+                    position: 'absolute', 
+                    bottom: '10%', 
+                    left: '-5%', 
+                    width: '500px', 
+                    height: '500px', 
+                    borderRadius: '50%', 
+                    background: 'rgba(137, 217, 209, 0.05)', 
+                    filter: 'blur(100px)' 
+                }}></div>
             </div>
         </Section>
     )

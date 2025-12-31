@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { getAuthHeaders } from './adminAuth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -26,10 +27,10 @@ export const getPolicy = async (slug: string): Promise<Policy> => {
 
 export const updatePolicy = async (slug: string, title: string, content: string): Promise<Policy> => {
     const { data: { session } } = await supabase.auth.getSession();
-    const headers: Record<string, string> = {
+    const headers = {
         'Content-Type': 'application/json',
+        ...getAuthHeaders(session?.access_token || null)
     };
-    if (session) headers['Authorization'] = `Bearer ${session.access_token}`;
 
     const res = await fetch(`${API_URL}/policies/${slug}`, {
         method: 'PUT',

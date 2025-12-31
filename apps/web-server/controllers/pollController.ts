@@ -58,6 +58,16 @@ export const close = async (req: Request, res: Response) => {
     }
 };
 
+export const deletePoll = async (req: Request, res: Response) => {
+    try {
+        await pollService.deletePoll(parseInt(req.params.id));
+        return sendSuccess(res, null, 'Poll deleted successfully');
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        return sendError(res, message);
+    }
+};
+
 export const getPolls = async (req: Request, res: Response) => {
     try {
         const page = parseInt(req.query.page as string) || 1;

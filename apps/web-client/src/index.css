@@ -25,6 +25,7 @@
 /* 8. Admin Panel Styles */
 @import './styles/admin.css';
 @import './styles/admin_kanban.css';
+@import './styles/admin_calendar.css';
 
 /* Compatibility: Import legacy styles-patch if absolutely needed,
    but ideally everything should be moved to modules above.

@@ -5,21 +5,11 @@ import mysql from 'mysql2/promise';
 import * as userService from '../services/userService.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { checkRole, STAFF_ROLES } from '../utils/roleUtils.js';
+import supabase from '../config/supabaseClient.js';
 
 const router = express.Router();
 
 // Pterodactyl Config
-// Environment has PTERODACTYL_SERVER_ID and API_KEY. Need to know the PANEL URL.
-// Actually, let's assume standard Pterodactyl API URL structure based on host or provided var?
-// User didn't provide PANEL URL in .env, but usually it's passed or known.
-// Let's look at existing code or ask. Assuming https://panel.holyhosting.net based on "HolyHosting".
-// Wait, looking at .env content viewed earlier:
-// PTERODACTYL_API_KEY=ptlc_...
-// MC_SERVER_HOST=147...
-// PTERODACTYL_SERVER_ID=5a931111
-// We need the Panel URL. Usually client knows it. I'll make it an env var or guess.
-// Let's use a placeholder and user can update or I will try to infer.
-
 const PANEL_URL = process.env.PTERODACTYL_HOST || "https://panel.holy.gg"; 
 const API_KEY = process.env.PTERODACTYL_API_KEY;
 const SERVER_ID = process.env.PTERODACTYL_SERVER_ID;
@@ -54,6 +44,29 @@ interface PteroServerDetails {
     };
 }
 
+interface PlanGlobalStatsRow {
+    online_count: number;
+    total_users: number;
+    new_users: number;
+    total_playtime_ms: number | string;
+}
+
+interface LuckPermsRow {
+    username: string;
+    uuid: string;
+    group_name: string | null;
+}
+
+interface SkinRow {
+    uuid: string;
+    skin_identifier: string;
+}
+
+interface SessionRow {
+    uuid: string;
+    session_start: number;
+}
+
 // Route: Get Server Resources (RAM, CPU, State) + PLAN GLOBAL STATS
 router.get('/resources', authenticateToken, checkRole(STAFF_ROLES), async (req: Request, res: Response) => {
     let connection = null;
@@ -68,7 +81,6 @@ router.get('/resources', authenticateToken, checkRole(STAFF_ROLES), async (req: 
             'Content-Type': 'application/json'
         };
 
-        // 1. Fetch Pterodactyl Stats
         const [resStats, resDetails] = await Promise.all([
             fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}/resources`, { method: 'GET', headers }),
             fetch(`${PANEL_URL}/api/client/servers/${SERVER_ID}`, { method: 'GET', headers })
@@ -102,7 +114,6 @@ router.get('/resources', authenticateToken, checkRole(STAFF_ROLES), async (req: 
             };
         }
 
-        // 2. Fetch Plan Global Stats (MySQL)
         const planStats = {
             online: 0,
             total_players: 0,
@@ -112,8 +123,6 @@ router.get('/resources', authenticateToken, checkRole(STAFF_ROLES), async (req: 
 
         try {
             connection = await mysql.createConnection(dbConfig);
-            
-            // 24h ago in ms
             const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
             
             const [rows] = await connection.execute(`
@@ -126,234 +135,207 @@ router.get('/resources', authenticateToken, checkRole(STAFF_ROLES), async (req: 
             `, [oneDayAgo]);
             
             if (Array.isArray(rows) && rows.length > 0) {
-                const r = rows[0] as { 
-                    online_count: number; 
-                    total_users: number; 
-                    new_users: number; 
-                    total_playtime_ms: number | string 
-                };
+                const r = rows[0] as PlanGlobalStatsRow;
                 planStats.online = r.online_count || 0;
                 planStats.total_players = r.total_users || 0;
                 planStats.new_players = r.new_users || 0;
                 planStats.total_playtime_hours = Math.floor((Number(r.total_playtime_ms) || 0) / 1000 / 60 / 60);
             }
-            
         } catch (dbErr: unknown) {
-            const message = dbErr instanceof Error ? dbErr.message : String(dbErr);
-            console.error("Plan DB Error in Resource Route:", message);
+            console.error("Plan DB Error in Resource Route:", dbErr);
         } finally {
             if (connection) await connection.end();
         }
 
-        // Combine and Send
-        res.json({
-            ...pteroData,
-            ...planStats
-        });
-
+        res.json({ ...pteroData, ...planStats });
     } catch (error) {
         console.error("Server Status Route Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    } finally {
         if (connection) await connection.end();
     }
 });
 
 // Route: Get Online Staff
-// (util imported at top)
-
-// Route: Get Online Staff (Real-time via Query Protocol - No RCON)
 router.get('/staff', async (req: Request, res: Response) => {
     let connection = null;
     
     try {
-        // 1. Fetch Online Players via Query Protocol (Lighter than RCON)
         const host = process.env.MC_SERVER_HOST || 'localhost';
         const port = parseInt(process.env.MC_SERVER_PORT as string) || 25565;
 
-        // Use util.status (Query) to get player list
-        // Note: 'enableSRV: true' is good for domain resolution
-        // Note: Query output depends on server.properties 'enable-query=true' usually, or standard handshake logic.
-        // util.status usually gets sample list. If full list is needed, util.queryFull is better but requires enable-query=true.
-        // Let's try util.status first as it is used in live status.
-        
-        let onlineUsernames: string[] = [];
-        // Use a Map to store original casing if needed, but Set for uniqueness
-        const uniqueUsers = new Set<string>();
-        
+        const uniqueUsers = new Map<string, { mc: boolean, discord: string }>();
+        const getOrInitStatus = (nameInput: string) => {
+            const name = nameInput.toLowerCase();
+            if (!uniqueUsers.has(name)) {
+                uniqueUsers.set(name, { mc: false, discord: 'offline' });
+            }
+            return uniqueUsers.get(name)!;
+        };
+
         // 1. Try Query Protocol
         try {
-            const result = await util.status(host, port, { timeout: 4000, enableSRV: true }); // Increased timeout
+            const result = await util.status(host, port, { timeout: 4000, enableSRV: true });
             if (result.players.sample) {
-                 result.players.sample.forEach(p => uniqueUsers.add(p.name));
+                 result.players.sample.forEach(p => getOrInitStatus(p.name).mc = true);
             }
         } catch (statusErr) {
              console.warn("[Staff Route] Query failed:", (statusErr as Error).message);
         }
 
         // 2. Try Plan DB
-        if (!connection) connection = await mysql.createConnection(dbConfig);
         try {
+            if (!connection) connection = await mysql.createConnection(dbConfig);
             const [rows] = await connection.execute(`
-                SELECT pu.name 
-                FROM plan_sessions ps
+                SELECT pu.name FROM plan_sessions ps
                 JOIN plan_users pu ON ps.user_id = pu.id
                 WHERE ps.session_end IS NULL
-            }`); 
-            (rows as { name: string }[]).forEach((r) => uniqueUsers.add(r.name));
+            `); 
+            (rows as { name: string }[]).forEach((r) => getOrInitStatus(r.name).mc = true);
         } catch (dbErr: unknown) {
-            console.error("[Staff Route] DB Fetch Error:", dbErr instanceof Error ? dbErr.message : String(dbErr));
+            console.error("[Staff Route] DB Fetch Error:", dbErr);
         }
 
-        onlineUsernames = Array.from(uniqueUsers);
-        console.log("[Staff Route] Detected Online Users:", onlineUsernames);
+        // 3. Check Discord Status via Bot
+        try {
+            const { data: settings } = await supabase.from('site_settings').select('value').eq('key', 'staff_cards').single();
 
-        if (onlineUsernames.length === 0) {
+            if (settings?.value) {
+                let cards = [];
+                try {
+                    cards = typeof settings.value === 'string' ? JSON.parse(settings.value) : settings.value;
+                    if (typeof cards === 'string') cards = JSON.parse(cards);
+                } catch(e) { console.error("Parse error:", e); }
+
+                if (Array.isArray(cards)) {
+                    const discordMapping: Record<string, string> = {};
+                    const allIds: string[] = [];
+
+                    cards.forEach((card: { discordIds?: string[], socials?: { discord?: string }, name: string, mc_nickname?: string }) => {
+                         const idsToCheck: string[] = [];
+                         if (Array.isArray(card.discordIds)) idsToCheck.push(...card.discordIds);
+                         if (card.socials?.discord) {
+                             card.socials.discord.split(',').forEach((p: string) => {
+                                 const trimmed = p.trim();
+                                 if (/^\d{17,20}$/.test(trimmed)) idsToCheck.push(trimmed);
+                             });
+                         }
+                         idsToCheck.forEach(id => {
+                             discordMapping[id] = card.mc_nickname || card.name;
+                             allIds.push(id);
+                         });
+                    });
+                    
+                    if (allIds.length > 0) {
+                        const botHost = process.env.BOT_HOST || 'discord-bot';
+                        const botApiPort = process.env.BOT_API_PORT || 3002;
+                        let botUrl = botHost.startsWith('http') ? botHost : `http://${botHost}:${botApiPort}`;
+                        botUrl = botUrl.replace(/\/$/, '');
+
+                        const controller = new AbortController();
+                        const timeout = setTimeout(() => controller.abort(), 5000);
+
+                        try {
+                            const resBot = await fetch(`${botUrl}/presence?ids=${allIds.join(',')}`, { signal: controller.signal });
+                            clearTimeout(timeout);
+                            if (resBot.ok) {
+                                const presenceData = await resBot.json() as Record<string, string>;
+                                Object.entries(presenceData).forEach(([id, status]) => {
+                                    if (['online', 'idle', 'dnd', 'offline'].includes(status)) {
+                                        const name = discordMapping[id];
+                                        if (name) getOrInitStatus(name).discord = status;
+                                    }
+                                });
+                            }
+                        } catch (botErr) { console.warn("Bot fetch failed:", botErr); }
+                    }
+                }
+            }
+        } catch (err) { console.error("Discord check error:", err); }
+
+        // 4. Combine and resolve LuckPerms details
+        const activeUsernames = Array.from(uniqueUsers.entries())
+            .filter(([_, s]) => s.mc || s.discord !== 'offline')
+            .map(([name]) => name);
+
+        if (activeUsernames.length === 0) {
             if (connection) await connection.end();
             return res.json([]);
         }
 
-        // 2. Resolve Ranks for these players via DB
         if (!connection) connection = await mysql.createConnection(dbConfig);
-        
-        // 2. Resolve Ranks for these players via REAL permissions table
-        if (!connection) connection = await mysql.createConnection(dbConfig);
-        
-        const placeholders = onlineUsernames.map(() => '?').join(',');
-        
-        // This query gets the username AND all groups they belong to
+        const placeholders = activeUsernames.map(() => '?').join(',');
         const [rows] = await connection.execute(`
             SELECT lp.username, lp.uuid, up.permission as group_name
             FROM luckperms_players lp
             LEFT JOIN luckperms_user_permissions up ON lp.uuid = up.uuid AND up.permission LIKE 'group.%'
             WHERE lp.username IN (${placeholders})
-        `, onlineUsernames);
+        `, activeUsernames);
 
-        // Group rows by username to handle multiple group memberships
-        const processedUsers = new Map<string, { username: string, uuid: string, groups: string[] }>();
-
-        (rows as { username: string, uuid: string, group_name: string }[]).forEach((r) => {
-            if (!processedUsers.has(r.username)) {
-                processedUsers.set(r.username, { 
-                    username: r.username, 
-                    uuid: r.uuid, 
-                    groups: [] 
-                });
-            }
-            if (r.group_name) {
-                processedUsers.get(r.username)!.groups.push(r.group_name.replace('group.', ''));
-            }
+        const dbUsersMap = new Map<string, { username: string, uuid: string, groups: string[] }>();
+        (rows as LuckPermsRow[]).forEach((r) => {
+            const low = r.username.toLowerCase();
+            if (!dbUsersMap.has(low)) dbUsersMap.set(low, { username: r.username, uuid: r.uuid, groups: [] });
+            if (r.group_name) dbUsersMap.get(low)!.groups.push(r.group_name.replace('group.', ''));
         });
 
-        const finalUsers = Array.from(processedUsers.values());
-        console.log("[Staff Check] Users and their groups:", finalUsers.map(u => `${u.username}: [${u.groups.join(', ')}]`));
-
-        if (finalUsers.length === 0) {
-             await connection.end();
-             return res.json([]);
-        }
-
-        // Query Skins from SkinRestorer (sr_players)
-        // ... (Same Logic)
-        
-
-        // Fetch skins
         const skinMap: Record<string, string> = {};
-        const uuids = finalUsers.map(u => u.uuid);
-        
-        if (uuids.length > 0) {
-            try {
-                const skinPlaceholders = uuids.map(() => '?').join(',');
-                const [skinRows] = await connection.execute(`
-                    SELECT uuid, skin_identifier 
-                    FROM sr_players 
-                    WHERE uuid IN (${skinPlaceholders})
-                `, uuids);
-                
-                (skinRows as { uuid: string, skin_identifier: string }[]).forEach((sr) => {
-                    skinMap[sr.uuid] = sr.skin_identifier;
-                });
-            } catch (err: unknown) {
-                console.error("Error fetching skins for staff:", err instanceof Error ? err.message : String(err));
-            }
-        }
-
-        // Fetch Session Start Times
         const sessionMap: Record<string, number> = {};
-        if (uuids.length > 0) {
+        const dbUuids = Array.from(dbUsersMap.values()).map(u => u.uuid);
+
+        if (dbUuids.length > 0) {
             try {
-                const sessionPlaceholders = uuids.map(() => '?').join(',');
+                const uuidPlaceholders = dbUuids.map(() => '?').join(',');
+                const [skinRows] = await connection.execute(`SELECT uuid, skin_identifier FROM sr_players WHERE uuid IN (${uuidPlaceholders})`, dbUuids);
+                (skinRows as SkinRow[]).forEach(sr => skinMap[sr.uuid] = sr.skin_identifier);
+
                 const [sessionRows] = await connection.execute(`
                     SELECT pu.uuid, MAX(ps.session_start) as session_start 
-                    FROM plan_sessions ps 
-                    JOIN plan_users pu ON ps.user_id = pu.id 
-                    WHERE pu.uuid IN (${sessionPlaceholders})
-                    AND ps.session_end IS NULL 
+                    FROM plan_sessions ps JOIN plan_users pu ON ps.user_id = pu.id 
+                    WHERE pu.uuid IN (${uuidPlaceholders}) AND ps.session_end IS NULL 
                     GROUP BY pu.uuid
-                `, uuids);
-                
-                (sessionRows as { uuid: string, session_start: number }[]).forEach((s) => {
-                    sessionMap[s.uuid] = s.session_start;
-                });
-            } catch (err: unknown) {
-                console.error("Error fetching sessions for staff:", err instanceof Error ? err.message : String(err));
-            }
+                `, dbUuids);
+                (sessionRows as SessionRow[]).forEach(s => sessionMap[s.uuid] = s.session_start);
+            } catch (err) { console.warn("Extra DB fetch failed:", err); }
         }
 
-        // Map structure
-        const staff = finalUsers.map((user) => {
-            // Determine the "best" role from all their groups
-            const staffGroups = ['owner', 'fundador', 'neroferno', 'killu', 'killuwu', 'developer', 'admin', 'ꐽ'];
-            let role = user.groups.find((g: string) => staffGroups.includes(g.toLowerCase())) || user.groups[0] || 'default';
+        const staff = activeUsernames.map((lowName) => {
+            const dbRef = dbUsersMap.get(lowName);
+            const statusObj = uniqueUsers.get(lowName)!;
+            const username = dbRef?.username || lowName.charAt(0).toUpperCase() + lowName.slice(1);
+            const uuid = dbRef?.uuid || '00000000-0000-0000-0000-000000000000';
+            const groups = dbRef?.groups || ['default'];
+            
+            const staffGroups = ['owner', 'fundador', 'neroferno', 'killu', 'killuwu', 'developer', 'admin', 'moderator', 'helper'];
+            let role = groups.find(g => staffGroups.includes(g.toLowerCase())) || groups[0] || 'default';
             let roleImage = null;
 
-            // Normalize Role & Image
-            if (user.username === 'UltraXn' && role === 'default') {
-                role = 'Founder';
-                roleImage = '/ranks/rank-neroferno.png';
-            }
-            
-            if (role === '§f§r') {
-               role = 'Founder';
-               roleImage = '/ranks/rank-neroferno.png';
-            }
-            
-            // Handle Unicode Developer Group or explicit mapping
-            if (role === 'ꐽ') {
-                role = 'developer';
-                roleImage = '/ranks/developer.png';
-            }
+            if (username.toLowerCase() === 'ultraxn') { role = 'Founder'; roleImage = '/ranks/rank-neroferno.png'; }
+            if (role === 'neroferno' || role === '§f§r') { role = 'Founder'; roleImage = '/ranks/rank-neroferno.png'; }
+            if (role === 'killuwu') { role = 'Owner'; roleImage = '/ranks/rank-killu.png'; }
+            if (role === 'ꐽ' || role === 'developer') { role = 'Developer'; roleImage = '/ranks/developer.png'; }
 
-            if (role.toLowerCase() === 'neroferno') {
-                roleImage = '/ranks/rank-neroferno.png';
-            }
-
-            // Determine Avatar
-            const skinName = skinMap[user.uuid];
-            const avatarUrl = skinName 
-                ? `https://mc-heads.net/avatar/${skinName}/100` 
-                : `https://mc-heads.net/avatar/${user.uuid}/100`;
+            const skinName = skinMap[uuid];
+            const avatarUrl = skinName ? `https://mc-heads.net/avatar/${skinName}/100` : `https://mc-heads.net/avatar/${username}/100`;
 
             return {
-                username: user.username,
-                role: role,
-                role_image: roleImage,
-                uuid: user.uuid,
-                avatar: avatarUrl,
-                login_time: sessionMap[user.uuid] || Date.now()
-            }
+                username, role, role_image: roleImage, uuid, avatar: avatarUrl,
+                login_time: sessionMap[uuid] || Date.now(),
+                mc_status: statusObj.mc ? 'online' : 'offline',
+                discord_status: statusObj.discord
+            };
         });
 
         res.json(staff);
 
     } catch (error) {
-        console.error("Staff Online Route Error (" + (error as Error).message + ")");
+        console.error("Staff Route Error:", error);
         res.json([]);
     } finally {
         if (connection) await connection.end();
     }
 });
 
-// Route: Get ALL Persistent Staff (from DB, not just online)
 router.get('/all-staff', async (req: Request, res: Response) => {
     try {
         const staff = await userService.getStaffUsers();

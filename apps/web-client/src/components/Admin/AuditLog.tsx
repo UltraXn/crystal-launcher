@@ -3,6 +3,7 @@ import { FaGlobe, FaGamepad, FaUser } from "react-icons/fa"
 import { useTranslation } from "react-i18next"
 import Loader from "../UI/Loader"
 import { supabase } from "../../services/supabaseClient"
+import { getAuthHeaders } from "../../services/adminAuth"
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -59,7 +60,7 @@ export default function AuditLog() {
             if (filterSource === 'all') {
                 // Fetch both in parallel
                 const { data: { session } } = await supabase.auth.getSession();
-                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+                const headers: HeadersInit = getAuthHeaders(session?.access_token || null);
 
                 const [resWeb, resGame] = await Promise.all([
                     fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=web&search=${searchTerm}`, { headers }),
@@ -95,7 +96,7 @@ export default function AuditLog() {
 
             } else if (filterSource === 'game') {
                 const { data: { session } } = await supabase.auth.getSession();
-                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+                const headers: HeadersInit = getAuthHeaders(session?.access_token || null);
 
                 const res = await fetch(`${API_URL}/logs/commands?limit=${limit}&page=${page}&search=${searchTerm}`, { headers });
                 if (!res.ok) throw new Error("Error fetching game logs");
@@ -114,7 +115,7 @@ export default function AuditLog() {
             } else {
                 // Web only
                 const { data: { session } } = await supabase.auth.getSession();
-                const headers: HeadersInit = session ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+                const headers: HeadersInit = getAuthHeaders(session?.access_token || null);
 
                 const res = await fetch(`${API_URL}/logs?limit=${limit}&page=${page}&source=${filterSource}&search=${searchTerm}`, { headers });
                 if (!res.ok) throw new Error("Error fetching web logs");
@@ -172,148 +173,187 @@ export default function AuditLog() {
     }
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '1rem' }}>
+        <div className="admin-card" style={{ background: 'rgba(10, 10, 15, 0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', display: 'flex', flexDirection: 'column', height: 'auto', minHeight: 'calc(100vh - 140px)', gap: '0' }}>
             
-            {/* CONTROLS HEADER (Search & Filters) */}
-            <div className="admin-card" style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
-                    <input 
-                        type="text" 
-                        placeholder={t('admin.logs.search_placeholder', 'Buscar usuario, comando...')}
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="admin-input"
-                        style={{ 
-                            width: '100%',
-                            padding: '0.6rem 1rem', // Bigger touch target
-                            fontSize: '0.9rem', 
-                            borderRadius: '8px',
-                            border: '1px solid #444',
-                            background: '#222'
-                        }}
-                    />
+            <div style={{ padding: '2rem 2rem 1.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div style={{ flex: '1', minWidth: '0' }}>
+                        <h3 style={{ margin: 0, fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: '900', color: '#fff', letterSpacing: '-0.5px', wordBreak: 'break-word' }}>{t('admin.logs.title', 'Registro de Auditoría')}</h3>
+                        <p style={{ margin: '0.5rem 0 0', color: 'rgba(255,255,255,0.4)', fontSize: 'clamp(0.8rem, 2vw, 0.9rem)' }}>Monitorea la actividad del sistema y los usuarios</p>
+                    </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <span style={{ color: '#aaa', fontSize: '0.85rem', fontWeight: 'bold', marginRight: '5px' }}>{t('admin.logs.filter_source', 'FUENTE:')}</span>
-                    
-                    <button 
-                        onClick={() => setFilterSource('all')}
-                        style={{
-                            padding: '0.5rem 1rem', 
-                            borderRadius: '6px',
-                            border: filterSource === 'all' ? '1px solid #fff' : '1px solid #444',
-                            background: filterSource === 'all' ? '#fff' : '#222',
-                            color: filterSource === 'all' ? '#000' : '#888',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '0.85rem',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        {t('admin.logs.filter_all', 'TODOS')}
-                    </button>
+                {/* CONTROLS HEADER (Search & Filters) */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 100%', minWidth: '200px' }}>
+                        <div style={{ position: 'relative', width: '100%' }}>
+                            <input 
+                                type="text" 
+                                placeholder={t('admin.logs.search_placeholder', 'Buscar usuario, comando...')}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="admin-input-premium"
+                                style={{ 
+                                    paddingLeft: '3rem',
+                                    borderRadius: '16px',
+                                    paddingTop: '0.8rem',
+                                    paddingBottom: '0.8rem',
+                                    width: '100%'
+                                }}
+                            />
+                             <FaUser style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                        </div>
+                    </div>
 
-                    <button 
-                        onClick={() => setFilterSource('web')}
-                        style={{
-                            padding: '0.5rem 1rem', 
-                            borderRadius: '6px',
-                            border: filterSource === 'web' ? '1px solid #3b82f6' : '1px solid #444',
-                            background: filterSource === 'web' ? '#3b82f6' : '#222',
-                            color: filterSource === 'web' ? '#fff' : '#888',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '0.85rem',
-                            display: 'flex', alignItems: 'center', gap: '6px',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <FaGlobe /> {t('admin.logs.filter_web', 'WEB')}
-                    </button>
+                    <div className="audit-log-filters" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap', flex: '1 1 auto', justifyContent: 'flex-start' }}>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{t('admin.logs.filter_source', 'FUENTE:')}</div>
+                        
+                        <button 
+                            onClick={() => setFilterSource('all')}
+                            className="hover-lift"
+                            style={{
+                                padding: '0.6rem 1.2rem', 
+                                borderRadius: '12px',
+                                border: filterSource === 'all' ? '1px solid #fff' : '1px solid rgba(255,255,255,0.1)',
+                                background: filterSource === 'all' ? '#fff' : 'rgba(255,255,255,0.05)',
+                                color: filterSource === 'all' ? '#000' : 'rgba(255,255,255,0.6)',
+                                cursor: 'pointer',
+                                fontWeight: '800',
+                                fontSize: '0.85rem',
+                                transition: 'all 0.2s',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {t('admin.logs.filter_all', 'TODOS')}
+                        </button>
 
-                    <button 
-                        onClick={() => setFilterSource('game')}
-                        style={{
-                            padding: '0.5rem 1rem', 
-                            borderRadius: '6px',
-                            border: filterSource === 'game' ? '1px solid #22c55e' : '1px solid #444',
-                            background: filterSource === 'game' ? '#22c55e' : '#222',
-                            color: filterSource === 'game' ? '#000' : '#888',
-                            cursor: 'pointer',
-                            fontWeight: 'bold',
-                            fontSize: '0.85rem',
-                            display: 'flex', alignItems: 'center', gap: '6px',
-                            transition: 'all 0.2s'
-                        }}
-                    >
-                        <FaGamepad /> {t('admin.logs.filter_game', 'JUEGO')}
-                    </button>
+                        <button 
+                            onClick={() => setFilterSource('web')}
+                            className="hover-lift"
+                            style={{
+                                padding: '0.6rem 1.2rem', 
+                                borderRadius: '12px',
+                                border: filterSource === 'web' ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.1)',
+                                background: filterSource === 'web' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255,255,255,0.05)',
+                                color: filterSource === 'web' ? '#3b82f6' : 'rgba(255,255,255,0.6)',
+                                cursor: 'pointer',
+                                fontWeight: '800',
+                                fontSize: '0.85rem',
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                transition: 'all 0.2s',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            <FaGlobe /> {t('admin.logs.filter_web', 'WEB')}
+                        </button>
+
+                        <button 
+                            onClick={() => setFilterSource('game')}
+                            className="hover-lift"
+                            style={{
+                                padding: '0.6rem 1.2rem', 
+                                borderRadius: '12px',
+                                border: filterSource === 'game' ? '1px solid #22c55e' : '1px solid rgba(255,255,255,0.1)',
+                                background: filterSource === 'game' ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.05)',
+                                color: filterSource === 'game' ? '#22c55e' : 'rgba(255,255,255,0.6)',
+                                cursor: 'pointer',
+                                fontWeight: '800',
+                                fontSize: '0.85rem',
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                transition: 'all 0.2s',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            <FaGamepad /> {t('admin.logs.filter_game', 'JUEGO')}
+                        </button>
+                    </div>
                 </div>
             </div>
             
             {/* TABLE CONTAINER (FLEX GROW TO FILL) */}
-            <div className="admin-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden', border: 'none', height: 'calc(100vh - 200px)' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
                 {loading ? (
-                    <Loader 
-                        text="Cargando registros..."
-                        style={{ height: 'auto', minHeight: '200px', flex: 1 }} 
-                    />
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <Loader 
+                            text="Cargando registros..."
+                            style={{ height: 'auto', minHeight: '200px' }} 
+                        />
+                    </div>
                 ) : logs.length === 0 ? (
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: '#666' }}>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'rgba(255,255,255,0.4)', flexDirection: 'column', gap: '1rem' }}>
+                         <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FaGlobe size={24} opacity={0.5} />
+                        </div>
                         <p>No hay registros encontrados.</p>
                     </div>
                 ) : (
                     <>
-                        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-                            <table className="admin-table" style={{ borderCollapse: 'collapse', width: '100%' }}>
-                                    <thead style={{ position: 'sticky', top: 0, background: '#111', zIndex: 10, borderBottom: '1px solid #333' }}>
+                        <div style={{ flex: 1, overflow: 'auto' }}>
+                            <table className="admin-table" style={{ borderCollapse: 'separate', borderSpacing: '0', width: '100%' }}>
+                                <thead style={{ position: 'sticky', top: 0, zIndex: 10, backdropFilter: 'blur(10px)', background: 'rgba(10,10,15,0.8)' }}>
                                     <tr>
-                                        <th className="th-mobile-hide" style={{width: '140px', padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>FECHA</th>
-                                        <th style={{padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>USUARIO</th>
-                                        <th style={{padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>ACCIÓN</th>
-                                        <th className="th-mobile-hide" style={{padding: '1rem', color: '#888', fontSize:'0.85rem', textAlign: 'left'}}>DETALLES</th>
-                                        <th style={{width: '50px', padding: '1rem', textAlign: 'center'}}></th>
+                                        <th className="th-mobile-hide" style={{ width: '180px', padding: '1.25rem 2rem', color: '#666', fontSize:'0.75rem', background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>FECHA</th>
+                                        <th style={{ padding: '1.25rem', color: '#666', fontSize:'0.75rem', background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>USUARIO</th>
+                                        <th style={{ padding: '1.25rem', color: '#666', fontSize:'0.75rem', background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>ACCIÓN</th>
+                                        <th className="th-mobile-hide" style={{ padding: '1.25rem', color: '#666', fontSize:'0.75rem', background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>DETALLES</th>
+                                        <th style={{ width: '80px', padding: '1.25rem', textAlign: 'center', background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.05)' }}></th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {logs.map((log, index) => (
-                                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
-                                            <td className="th-mobile-hide" style={{ color: '#888', fontSize: '0.85rem', padding: '0.8rem 1rem' }}>
-                                                {new Date(log.created_at).toLocaleString()}
+                                        <tr key={log.id} style={{ transition: 'background 0.2s', background: index % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'transparent' }} className="hover:bg-white/5">
+                                            <td className="th-mobile-hide" style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', padding: '1rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                <div style={{ fontWeight: '500' }}>{new Date(log.created_at).toLocaleDateString()}</div>
+                                                <div style={{ fontSize: '0.75rem', opacity: 0.6 }}>{new Date(log.created_at).toLocaleTimeString()}</div>
                                             </td>
-                                            <td style={{ padding: '0.8rem 1rem' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <FaUser size={10} color="#666" />
-                                                    <span style={{color: log.username === 'Staff' ? 'var(--accent)' : '#ccc', fontWeight: log.username === 'Staff' ? 'bold' : 'normal', wordBreak: 'break-word'}}>
+                                            <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                                                    <div style={{ 
+                                                        width: '32px', height: '32px', borderRadius: '8px', 
+                                                        background: 'rgba(255,255,255,0.05)', 
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        color: 'rgba(255,255,255,0.5)'
+                                                    }}>
+                                                        <FaUser size={12} />
+                                                    </div>
+                                                    <span style={{
+                                                        color: log.username === 'Staff' ? 'var(--accent)' : '#fff', 
+                                                        fontWeight: '700',
+                                                        fontSize: '0.9rem'
+                                                    }}>
                                                         {log.username || 'System'}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td style={{ padding: '0.8rem 1rem' }}>
-                                                <span className="audit-badge" style={{
+                                            <td style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                <span style={{
                                                     background: getActionColor(log.action),
-                                                    padding: '2px 8px',
-                                                    borderRadius: '4px',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 'bold',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '800',
                                                     color: '#000',
                                                     display: 'inline-block',
-                                                    width: '100%', // Full width in cell
-                                                    maxWidth: '120px',
-                                                    textAlign: 'center',
-                                                    whiteSpace: 'nowrap',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis'
+                                                    letterSpacing: '0.5px',
+                                                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                                                    textTransform: 'uppercase'
                                                 }}>
                                                     {log.action}
                                                 </span>
                                             </td>
-                                            <td className="th-mobile-hide" style={{ color: '#bbb', fontSize: '0.9rem', padding: '0.8rem 1rem' }}>
+                                            <td className="th-mobile-hide" style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.02)', fontWeight: '500' }}>
                                                 {log.details}
                                             </td>
-                                            <td style={{ textAlign: 'center', padding: '0.8rem 1rem' }}>
-                                                {log.source === 'web' ? <FaGlobe color="#3b82f6" title="Web Panel" /> : <FaGamepad color="#22c55e" title="Minecraft Server" />}
+                                            <td style={{ textAlign: 'center', padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                {log.source === 'web' ? (
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', color: '#3b82f6' }}>
+                                                        <FaGlobe />
+                                                    </div>
+                                                ) : (
+                                                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', color: '#22c55e' }}>
+                                                        <FaGamepad />
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
@@ -323,35 +363,38 @@ export default function AuditLog() {
 
                         {/* PAGINATION FOOTER */}
                         <div style={{ 
-                            padding: '0.8rem 1rem', 
-                            background: '#1a1a1a', 
-                            borderTop: '1px solid #333',
+                            padding: '1.5rem 2rem', 
+                            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
                             display: 'flex',
                             justifyContent: 'space-between', 
                             alignItems: 'center',
                             flexShrink: 0,
                             flexWrap: 'wrap',
-                            gap: '1rem'
+                            gap: '1rem',
+                            background: 'rgba(255,255,255,0.01)'
                         }}>
-                             <span style={{ fontSize: '0.9rem', color: '#888' }}>
-                                Página <strong style={{color:'#fff'}}>{page}</strong> de <strong style={{color:'#fff'}}>{totalPages}</strong>
+                             <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', fontWeight: '500' }}>
+                                Mirando página <strong style={{color:'#fff'}}>{page}</strong> de <strong style={{color:'#fff'}}>{totalPages}</strong>
                             </span>
 
                             {totalPages >= 1 && (
-                                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                                     <button 
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}
                                         style={{ 
-                                            padding: '0.4rem 0.8rem', 
+                                            padding: '0 1rem',
+                                            height: '36px', 
                                             cursor: 'pointer', 
-                                            background: '#333', 
-                                            border:'1px solid #444', 
-                                            borderRadius:'20px', 
+                                            background: 'rgba(255,255,255,0.05)', 
+                                            border:'1px solid rgba(255,255,255,0.1)', 
+                                            borderRadius:'10px', 
                                             color:'#fff', 
                                             opacity: page===1 ? 0.5:1,
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.2s'
                                         }}
+                                        className="hover-lift"
                                     >
                                         &lt;
                                     </button>
@@ -362,24 +405,26 @@ export default function AuditLog() {
                                                 key={idx}
                                                 onClick={() => setPage(p)}
                                                 style={{
-                                                    background: page === p ? 'var(--accent)' : '#333',
-                                                    color: page === p ? '#000' : '#eee',
-                                                    border: page === p ? 'none' : '1px solid #444',
-                                                    minWidth: '32px',
-                                                    height: '32px',
-                                                    borderRadius: '50%',
+                                                    background: page === p ? 'var(--accent)' : 'transparent',
+                                                    color: page === p ? '#000' : 'rgba(255,255,255,0.7)',
+                                                    border: page === p ? 'none' : '1px solid transparent',
+                                                    minWidth: '36px',
+                                                    height: '36px',
+                                                    borderRadius: '10px',
                                                     cursor: 'pointer',
                                                     fontWeight: 'bold',
                                                     fontSize: '0.9rem',
                                                     display: 'flex',
                                                     alignItems: 'center',
-                                                    justifyContent: 'center'
+                                                    justifyContent: 'center',
+                                                    transition: 'all 0.2s'
                                                 }}
+                                                className={page !== p ? "hover-lift" : ""}
                                             >
                                                 {p}
                                             </button>
                                         ) : (
-                                            <span key={idx} style={{ color: '#888', lineHeight: '32px', padding: '0 5px' }}>...</span>
+                                            <span key={idx} style={{ color: 'rgba(255,255,255,0.3)', lineHeight: '36px', padding: '0 5px' }}>...</span>
                                         )
                                     ))}
 
@@ -387,15 +432,18 @@ export default function AuditLog() {
                                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                         disabled={page === totalPages}
                                         style={{ 
-                                            padding: '0.4rem 0.8rem', 
+                                            padding: '0 1rem', 
+                                            height: '36px',
                                             cursor: 'pointer', 
-                                            background: '#333', 
-                                            border:'1px solid #444', 
-                                            borderRadius:'20px', 
+                                            background: 'rgba(255,255,255,0.05)', 
+                                            border:'1px solid rgba(255,255,255,0.1)', 
+                                            borderRadius:'10px', 
                                             color:'#fff', 
                                             opacity: page===totalPages?0.5:1,
-                                            fontWeight: 'bold'
+                                            fontWeight: 'bold',
+                                            transition: 'all 0.2s'
                                         }}
+                                        className="hover-lift"
                                     >
                                         &gt;
                                     </button>

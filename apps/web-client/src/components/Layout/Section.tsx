@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import anime from 'animejs/lib/anime.js';
+import { gsap } from 'gsap';
 import { useIntersectionObserver } from '../../hooks/useIntersectionObserver';
 
 interface SectionProps {
@@ -25,24 +25,27 @@ export default function Section({
     const hasAnimated = useRef(false);
 
     useEffect(() => {
-        if (isVisible && !hasAnimated.current) {
+        if (isVisible && !hasAnimated.current && ref.current) {
             hasAnimated.current = true;
 
-            const translateY = [50, 0];
-            let translateX = [0, 0];
+            const startY = direction === 'up' ? 50 : (direction === 'down' ? -50 : 0);
+            const startX = direction === 'left' ? -50 : (direction === 'right' ? 50 : 0);
 
-            if (direction === 'left') translateX = [-50, 0];
-            if (direction === 'right') translateX = [50, 0];
-
-            anime({
-                targets: ref.current,
-                opacity: [0, 1],
-                translateY: translateY,
-                translateX: translateX,
-                easing: 'easeOutExpo',
-                duration: 1000,
-                delay: delay
-            });
+            gsap.fromTo(ref.current,
+                { 
+                    opacity: 0, 
+                    y: startY, 
+                    x: startX 
+                },
+                {
+                    opacity: 1,
+                    y: 0,
+                    x: 0,
+                    duration: 1,
+                    ease: 'power3.out',
+                    delay: delay / 1000 // gsap uses seconds
+                }
+            );
         }
     }, [isVisible, delay, direction, ref]);
 

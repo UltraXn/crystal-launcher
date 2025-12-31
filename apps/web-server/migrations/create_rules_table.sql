@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS public.server_rules (
     category VARCHAR(255) NOT NULL, -- Examples: 'Comportamiento', 'Chat', 'PvP', 'Clientes', 'Staff'
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,          -- Markdown content description
+    color VARCHAR(7) DEFAULT '#6366f1', -- HEX Color
     sort_order INTEGER DEFAULT 0,   -- Lower number = Higher priority
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()

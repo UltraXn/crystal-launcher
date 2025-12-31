@@ -1,55 +1,54 @@
 import { useTranslation } from "react-i18next";
+import "../../styles/loader.css";
 
 interface LoaderProps {
     text?: string;
     style?: React.CSSProperties;
     size?: number;
+    minimal?: boolean;
+    fullScreen?: boolean;
 }
 
-export default function Loader({ text, style, size }: LoaderProps) {
+export default function Loader({ text, style, size, minimal, fullScreen }: LoaderProps) {
     const { t } = useTranslation();
-    // If text is explicitly "", allow it to be empty. If undefined, show default.
+    
+    // In minimal mode, we only show a small spinner
+    if (minimal) {
+        return (
+            <div className="loader-minimal" style={style}>
+                <div className="spinner-ring" style={{ width: size, height: size }}></div>
+                {text && <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', fontWeight: 800 }}>{text}</span>}
+            </div>
+        );
+    }
+
     const displayText = text === "" ? null : (text || t('common.loading_content'));
-    const circleSize = size || 50;
 
     return (
-        <div className="loader-container" style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            width: '100%',
-            minHeight: size ? 'auto' : '200px',
-            ...style
-        }}>
-            <style>{`
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-                @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-                .spinner-circle {
-                    width: ${circleSize}px; height: ${circleSize}px;
-                    border: 2px solid rgba(255, 255, 255, 0.1);
-                    border-top: 2px solid var(--accent, #168C80);
-                    border-radius: 50%;
-                    animation: spin 1s linear infinite;
-                }
-                .pulpito-mini {
-                    animation: jump 2s infinite ease-in-out;
-                }
-            `}</style>
-
-            <div className="loader-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: displayText ? '1rem' : 0 }}>
-                <div className="spinner-circle"></div>
-                {!size && (
-                     <img
+        <div className={`premium-loader-container ${fullScreen ? 'loader-fullscreen' : ''}`} style={style}>
+            <div className="loader-visual-wrapper">
+                {/* Orbital Rings */}
+                <div className="loader-ring loader-ring-1"></div>
+                <div className="loader-ring loader-ring-2"></div>
+                <div className="loader-ring loader-ring-3"></div>
+                
+                {/* Glow & Shine */}
+                <div className="loader-shine"></div>
+                
+                {/* Logo */}
+                <div className="loader-logo-glow">
+                    <img
                         src="/images/ui/logo.webp"
                         alt="Loading..."
-                        className="pulpito-mini"
-                        style={{ width: '50px', height: 'auto', display: 'block' }}
                     />
-                )}
+                </div>
             </div>
-            {displayText && <p style={{ color: 'var(--muted, #aaa)', fontSize: '1rem', marginTop: '0.5rem' }}>{displayText}</p>}
+
+            {displayText && (
+                <div className="loader-text-premium">
+                    {displayText}
+                </div>
+            )}
         </div>
     )
 }

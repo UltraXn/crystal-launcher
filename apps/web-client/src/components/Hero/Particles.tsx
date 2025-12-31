@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import anime from 'animejs/lib/anime.js'
+import { gsap } from 'gsap'
 
 export default function HeroParticles() {
     const containerRef = useRef<HTMLDivElement>(null)
@@ -13,7 +13,7 @@ export default function HeroParticles() {
         const colors = ['#89D9D1', '#168C80', '#0C5952', '#ffffff']
 
         // Create particles
-        const particles = []
+        const particles: HTMLDivElement[] = []
         for (let i = 0; i < numParticles; i++) {
             const el = document.createElement('div')
             el.classList.add('particle')
@@ -30,33 +30,31 @@ export default function HeroParticles() {
             el.style.opacity = String(Math.random() * 0.5 + 0.1) // 0.1 to 0.6
             el.style.left = `${Math.random() * 100}%`
             el.style.top = `${Math.random() * 100}%`
-            // Simple blur for "light/bubble" effect
             el.style.filter = `blur(${Math.random() * 2}px)`
 
             container.appendChild(el)
             particles.push(el)
+
+            // GSAP individual animation for more natural float
+            gsap.to(el, {
+                x: "random(-100, 100)",
+                y: "random(-100, 100)",
+                scale: "random(0.5, 1.5)",
+                opacity: "random(0.1, 0.6)",
+                duration: "random(3, 8)",
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut",
+                delay: Math.random() * 2
+            });
         }
 
-        // Animate particles
-        const animation = anime({
-            targets: particles,
-            translateX: () => anime.random(-100, 100),
-            translateY: () => anime.random(-100, 100),
-            scale: () => [0.5, 1.5],
-            opacity: () => [0.1, 0.6],
-            easing: 'easeInOutSine',
-            duration: () => anime.random(3000, 8000),
-            delay: () => anime.random(0, 2000),
-            direction: 'alternate',
-            loop: true
-        })
-
         return () => {
-            animation.pause()
-            // Cleanup particles
+            // Cleanup particles and their animations
             if (container) {
                 while (container.firstChild) {
-                    container.removeChild(container.firstChild)
+                    gsap.killTweensOf(container.firstChild);
+                    container.removeChild(container.firstChild);
                 }
             }
         }

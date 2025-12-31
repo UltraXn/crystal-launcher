@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import anime from 'animejs/lib/anime.js';
+import { gsap } from 'gsap';
 
 declare global {
     interface Window {
@@ -55,21 +55,17 @@ interface KoFiButtonProps {
 
 const KoFiButton = ({ kofiId = "G2G03Y8FL", text = "¡Dona por Ko-Fi!" }: KoFiButtonProps) => {
     const iconRef = useRef<HTMLImageElement>(null);
-    const animationRef = useRef<anime.AnimeInstance | null>(null);
+    const animationRef = useRef<gsap.core.Tween | null>(null);
 
     const handleMouseEnter = () => {
-        // Stop any current animation to restart
-        if (animationRef.current) animationRef.current.pause();
+        if (animationRef.current) animationRef.current.kill();
 
-        animationRef.current = anime({
-            targets: iconRef.current,
-            translateY: [
-                { value: -10, duration: 200, easing: 'easeOutQuad' },
-                { value: 0, duration: 200, easing: 'easeInQuad' },
-                { value: -5, duration: 200, easing: 'easeOutQuad' },
-                { value: 0, duration: 200, easing: 'easeInQuad' }
-            ],
-            duration: 800
+        animationRef.current = gsap.to(iconRef.current, {
+            y: -10,
+            duration: 0.2,
+            ease: 'power2.out',
+            yoyo: true,
+            repeat: 3
         });
     };
 

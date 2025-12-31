@@ -19,6 +19,7 @@
   --ct-tide: 22, 140, 128; /* #168C80 - Verde Mar */
   --ct-crystal: 137, 217, 209; /* #89D9D1 - Acento Cian */
   --ct-text: 255, 255, 255; /* #FFFFFF */
+  --accent-rgb: var(--ct-crystal);
 }
 
 /* Themes */

@@ -15,18 +15,23 @@ export default function BroadcastAlert() {
 
     const fetchConfig = () => {
         fetch(`${API_URL}/settings`)
-            .then(res => res.json())
+            .then(res => res.ok ? res.json() : null)
             .then(data => {
-                if(data.broadcast_config) {
+                if(data && data.broadcast_config) {
                     try {
                         const parsed = typeof data.broadcast_config === 'string' 
                             ? JSON.parse(data.broadcast_config) 
                             : data.broadcast_config;
                         setConfig(parsed);
-                    } catch (e) { console.error(e); }
+                    } catch (e) { 
+                        console.warn("BroadcastAlert: Failed to parse broadcast_config", e); 
+                    }
                 }
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                // Only log warning to avoid console noise on expected dev hiccups
+                console.warn("BroadcastAlert: Failed to fetch settings", err.message);
+            });
     };
 
     useEffect(() => {

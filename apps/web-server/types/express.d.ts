@@ -9,6 +9,11 @@ declare global {
                 role: string;
                 email?: string;
                 minecraft_uuid?: string;
+                app_metadata?: {
+                    two_factor_enabled?: boolean;
+                    two_factor_secret?: string;
+                    [key: string]: unknown;
+                };
             };
         }
     }

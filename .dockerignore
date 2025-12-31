@@ -1,6 +1,12 @@
 node_modules
 .git
 .env
-!server/.env
+.env.*
+.DS_Store
+.turbo
+coverage
 dist
 build
+tmp
+apps/*/dist
+apps/*/node_modules

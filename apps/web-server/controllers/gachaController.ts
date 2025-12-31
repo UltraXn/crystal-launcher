@@ -24,6 +24,9 @@ export const roll = async (req: Request, res: Response) => {
         if (message === "COOLDOWN_ACTIVE") {
              return sendError(res, "You can only roll once every 24 hours!", "COOLDOWN", 429);
         }
+        if (message === "ACCOUNT_NOT_LINKED") {
+             return sendError(res, "Debes vincular tu cuenta de Minecraft primero para recibir premios.", "NOT_LINKED", 400);
+        }
         return sendError(res, message || "Gacha failed", "INTERNAL_ERROR", 500);
     }
 };

@@ -1,8 +1,8 @@
 
 import { useState, useRef, useEffect } from 'react'
-import { FaBars, FaUserCircle, FaShieldAlt, FaGift } from 'react-icons/fa'
+import { FaBars, FaUserCircle, FaShieldAlt } from 'react-icons/fa'
 import { Link } from 'react-router-dom'
-import anime from 'animejs/lib/anime.js'
+import { gsap } from 'gsap'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
@@ -16,7 +16,7 @@ export default function Menu() {
     const itemsRef = useRef<(HTMLAnchorElement | HTMLDivElement)[]>([])
 
     // Check if admin (Same logic as Navbar)
-    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper', 'owner', 'founder', 'developer']
+    const allowedRoles = ['admin', 'neroferno', 'killu', 'helper', 'owner', 'founder', 'developer', 'staff']
     const isAdmin = allowedRoles.includes(user?.user_metadata?.role?.toLowerCase())
 
     const toggleMenu = () => {
@@ -34,43 +34,50 @@ export default function Menu() {
     useEffect(() => {
         if (isOpen) {
             // OPEN ANIMATION
-            anime.remove(dropdownRef.current);
-            anime.remove(itemsRef.current);
+            if (dropdownRef.current) {
+                gsap.killTweensOf(dropdownRef.current);
+                gsap.set(dropdownRef.current, { visibility: 'visible', opacity: 1 });
 
-            anime.set(dropdownRef.current, { visibility: 'visible', opacity: 1 });
+                gsap.fromTo(dropdownRef.current,
+                    { scale: 0.9, opacity: 0, y: 10 },
+                    {
+                        scale: 1,
+                        opacity: 1,
+                        y: 0,
+                        ease: 'elastic.out(1, 0.75)',
+                        duration: 0.8
+                    }
+                );
+            }
 
-            anime({
-                targets: dropdownRef.current,
-                scale: [0.9, 1],
-                opacity: [0, 1],
-                translateY: [10, 0],
-                easing: 'spring(1, 80, 10, 0)',
-                duration: 600
-            });
-
-            anime({
-                targets: itemsRef.current,
-                translateX: [20, 0],
-                opacity: [0, 1],
-                delay: anime.stagger(100, { start: 100 }),
-                easing: 'easeOutExpo'
-            });
+            if (itemsRef.current.length > 0) {
+                gsap.killTweensOf(itemsRef.current);
+                gsap.fromTo(itemsRef.current,
+                    { x: 20, opacity: 0 },
+                    {
+                        x: 0,
+                        opacity: 1,
+                        stagger: 0.05,
+                        delay: 0.1,
+                        ease: 'power3.out',
+                        duration: 0.5
+                    }
+                );
+            }
 
         } else {
-            // CLOSE ANIMATION only if we have rendered at least once (ref exists)
+            // CLOSE ANIMATION
             if (dropdownRef.current) {
-                anime.remove(dropdownRef.current);
-                anime.remove(itemsRef.current);
-
-                anime({
-                    targets: dropdownRef.current,
+                gsap.killTweensOf(dropdownRef.current);
+                gsap.to(dropdownRef.current, {
                     opacity: 0,
-                    translateY: 10,
-                    duration: 200,
-                    easing: 'easeInQuad',
-                    complete: () => {
-                        if (!isOpen && dropdownRef.current) { // check isOpen again to prevent race condition
-                            anime.set(dropdownRef.current, { visibility: 'hidden' });
+                    y: 10,
+                    scale: 0.95,
+                    duration: 0.3,
+                    ease: 'power2.in',
+                    onComplete: () => {
+                        if (dropdownRef.current) {
+                            gsap.set(dropdownRef.current, { visibility: 'hidden' });
                         }
                     }
                 });
@@ -156,9 +163,6 @@ export default function Menu() {
                                      <FaShieldAlt style={{ marginRight: '8px' }}/> {t('account.admin_panel')}
                                 </Link>
                             )}
-                            <Link to="/gacha" className="menu-item" onClick={closeMenu} style={{ color: 'var(--accent)', fontWeight: 'bold' }}>
-                                 <FaGift style={{ marginRight: '8px' }}/> {t('gacha.title', 'Recompensa Diaria')}
-                            </Link>
                             <Link to="/account" className="menu-item" onClick={closeMenu}>
                                  <FaUserCircle style={{ marginRight: '8px' }}/> {(() => {
                                     const meta = user.user_metadata || {};

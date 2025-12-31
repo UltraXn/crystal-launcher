@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient'
+import { getAuthHeaders } from './adminAuth'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -32,8 +33,10 @@ export const getWikiArticle = async (slug: string): Promise<WikiArticle> => {
 
 export const createWikiArticle = async (articleData: Partial<WikiArticle>): Promise<WikiArticle> => {
     const { data: { session } } = await supabase.auth.getSession()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (session) headers['Authorization'] = `Bearer ${session.access_token}`
+    const headers = { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(session?.access_token || null)
+    }
 
     const res = await fetch(`${API_URL}/wiki`, {
         method: 'POST',
@@ -47,8 +50,10 @@ export const createWikiArticle = async (articleData: Partial<WikiArticle>): Prom
 
 export const updateWikiArticle = async (id: number, articleData: Partial<WikiArticle>): Promise<WikiArticle> => {
     const { data: { session } } = await supabase.auth.getSession()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (session) headers['Authorization'] = `Bearer ${session.access_token}`
+    const headers = { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(session?.access_token || null)
+    }
 
     const res = await fetch(`${API_URL}/wiki/${id}`, {
         method: 'PUT',
@@ -62,8 +67,7 @@ export const updateWikiArticle = async (id: number, articleData: Partial<WikiArt
 
 export const deleteWikiArticle = async (id: number): Promise<void> => {
     const { data: { session } } = await supabase.auth.getSession()
-    const headers: Record<string, string> = {}
-    if (session) headers['Authorization'] = `Bearer ${session.access_token}`
+    const headers = getAuthHeaders(session?.access_token || null)
 
     const res = await fetch(`${API_URL}/wiki/${id}`, {
         method: 'DELETE',
