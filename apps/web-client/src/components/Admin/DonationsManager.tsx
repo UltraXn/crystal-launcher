@@ -22,10 +22,14 @@ export interface Donation {
     created_at: string;
 }
 
-export default function DonationsManager() {
+interface DonationsManagerProps {
+    mockDonations?: Donation[];
+}
+
+export default function DonationsManager({ mockDonations }: DonationsManagerProps = {}) {
     const { t } = useTranslation() 
-    const [donations, setDonations] = useState<Donation[]>([])
-    const [loading, setLoading] = useState(true)
+    const [donations, setDonations] = useState<Donation[]>(mockDonations || [])
+    const [loading, setLoading] = useState(!mockDonations) // If mock provided, start as loaded
     const [search, setSearch] = useState('')
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
@@ -38,6 +42,7 @@ export default function DonationsManager() {
     const [alert, setAlert] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
     const fetchDonations = useCallback(async () => {
+        if (mockDonations) return;
         setLoading(true)
         try {
             const { data: { session } } = await supabase.auth.getSession()

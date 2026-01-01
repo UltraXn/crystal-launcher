@@ -4,12 +4,21 @@ import { FaDiscord, FaUserPlus, FaCalendarAlt, FaShieldAlt } from "react-icons/f
 import { motion as Motion, useInView } from "framer-motion";
 import { gsap } from "gsap";
 
-export default function StatsRow() {
+interface StatsRowProps {
+    mockStats?: {
+        discord: number;
+        registered: number;
+        years: number;
+        staff: number;
+    };
+}
+
+export default function StatsRow({ mockStats }: StatsRowProps) {
     const { t } = useTranslation();
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: "-100px" });
 
-    const [statsData, setStatsData] = useState({
+    const [statsData, setStatsData] = useState(mockStats || {
         discord: 200,
         registered: 0,
         years: 1,
@@ -18,6 +27,8 @@ export default function StatsRow() {
     const API_URL = import.meta.env.VITE_API_URL;
 
     useEffect(() => {
+        if (mockStats) return;
+
         const fetchStats = async () => {
             try {
                 // Fetch Minecraft Status (Players Online)
@@ -54,7 +65,7 @@ export default function StatsRow() {
         };
 
         fetchStats();
-    }, [API_URL]);
+    }, [API_URL, mockStats]);
 
     const stats = useMemo(() => [
         {

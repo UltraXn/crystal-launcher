@@ -26,9 +26,14 @@ interface Registration {
     }
 }
 
-export default function EventsManager() {
+interface EventsManagerProps {
+    mockEvents?: Event[];
+    mockRegistrationsMap?: Record<number, Registration[]>;
+}
+
+export default function EventsManager({ mockEvents, mockRegistrationsMap }: EventsManagerProps = {}) {
     const { t } = useTranslation()
-    const [events, setEvents] = useState<Event[]>([])
+    const [events, setEvents] = useState<Event[]>(mockEvents || [])
     const [loading, setLoading] = useState(true)
     const [isEditing, setIsEditing] = useState(false)
     const [currentEvent, setCurrentEvent] = useState<Event | null>(null)
@@ -54,6 +59,7 @@ export default function EventsManager() {
     const API_URL = import.meta.env.VITE_API_URL || '/api'
 
     const fetchEvents = useCallback(async () => {
+        if (mockEvents) return;
         try {
             const res = await fetch(`${API_URL}/events`)
             const data = await res.json()
@@ -65,7 +71,7 @@ export default function EventsManager() {
         } finally {
             setLoading(false)
         }
-    }, [API_URL])
+    }, [API_URL, mockEvents])
 
     useEffect(() => {
         fetchEvents()
@@ -439,6 +445,7 @@ export default function EventsManager() {
                     eventId={showRegistrationsModal} 
                     onClose={() => setShowRegistrationsModal(null)} 
                     API_URL={API_URL}
+                    mockRegistrations={mockRegistrationsMap?.[showRegistrationsModal]}
                 />
             )}
         </div>
@@ -449,15 +456,17 @@ interface RegistrationsModalProps {
     eventId: number;
     onClose: () => void;
     API_URL: string;
+    mockRegistrations?: Registration[];
 }
 
-function RegistrationsModal({ eventId, onClose, API_URL }: RegistrationsModalProps) {
+function RegistrationsModal({ eventId, onClose, API_URL, mockRegistrations }: RegistrationsModalProps) {
     const { t } = useTranslation()
-    const [registrations, setRegistrations] = useState<Registration[]>([])
-    const [loading, setLoading] = useState(true)
+    const [registrations, setRegistrations] = useState<Registration[]>(mockRegistrations || [])
+    const [loading, setLoading] = useState(!mockRegistrations)
     
     useEffect(() => {
         const fetchReg = async () => {
+            if (mockRegistrations) return;
             try {
                 const { data: { session } } = await supabase.auth.getSession()
                 const res = await fetch(`${API_URL}/events/${eventId}/registrations`, {
@@ -471,7 +480,7 @@ function RegistrationsModal({ eventId, onClose, API_URL }: RegistrationsModalPro
             finally { setLoading(false) }
         }
         fetchReg()
-    }, [eventId, API_URL])
+    }, [eventId, API_URL, mockRegistrations])
 
     return (
         <div className="sync-modal-overlay" onClick={onClose}>

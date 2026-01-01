@@ -9,7 +9,11 @@ const meta = {
     layout: 'fullscreen',
   },
   decorators: [
-    (Story) => <Story />,
+    (Story) => (
+      <div style={{ backgroundColor: '#09090b', minHeight: '100vh' }}>
+        <Story />
+      </div>
+    ),
   ],
   tags: ['autodocs'],
 } satisfies Meta<typeof Hero>;
@@ -32,6 +36,9 @@ export const Default: Story = {
              // Mock fetch for settings and player count
              useEffect(() => {
                 const originalFetch = window.fetch;
+                // Mock env for Storybook
+                (window as any)._env_ = { VITE_API_URL: 'http://localhost:3000' };
+                
                 window.fetch = async (input, init) => {
                     const url = typeof input === 'string' ? input : input.toString();
                     
@@ -43,7 +50,7 @@ export const Default: Story = {
                      if (url.includes('/minecraft/status')) {
                          return new Response(JSON.stringify({ 
                              online: true,
-                             players: { online: 50, max: 100 }
+                             players: { online: 2, max: 100 }
                          }), { status: 200 });
                     }
 

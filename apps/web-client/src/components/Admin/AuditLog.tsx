@@ -30,13 +30,18 @@ interface WebLog {
     details: string;
 }
 
-export default function AuditLog() {
-    const [logs, setLogs] = useState<LogEntry[]>([])
-    const [loading, setLoading] = useState(true)
+interface AuditLogProps {
+    mockLogs?: LogEntry[];
+    mockTotal?: number;
+}
+
+export default function AuditLog({ mockLogs, mockTotal }: AuditLogProps = {}) {
+    const [logs, setLogs] = useState<LogEntry[]>(mockLogs || [])
+    const [loading, setLoading] = useState(!mockLogs)
     const [filterSource, setFilterSource] = useState('all') // 'all', 'web', 'game'
     const [page, setPage] = useState(1)
     const [limit] = useState(50) // Increased limit to enable scrolling
-    const [totalPages, setTotalPages] = useState(1)
+    const [totalPages, setTotalPages] = useState(mockTotal ? Math.ceil(mockTotal / 50) : 1)
 
     const { t } = useTranslation()
     const [search, setSearch] = useState('')
@@ -52,6 +57,7 @@ export default function AuditLog() {
     }, [search])
 
     const fetchLogs = useCallback(async () => {
+        if (mockLogs) return;
         setLoading(true)
         try {
             let fetchedLogs: LogEntry[] = [];

@@ -49,7 +49,12 @@ interface ConfirmData {
     onConfirm: () => void;
 }
 
-export default function TicketsManager() {
+interface TicketsManagerProps {
+    mockTickets?: Ticket[];
+    mockMessages?: Record<number, Message[]>; // Map ticket ID to messages
+}
+
+export default function TicketsManager({ mockTickets, mockMessages }: TicketsManagerProps = {}) {
     const { t } = useTranslation()
     const { user } = useAuth() as { user: User | null }
     const [tickets, setTickets] = useState<Ticket[]>([])
@@ -69,6 +74,11 @@ export default function TicketsManager() {
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const fetchTickets = useCallback(async () => {
+        if (mockTickets) {
+            setTickets(mockTickets)
+            setLoading(false)
+            return
+        }
         try {
             setLoading(true)
             const { data: { session } } = await supabase.auth.getSession();
@@ -470,6 +480,7 @@ export default function TicketsManager() {
                     ticket={selectedTicket}
                     onClose={() => setSelectedTicket(null)}
                     refreshTickets={fetchTickets}
+                    mockMessages={mockMessages?.[selectedTicket.id]}
                 />
             )}
             {confirmBulkDelete && (
@@ -489,9 +500,10 @@ interface TicketDetailModalProps {
     ticket: Ticket;
     onClose: () => void;
     refreshTickets: () => void;
+    mockMessages?: Message[];
 }
 
-function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModalProps) {
+function TicketDetailModal({ ticket, onClose, refreshTickets, mockMessages }: TicketDetailModalProps) {
     const { t } = useTranslation()
     const { user } = useAuth() as { user: User | null }
     const [messages, setMessages] = useState<Message[]>([])
@@ -503,6 +515,13 @@ function TicketDetailModal({ ticket, onClose, refreshTickets }: TicketDetailModa
     const scrollRef = useRef<HTMLDivElement>(null)
 
     const fetchMessages = useCallback(async () => {
+        if (mockMessages) {
+            setMessages(mockMessages)
+            setTimeout(() => {
+                if (scrollRef.current) scrollRef.current.scrollIntoView({ behavior: 'smooth' })
+            }, 100)
+            return
+        }
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const headers: HeadersInit = getAuthHeaders(session?.access_token || null);

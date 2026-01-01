@@ -22,9 +22,10 @@ interface Poll {
 interface PollDisplayProps {
     poll: Poll | null;
     refreshPoll?: () => void;
+    onVote?: (optionId: string) => Promise<void>; // Optional override for testing
 }
 
-export default function PollDisplay({ poll, refreshPoll }: PollDisplayProps) {
+export default function PollDisplay({ poll, refreshPoll, onVote }: PollDisplayProps) {
     const [voting, setVoting] = useState(false)
     const [voted, setVoted] = useState(false)
 
@@ -49,11 +50,15 @@ export default function PollDisplay({ poll, refreshPoll }: PollDisplayProps) {
         if (voted) return
         setVoting(true)
         try {
-            await fetch(`${API_URL}/polls/vote`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pollId: poll.id, optionId })
-            })
+            if (onVote) {
+                await onVote(optionId);
+            } else {
+                await fetch(`${API_URL}/polls/vote`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pollId: poll.id, optionId })
+                })
+            }
             setVoted(true)
             if (refreshPoll) refreshPoll()
         } catch (err) { console.error(err) }

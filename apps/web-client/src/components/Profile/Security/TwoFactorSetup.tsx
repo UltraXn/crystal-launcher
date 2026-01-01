@@ -5,19 +5,39 @@ import { setup2FA, enable2FA, disable2FA, get2FAStatus } from '../../../services
 import { supabase } from '../../../services/supabaseClient';
 import Loader from '../../UI/Loader';
 
-export default function TwoFactorSetup() {
+interface TwoFactorSetupProps {
+    mockEnabled?: boolean;
+    mockLoading?: boolean;
+    mockSetupData?: { secret: string; qrCode: string } | null;
+    onSetup?: () => Promise<{ success: boolean; data?: { secret: string; qrCode: string }; error?: string }>;
+    onEnable?: (token: string, secret: string) => Promise<{ success: boolean; error?: string }>;
+    onDisable?: () => Promise<{ success: boolean; error?: string }>;
+}
+
+export default function TwoFactorSetup({ 
+    mockEnabled, 
+    mockLoading, 
+    mockSetupData,
+    onSetup,
+    onEnable,
+    onDisable 
+}: TwoFactorSetupProps = {}) {
     const { t } = useTranslation();
-    const [enabled, setEnabled] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [setupData, setSetupData] = useState<{ secret: string; qrCode: string } | null>(null);
+    const [enabled, setEnabled] = useState(mockEnabled ?? false);
+    const [loading, setLoading] = useState(mockLoading ?? true);
+    const [setupData, setSetupData] = useState<{ secret: string; qrCode: string } | null>(mockSetupData ?? null);
     const [token, setToken] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [confirming, setConfirming] = useState(false);
 
     useEffect(() => {
+        if (mockLoading !== undefined) {
+             setLoading(mockLoading);
+             return;
+        }
         checkStatus();
-    }, []);
+    }, [mockLoading]);
 
     const checkStatus = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -37,6 +57,16 @@ export default function TwoFactorSetup() {
     const handleSetup = async () => {
         setLoading(true);
         setError('');
+        
+        if (onSetup) {
+            try {
+                const res = await onSetup();
+                if (res.success && res.data) setSetupData(res.data);
+                else setError(res.error || 'Failed');
+            } finally { setLoading(false); }
+            return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
@@ -59,6 +89,18 @@ export default function TwoFactorSetup() {
         setConfirming(true);
         setError('');
         
+        if (onEnable) {
+            try {
+                const res = await onEnable(token, setupData.secret);
+                if (res.success) {
+                    setEnabled(true);
+                    setSetupData(null);
+                    setSuccess(t('account.security.2fa_enabled', '2FA Enabled Successfully!'));
+                } else setError(res.error || 'Invalid code');
+            } finally { setConfirming(false); }
+            return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
@@ -82,6 +124,17 @@ export default function TwoFactorSetup() {
         if(!confirm(t('account.security.2fa_disable_confirm', 'Are you sure you want to disable 2FA?'))) return;
         setLoading(true);
         
+        if (onDisable) {
+            try {
+                const res = await onDisable();
+                if (res.success) {
+                    setEnabled(false);
+                    setSuccess(t('account.security.2fa_disabled', '2FA Disabled'));
+                } else setError(res.error || 'Failed');
+            } finally { setLoading(false); }
+            return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 

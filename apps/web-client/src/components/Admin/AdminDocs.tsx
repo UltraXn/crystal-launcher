@@ -170,20 +170,25 @@ interface AdminDoc {
     content: string;
 }
 
-export default function AdminDocs() {
+interface AdminDocsProps {
+    mockDocs?: AdminDoc[];
+}
+
+export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
     const { t } = useTranslation();
     const defaults = useDocsDefaults();
-    const [docs, setDocs] = useState<AdminDoc[]>([]);
+    const [docs, setDocs] = useState<AdminDoc[]>(mockDocs || []);
     const [activeTab, setActiveTab] = useState('intro');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState('');
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!mockDocs);
     const [saving, setSaving] = useState(false);
 
     // Fetch docs from DB
     useEffect(() => {
         const fetchDocs = async () => {
+             if (mockDocs) return; // Use mocked docs
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 const res = await fetch(`${API_URL}/settings/admin_docs`, {

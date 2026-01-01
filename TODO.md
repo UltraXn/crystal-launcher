@@ -134,7 +134,6 @@ Esta sección define el "Siguiente Nivel" para profesionalizar el portfolio al m
 
 - [ ] **Husky + Commitlint**: Estandarizar commits (`feat:`, `fix:`) antes de subir código.
 - [ ] **Renovate Bot**: Automatización de actualizaciones de dependencias (`npm`).
-- [ ] **Renovate Bot**: Automatización de actualizaciones de dependencias (`npm`).
 
 #### Observabilidad & Analítica
 

@@ -29,15 +29,20 @@ interface MedalDefinition {
     description: string;
 }
 
-export default function UsersManager() {
+interface UsersManagerProps {
+    mockUsers?: UserDefinition[];
+    mockMedals?: MedalDefinition[];
+}
+
+export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProps = {}) {
     const { t } = useTranslation()
-    const [users, setUsers] = useState<UserDefinition[]>([])
+    const [users, setUsers] = useState<UserDefinition[]>(mockUsers || [])
     const [loading, setLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
-    const [hasSearched, setHasSearched] = useState(false)
+    const [hasSearched, setHasSearched] = useState(!!mockUsers) // Assume searched if mocks provided
     
     // Medal Management State
-    const [availableMedals, setAvailableMedals] = useState<MedalDefinition[]>([])
+    const [availableMedals, setAvailableMedals] = useState<MedalDefinition[]>(mockMedals || [])
     const [editingUser, setEditingUser] = useState<UserDefinition | null>(null)
     const [savingMedals, setSavingMedals] = useState(false)
 
@@ -48,6 +53,7 @@ export default function UsersManager() {
 
     // Fetch available medals on load
     useEffect(() => {
+        if (mockMedals) return;
         fetch(`${API_URL}/settings`)
             .then(res => {
                 if(!res.ok) throw new Error("Fetch failed");

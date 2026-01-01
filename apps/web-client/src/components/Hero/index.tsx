@@ -7,7 +7,21 @@ import HeroParticles from "./Particles"
 import { gsap } from "gsap"
 import { useTranslation } from 'react-i18next'
 
-export default function Hero() {
+interface Slide {
+    image: string;
+    title?: string;
+    text?: string;
+    buttonText?: string;
+    link?: string;
+}
+
+interface HeroProps {
+    mockSlides?: Slide[];
+    mockPlayerCount?: number;
+    mockIsOnline?: boolean;
+}
+
+export default function Hero({ mockSlides, mockPlayerCount, mockIsOnline }: HeroProps = {}) {
     const { t } = useTranslation()
     const [copied, setCopied] = useState(false)
     const ip = "MC.CrystaltidesSMP.net"
@@ -22,18 +36,16 @@ export default function Hero() {
     // State for player count
     const [playerCount, setPlayerCount] = useState(0)
     const [isOnline, setIsOnline] = useState<boolean | null>(null) // null = loading
-    interface Slide {
-        image: string;
-        title?: string;
-        text?: string;
-        buttonText?: string;
-        link?: string;
-    }
-
+    
     const [slides, setSlides] = useState<Slide[]>([])
     const API_URL = import.meta.env.VITE_API_URL
 
     useEffect(() => {
+        if (mockSlides) {
+            setSlides(mockSlides);
+            return;
+        }
+
         // Fetch hero slides
         fetch(`${API_URL}/settings`)
             .then(res => res.json())
@@ -50,7 +62,7 @@ export default function Hero() {
                 }
             })
             .catch(err => console.error("Error fetching settings for hero", err));
-    }, [API_URL]);
+    }, [API_URL, mockSlides]);
 
     useEffect(() => {
         // GSAP Timeline for organized premium animation
@@ -111,6 +123,20 @@ export default function Hero() {
 
         // Player Count Animation Logic
         const fetchPlayerCount = async () => {
+            if (mockIsOnline !== undefined && mockPlayerCount !== undefined) {
+                 setIsOnline(mockIsOnline);
+                 const counter = { val: 0 };
+                 gsap.to(counter, {
+                    val: mockPlayerCount,
+                    roundProps: "val",
+                    duration: 2.5,
+                    delay: 0.5,
+                    ease: "power2.out",
+                    onUpdate: () => setPlayerCount(Math.floor(counter.val))
+                });
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/minecraft/status`)
                 if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -140,7 +166,7 @@ export default function Hero() {
 
         return () => ctx.revert(); // Cleanup GSAP context
 
-    }, [API_URL])
+    }, [API_URL, mockIsOnline, mockPlayerCount])
 
     const handleCopy = () => {
         navigator.clipboard.writeText(ip)

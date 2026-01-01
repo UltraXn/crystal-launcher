@@ -42,12 +42,19 @@ const getStatusColor = (status: string) => {
     }
 };
 
-export default function DashboardOverview() {
+interface DashboardOverviewProps {
+    mockServerStats?: any;
+    mockStaffOnline?: StaffMember[];
+    mockTicketStats?: { open: number, urgent: number };
+    mockDonationStats?: { currentMonth: string, percentChange: number };
+}
+
+export default function DashboardOverview({ mockServerStats, mockStaffOnline, mockTicketStats, mockDonationStats }: DashboardOverviewProps = {}) {
     const { t } = useTranslation()
     const { user } = useAuth()
     
     // Initial state with defaults
-    const [serverStats, setServerStats] = useState({ 
+    const [serverStats, setServerStats] = useState(mockServerStats || { 
         online: false, 
         status: 'offline', 
         memory: { current: 0, limit: 12000 }, 
@@ -58,13 +65,14 @@ export default function DashboardOverview() {
     
     const API_URL = import.meta.env.VITE_API_URL
 
-    const [staffOnline, setStaffOnline] = useState<StaffMember[]>([])
-    const [ticketStats, setTicketStats] = useState({ open: 0, urgent: 0 })
-    const [donationStats, setDonationStats] = useState({ currentMonth: "0.00", percentChange: 0 })
-    const [loading, setLoading] = useState(true)
+    const [staffOnline, setStaffOnline] = useState<StaffMember[]>(mockStaffOnline || [])
+    const [ticketStats, setTicketStats] = useState(mockTicketStats || { open: 0, urgent: 0 })
+    const [donationStats, setDonationStats] = useState(mockDonationStats || { currentMonth: "0.00", percentChange: 0 })
+    const [loading, setLoading] = useState(!mockServerStats) // If mocks provided, not loading
 
     useEffect(() => {
         const fetchData = async () => {
+             if (mockServerStats) return;
             try {
                 // Get Supabase Session Token
                 const { data: { session } } = await supabase.auth.getSession();

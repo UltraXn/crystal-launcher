@@ -29,14 +29,19 @@ interface Poll {
     closes_at?: string;
 }
 
-export default function PollsManager() {
+interface PollsManagerProps {
+    mockActivePoll?: Poll | null;
+    mockHistoryPolls?: Poll[];
+}
+
+export default function PollsManager({ mockActivePoll, mockHistoryPolls }: PollsManagerProps = {}) {
     const { t } = useTranslation()
-    const [activePoll, setActivePoll] = useState<Poll | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [activePoll, setActivePoll] = useState<Poll | null>(mockActivePoll !== undefined ? mockActivePoll : null)
+    const [loading, setLoading] = useState(mockActivePoll === undefined) // Only load if no mock provided
     const [tab, setTab] = useState('active') // 'active', 'history'
 
     // History State
-    const [historyPolls, setHistoryPolls] = useState<Poll[]>([])
+    const [historyPolls, setHistoryPolls] = useState<Poll[]>(mockHistoryPolls || [])
     const [historyLoading, setHistoryLoading] = useState(false)
     const [page, setPage] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
@@ -60,6 +65,7 @@ export default function PollsManager() {
 
     // Fetch Active
     const fetchActive = useCallback(async () => {
+        if (mockActivePoll !== undefined) return;
         setLoading(true)
         try {
             const res = await fetch(`${API_URL}/polls/active`)
@@ -69,10 +75,11 @@ export default function PollsManager() {
             }
         } catch(err) { console.error(err) }
         finally { setLoading(false) }
-    }, [])
+    }, [mockActivePoll])
 
     // Fetch History
     const fetchHistory = useCallback(async () => {
+        if (mockHistoryPolls) return;
         setHistoryLoading(true)
         try {
             const res = await fetch(`${API_URL}/polls?page=${page}&limit=10`)
@@ -84,7 +91,7 @@ export default function PollsManager() {
             }
         } catch (err) { console.error(err) }
         finally { setHistoryLoading(false) }
-    }, [page])
+    }, [page, mockHistoryPolls])
 
     useEffect(() => { 
         if(tab === 'active') fetchActive()

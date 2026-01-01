@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { motion, AnimatePresence } from "framer-motion"
 import { FaPlus, FaEdit, FaTrash, FaSave, FaTimes, FaBook, FaSearch, FaTag, FaGlobe } from "react-icons/fa"
 import { getWikiArticles, createWikiArticle, updateWikiArticle, deleteWikiArticle, WikiArticle } from "../../services/wikiService"
 import Loader from "../UI/Loader"
 
-export default function WikiManager() {
+interface WikiManagerProps {
+    mockArticles?: WikiArticle[];
+}
+
+export default function WikiManager({ mockArticles }: WikiManagerProps = {}) {
     const { t } = useTranslation()
-    const [articles, setArticles] = useState<WikiArticle[]>([])
-    const [loading, setLoading] = useState(true)
+    const [articles, setArticles] = useState<WikiArticle[]>(mockArticles || [])
+    const [loading, setLoading] = useState(!mockArticles)
     const [searchTerm, setSearchTerm] = useState("")
 
     // Form State
@@ -22,11 +26,8 @@ export default function WikiManager() {
     const [editingId, setEditingId] = useState<number | null>(null)
     const [saving, setSaving] = useState(false)
 
-    useEffect(() => {
-        fetchArticles()
-    }, [])
-
-    const fetchArticles = async () => {
+    const fetchArticles = useCallback(async () => {
+        if (mockArticles) return;
         setLoading(true)
         try {
             const data = await getWikiArticles()
@@ -36,7 +37,11 @@ export default function WikiManager() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [mockArticles])
+
+    useEffect(() => {
+        fetchArticles()
+    }, [fetchArticles])
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault()

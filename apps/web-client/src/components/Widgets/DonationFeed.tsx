@@ -16,12 +16,17 @@ interface Donation {
     is_public: boolean;
 }
 
-export default function DonationFeed() {
-    const [donations, setDonations] = useState<Donation[]>([])
-    const [loading, setLoading] = useState(true)
+interface DonationFeedProps {
+    mockDonations?: Donation[];
+}
+
+export default function DonationFeed({ mockDonations }: DonationFeedProps = {}) {
+    const [donations, setDonations] = useState<Donation[]>(mockDonations || [])
+    const [loading, setLoading] = useState(!mockDonations)
     const { t, i18n } = useTranslation()
 
     useEffect(() => {
+        if (mockDonations) return;
         fetchDonations()
 
         // Suscribirse a cambios en tiempo real (NUEVAS donaciones aparecen al instante)

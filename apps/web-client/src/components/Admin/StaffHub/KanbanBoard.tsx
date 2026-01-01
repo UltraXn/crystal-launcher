@@ -13,14 +13,20 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 const COLUMNS = KANBAN_COLUMNS;
 
-export default function KanbanBoard() {
+interface KanbanBoardProps {
+    mockTasks?: KanbanTask[];
+    mockGoogleEvents?: GoogleEvent[];
+    mockNotionTasks?: any[];
+}
+
+export default function KanbanBoard({ mockTasks, mockGoogleEvents, mockNotionTasks }: KanbanBoardProps = {}) {
     const { t } = useTranslation();
-    const [tasks, setTasks] = useState<KanbanTask[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [tasks, setTasks] = useState<KanbanTask[]>((mockTasks || []).map(t => ({...t, columnId: t.column_id || 'idea'})));
+    const [loading, setLoading] = useState(!mockTasks);
     const [viewMode, setViewMode] = useState<'board' | 'calendar'>('board');
-    const [googleEvents, setGoogleEvents] = useState<GoogleEvent[]>([]); // Initialize googleEvents state
+    const [googleEvents, setGoogleEvents] = useState<GoogleEvent[]>(mockGoogleEvents || []);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [notionTasks, setNotionTasks] = useState<any[]>([]); // Initialize notionTasks state
+    const [notionTasks, setNotionTasks] = useState<any[]>(mockNotionTasks || []);
     const [syncing, setSyncing] = useState(false);
     const [notionSyncing, setNotionSyncing] = useState(false);
 
@@ -101,6 +107,7 @@ export default function KanbanBoard() {
     }, []);
 
     const fetchTasks = async () => {
+        if (mockTasks) return;
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${API_URL}/staff/tasks`, {

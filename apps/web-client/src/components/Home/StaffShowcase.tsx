@@ -97,9 +97,15 @@ const RANK_BADGES: Record<string, string> = {
     'Staff': '/ranks/staff.png'
 };
 
-export default function StaffShowcase() {
+interface StaffShowcaseProps {
+    mockStaff?: StaffMember[];
+    mockOnlineStatus?: Record<string, { mc: string, discord: string }>;
+    mockRecruitment?: { status: string; link: string };
+}
+
+export default function StaffShowcase({ mockStaff, mockOnlineStatus, mockRecruitment }: StaffShowcaseProps) {
     const { t, i18n } = useTranslation();
-    const [staff, setStaff] = useState<StaffMember[]>([]);
+    const [staff, setStaff] = useState<StaffMember[]>(mockStaff || []);
     
     // Helper to get badge
     const getBadge = (role: string) => {
@@ -107,10 +113,10 @@ export default function StaffShowcase() {
         const key = Object.keys(RANK_BADGES).find(k => k.toLowerCase() === role.toLowerCase());
         return key ? RANK_BADGES[key] : null;
     };
-    const [recruitment, setRecruitment] = useState<{ status: string; link: string }>({ status: 'false', link: '' });
-    const [loading, setLoading] = useState(true);
+    const [recruitment, setRecruitment] = useState<{ status: string; link: string }>(mockRecruitment || { status: 'false', link: '' });
+    const [loading, setLoading] = useState(!mockStaff);
     // Store separated statuses
-    const [onlineStaff, setOnlineStaff] = useState<Record<string, { mc: string, discord: string }>>({});
+    const [onlineStaff, setOnlineStaff] = useState<Record<string, { mc: string, discord: string }>>(mockOnlineStatus || {});
     const [hoveredDiscord, setHoveredDiscord] = useState<string | null>(null);
 
     const resolveUrl = (url: string, platform: 'twitter' | 'youtube' | 'twitch') => {
@@ -123,6 +129,8 @@ export default function StaffShowcase() {
     };
 
     useEffect(() => {
+        if (mockStaff) return;
+
         // Fetch Settings (Staff Cards & Recruitment)
         fetch(`${API_URL}/settings?t=${new Date().getTime()}`)
             .then(res => {
@@ -168,10 +176,10 @@ export default function StaffShowcase() {
                 .catch(() => {});
         };
 
-        fetchStatus();
+        if (!mockStaff) fetchStatus();
         const interval = setInterval(fetchStatus, 30000); // 30s refresh
         return () => clearInterval(interval);
-    }, []);
+    }, [mockStaff]);
 
     if (loading) return (
         <Section><div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}><Loader /></div></Section>

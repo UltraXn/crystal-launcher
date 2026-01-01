@@ -9,9 +9,10 @@ import Loader from "../UI/Loader"
 interface ProfileWallProps {
     profileId: string; // The UUID of the profile owner
     isAdmin?: boolean;
+    mockComments?: ProfileComment[];
 }
 
-export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
+export default function ProfileWall({ profileId, isAdmin, mockComments }: ProfileWallProps) {
     const { t } = useTranslation()
     const { user } = useAuth()
     const [comments, setComments] = useState<ProfileComment[]>([])
@@ -20,6 +21,12 @@ export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
     const [sending, setSending] = useState(false)
 
     useEffect(() => {
+        if (mockComments) {
+            setComments(mockComments);
+            setLoading(false);
+            return;
+        }
+
         const fetchComments = async () => {
             try {
                 const data = await getProfileComments(profileId)
@@ -31,7 +38,7 @@ export default function ProfileWall({ profileId, isAdmin }: ProfileWallProps) {
             }
         }
         if (profileId) fetchComments()
-    }, [profileId])
+    }, [profileId, mockComments])
 
     const handlePostComment = async (e: React.FormEvent) => {
         e.preventDefault()

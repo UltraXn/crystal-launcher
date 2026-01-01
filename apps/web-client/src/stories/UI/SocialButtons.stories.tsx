@@ -49,7 +49,7 @@ export const Twitter: StoryObj<typeof TwitterButton> = {
 // All (Grouped)
 export const All: Story = {
     render: () => (
-        <div className="flex flex-col md:flex-row gap-4 w-full max-w-5xl">
+        <div className="flex flex-col md:flex-row gap-4 w-full max-w-5xl items-start">
             <div className="flex-1"><DiscordButton /></div>
             <div className="flex-1"><TwitchButton /></div>
             <div className="flex-1"><TwitterButton /></div>
