@@ -32,7 +32,7 @@ router.get('/live', async (req: Request, res: Response) => {
 
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.warn(`[Server Status] Check Failed: ${message}`);
+        console.warn(`[Server Status] Check Failed for ${host}:${port}: ${message}`);
         
         // Fallback: Return offline structure so frontend handles it gracefully
         res.json({
