@@ -27,7 +27,7 @@ export default function Status() {
     const [copied, setCopied] = useState(false)
     const { t } = useTranslation()
 
-    const SERVER_IP = "147.135.9.233:26408" // Display IP
+    const SERVER_IP = "mc.crystaltidesSMP.net" // Display IP
 
     const fetchStatus = async () => {
         try {
