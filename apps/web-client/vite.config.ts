@@ -15,7 +15,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const storybookConfigDir = path.join(dirname, '.storybook');
-const hasStorybook = fs.existsSync(storybookConfigDir);
+const storybookMain = path.join(storybookConfigDir, 'main.ts');
+const storybookMainJs = path.join(storybookConfigDir, 'main.js');
+const hasStorybook = fs.existsSync(storybookMain) || fs.existsSync(storybookMainJs);
 
 export default defineConfig({
   envDir: '../../',
