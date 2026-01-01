@@ -162,7 +162,7 @@ export default function Donors() {
     }, [i18n.language, HARDCODED_DONORS, hardcodedDescs, t])
 
     return (
-        <Section title={<span><img src="/skins/kiru.png" alt="icon" style={{ height: '1.5em', verticalAlign: 'middle', marginRight: '0.5rem' }} /> {t('donors.title')} ✨</span>}>
+        <Section title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><img src="/skins/kiru.png" alt="icon" style={{ height: '1.5em', verticalAlign: 'middle' }} /> {t('donors.title')} ✨</div>}>
             <Section>
                 <div className="crystal-card">
                     <p>{t('donors.intro')}</p>

@@ -203,7 +203,7 @@ export default function StaffShowcase({ mockStaff, mockOnlineStatus, mockRecruit
     };
 
     return (
-        <Section title={<span><FaUsers style={{ color: 'var(--accent)', marginRight: '0.5rem', verticalAlign: 'middle' }} /> {t('staff.title', 'Nuestro Equipo')}</span>}>
+        <Section title={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><FaUsers style={{ color: 'var(--accent)', fontSize: '1.2em' }} /> {t('staff.title', 'Nuestro Equipo')}</div>}>
             
             {/* Recruitment Banner */}
             <AnimatePresence>
