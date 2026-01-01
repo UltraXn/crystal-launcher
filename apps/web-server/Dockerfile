@@ -37,9 +37,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web-server/dist ./dist
 # Credentials for Google Calendar
 COPY --from=builder /app/apps/web-server/service-account.json ./service-account.json
-# If you have any other files needed at runtime (like .env or config files), 
-# they should be handled via volumes or COPY here if they are static.
-# Note: .env is usually passed via docker-compose env_file or volumes.
+# Copy .env file generated during build
+COPY --from=builder /app/apps/web-server/.env ./.env
 
 EXPOSE 3001
 
