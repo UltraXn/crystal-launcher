@@ -203,6 +203,7 @@
     "rules": {
         "title": "Server Rules",
         "intro": "To maintain a healthy and fun community, it is essential to respect these coexistence rules. Failure to comply can lead to severe sanctions.",
+        "loading": "Loading rules...",
         "items": {
             "1": {
                 "title": "PVP With Consent",
@@ -937,6 +938,27 @@
                 "ranks": "Ranks"
             }
         },
+        "locations": {
+            "title": "Places & Lore",
+            "subtitle": "World architecture and historical points of interest",
+            "loading": "Syncing Lore...",
+            "new_btn": "New Place",
+            "edit_title": "Edit Entry",
+            "new_title": "New Entry",
+            "delete_confirm_title": "Delete Lore Entry",
+            "delete_confirm_msg": "Are you sure you want to delete this place? Historical data will be permanently lost.",
+            "lore_entry": "Lore Entry",
+            "secret": "Secret?",
+            "coords": "Coordinates",
+            "order": "Order",
+            "image_url": "Image URL",
+            "short_desc": "Short Description (Summary)",
+            "long_desc": "Detailed History / Lore",
+            "authors": "Architects / Authors",
+            "nick_ph": "Author Nick",
+            "cancel": "Cancel",
+            "save_btn": "Save Entry"
+        },
         "2fa": {
             "title": "Security Verification",
             "desc": "Enter your 2FA code to access the Admin Panel.",
@@ -1418,21 +1440,27 @@
         "error_create": "Error creating ticket. Please try again."
     },
     "gacha": {
-        "title": "Daily Reward",
-        "subtitle": "Try your luck for free every 24 hours and receive prizes on the server!",
-        "claim_btn": "Claim Daily",
-        "cooldown_btn": "On Cooldown",
+        "title": "Daily Roulette",
+        "hero_title": "Wheel of Destiny",
+        "hero_subtitle": "Try your luck for free every 24 hours and unlock exclusive treasures for your adventure!",
+        "btn_roll": "Spin Roulette",
+        "btn_cooldown": "On Cooldown",
         "history_btn": "History",
-        "last_rewards": "Latest Rewards",
-        "no_history": "No history",
-        "opening": "Opening box...",
+        "possible_rewards": "Possible Rewards",
+        "last_rewards": "Latest Winners",
+        "no_history": "You haven't claimed any prizes yet.",
+        "opening": "Spinning wheel...",
         "claim_success": "The prize has been sent to your server queue!",
-        "understood": "Understood",
+        "reward_delivered": "The item has been teleported to your Minecraft account!",
+        "claim_btn": "Claim Prize",
         "vuelve_mañana": "Come back tomorrow",
-        "already_claimed": "You have already claimed your prize today!",
-        "roll_error": "Roll error",
+        "already_claimed": "You have already spun the wheel today!",
+        "roll_error": "Spin error",
         "conn_error": "Connection error",
-        "loading": "Loading Gacha..."
+        "loading": "Syncing Roulette...",
+        "account_not_linked": "Account not linked",
+        "link_instruction": "You must link your Minecraft account in settings to receive prizes on the server.",
+        "link_button": "Link now"
     },
     "tutorial": {
         "step1_title": "Welcome to CrystalTides!",

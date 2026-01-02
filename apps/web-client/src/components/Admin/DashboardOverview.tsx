@@ -6,8 +6,9 @@ import { useTranslation } from 'react-i18next'
 import Loader from "../UI/Loader"
 import AnimatedCounter from "../UI/AnimatedCounter"
 import { supabase } from '../../services/supabaseClient'
-
 import MinecraftAvatar from "../UI/MinecraftAvatar"
+
+import StatCard from '../UI/StatCard';
 
 interface StaffMember {
     username: string;
@@ -42,8 +43,17 @@ const getStatusColor = (status: string) => {
     }
 };
 
+interface ServerStats {
+    online: boolean;
+    status: string;
+    memory: { current: number; limit: number };
+    cpu: number;
+    players: { online: number; max: number };
+    global: { total: number; new: number; playtime: number };
+}
+
 interface DashboardOverviewProps {
-    mockServerStats?: any;
+    mockServerStats?: ServerStats;
     mockStaffOnline?: StaffMember[];
     mockTicketStats?: { open: number, urgent: number };
     mockDonationStats?: { currentMonth: string, percentChange: number };
@@ -54,7 +64,7 @@ export default function DashboardOverview({ mockServerStats, mockStaffOnline, mo
     const { user } = useAuth()
     
     // Initial state with defaults
-    const [serverStats, setServerStats] = useState(mockServerStats || { 
+    const [serverStats, setServerStats] = useState<ServerStats>(mockServerStats || { 
         online: false, 
         status: 'offline', 
         memory: { current: 0, limit: 12000 }, 
@@ -177,7 +187,7 @@ export default function DashboardOverview({ mockServerStats, mockStaffOnline, mo
             supabase.removeChannel(donationsChannel)
             supabase.removeChannel(ticketsChannel)
         }
-    }, [API_URL])
+    }, [API_URL, mockServerStats])
 
     // Calculate RAM usage percentage
     const memoryPercent = serverStats.memory.limit > 0 
@@ -196,7 +206,7 @@ export default function DashboardOverview({ mockServerStats, mockStaffOnline, mo
         <div className="dashboard-wrapper" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
 
             {/* KPI CARDS */}
-            <div className="admin-kpi-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div className="admin-kpi-grid">
                 <StatCard
                     title={t('admin.dashboard.stats.server_status')}
                     value={serverStats.online ? t('admin.dashboard.stats.server_online') : (serverStats.status ? t(`admin.dashboard.stats.status_${serverStats.status}`) : t('admin.dashboard.stats.server_offline')).toUpperCase()}
@@ -228,7 +238,7 @@ export default function DashboardOverview({ mockServerStats, mockStaffOnline, mo
             </div>
 
             {/* ANALYTICS SECTION */}
-            <div className="admin-analytics-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            <div className="admin-analytics-grid">
 
                 {/* Resource Usage (Real Data) */}
                 <div style={{ 
@@ -437,50 +447,4 @@ export default function DashboardOverview({ mockServerStats, mockStaffOnline, mo
     )
 }
 
-interface StatCardProps {
-    title: string;
-    value: React.ReactNode;
-    percent: string;
-    color?: string;
-    icon: React.ReactNode;
-}
 
-function StatCard({ title, value, percent, color = 'var(--accent)', icon }: StatCardProps) {
-    return (
-        <div style={{ 
-            background: 'rgba(10, 10, 15, 0.6)', 
-            backdropFilter: 'blur(20px)', 
-            border: '1px solid rgba(255, 255, 255, 0.05)',
-            borderRadius: '24px',
-            padding: '1.75rem',
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'start',
-            transition: 'transform 0.2s',
-            position: 'relative',
-            overflow: 'hidden'
-        }} className="hover-lift">
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: `linear-gradient(90deg, ${color}, transparent)` }}></div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <h4 style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800' }}>{title}</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '1.8rem', fontWeight: '900', color: '#fff', lineHeight: 1 }}>{value}</span>
-                    <span style={{ color: color, fontSize: '0.8rem', opacity: 0.9, fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        {percent}
-                    </span>
-                </div>
-            </div>
-            <div style={{
-                background: `rgba(${parseInt(color.slice(1,3),16)}, ${parseInt(color.slice(3,5),16)}, ${parseInt(color.slice(5,7),16)}, 0.1)`,
-                width: '56px', height: '56px',
-                borderRadius: '16px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: color, fontSize: '1.5rem',
-                border: `1px solid ${color}20`,
-                boxShadow: `0 8px 20px -5px ${color}30`
-            }}>
-                {icon}
-            </div>
-        </div>
-    )
-}

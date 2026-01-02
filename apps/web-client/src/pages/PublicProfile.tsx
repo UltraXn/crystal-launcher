@@ -15,7 +15,7 @@ import { FaPlus } from "react-icons/fa6"
 import { supabase } from "../services/supabaseClient"
 import Toast, { ToastType } from "../components/UI/Toast"
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface MedalDefinition {
     id: string | number;
@@ -96,8 +96,18 @@ export default function PublicProfile() {
                     'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
                 }
             });
-            
-            const data = await res.json();
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Error ${res.status}`);
+            }
+
+            const contentType = res.headers.get("content-type");
+            let data;
+            if (contentType && contentType.includes("application/json")) {
+                data = await res.json();
+            } else {
+                throw new Error("Invalid response from server");
+            }
             
             if (res.ok) {
                 setProfile(prev => prev ? ({ ...prev, reputation: data.newReputation }) : null);
@@ -123,7 +133,14 @@ export default function PublicProfile() {
                     if(resUser.status === 404) throw new Error(t('profile.not_found', 'Usuario no encontrado'))
                     throw new Error("Error loading profile")
                 }
-                const response = await resUser.json()
+                
+                const contentType = resUser.headers.get("content-type");
+                let response;
+                if (contentType && contentType.includes("application/json")) {
+                    response = await resUser.json()
+                } else {
+                    throw new Error("Invalid response format from server")
+                }
                 if (!response.success || !response.data) throw new Error("Invalid response format")
                 const userData = response.data
                 setProfile(userData)
@@ -132,15 +149,18 @@ export default function PublicProfile() {
                 if (userData.medals && userData.medals.length > 0) {
                     const resSettings = await fetch(`${API_URL}/settings`)
                     if (resSettings.ok) {
-                        const settings = await resSettings.json()
-                        if (settings.medal_definitions) {
-                            try {
-                                const parsed = typeof settings.medal_definitions === 'string' 
-                                    ? JSON.parse(settings.medal_definitions) 
-                                    : settings.medal_definitions
-                                setMedalDefinitions(Array.isArray(parsed) ? parsed : [])
-                            } catch (e) {
-                                console.warn("Failed to parse medals", e)
+                        const contentType = resSettings.headers.get("content-type");
+                        if (contentType && contentType.includes("application/json")) {
+                            const settings = await resSettings.json()
+                            if (settings.medal_definitions) {
+                                try {
+                                    const parsed = typeof settings.medal_definitions === 'string' 
+                                        ? JSON.parse(settings.medal_definitions) 
+                                        : settings.medal_definitions
+                                    setMedalDefinitions(Array.isArray(parsed) ? parsed : [])
+                                } catch (e) {
+                                    console.warn("Failed to parse medals", e)
+                                }
                             }
                         }
                     }
@@ -151,11 +171,14 @@ export default function PublicProfile() {
                     try {
                         const resStats = await fetch(`${API_URL}/player-stats/${username}`)
                         if (resStats.ok) {
-                            const response = await resStats.json()
-                            if (response.success && response.data) {
-                                setPlayerStats(response.data)
-                            } else {
-                                setPlayerStats(response)
+                            const contentType = resStats.headers.get("content-type");
+                            if (contentType && contentType.includes("application/json")) {
+                                const response = await resStats.json()
+                                if (response.success && response.data) {
+                                    setPlayerStats(response.data)
+                                } else {
+                                    setPlayerStats(response)
+                                }
                             }
                         }
                     } catch (e) { console.warn("Failed to fetch stats", e) }

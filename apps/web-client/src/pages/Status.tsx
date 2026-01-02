@@ -5,7 +5,7 @@ import Confetti from "canvas-confetti"
 import Loader from "../components/UI/Loader"
 import { useTranslation } from 'react-i18next'
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 interface ServerStatusData {
     online: boolean;
@@ -32,8 +32,13 @@ export default function Status() {
     const fetchStatus = async () => {
         try {
             const res = await fetch(`${API_URL}/server/status/live`)
-            const data = await res.json()
-            setStatus(data)
+            if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+            
+            const contentType = res.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await res.json();
+                setStatus(data);
+            }
         } catch (error) {
             console.error("Error fetching status:", error)
             setStatus(null) // Acts as offline/error

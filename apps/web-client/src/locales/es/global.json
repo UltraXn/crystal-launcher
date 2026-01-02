@@ -203,6 +203,7 @@
     "rules": {
         "title": "Reglas del Servidor",
         "intro": "Para mantener una comunidad sana y divertida, es fundamental respetar estas normas de convivencia. El incumplimiento puede llevar a sanciones severas.",
+        "loading": "Cargando normativas...",
         "items": {
             "1": {
                 "title": "PVP Con Consentimiento",
@@ -818,6 +819,27 @@
                 "ranks": "Rangos"
             },
             "delete_confirm": "¿Estás seguro de que quieres eliminar este artículo?"
+        },
+        "locations": {
+            "title": "Lugares y Lore",
+            "subtitle": "Arquitectura del mundo y puntos de interés histórico",
+            "loading": "Sincronizando Lore...",
+            "new_btn": "Nuevo Lugar",
+            "edit_title": "Editar Registro",
+            "new_title": "Nuevo Registro",
+            "delete_confirm_title": "Eliminar Registro de Lore",
+            "delete_confirm_msg": "¿Estás seguro de que quieres borrar este lugar? La historia asociada se perderá permanentemente.",
+            "lore_entry": "Entrada de Lore",
+            "secret": "¿Secreto?",
+            "coords": "Coordenadas",
+            "order": "Orden",
+            "image_url": "URL de la Imagen",
+            "short_desc": "Descripción Corta (Resumen)",
+            "long_desc": "Historia / Lore Detallado",
+            "authors": "Arquitectos / Autores",
+            "nick_ph": "Nick del Autor",
+            "cancel": "Cancelar",
+            "save_btn": "Guardar Registro"
         },
         "2fa": {
             "title": "Verificación de Seguridad",
@@ -1476,21 +1498,27 @@
         "error_create": "Error al crear el ticket. Por favor, inténtalo de nuevo."
     },
     "gacha": {
-        "title": "Recompensa Diaria",
-        "subtitle": "¡Prueba tu suerte gratis cada 24 horas y recibe premios en el servidor!",
-        "claim_btn": "Reclamar Diario",
-        "cooldown_btn": "En Cooldown",
+        "title": "Ruleta Diaria",
+        "hero_title": "Ruleta del Destino",
+        "hero_subtitle": "¡Prueba tu suerte gratis cada 24 horas y reclama tesoros exclusivos para tu aventura!",
+        "btn_roll": "Girar Ruleta",
+        "btn_cooldown": "En Descanso",
         "history_btn": "Historial",
-        "last_rewards": "Últimos Premios",
-        "no_history": "Sin historial",
-        "opening": "Abriendo caja...",
+        "possible_rewards": "Posibles Premios",
+        "last_rewards": "Últimos Ganadores",
+        "no_history": "Aún no has reclamado ningún premio.",
+        "opening": "Girando la ruleta...",
         "claim_success": "¡El premio ha sido enviado a tu cola del servidor!",
-        "understood": "Entendido",
+        "reward_delivered": "¡El objeto ha sido teletransportado a tu inventario!",
+        "claim_btn": "Recoger Premio",
         "vuelve_mañana": "Vuelve mañana",
-        "already_claimed": "¡Ya has reclamado tu premio hoy!",
-        "roll_error": "Error al tirar",
+        "already_claimed": "¡Ya has girado la ruleta hoy!",
+        "roll_error": "Error al girar",
         "conn_error": "Error de conexión",
-        "loading": "Cargando Gacha..."
+        "loading": "Sincronizando Ruleta...",
+        "account_not_linked": "Cuenta no vinculada",
+        "link_instruction": "Debes vincular tu cuenta de Minecraft en los ajustes para poder recibir premios en el servidor.",
+        "link_button": "Vincular ahora"
     },
     "tutorial": {
         "step1_title": "¡Bienvenido a CrystalTides!",

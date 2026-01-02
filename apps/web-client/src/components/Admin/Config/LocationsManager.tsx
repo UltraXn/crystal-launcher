@@ -3,6 +3,8 @@ import { FaPlus, FaTrash, FaSave, FaEdit, FaTimes, FaMapMarkerAlt, FaGhost, FaUs
 import ConfirmationModal from '../../UI/ConfirmationModal';
 import { getLocations, createLocation, updateLocation, deleteLocation, WorldLocation, LocationAuthor } from '../../../services/locationService';
 import { supabase } from '../../../services/supabaseClient';
+import { useTranslation } from 'react-i18next';
+import Loader from '../../UI/Loader';
 
 const AUTHOR_ROLES = [
     'architect',
@@ -14,6 +16,7 @@ const AUTHOR_ROLES = [
 ];
 
 export default function LocationsManager() {
+    const { t } = useTranslation();
     const [locations, setLocations] = useState<WorldLocation[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -130,9 +133,8 @@ export default function LocationsManager() {
     };
 
     if (loading) return (
-        <div className="p-20 flex flex-col items-center justify-center gap-4 text-white/50 animate-pulse">
-            <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-            <p className="font-bold tracking-widest text-xs uppercase">Sincronizando Lore...</p>
+        <div style={{ padding: '5rem 0' }}>
+            <Loader text={t('admin.locations.loading') || "Sincronizando Lore..."} />
         </div>
     );
 
@@ -209,9 +211,9 @@ export default function LocationsManager() {
             <div className="manager-header">
                 <div>
                     <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '900', color: '#fff', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <FaMapMarkerAlt style={{ color: 'var(--accent)' }} /> Lugares y Lore
+                        <FaMapMarkerAlt style={{ color: 'var(--accent)' }} /> {t('admin.locations.title')}
                     </h3>
-                    <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)' }}>Arquitectura del mundo y puntos de interés histórico</p>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.4)' }}>{t('admin.locations.subtitle')}</p>
                 </div>
                 {!isCreating && (
                     <button 
