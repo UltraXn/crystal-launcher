@@ -25,6 +25,7 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ profile, currentUser, onGiveKarma, givingKarma }: ProfileHeaderProps) {
+    const { t } = useTranslation()
     return (
         <div className="profile-header-premium">
              <style>{`
@@ -162,7 +163,7 @@ export default function ProfileHeader({ profile, currentUser, onGiveKarma, givin
                                             display: 'flex',
                                             opacity: givingKarma ? 0.5 : 1
                                         }}
-                                        title="Dar Karma"
+                                        title={t('profile.give_karma')}
                                     >
                                         <FaPlus />
                                     </button>

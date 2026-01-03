@@ -396,8 +396,10 @@
             "overview": "Resumen",
             "posts": "Mis Publicaciones",
             "achievements": "Logros",
+            "medals": "Medallas",
             "minecraft": "Cuenta Minecraft",
             "connections": "Conexiones",
+            "settings": "Ajustes",
             "logout": "Cerrar Sesión"
         },
         "overview": {
@@ -538,10 +540,22 @@
             "placeholder": "Escribe algo en este muro...",
             "post": "Publicar",
             "login_required": "Inicia sesión para dejar un comentario.",
-            "empty": "Aún no hay mensajes. ¡Sé el primero!"
-        }
+            "empty": "Aún no hay mensajes. ¡Sé el primero!",
+            "comment_posted": "¡Comentario publicado!",
+            "comment_deleted": "Comentario eliminado",
+            "error_posting": "Error al publicar comentario",
+            "error_deleting": "Error al eliminar comentario"
+        },
+        "karma_success": "¡Karma entregado!",
+        "karma_error": "Error al dar karma",
+        "karma_conn_error": "Error de conexión",
+        "no_bio": "Este aventurero aún no ha escrito su historia.",
+        "skin_title": "Skin del Personaje",
+        "stats_title": "Estadísticas de Juego",
+        "give_karma": "Dar Karma"
     },
 "admin": {
+        "close": "Cerrar",
         "loading_panel": "Cargando panel...",
         "sidebar": {
             "general": "General",
@@ -1580,7 +1594,11 @@
         "mode": "Modo",
         "platform": "Plataforma",
         "offline_title": "Servidor No Disponible",
-        "offline_desc": "El servidor parece estar apagado o en mantenimiento. Por favor revisa nuestro Discord para más información."
+        "offline_desc": "El servidor parece estar apagado o en mantenimiento. Por favor revisa nuestro Discord para más información.",
+        "refresh_btn": "Actualizar Estado",
+        "copy_ip_btn": "Copiar IP",
+        "platform_val": "Edición Java",
+        "mode_val": "Survival / SMP"
     },
     "calendar": {
         "month": "Mes",

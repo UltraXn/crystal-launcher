@@ -111,13 +111,13 @@ export default function PublicProfile() {
             
             if (res.ok) {
                 setProfile(prev => prev ? ({ ...prev, reputation: data.newReputation }) : null);
-                showToast("¡Karma entregado!", "success");
+                showToast(t('profile.karma_success'), "success");
             } else {
-                showToast(data.error || "Error al dar karma", "error");
+                showToast(data.error || t('profile.karma_error'), "error");
             }
         } catch (e) { 
             console.error(e); 
-            showToast("Error de conexión", "error");
+            showToast(t('profile.karma_conn_error'), "error");
         }
         finally { setGivingKarma(false); }
     };
@@ -327,7 +327,7 @@ export default function PublicProfile() {
                 <div className="profile-sidebar">
                      {/* Skin Showcase */}
                      <div className="premium-card">
-                        <h3><FaGamepad /> {t('profile.skin', 'Avatar 3D')}</h3>
+                        <h3><FaGamepad /> {t('profile.skin_title')}</h3>
                         <div className="skin-preview-premium">
                             <SkinViewer username={profile.username} height={380} width={280} />
                         </div>
@@ -350,7 +350,7 @@ export default function PublicProfile() {
                             <div style={{ flex: 1, minWidth: '300px' }}>
                                 <h3><FaUser /> {t('profile.about_me')}</h3>
                                 <div style={{ color: '#aaa', lineHeight: 1.8 }}>
-                                    {profile.bio ? <MarkdownRenderer content={profile.bio} /> : <p style={{ fontStyle: 'italic' }}>{t('profile.no_bio', 'Este usuario prefiere mantener el misterio.')}</p>}
+                                    {profile.bio ? <MarkdownRenderer content={profile.bio} /> : <p style={{ fontStyle: 'italic' }}>{t('profile.no_bio')}</p>}
                                 </div>
                             </div>
                             

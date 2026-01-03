@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { FaUser, FaSignOutAlt, FaGamepad, FaTrophy, FaServer, FaCamera, FaPen, FaComment, FaShieldAlt, FaMedal, FaLink, FaCog } from 'react-icons/fa';
+import { FaMedal, FaTimes, FaSignOutAlt, FaTrophy, FaServer, FaCamera, FaPen, FaComment, FaShieldAlt, FaLink, FaCog } from 'react-icons/fa';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../utils/imageOptimizer';
@@ -33,6 +33,8 @@ interface AccountSidebarProps {
     statsData?: { username?: string };
     mcUsername: string;
     isLinked: boolean;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
 const AccountSidebar: React.FC<AccountSidebarProps> = ({ 
@@ -41,7 +43,9 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({
     user, 
     statsData, 
     mcUsername, 
-    isLinked 
+    isLinked,
+    isOpen,
+    onClose
 }) => {
     const { t } = useTranslation();
     const { logout, updateUser } = useAuth();
@@ -111,7 +115,28 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({
     };
 
     return (
-        <aside className="dashboard-sidebar" style={{ background: 'rgba(30,30,35,0.6)' }}>
+        <aside className={`dashboard-sidebar ${isOpen ? 'open' : ''}`} style={{ background: 'rgba(30,30,35,0.6)' }}>
+            <div className="drawer-handle" />
+            {/* Mobile Close Button */}
+            <button 
+                className="sidebar-close-btn-mobile"
+                onClick={onClose}
+                style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'none',
+                    border: 'none',
+                    color: 'rgba(255,255,255,0.4)',
+                    fontSize: '1.2rem',
+                    display: 'none', // Shown via CSS
+                    cursor: 'pointer',
+                    zIndex: 10
+                }}
+            >
+                <FaTimes />
+            </button>
+
             <div className="user-snippet">
                 <div className="user-avatar-premium-wrapper" style={{ position: 'relative', marginBottom: '1.2rem' }}>
                     <div className="user-avatar-large" style={{ 

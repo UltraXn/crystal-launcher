@@ -134,11 +134,11 @@ export default function Status() {
                                 </div>
                                 <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 w-full">
                                     <span className="text-gray-400">{t('status.mode')}</span>
-                                    <span className="font-medium text-white">Survival / SMP</span>
+                                    <span className="font-medium text-white">{t('status.mode_val')}</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 w-full">
                                     <span className="text-gray-400">{t('status.platform')}</span>
-                                    <span className="font-medium text-white">Java Edition</span>
+                                    <span className="font-medium text-white">{t('status.platform_val')}</span>
                                 </div>
                             </div>
                          </div>

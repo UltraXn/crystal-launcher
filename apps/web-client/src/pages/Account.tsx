@@ -17,6 +17,7 @@ import AccountSidebar from '../components/Account/AccountSidebar'
 import AchievementCard from '../components/Account/AchievementCard'
 import ConnectionCards from '../components/Account/ConnectionCards'
 import ProfileSettings from '../components/Account/ProfileSettings'
+import AccountMobileNavbar from '../components/Account/AccountMobileNavbar'
 
 interface Thread {
     id: string | number;
@@ -60,6 +61,32 @@ export default function Account() {
     
     // Initialize activeTab from URL, fallback to 'overview'
     const [activeTab, setActiveTabInternal] = useState(searchParams.get('tab') || 'overview')
+
+    // Mobile Navigation States
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+    const [sidebarOpen, setSidebarOpen] = useState(false)
+
+    // Handle Resize
+    useEffect(() => {
+        const handleResize = () => {
+            const mobile = window.innerWidth < 1024
+            setIsMobile(mobile)
+            if (!mobile) setSidebarOpen(true)
+            else setSidebarOpen(false)
+        }
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [])
+
+    // Lock body scroll when sidebar is open on mobile
+    useEffect(() => {
+        if (isMobile && sidebarOpen) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+        return () => { document.body.style.overflow = 'unset' }
+    }, [isMobile, sidebarOpen])
 
     // Sync state when URL changes
     useEffect(() => {
@@ -286,6 +313,15 @@ export default function Account() {
         <div className="account-page" style={{ paddingTop: '6rem', minHeight: '100vh', paddingBottom: '4rem', background: '#080808' }}>
             <div className="dashboard-container animate-fade-in" style={{ padding: '0 2rem' }}>
 
+                {/* Mobile Overlay */}
+                {isMobile && sidebarOpen && (
+                    <div 
+                        className="admin-mobile-overlay"
+                        style={{ zIndex: 998, background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(4px)' }}
+                        onClick={() => setSidebarOpen(false)}
+                    />
+                )}
+
                 {/* Sidebar */}
                 <AccountSidebar 
                     activeTab={activeTab} 
@@ -294,6 +330,8 @@ export default function Account() {
                     statsData={statsData || undefined}
                     mcUsername={mcUsername}
                     isLinked={isLinked}
+                    isOpen={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
                 />
 
                 {/* Main Content Area */}
@@ -537,6 +575,16 @@ export default function Account() {
                 type={toast.type}
                 onClose={() => setToast(prev => ({ ...prev, visible: false }))}
             />
+
+            {/* Mobile Bottom Navbar */}
+            {isMobile && (
+                <AccountMobileNavbar 
+                    activeTab={activeTab} 
+                    setActiveTab={setActiveTab} 
+                    sidebarOpen={sidebarOpen} 
+                    setSidebarOpen={setSidebarOpen} 
+                />
+            )}
         </div>
     )
 }

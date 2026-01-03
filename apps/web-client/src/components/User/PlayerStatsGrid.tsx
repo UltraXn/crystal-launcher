@@ -76,11 +76,11 @@ export default function PlayerStatsGrid({ stats, loading, isPublic, isAdmin }: P
                     font-size: 0.9rem;
                 }
             `}</style>
-            <h3><FaTrophy /> {t('profile.stats', 'Estadísticas')}</h3>
+            <h3><FaTrophy /> {t('profile.stats')}</h3>
             {(isPublic || isAdmin) ? (
                 <div className="stat-grid-premium">
                     {loading ? (
-                        <Loader text="..." />
+                        <Loader text={t('profile.loading_stats')} />
                     ) : stats ? (
                         <>
                             <div className="stat-item-premium">
@@ -106,7 +106,7 @@ export default function PlayerStatsGrid({ stats, loading, isPublic, isAdmin }: P
                                 <div style={{ fontSize: '0.7rem', color: '#666' }}>{t('profile.mined', 'Bloques Minados')}</div>
                             </div>
                         </>
-                    ) : <p>Error</p>}
+                    ) : <p>{t('profile.error_stats')}</p>}
                 </div>
             ) : <p>{t('profile.private_stats')}</p>}
         </div>

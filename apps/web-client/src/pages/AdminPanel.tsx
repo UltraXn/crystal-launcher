@@ -178,6 +178,7 @@ export default function AdminPanel() {
 
             {/* Sidebar Left - Responsive */}
             <aside className={`admin-layout-sidebar ${isMobile && sidebarOpen ? 'open' : ''}`}>
+                <div className="drawer-handle" />
                 <div className="admin-sidebar-header">
                     <div>
                         <h3 className="admin-brand-title">

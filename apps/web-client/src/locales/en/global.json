@@ -399,8 +399,10 @@
             "overview": "Overview",
             "posts": "My Posts",
             "achievements": "Achievements",
+            "medals": "Medals",
             "minecraft": "Minecraft Account",
             "connections": "Connections",
+            "settings": "Settings",
             "logout": "Logout"
         },
         "overview": {
@@ -544,10 +546,22 @@
             "placeholder": "Write something on this wall...",
             "post": "Post",
             "login_required": "Log in to leave a comment.",
-            "empty": "No messages yet. Be the first!"
-        }
+            "empty": "No messages yet. Be the first!",
+            "comment_posted": "Comment posted!",
+            "comment_deleted": "Comment deleted",
+            "error_posting": "Error posting comment",
+            "error_deleting": "Error deleting comment"
+        },
+        "karma_success": "Karma delivered!",
+        "karma_error": "Error giving karma",
+        "karma_conn_error": "Connection error",
+        "no_bio": "This adventurer hasn't written their story yet.",
+        "skin_title": "Character Skin",
+        "stats_title": "Gameplay Statistics",
+        "give_karma": "Give Karma"
     },
     "admin": {
+        "close": "Close",
         "loading_panel": "Loading panel...",
         "sidebar": {
             "general": "General",
@@ -578,7 +592,11 @@
             "docs": "Documentation",
             "donations": "Donations",
             "wiki": "Wiki / Gamepedia",
-            "locations": "Places & Lore"
+            "locations": "Places & Lore",
+            "refresh_btn": "Refresh Status",
+            "copy_ip_btn": "Copy IP",
+            "platform_val": "Java Edition",
+            "mode_val": "Survival / SMP"
         },
         "headers": {
             "general": "General Dashboard",
