@@ -1,0 +1,28 @@
+# Flutter
+build/
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+/windows/flutter/ephemeral/
+
+# Rust
+/native/target/
+**/*.rs.bk
+
+# Binaries
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+
+# Specific to CrystalLauncher
+/lib/generated_plugin_registrant.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/

@@ -1,0 +1,27 @@
+[package]
+name = "CrystalNative"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "CrystalLite"
+path = "src/bin/lite.rs"
+
+[dependencies]
+
+slint = "1.9"
+tokio = { version = "1.42", features = ["full"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+mlua = { version = "0.10", features = ["lua54", "vendored"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha1 = "0.10"
+hex = "0.4"
+anyhow = "1.0"
+thiserror = "2.0"
+
+[build-dependencies]
+slint-build = "1.9"
