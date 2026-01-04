@@ -1,35 +1,67 @@
-# CrystalTides Launcher
+# 🦋 CrystalTides Launcher
 
-Esta es la estructura base para tu launcher de Minecraft creado en C# con WPF.
+Un launcher de Minecraft modular y de alto rendimiento construido con **Flutter** y **Rust**. Inspirado en la estética de Lunar Client, diseñado para el ecosistema CrystalTides.
 
-## Estructura del Proyecto
+## 🏗️ Arquitectura
 
-### 1. CrystalTides.Core (Biblioteca de Clases)
-Contiene toda la lógica de negocio, independiente de la interfaz gráfica.
+El launcher sigue una arquitectura de procesos desacoplada:
 
-- **Authentication/**: Manejo de cuentas (Microsoft, Mojang, Offline).
-- **Game/**: Lógica relacionada con Minecraft.
-  - **Versioning/**: Obtención de versiones (vanilla, forge, fabric).
-  - **Assets/**: Descarga y validación de assets/librerías.
-- **Installation/**: Lógica de instalación (descomprimir natives, crear carpetas).
-- **Models/**: Clases de datos (Profile, VersionManifest, etc.).
-- **Services/**: Servicios generales (Configuración, Red, Archivos).
+- **UI en Flutter**: Una interfaz premium basada en glassmorphism para la gestión del juego y ajustes.
+- **Puente Nativo (Rust)**: Backend de alto rendimiento que maneja criptografía, bases de datos locales (SQLite) y parches en caliente.
+- **Motor de Minecraft (Engine)**: Una capa de orquestación personalizada para la gestión de versiones y descarga de activos.
 
-### 2. CrystalTides.Launcher (Aplicación WPF)
-La interfaz gráfica de usuario.
+## 🚀 Características Clave
 
-- **Views/**: Ventanas y páginas (Login, Home, Settings).
-- **ViewModels/**: Lógica de la vista (Patrón MVVM recomendado).
-- **Components/**: Controles reutilizables (Botones, Barras de carga).
-- **Resources/**: Imágenes, Estilos, Diccionarios de recursos.
+### ⚡ Descubrimiento Híbrido de Activos (Alta Velocidad)
 
-## Primeros Pasos
+El `MinecraftEngine` implementa una estrategia de **Descubrimiento Primero** para maximizar la eficiencia:
 
-1. Abre `CrystalTidesLauncher.sln` en Visual Studio o tu IDE preferido.
-2. Implementa la autenticación en `Core/Authentication`.
-3. Crea el diseño en `Launcher/Views/MainWindow.xaml`.
-4. Conecta la lógica usando ViewModels.
+- **Reutilización Estándar**: Detecta automáticamente tu carpeta `%APPDATA%\.minecraft` (Windows) y las rutas del directorio personal en macOS/Linux.
+- **Cero Redundancia**: Si los activos o librerías ya existen en tu instalación estándar de Minecraft, el launcher los **clona o enlaza** en lugar de descargarlos de nuevo.
+- **Aislamiento**: Los archivos personalizados de CrystalTides se mantienen separados, asegurando que tu instalación vanilla permanezca intacta.
 
-## Recomendaciones
-- Usa **MVVM (Model-View-ViewModel)** para separar la UI de la lógica.
-- Utiliza librerías como `CmlLib.Core` si no quieres escribir todo el núcleo del launcher desde cero, o implementa tu propia lógica en `Core`.
+### 🧠 Integración con Game-Bridge
+
+Inyecta de forma fluida el [Agente Crystal](https://github.com/UltraXn/crystal-agent) en procesos reales de Minecraft para HUDs y lógica dentro del juego.
+
+### 🎨 UI/UX Premium
+
+- **Glassmorphism**: Estética moderna de cristal esmerilado con animaciones a 60FPS.
+- **Navegación con Estado**: Interfaz basada en barra lateral con integración profunda para ajustes y progreso de lanzamiento.
+- **Animaciones Rive**: Gráficos vectoriales interactivos para una sensación de interfaz "viva".
+
+## 📁 Estructura del Proyecto
+
+- `lib/`: Código fuente de Flutter.
+  - `services/`: Lógica central (MinecraftEngine, LaunchService, DownloadService).
+  - `ui/`: Páginas y widgets personalizados.
+  - `data/`: Persistencia basada en Drift.
+- `native/`: El crate de Rust para el puente nativo.
+- `windows/`: Corredor C++ específico de Windows y configuración de FFI.
+
+## 🛠️ Desarrollo
+
+### Requisitos Previos
+
+- Flutter SDK 3.3x o superior
+- Toolchain de Rust
+- Visual Studio con "Desarrollo de escritorio con C++" (para compilación en Windows)
+
+### Compilación del Core Nativo
+
+Antes de ejecutar la app de Flutter, compila el código de Rust:
+
+```bash
+cd native
+cargo build --release
+```
+
+### Ejecución de la Aplicación
+
+```bash
+flutter run -d windows
+```
+
+---
+
+Construyendo la próxima generación de infraestructura para Minecraft. Impulsado por Rust y Flutter.
