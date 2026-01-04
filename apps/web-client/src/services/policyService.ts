@@ -44,3 +44,21 @@ export const updatePolicy = async (slug: string, title: string, content: string,
     const data = await res.json();
     return data.success ? data.data : data;
 };
+
+export const translateText = async (text: string): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(session?.access_token || null)
+    };
+
+    const res = await fetch(`${API_URL}/translation`, { // Using the existing route
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ text, targetLang: 'en' })
+    });
+
+    if (!res.ok) throw new Error('Error translating text');
+    const data = await res.json();
+    return data.success ? data.translatedText : '';
+};

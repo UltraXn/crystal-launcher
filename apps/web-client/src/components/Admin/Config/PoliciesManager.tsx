@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { FaSave, FaExclamationTriangle, FaShieldAlt, FaFileContract, FaSync, FaCheck } from 'react-icons/fa'
-import { getPolicies, getPolicy, updatePolicy, Policy } from '../../../services/policyService'
+import { FaSave, FaExclamationTriangle, FaShieldAlt, FaFileContract, FaSync, FaCheck, FaGlobeAmericas } from 'react-icons/fa'
+import { getPolicies, getPolicy, updatePolicy, translateText, Policy } from '../../../services/policyService'
 import { useTranslation } from 'react-i18next'
 import Loader from '../../UI/Loader'
 
@@ -11,6 +11,7 @@ export default function PoliciesManager() {
     const [currentPolicy, setCurrentPolicy] = useState<Policy | null>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [translating, setTranslating] = useState(false)
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null)
 
     // Form state
@@ -23,6 +24,27 @@ export default function PoliciesManager() {
     useEffect(() => {
         fetchPolicies()
     }, [])
+    
+    // ... existing fetch functions ...
+
+    const handleAutoTranslate = async () => {
+        if (!title || !content) return;
+        try {
+            setTranslating(true);
+            const [tTitle, tContent] = await Promise.all([
+                translateText(title),
+                translateText(content)
+            ]);
+            setTitleEn(tTitle);
+            setContentEn(tContent);
+            setMessage({ text: t('admin.settings.policies.translate_success', 'Traducido con éxito. Revisa el contenido.'), type: 'success' });
+        } catch (error) {
+            console.error(error);
+            setMessage({ text: t('admin.settings.policies.translate_error', 'Error al traducir.'), type: 'error' });
+        } finally {
+            setTranslating(false);
+        }
+    };
 
     useEffect(() => {
         if (selectedSlug) {
@@ -150,37 +172,69 @@ export default function PoliciesManager() {
                             <div className="admin-card" style={{ margin: 0, padding: '2rem', background: 'rgba(10, 10, 15, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px' }}>
                                 
                                 {/* Language Tabs */}
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
-                                    <button 
-                                        onClick={() => setEditLang('es')}
-                                        style={{
-                                            background: 'none', border: 'none',
-                                            color: editLang === 'es' ? '#fff' : 'rgba(255,255,255,0.4)',
-                                            fontWeight: editLang === 'es' ? '800' : '500',
-                                            cursor: 'pointer',
-                                            display: 'flex', alignItems: 'center', gap: '8px',
-                                            borderBottom: editLang === 'es' ? '2px solid var(--accent)' : '2px solid transparent',
-                                            paddingBottom: '0.5rem',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        <span style={{ fontSize: '1.2rem' }}>🇪🇸</span> Español (Principal)
-                                    </button>
-                                    <button 
-                                        onClick={() => setEditLang('en')}
-                                        style={{
-                                            background: 'none', border: 'none',
-                                            color: editLang === 'en' ? '#fff' : 'rgba(255,255,255,0.4)',
-                                            fontWeight: editLang === 'en' ? '800' : '500',
-                                            cursor: 'pointer',
-                                            display: 'flex', alignItems: 'center', gap: '8px',
-                                            borderBottom: editLang === 'en' ? '2px solid var(--accent)' : '2px solid transparent',
-                                            paddingBottom: '0.5rem',
-                                            transition: 'all 0.2s'
-                                        }}
-                                    >
-                                        <span style={{ fontSize: '1.2rem' }}>🇺🇸</span> English (Translation)
-                                    </button>
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                        <button 
+                                            onClick={() => setEditLang('es')}
+                                            style={{
+                                                background: 'none', border: 'none',
+                                                color: editLang === 'es' ? '#fff' : 'rgba(255,255,255,0.4)',
+                                                fontWeight: editLang === 'es' ? '800' : '500',
+                                                cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                borderBottom: editLang === 'es' ? '2px solid var(--accent)' : '2px solid transparent',
+                                                paddingBottom: '0.5rem',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <span style={{ fontSize: '1.2rem' }}>🇪🇸</span> Español (Principal)
+                                        </button>
+                                        <button 
+                                            onClick={() => setEditLang('en')}
+                                            style={{
+                                                background: 'none', border: 'none',
+                                                color: editLang === 'en' ? '#fff' : 'rgba(255,255,255,0.4)',
+                                                fontWeight: editLang === 'en' ? '800' : '500',
+                                                cursor: 'pointer',
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                borderBottom: editLang === 'en' ? '2px solid var(--accent)' : '2px solid transparent',
+                                                paddingBottom: '0.5rem',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <span style={{ fontSize: '1.2rem' }}>🇺🇸</span> English (Translation)
+                                        </button>
+                                    </div>
+                                    
+                                    {editLang === 'en' && (
+                                        <button
+                                            onClick={handleAutoTranslate}
+                                            disabled={translating || !title || !content}
+                                            style={{
+                                                marginLeft: 'auto',
+                                                background: 'rgba(var(--accent-rgb), 0.1)',
+                                                border: '1px solid rgba(var(--accent-rgb), 0.3)',
+                                                color: 'var(--accent)',
+                                                padding: '0.5rem 1rem',
+                                                borderRadius: '8px',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px',
+                                                fontWeight: '600',
+                                                fontSize: '0.85rem',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            className="hover-lift"
+                                        >
+                                            {translating ? (
+                                                <span className="spinner-border spinner-border-sm" style={{ width: '12px', height: '12px' }}></span>
+                                            ) : (
+                                                <FaGlobeAmericas />
+                                            )}
+                                            {t('admin.settings.policies.auto_translate', 'Traducir desde Español')}
+                                        </button>
+                                    )}
                                 </div>
 
                                 <div style={{ marginBottom: '2rem', textAlign: 'center' }}>

@@ -113,7 +113,10 @@
         "suggestions": "Sugerencias",
         "news": "Noticias",
         "stories": "Historias",
-        "forum": "Foro"
+        "forum": "Foro",
+        "support": "Soporte",
+        "privacy": "Política de Privacidad",
+        "tos": "Términos de Servicio"
     },
     "login": {
         "title": "Iniciar Sesión",
