@@ -6,4 +6,7 @@
 	url = https://github.com/UltraXn/CrystalTidesSMP-Bot-DC.git
 [submodule "apps/launcher"]
 	path = apps/launcher
-	url = https://github.com/UltraXn/CrystalTides-Launcher.git
+	url = https://github.com/UltraXn/crystal-launcher
+[submodule "apps/game-bridge"]
+	path = apps/game-bridge
+	url = https://github.com/UltraXn/crystal-agent
