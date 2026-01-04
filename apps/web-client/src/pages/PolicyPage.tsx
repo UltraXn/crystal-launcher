@@ -10,7 +10,7 @@ import { FaShieldAlt, FaFileContract, FaClock, FaHeadset, FaArrowLeft } from 're
 
 export default function PolicyPage() {
     const { slug } = useParams<{ slug: string }>();
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [policy, setPolicy] = useState<Policy | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -56,6 +56,9 @@ export default function PolicyPage() {
     );
 
     const Icon = policy.slug === 'privacy' ? FaShieldAlt : FaFileContract;
+
+    const displayTitle = (i18n.language === 'en' && policy.title_en) ? policy.title_en : policy.title;
+    const displayContent = (i18n.language === 'en' && policy.content_en) ? policy.content_en : policy.content;
 
     return (
         <Section className="policy-page">
@@ -134,8 +137,45 @@ export default function PolicyPage() {
                         WebkitTextFillColor: 'transparent',
                         paddingBottom: '0.2em' /* Fix clipping */
                     }}>
-                        {policy.title}
+                        {displayTitle}
                     </h1>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+                        <button 
+                            onClick={() => i18n.changeLanguage('es')}
+                            style={{
+                                background: i18n.language === 'es' ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
+                                color: i18n.language === 'es' ? '#000' : '#fff',
+                                border: 'none',
+                                padding: '0.4rem 0.8rem',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '0.8rem',
+                                transition: 'all 0.2s',
+                                opacity: i18n.language === 'es' ? 1 : 0.6
+                            }}
+                        >
+                            ES
+                        </button>
+                        <button 
+                            onClick={() => i18n.changeLanguage('en')}
+                            style={{
+                                background: i18n.language === 'en' ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
+                                color: i18n.language === 'en' ? '#000' : '#fff',
+                                border: 'none',
+                                padding: '0.4rem 0.8rem',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '0.8rem',
+                                transition: 'all 0.2s',
+                                opacity: i18n.language === 'en' ? 1 : 0.6
+                            }}
+                        >
+                            EN
+                        </button>
+                    </div>
 
                     <div style={{ 
                         display: 'inline-flex', 
@@ -173,7 +213,7 @@ export default function PolicyPage() {
                     <ReactMarkdown components={{
                         h1: ({ ...props }) => <h1 style={{ color: '#fff', fontSize: '2.5rem', marginBottom: '1.5rem', marginTop: '3rem' }} {...props} />,
                         h2: ({ ...props }) => <h2 style={{ color: '#fff', fontSize: '1.8rem', marginTop: '3rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }} {...props} />,
-                        h3: ({ ...props }) => <h3 style={{ color: 'var(--accent)', fontSize: '1.4rem', marginTop: '2rem', marginBottom: '1rem' }} {...props} />,
+                        h3: ({ ...props }) => <h3 style={{ color: 'var(--accent)', fontSize: '1.4rem', marginTop: '2rem', marginBottom: '1.5rem' }} {...props} />,
                         p: ({ ...props }) => <p style={{ marginBottom: '1.5rem', color: '#ccc', lineHeight: '1.8' }} {...props} />,
                         ul: ({ ...props }) => <ul style={{ marginBottom: '2rem', paddingLeft: '1.5rem' }} {...props} />,
                         li: ({ ...props }) => <li style={{ marginBottom: '0.8rem', paddingLeft: '0.5rem' }} {...props} />,
@@ -181,7 +221,7 @@ export default function PolicyPage() {
                         a: ({ ...props }) => <a style={{ color: 'var(--accent)', textDecoration: 'none', borderBottom: '1px solid rgba(var(--accent-rgb), 0.3)', transition: 'all 0.2s' }} {...props} />,
                         blockquote: ({ ...props }) => <blockquote style={{ borderLeft: '4px solid var(--accent)', paddingLeft: '1.5rem', color: '#aaa', fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '1.5rem', borderRadius: '0 12px 12px 0', margin: '2rem 0' }} {...props} />
                     }}>
-                        {policy.content}
+                        {displayContent}
                     </ReactMarkdown>
                 </div>
 

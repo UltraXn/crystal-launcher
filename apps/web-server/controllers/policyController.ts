@@ -28,19 +28,19 @@ export const getPolicy = async (req: Request, res: Response) => {
 export const updatePolicy = async (req: Request, res: Response) => {
     try {
         const { slug } = req.params;
-        const { title, content } = req.body;
+        const { title, content, title_en, content_en } = req.body;
         const user = req.user;
 
         if (!user) return sendError(res, 'Unauthorized', 'UNAUTHORIZED', 401);
 
         const userId = user.id;
 
-        const policy = await policyService.updatePolicy(slug, title, content, userId);
+        const policy = await policyService.updatePolicy(slug, title, content, title_en, content_en, userId);
         
         await logService.createLog({ 
             user_id: userId, 
             action: 'UPDATE_POLICY', 
-            details: `Updated policy: ${slug}` 
+            details: `Updated policy: ${slug} (EN/ES)` 
         });
         
         sendSuccess(res, policy, 'Policy updated successfully');

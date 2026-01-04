@@ -53,6 +53,26 @@ router.get('/profile/:username', userController.getPublicProfile);
 
 /**
  * @swagger
+ * /users/profile/{username}/full:
+ *   get:
+ *     summary: Obtener perfil completo (Stats + Eco + Foro)
+ *     tags: [Usuarios]
+ *     parameters:
+ *       - in: path
+ *         name: username
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Perfil completo unificado
+ *       404:
+ *         description: Usuario no encontrado
+ */
+router.get('/profile/:username/full', userController.getFullProfile);
+
+/**
+ * @swagger
  * /users/{id}/role:
  *   patch:
  *     summary: Actualizar rol de usuario

@@ -5,6 +5,8 @@ export interface Policy {
     slug: string;
     title: string;
     content: string;
+    title_en?: string;
+    content_en?: string;
     updated_at: string;
     last_updated_by?: string;
 }
@@ -29,12 +31,14 @@ export const getPolicyBySlug = async (slug: string) => {
     return data;
 };
 
-export const updatePolicy = async (slug: string, title: string, content: string, userId: string) => {
+export const updatePolicy = async (slug: string, title: string, content: string, title_en: string, content_en: string, userId: string) => {
     const { data, error } = await supabase
         .from('site_policies')
         .update({ 
             title, 
-            content, 
+            content,
+            title_en,
+            content_en,
             last_updated_by: userId,
             updated_at: new Date().toISOString()
         })

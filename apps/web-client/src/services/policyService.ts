@@ -8,6 +8,8 @@ export interface Policy {
     slug: string;
     title: string;
     content: string;
+    title_en?: string;
+    content_en?: string;
     updated_at: string;
 }
 
@@ -25,7 +27,7 @@ export const getPolicy = async (slug: string): Promise<Policy> => {
     return data.success ? data.data : data;
 };
 
-export const updatePolicy = async (slug: string, title: string, content: string): Promise<Policy> => {
+export const updatePolicy = async (slug: string, title: string, content: string, title_en: string, content_en: string): Promise<Policy> => {
     const { data: { session } } = await supabase.auth.getSession();
     const headers = {
         'Content-Type': 'application/json',
@@ -35,7 +37,7 @@ export const updatePolicy = async (slug: string, title: string, content: string)
     const res = await fetch(`${API_URL}/policies/${slug}`, {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ title, content })
+        body: JSON.stringify({ title, content, title_en, content_en })
     });
 
     if (!res.ok) throw new Error('Error updating policy');

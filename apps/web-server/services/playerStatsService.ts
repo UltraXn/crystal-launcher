@@ -119,7 +119,7 @@ const getPvpKills = async (uuid: string) => {
     } catch { return 0; }
 };
 
-const getMoney = async (uuid: string) => {
+export const getMoney = async (uuid: string) => {
     try {
          const [rows] = await db.query<RowDataPacket[]>(`
             SELECT 

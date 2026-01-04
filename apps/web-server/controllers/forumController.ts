@@ -34,6 +34,30 @@ export const getThread = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Aggregated Endpoint: Thread + Poll + Posts
+ * Optimizes initial load by fetching everything in parallel
+ */
+export const getThreadFull = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const threadId = parseInt(id);
+
+        if (isNaN(threadId)) return res.status(400).json({ error: "Invalid Thread ID" });
+
+        // Fetch Thread (includes Poll) and Posts in parallel
+        const [thread, posts] = await Promise.all([
+            forumService.getThread(threadId),
+            forumService.getPosts(threadId)
+        ]);
+
+        res.json({ ...thread, posts });
+    } catch (error) {
+         const message = error instanceof Error ? error.message : String(error);
+         res.status(404).json({ error: message });
+    }
+};
+
 export const createThread = async (req: Request, res: Response) => {
     try {
         const result = await forumService.createThread(req.body);

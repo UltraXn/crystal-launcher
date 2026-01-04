@@ -1,5 +1,8 @@
 import * as userService from '../services/userService.js';
 import * as logService from '../services/logService.js';
+import * as playerStatsService from '../services/playerStatsService.js';
+import * as forumService from '../services/forumService.js';
+
 import { Request, Response } from 'express';
 import { sendSuccess, sendError } from '../utils/responseHandler.js';
 
@@ -66,6 +69,45 @@ export const getPublicProfile = async (req: Request, res: Response) => {
         const profile = await userService.getPublicProfile(username);
         if (!profile) return sendError(res, 'User not found', 'USER_NOT_FOUND', 404);
         return sendSuccess(res, profile);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return sendError(res, message);
+    }
+};
+
+/**
+ * Aggregated Endpoint: Profile + Stats + Wallet + Threads
+ * Replaces the need for GraphQL by grouping all data in one response
+ */
+export const getFullProfile = async (req: Request, res: Response) => {
+    try {
+        const { username } = req.params;
+        const profile = await userService.getPublicProfile(username);
+
+        if (!profile) return sendError(res, 'User not found', 'USER_NOT_FOUND', 404);
+
+        // Parallel Fetching of related data
+        const [stats, wallet, threads] = await Promise.all([
+            // Stats (Game Kills, Playtime) - uses Minecraft Nick implies profile.username
+            profile.username ? playerStatsService.getPlayerStats(profile.username) : null,
+            
+            // Wallet (Coins) - uses UUID or Nick
+            profile.minecraft_uuid ? playerStatsService.getMoney(profile.minecraft_uuid) : 0,
+
+            // Forum Activity - uses Web User ID
+            forumService.getUserThreads(profile.id)
+        ]);
+
+        return sendSuccess(res, {
+            ...profile,
+            game_stats: stats,
+            wallet: { coins: wallet },
+            forum: {
+                threads: threads.slice(0, 5), // Limit to top 5
+                total_threads: threads.length
+            }
+        });
+
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return sendError(res, message);

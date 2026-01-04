@@ -14,8 +14,11 @@ export default function PoliciesManager() {
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null)
 
     // Form state
+    const [editLang, setEditLang] = useState<'es' | 'en'>('es')
     const [title, setTitle] = useState('')
     const [content, setContent] = useState('')
+    const [titleEn, setTitleEn] = useState('')
+    const [contentEn, setContentEn] = useState('')
 
     useEffect(() => {
         fetchPolicies()
@@ -46,6 +49,8 @@ export default function PoliciesManager() {
             setCurrentPolicy(data)
             setTitle(data.title)
             setContent(data.content)
+            setTitleEn(data.title_en || '')
+            setContentEn(data.content_en || '')
         } catch (err) {
             console.error(err)
         } finally {
@@ -58,7 +63,7 @@ export default function PoliciesManager() {
         try {
             setSaving(true)
             setMessage(null)
-            await updatePolicy(selectedSlug, title, content)
+            await updatePolicy(selectedSlug, title, content, titleEn, contentEn)
             setMessage({ text: t('admin.settings.policies.save_success', 'Política actualizada con éxito'), type: 'success' })
             fetchPolicies() // Refresh list
         } catch (err) {
@@ -143,14 +148,50 @@ export default function PoliciesManager() {
                     {currentPolicy ? (
                         <>
                             <div className="admin-card" style={{ margin: 0, padding: '2rem', background: 'rgba(10, 10, 15, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px' }}>
+                                
+                                {/* Language Tabs */}
+                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+                                    <button 
+                                        onClick={() => setEditLang('es')}
+                                        style={{
+                                            background: 'none', border: 'none',
+                                            color: editLang === 'es' ? '#fff' : 'rgba(255,255,255,0.4)',
+                                            fontWeight: editLang === 'es' ? '800' : '500',
+                                            cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', gap: '8px',
+                                            borderBottom: editLang === 'es' ? '2px solid var(--accent)' : '2px solid transparent',
+                                            paddingBottom: '0.5rem',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '1.2rem' }}>🇪🇸</span> Español (Principal)
+                                    </button>
+                                    <button 
+                                        onClick={() => setEditLang('en')}
+                                        style={{
+                                            background: 'none', border: 'none',
+                                            color: editLang === 'en' ? '#fff' : 'rgba(255,255,255,0.4)',
+                                            fontWeight: editLang === 'en' ? '800' : '500',
+                                            cursor: 'pointer',
+                                            display: 'flex', alignItems: 'center', gap: '8px',
+                                            borderBottom: editLang === 'en' ? '2px solid var(--accent)' : '2px solid transparent',
+                                            paddingBottom: '0.5rem',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '1.2rem' }}>🇺🇸</span> English (Translation)
+                                    </button>
+                                </div>
+
                                 <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
                                     <label style={{ display: 'block', marginBottom: '0.8rem', color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                        {t('admin.settings.policies.field_title', 'Título del Documento')}
+                                        {t('admin.settings.policies.field_title', 'Título del Documento')} ({editLang.toUpperCase()})
                                     </label>
                                     <input
                                         className="admin-input-premium"
-                                        value={title}
-                                        onChange={(e) => setTitle(e.target.value)}
+                                        value={editLang === 'es' ? title : titleEn}
+                                        onChange={(e) => editLang === 'es' ? setTitle(e.target.value) : setTitleEn(e.target.value)}
+                                        placeholder={editLang === 'en' ? "Privacy Policy" : "Política de Privacidad"}
                                         style={{ width: '100%', fontSize: '1.3rem', fontWeight: '800', padding: '1rem', textAlign: 'center' }}
                                     />
                                 </div>
@@ -158,16 +199,17 @@ export default function PoliciesManager() {
                                 <div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
                                         <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                            {t('admin.settings.policies.field_content', 'Contenido (Markdown)')}
+                                            {t('admin.settings.policies.field_content', 'Contenido (Markdown)')} ({editLang.toUpperCase()})
                                         </label>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--accent)', background: 'rgba(var(--accent-rgb), 0.1)', padding: '4px 8px', borderRadius: '4px', fontWeight: 'bold' }}>Markdown Soportado</span>
                                     </div>
                                     <div className="custom-scrollbar" style={{ borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
                                         <textarea
                                             className="admin-textarea"
-                                            value={content}
-                                            onChange={(e) => setContent(e.target.value)}
+                                            value={editLang === 'es' ? content : contentEn}
+                                            onChange={(e) => editLang === 'es' ? setContent(e.target.value) : setContentEn(e.target.value)}
                                             rows={20}
+                                            placeholder={editLang === 'en' ? "Write the policy content in English here..." : "Escribe el contenido aquí..."}
                                             style={{ 
                                                 width: '100%', 
                                                 fontFamily: '"JetBrains Mono", monospace', 

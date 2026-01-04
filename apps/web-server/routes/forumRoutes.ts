@@ -8,6 +8,7 @@ router.get('/stats', forumController.getStats);
 router.get('/category/:categoryId', forumController.getThreads);
 router.get('/user/:userId/threads', forumController.getUserThreads);
 router.get('/thread/:id', forumController.getThread);
+router.get('/thread/:id/full', forumController.getThreadFull); // Aggregated
 router.get('/thread/:id/posts', forumController.getPosts);
 
 // Authenticated routes
