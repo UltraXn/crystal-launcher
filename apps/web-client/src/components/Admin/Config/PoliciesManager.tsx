@@ -172,8 +172,16 @@ export default function PoliciesManager() {
                             <div className="admin-card" style={{ margin: 0, padding: '2rem', background: 'rgba(10, 10, 15, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '24px' }}>
                                 
                                 {/* Language Tabs */}
-                                <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem', alignItems: 'center' }}>
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
+                                <div style={{ 
+                                    display: 'flex', 
+                                    gap: '1rem', 
+                                    marginBottom: '2rem', 
+                                    borderBottom: '1px solid rgba(255,255,255,0.1)', 
+                                    paddingBottom: '1rem', 
+                                    alignItems: 'center',
+                                    flexWrap: 'wrap' 
+                                }}>
+                                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                                         <button 
                                             onClick={() => setEditLang('es')}
                                             style={{
@@ -184,7 +192,8 @@ export default function PoliciesManager() {
                                                 display: 'flex', alignItems: 'center', gap: '8px',
                                                 borderBottom: editLang === 'es' ? '2px solid var(--accent)' : '2px solid transparent',
                                                 paddingBottom: '0.5rem',
-                                                transition: 'all 0.2s'
+                                                transition: 'all 0.2s',
+                                                whiteSpace: 'nowrap'
                                             }}
                                         >
                                             <span style={{ fontSize: '1.2rem' }}>🇪🇸</span> Español (Principal)
@@ -199,7 +208,8 @@ export default function PoliciesManager() {
                                                 display: 'flex', alignItems: 'center', gap: '8px',
                                                 borderBottom: editLang === 'en' ? '2px solid var(--accent)' : '2px solid transparent',
                                                 paddingBottom: '0.5rem',
-                                                transition: 'all 0.2s'
+                                                transition: 'all 0.2s',
+                                                whiteSpace: 'nowrap'
                                             }}
                                         >
                                             <span style={{ fontSize: '1.2rem' }}>🇺🇸</span> English (Translation)
@@ -223,7 +233,8 @@ export default function PoliciesManager() {
                                                 gap: '8px',
                                                 fontWeight: '600',
                                                 fontSize: '0.85rem',
-                                                transition: 'all 0.2s'
+                                                transition: 'all 0.2s',
+                                                flexShrink: 0
                                             }}
                                             className="hover-lift"
                                         >
@@ -232,7 +243,7 @@ export default function PoliciesManager() {
                                             ) : (
                                                 <FaGlobeAmericas />
                                             )}
-                                            {t('admin.settings.policies.auto_translate', 'Traducir desde Español')}
+                                            {t('admin.settings.policies.auto_translate', 'Traducir con IA')}
                                         </button>
                                     )}
                                 </div>
