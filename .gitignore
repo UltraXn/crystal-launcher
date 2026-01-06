@@ -38,3 +38,5 @@ docker-compose.lite.yml
 # Secrets
 service-account.json
 **/service-account.json
+
+apps/web-server/crystaltides-prod-*.json
