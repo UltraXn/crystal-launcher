@@ -4,14 +4,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'minecraft_service.dart';
 import 'download_service.dart';
+import 'asset_service.dart';
 
 class MinecraftEngine {
   final MinecraftService _mcService;
   final DownloadService _downloadService;
+  final AssetService _assetService;
 
-  MinecraftEngine(this._mcService, this._downloadService);
+  MinecraftEngine(this._mcService, this._downloadService, this._assetService);
 
-  Future<List<String>> prepareVersion(String versionId,
+  Future<({List<String> classpath, String assetIndex})> prepareVersion(
+      String versionId,
       {void Function(String task, double progress)? onProgress}) async {
     debugPrint("📂 Preparing Minecraft $versionId...");
 
@@ -21,6 +24,7 @@ class MinecraftEngine {
 
     // 2. Fetch Version Details
     final details = await _mcService.getVersionDetails(version.url);
+    final String assetIndex = details['assetIndex']['id'];
 
     // 3. Setup Directories
     final appDir = await getApplicationSupportDirectory();
@@ -28,10 +32,12 @@ class MinecraftEngine {
     final versionsDir = p.join(gameBaseDir, 'versions', versionId);
     final librariesDir = p.join(gameBaseDir, 'libraries');
 
-    if (!await Directory(versionsDir).exists())
+    if (!await Directory(versionsDir).exists()) {
       await Directory(versionsDir).create(recursive: true);
-    if (!await Directory(librariesDir).exists())
+    }
+    if (!await Directory(librariesDir).exists()) {
       await Directory(librariesDir).create(recursive: true);
+    }
 
     final List<String> classpath = [];
 
@@ -43,11 +49,19 @@ class MinecraftEngine {
       if (onProgress != null) onProgress("Downloading Client JAR", 0);
       await _downloadService.downloadFile(clientUrl, clientJarPath,
           onProgress: (received, total) {
-        if (onProgress != null)
+        if (onProgress != null) {
           onProgress("Downloading Client JAR", received / total);
+        }
       });
     }
     classpath.add(clientJarPath);
+
+    // 4.5. Download Assets
+    if (onProgress != null) onProgress("Syncing Assets", 0.1);
+    await _assetService.downloadAssets(details, gameBaseDir,
+        onProgress: (task, progress) {
+      if (onProgress != null) onProgress(task, progress);
+    });
 
     // 5. Download Libraries (Simplified for testing)
     final List libs = details['libraries'];
@@ -62,10 +76,11 @@ class MinecraftEngine {
       }
       classpath.add(libPath);
       downloadedLibs++;
-      if (onProgress != null)
+      if (onProgress != null) {
         onProgress("Syncing Libraries", downloadedLibs / libs.length);
+      }
     }
 
-    return classpath;
+    return (classpath: classpath, assetIndex: assetIndex);
   }
 }

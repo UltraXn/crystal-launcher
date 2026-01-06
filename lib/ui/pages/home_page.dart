@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
+import 'package:drift/drift.dart' as drift;
 import '../../native_bridge.dart';
 import '../../data/database.dart';
 import '../../services/launch_service.dart';
@@ -21,6 +22,71 @@ class _HomePageState extends State<HomePage> {
   String _launchStatus = "";
   double _launchProgress = 0;
   bool _isLaunching = false;
+  Profile? _selectedProfile;
+
+  void _showCreateProfileDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final versionController =
+        TextEditingController(text: "1.21.1"); // Default for now
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: CrystalTheme.cardDark,
+        title: const Text("Create Instance",
+            style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: "Instance Name",
+                labelStyle: TextStyle(color: Colors.white54),
+                enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white24)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: versionController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: "Version (e.g. 1.20.1)",
+                labelStyle: TextStyle(color: Colors.white54),
+                enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white24)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (nameController.text.isNotEmpty) {
+                final db = context.read<AppDatabase>();
+                await db.createProfile(
+                  ProfilesCompanion.insert(
+                    name: nameController.text,
+                    versionId: versionController.text,
+                    type: "vanilla",
+                    lastPlayed: const drift.Value(null),
+                  ),
+                );
+                if (ctx.mounted) Navigator.pop(ctx);
+              }
+            },
+            child: const Text("Create"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void didChangeDependencies() {
@@ -81,7 +147,7 @@ class _HomePageState extends State<HomePage> {
               height: 400,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: CrystalTheme.blue.withValues(alpha: 0.1),
+                color: CrystalTheme.accent.withValues(alpha: 0.1),
               ),
             ),
           )
@@ -101,25 +167,27 @@ class _HomePageState extends State<HomePage> {
                 const Text(
                   "WELCOME TO",
                   style: TextStyle(
-                    color: CrystalTheme.blue,
+                    color: CrystalTheme.accent,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 4,
                     fontSize: 14,
                   ),
                 ).animate().fadeIn(delay: 200.ms).slideX(),
+                const SizedBox(height: 20),
 
-                const Text(
-                  "CRYSTAL TIDES",
-                  style: TextStyle(
-                    fontSize: 64,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -2,
-                    color: Colors.white,
+                // Official Logo
+                Center(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    height: 140,
+                    filterQuality: FilterQuality.high,
                   ),
                 )
                     .animate()
                     .fadeIn(delay: 400.ms)
                     .scale(begin: const Offset(0.9, 0.9)),
+
+                const SizedBox(height: 10),
 
                 const SizedBox(height: 10),
                 _StatusChip(status: _status, hash: _hash)
@@ -135,127 +203,261 @@ class _HomePageState extends State<HomePage> {
                   radius: 20,
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("READY TO PLAY",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.white)),
-                            Text("Version 1.25.4 - Pre-release",
-                                style: TextStyle(
-                                    color: Colors.white54, fontSize: 13)),
-                          ],
-                        ),
+                    child: StreamBuilder<List<Profile>>(
+                      stream: context.read<AppDatabase>().watchProfiles(),
+                      builder: (context, snapshot) {
+                        final profiles = snapshot.data ?? [];
+                        final hasProfiles = profiles.isNotEmpty;
 
-                        // Launch Button with Glow
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
+                        // Sync selection
+                        if (hasProfiles) {
+                          if (_selectedProfile == null ||
+                              !profiles
+                                  .any((p) => p.id == _selectedProfile!.id)) {
+                            // Avoid setState during build usually, but for local state sync it's tricky.
+                            // Better to just use profiles.first as fallback for display.
+                            if (_selectedProfile?.id != profiles.first.id) {
+                              Future.microtask(() => setState(
+                                  () => _selectedProfile = profiles.first));
+                            }
+                          }
+                        }
+
+                        // Use local or first
+                        final effectiveProfile = _selectedProfile ??
+                            (hasProfiles ? profiles.first : null);
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            if (_isLaunching)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Column(
-                                  children: [
-                                    Text(_launchStatus.toUpperCase(),
-                                        style: const TextStyle(
-                                            color: CrystalTheme.blue,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.5)),
-                                    const SizedBox(height: 8),
-                                    SizedBox(
-                                      width: 150,
-                                      height: 4,
-                                      child: LinearProgressIndicator(
-                                        value: _launchProgress,
-                                        backgroundColor: Colors.white10,
-                                        valueColor:
-                                            const AlwaysStoppedAnimation(
-                                                CrystalTheme.blue),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            Container(
-                              decoration: BoxDecoration(
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: CrystalTheme.blue.withValues(
-                                        alpha: _isLaunching ? 0.1 : 0.3),
-                                    blurRadius: 20,
-                                    spreadRadius: 2,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    hasProfiles
+                                        ? "READY TO PLAY"
+                                        : "BEGIN JOURNEY",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        color: Colors.white),
                                   ),
+                                  const SizedBox(height: 4),
+                                  if (hasProfiles)
+                                    DropdownButtonHideUnderline(
+                                      child: DropdownButton<Profile>(
+                                        value: effectiveProfile,
+                                        dropdownColor: CrystalTheme.cardDark,
+                                        isDense: true,
+                                        icon: const Icon(Icons.arrow_drop_down,
+                                            color: CrystalTheme.accent),
+                                        items: [
+                                          ...profiles
+                                              .map((p) => DropdownMenuItem(
+                                                    value: p,
+                                                    child: Text(
+                                                        "${p.name} (${p.versionId})",
+                                                        style: const TextStyle(
+                                                            color:
+                                                                Colors.white70,
+                                                            fontSize: 13)),
+                                                  )),
+                                          const DropdownMenuItem(
+                                            value: null,
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.add,
+                                                    size: 14,
+                                                    color: CrystalTheme.accent),
+                                                SizedBox(width: 5),
+                                                Text("New Profile",
+                                                    style: TextStyle(
+                                                        color:
+                                                            CrystalTheme.accent,
+                                                        fontSize: 13)),
+                                              ],
+                                            ),
+                                          )
+                                        ],
+                                        onChanged: (val) {
+                                          if (val == null) {
+                                            _showCreateProfileDialog(context);
+                                          } else {
+                                            setState(
+                                                () => _selectedProfile = val);
+                                          }
+                                        },
+                                      ),
+                                    )
+                                  else
+                                    Row(
+                                      children: [
+                                        Image.asset(
+                                            'assets/images/server_icon.png',
+                                            height: 24,
+                                            width: 24),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                            "Create a profile to get started",
+                                            style: TextStyle(
+                                                color: Colors.white54,
+                                                fontSize: 13)),
+                                      ],
+                                    )
                                 ],
                               ),
-                              child: ElevatedButton(
-                                onPressed: _isLaunching
-                                    ? null
-                                    : () async {
-                                        setState(() {
-                                          _isLaunching = true;
-                                          _launchStatus = "Initializing...";
-                                          _launchProgress = 0;
-                                        });
+                            ),
 
-                                        final db = context.read<AppDatabase>();
-                                        final engine =
-                                            context.read<MinecraftEngine>();
-                                        final launcher =
-                                            context.read<LaunchService>();
+                            // Launch/Create Button
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (_isLaunching)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: Column(
+                                      children: [
+                                        Text(_launchStatus.toUpperCase(),
+                                            style: const TextStyle(
+                                                color: CrystalTheme.accent,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 1.5)),
+                                        const SizedBox(height: 8),
+                                        SizedBox(
+                                          width: 150,
+                                          height: 4,
+                                          child: LinearProgressIndicator(
+                                            value: _launchProgress,
+                                            backgroundColor: Colors.white10,
+                                            valueColor:
+                                                const AlwaysStoppedAnimation(
+                                                    CrystalTheme.accent),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                Container(
+                                  decoration: BoxDecoration(
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: CrystalTheme.accent.withValues(
+                                            alpha: _isLaunching ? 0.1 : 0.3),
+                                        blurRadius: 20,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: hasProfiles
+                                          ? CrystalTheme.accent
+                                          : Colors.white10,
+                                      foregroundColor: hasProfiles
+                                          ? Colors.black
+                                          : Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 32, vertical: 20),
+                                    ),
+                                    onPressed: _isLaunching
+                                        ? null
+                                        : () async {
+                                            if (!hasProfiles) {
+                                              _showCreateProfileDialog(context);
+                                              return;
+                                            }
 
-                                        try {
-                                          final ram =
-                                              await db.getSetting("ram_mb") ??
-                                                  "4096";
-                                          final bridge = await db.getSetting(
-                                                      "bridge_enabled") ==
-                                                  "true" ||
-                                              (await db.getSetting(
-                                                      "bridge_enabled") ==
-                                                  null);
-
-                                          final classpath = await engine
-                                              .prepareVersion("1.21.1",
-                                                  onProgress: (task, progress) {
                                             setState(() {
-                                              _launchStatus = task;
-                                              _launchProgress = progress;
+                                              _isLaunching = true;
+                                              _launchStatus = "Initializing...";
+                                              _launchProgress = 0;
                                             });
-                                          });
 
-                                          await launcher.launchGame(
-                                            ramMB: ram,
-                                            enableBridge: bridge,
-                                            classpath: classpath,
-                                            mainClass:
-                                                "net.minecraft.client.main.Main",
-                                          );
-                                        } catch (e) {
-                                          debugPrint("Launch Error: $e");
-                                        } finally {
-                                          if (mounted)
-                                            setState(
-                                                () => _isLaunching = false);
-                                        }
-                                      },
-                                child: Text(_isLaunching
-                                    ? "PREPARING..."
-                                    : "LAUNCH GAME"),
-                              ),
-                            )
-                                .animate(onPlay: (c) => c.repeat(reverse: true))
-                                .shimmer(
-                                    duration: 3.seconds, color: Colors.white12),
+                                            final db =
+                                                context.read<AppDatabase>();
+                                            final engine =
+                                                context.read<MinecraftEngine>();
+                                            final launcher =
+                                                context.read<LaunchService>();
+
+                                            try {
+                                              final ram = await db
+                                                      .getSetting("ram_mb") ??
+                                                  "4096";
+                                              final bridge = await db.getSetting(
+                                                          "bridge_enabled") ==
+                                                      "true" ||
+                                                  (await db.getSetting(
+                                                          "bridge_enabled") ==
+                                                      null);
+
+                                              // Prepare using asset service if needed
+                                              final preparation = await engine
+                                                  .prepareVersion(
+                                                      effectiveProfile!
+                                                          .versionId, // Use effective profile version
+                                                      onProgress:
+                                                          (task, progress) {
+                                                setState(() {
+                                                  _launchStatus = task;
+                                                  _launchProgress = progress;
+                                                });
+                                              });
+
+                                              // Launch using profile settings
+                                              // We need to implement profile-specific settings later, for now use global/default
+                                              await launcher.launchGame(
+                                                version:
+                                                    effectiveProfile.versionId,
+                                                assetIndex:
+                                                    preparation.assetIndex,
+                                                ramMB: ram,
+                                                enableBridge: bridge,
+                                                classpath:
+                                                    preparation.classpath,
+                                                mainClass:
+                                                    "net.minecraft.client.main.Main",
+                                              );
+                                            } catch (e) {
+                                              debugPrint("Launch Error: $e");
+                                              if (!context.mounted) return;
+
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(SnackBar(
+                                                      content:
+                                                          Text("Error: $e")));
+                                            } finally {
+                                              if (mounted) {
+                                                setState(
+                                                    () => _isLaunching = false);
+                                              }
+                                            }
+                                          },
+                                    child: Text(
+                                      _isLaunching
+                                          ? "PREPARING..."
+                                          : (hasProfiles
+                                              ? "LAUNCH GAME"
+                                              : "CREATE PROFILE"),
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1),
+                                    ),
+                                  ),
+                                )
+                                    .animate(
+                                        onPlay: (c) => c.repeat(reverse: true))
+                                    .shimmer(
+                                        duration: 3.seconds,
+                                        color: Colors.white12),
+                              ],
+                            ),
                           ],
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2),

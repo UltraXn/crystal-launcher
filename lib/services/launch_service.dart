@@ -6,6 +6,8 @@ class LaunchService {
   Future<void> launchGame({
     required String ramMB,
     required bool enableBridge,
+    required String version,
+    String assetIndex = "1.21",
     List<String>? classpath,
     String mainClass = "com.crystaltides.test.FakeMinecraft",
     String? gameDir,
@@ -17,7 +19,14 @@ class LaunchService {
     // In a real scenario, this would point to the Minecraft JAR
     // For our "Frankenstein" test, we use the test-env we built earlier
     final projectRoot = Directory.current.path;
-    final testEnvDir = p.join(projectRoot, 'apps', 'game-bridge', 'test-env');
+    // Dynamic resolution for Submodule vs Monorepo root
+    String testEnvDir = p.join(projectRoot, 'apps', 'game-bridge', 'test-env');
+
+    // If running from apps/launcher, look in sibling directory
+    if (!await Directory(testEnvDir).exists()) {
+      testEnvDir =
+          p.normalize(p.join(projectRoot, '..', 'game-bridge', 'test-env'));
+    }
 
     final List<String> args = [
       '-Xmx${ramMB}M',
@@ -29,9 +38,8 @@ class LaunchService {
     }
 
     if (enableBridge) {
-      // Find agent.jar in test-env for now
-      final agentPath =
-          p.join(projectRoot, 'apps', 'game-bridge', 'test-env', 'agent.jar');
+      // Find agent.jar in the resolved test-env
+      final agentPath = p.join(testEnvDir, 'agent.jar');
       args.add('-javaagent:$agentPath');
     }
 
@@ -41,7 +49,7 @@ class LaunchService {
     if (mainClass != "com.crystaltides.test.FakeMinecraft") {
       args.addAll([
         '--version',
-        'CrystalTides-v1',
+        version,
         '--accessToken',
         '0',
         '--gameDir',
@@ -49,11 +57,11 @@ class LaunchService {
         '--assetsDir',
         p.join(testEnvDir, 'assets'),
         '--assetIndex',
-        '1.21', // TODO: Dynamically resolve from version JSON
+        assetIndex,
         '--userType',
         'mojang',
         '--uuid',
-        '0',
+        '00000000-0000-0000-0000-000000000000', // Valid format to prevent crash
       ]);
     }
 
@@ -67,11 +75,11 @@ class LaunchService {
       );
 
       // Listen to output
-      process.stdout.transform(SystemEncoding().decoder).listen((data) {
+      process.stdout.transform(const SystemEncoding().decoder).listen((data) {
         debugPrint("🎮 [GAME]: ${data.trim()}");
       });
 
-      process.stderr.transform(SystemEncoding().decoder).listen((data) {
+      process.stderr.transform(const SystemEncoding().decoder).listen((data) {
         debugPrint("❌ [GAME ERROR]: ${data.trim()}");
       });
 

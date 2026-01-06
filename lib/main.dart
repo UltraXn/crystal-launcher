@@ -9,7 +9,10 @@ import 'native_bridge.dart';
 import 'services/launch_service.dart';
 import 'services/minecraft_service.dart';
 import 'services/download_service.dart';
+import 'services/asset_service.dart';
 import 'services/minecraft_engine.dart';
+import 'services/auth_service.dart';
+import 'ui/pages/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +30,7 @@ void main() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
+    minimumSize: Size(960, 600), // Prevent layout breaking
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -39,11 +43,15 @@ void main() async {
       providers: [
         Provider<AppDatabase>.value(value: database),
         Provider<NativeBridge>.value(value: bridge),
+        Provider<AuthService>(create: (_) => AuthService(database)),
         Provider<LaunchService>(create: (_) => LaunchService()),
         Provider<MinecraftService>(create: (_) => MinecraftService()),
         Provider<DownloadService>(create: (_) => DownloadService()),
-        ProxyProvider2<MinecraftService, DownloadService, MinecraftEngine>(
-          update: (_, mc, dl, __) => MinecraftEngine(mc, dl),
+        Provider<AssetService>(
+            create: (ref) => AssetService(ref.read<DownloadService>())),
+        ProxyProvider3<MinecraftService, DownloadService, AssetService,
+            MinecraftEngine>(
+          update: (_, mc, dl, assets, __) => MinecraftEngine(mc, dl, assets),
         ),
       ],
       child: const CrystalApp(),
@@ -60,9 +68,43 @@ class CrystalApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'CrystalLauncher',
       theme: CrystalTheme.darkTheme(context),
-      home: const CrystalShell(
-        child: HomePage(),
-      ),
+      home: const AuthWrapper(),
+    );
+  }
+}
+
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  Widget build(BuildContext context) {
+    // Watch the active account stream. If null, we are logged out.
+    // If not null, we have a session.
+    return StreamBuilder<Account?>(
+      stream: context.read<AuthService>().watchActiveAccount(),
+      builder: (context, snapshot) {
+        // We can show a loading spinner while connection state is waiting,
+        // but normally watch emits quickly.
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0C1425),
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final account = snapshot.data;
+        if (account != null) {
+          // pass chid if needed, or just normal shell
+          return const CrystalShell(child: HomePage());
+        } else {
+          return const LoginPage();
+        }
+      },
     );
   }
 }

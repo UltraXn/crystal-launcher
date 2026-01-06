@@ -1,9 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:async';
 import 'package:window_manager/window_manager.dart';
+import 'package:provider/provider.dart';
 import 'theme.dart';
 import 'pages/home_page.dart';
 import 'pages/settings_page.dart';
+import '../../services/auth_service.dart';
+import '../../data/database.dart';
+import 'pages/login_page.dart';
+
+class _BackgroundCarousel extends StatefulWidget {
+  const _BackgroundCarousel();
+
+  @override
+  State<_BackgroundCarousel> createState() => _BackgroundCarouselState();
+}
+
+class _BackgroundCarouselState extends State<_BackgroundCarousel> {
+  int _currentIndex = 0;
+  final List<String> _images = [
+    'assets/images/backgrounds/hero-bg-1.webp',
+    'assets/images/backgrounds/hero-bg-2.webp',
+    'assets/images/backgrounds/hero-bg-3.webp',
+    'assets/images/backgrounds/hero-bg-4.webp',
+    'assets/images/backgrounds/hero-bg-5.webp',
+  ];
+
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Rotate every 10 seconds
+    _timer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentIndex = (_currentIndex + 1) % _images.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(seconds: 2), // Slow, premium fade
+      child: Container(
+        key: ValueKey<int>(_currentIndex),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(_images[_currentIndex]),
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class CrystalShell extends StatefulWidget {
   final Widget?
@@ -21,9 +82,20 @@ class _CrystalShellState extends State<CrystalShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black, // Dark base for images
       body: Stack(
         children: [
-          // Content Area
+          // 0. Global Background Carousel
+          const Positioned.fill(child: _BackgroundCarousel()),
+
+          // 1. Dark Overlay (Web Aesthetic: Navy @ 85%)
+          Positioned.fill(
+            child: Container(
+              color: CrystalTheme.navy.withValues(alpha: 0.85),
+            ),
+          ),
+
+          // 2. Content Area
           Positioned.fill(
             child: IndexedStack(
               index: _activeIndex,
@@ -31,16 +103,16 @@ class _CrystalShellState extends State<CrystalShell> {
                 HomePage(),
                 Placeholder(
                     fallbackHeight: 100,
-                    color: Colors.blue), // Store placeholder
+                    color: Colors.transparent), // Store placeholder
                 Placeholder(
                     fallbackHeight: 100,
-                    color: Colors.green), // Forum placeholder
+                    color: Colors.transparent), // Forum placeholder
                 SettingsPage(),
               ],
             ),
           ),
 
-          // Sidebar
+          // 3. Sidebar
           Positioned(
             left: 0,
             top: 0,
@@ -53,7 +125,7 @@ class _CrystalShellState extends State<CrystalShell> {
             ),
           ).animate().fadeIn(duration: 800.ms).slideX(begin: -0.1),
 
-          // Custom Title Bar
+          // 4. Custom Title Bar
           const Positioned(
             top: 0,
             left: 0,
@@ -115,10 +187,227 @@ class _CrystalSidebarState extends State<CrystalSidebar> {
               active: widget.selectedIndex == 3,
               onTap: () => widget.onIndexChanged(3),
             ),
+
+            const Spacer(),
+
+            const Padding(
+              padding: EdgeInsets.only(bottom: 24.0),
+              child: _SidebarAvatar(),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _SidebarAvatar extends StatelessWidget {
+  const _SidebarAvatar();
+
+  void _showAccountManager(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => const _AccountManagerDialog(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.read<AuthService>();
+
+    return StreamBuilder<Account?>(
+      stream: auth.watchActiveAccount(),
+      builder: (context, snapshot) {
+        final account = snapshot.data;
+        // Generate a skin face URL or use a placeholder
+        // Using Minotar for offline skins based on username
+        final imageUrl = account != null
+            ? "https://minotar.net/helm/${account.name}/100.png"
+            : "https://minotar.net/helm/Steve/100.png"; // Default
+
+        return InkWell(
+          onTap: () => _showAccountManager(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
+                image: DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                )),
+          )
+              .animate(target: account != null ? 1 : 0) // Pulse if logged in
+              .shimmer(
+                  duration: 2.seconds, delay: 5.seconds, color: Colors.white24),
+        );
+      },
+    );
+  }
+}
+
+class _AccountManagerDialog extends StatelessWidget {
+  const _AccountManagerDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.read<AuthService>();
+
+    return Dialog(
+        backgroundColor: Colors.transparent,
+        child: GlassBox(
+          radius: 20,
+          opacity: 0.1,
+          blur: 20,
+          child: Container(
+            width: 350,
+            constraints: const BoxConstraints(maxHeight: 500),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white10),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("ACCOUNTS",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2)),
+                    IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close,
+                            color: Colors.white54, size: 20)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Divider(color: Colors.white10),
+                const SizedBox(height: 10),
+                Flexible(
+                  child: FutureBuilder<List<Account>>(
+                    future: auth.getAccounts(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      final accounts = snapshot.data!;
+                      return ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: accounts.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (ctx, index) {
+                          final acc = accounts[index];
+                          final isMicrosoft = acc.type == "microsoft";
+
+                          // We need to check active status properly, but for now let's just show them
+                          return StreamBuilder<Account?>(
+                            stream: auth.watchActiveAccount(),
+                            builder: (_, activeSnap) {
+                              final isActive = activeSnap.data?.id == acc.id;
+
+                              return Container(
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? CrystalTheme.accent
+                                          .withValues(alpha: 0.1)
+                                      : Colors.white.withValues(alpha: 0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: isActive
+                                          ? CrystalTheme.accent
+                                          : Colors.transparent),
+                                ),
+                                child: ListTile(
+                                  leading: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        image: DecorationImage(
+                                            image: NetworkImage(
+                                                "https://minotar.net/helm/${acc.name}/64.png"))),
+                                  ),
+                                  title: Text(acc.name,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13)),
+                                  subtitle: Text(
+                                      isMicrosoft ? "Microsoft" : "Offline",
+                                      style: const TextStyle(
+                                          color: Colors.white38, fontSize: 11)),
+                                  trailing: isActive
+                                      ? const Icon(Icons.check_circle,
+                                          color: CrystalTheme.accent, size: 18)
+                                      : IconButton(
+                                          icon: const Icon(Icons.login,
+                                              color: Colors.white24, size: 18),
+                                          onPressed: () =>
+                                              auth.switchAccount(acc.id),
+                                        ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white10,
+                        foregroundColor: Colors.white),
+                    onPressed: () {
+                      Navigator.pop(context); // Close dialog
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LoginPage(),
+                        ),
+                      );
+                    },
+                    child: const Text("+ ADD ACCOUNT"),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () async {
+                      final active = await auth.getActiveAccount();
+                      if (active != null) {
+                        await auth.logout(active.id);
+                      }
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    child: const Text("Log Out Active Account",
+                        style:
+                            TextStyle(color: Colors.redAccent, fontSize: 12)),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ));
   }
 }
 
