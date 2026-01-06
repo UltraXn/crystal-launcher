@@ -34,3 +34,7 @@ storybook-static
 
 # Docker setup
 docker-compose.lite.yml
+
+# Secrets
+service-account.json
+**/service-account.json
