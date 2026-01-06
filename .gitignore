@@ -27,7 +27,7 @@ minecraft-plugin/
 !.env.example
 
 # Documentation
-docs/
+
 
 *storybook.log
 storybook-static

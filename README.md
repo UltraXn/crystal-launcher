@@ -73,6 +73,15 @@ cd apps/launcher
 flutter run -d windows
 ```
 
+### 4. Ejecutar Stack Web (Full Environment)
+
+Para levantar Frontend, Backend y Bot simultáneamente con Docker:
+
+```bash
+# Desde la raíz del repo (Windows)
+.\scripts\start-dev.bat
+```
+
 ---
 
 ## 🛡️ Verificación y Seguridad

@@ -3,6 +3,9 @@ echo ==========================================
 echo    CrystalTides SMP - Dev Environment
 echo ==========================================
 
+:: Navigate to project root (parent of scripts/)
+pushd "%~dp0.."
+
 echo [1/3] Building Backend...
 docker-compose build backend
 if %errorlevel% neq 0 (
