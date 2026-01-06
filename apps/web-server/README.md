@@ -1,47 +1,47 @@
-# ⚡ CrystalTides Web Server (Backend)
+# ⚡ Servidor Web CrystalTides (Backend)
 
-The core backend API for the **CrystalTides SMP** platform. It handles authentication, game data processing, payments, and integrations with external services (Discord, Twitch, Minecraft).
+La API backend principal para la plataforma **CrystalTides SMP**. Maneja la autenticación, procesamiento de datos del juego, pagos e integraciones con servicios externos (Discord, Twitch, Minecraft).
 
-## 🏗️ Tech Stack
+## 🏗️ Stack Tecnológico
 
 - **Runtime**: Node.js
 - **Framework**: Express / Custom (TypeScript)
-- **Database**: Supabase (PostgreSQL) & MySQL (Game Data)
-- **Authentication**: Supabase Auth
-- **Integrations**:
-  - Google Calendar (Events)
-  - Pterodactyl (Server Control)
-  - Twitch API (Clips & Auth)
+- **Base de Datos**: Supabase (PostgreSQL) y MySQL (Datos del Juego)
+- **Autenticación**: Supabase Auth
+- **Integraciones**:
+  - Google Calendar (Eventos)
+  - Pterodactyl (Control del Servidor)
+  - Twitch API (Clips y Auth)
 
-## 📂 Project Structure
+## 📂 Estructura del Proyecto
 
-- `controllers/`: Request handlers.
-- `routes/`: API endpoint definitions.
-- `services/`: Business logic and external API clients.
-- `middleware/`: Auth and validation layers.
-- `schemas/`: Zod validation schemas.
+- `controllers/`: Manejadores de peticiones.
+- `routes/`: Definición de endpoints de la API.
+- `services/`: Lógica de negocio y clientes de API externos.
+- `middleware/`: Capas de autenticación y validación.
+- `schemas/`: Esquemas de validación Zod.
 
-## 🚀 Getting Started
+## 🚀 Comenzando
 
-### Prerequisites
+### Prerrequisitos
 
 - Node.js 18+
-- npm or pnpm
+- npm o pnpm
 
-### Installation
+### Instalación
 
 ```bash
 npm install
 ```
 
-### Environment Variables
+### Variables de Entorno
 
-See `.env.example` for the required configuration keys. You will need credentials for Supabase, Google Cloud, and Twitch.
+Mira `.env.example` para las claves de configuración requeridas. Necesitarás credenciales para Supabase, Google Cloud y Twitch.
 
-### Development
+### Desarrollo
 
 ```bash
-# Start dev server
+# Iniciar servidor de desarrollo
 npm run dev
 ```
 
