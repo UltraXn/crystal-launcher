@@ -239,7 +239,7 @@ export const unlinkAccount = async (req: Request, res: Response) => {
         // Log detailed error for debugging schema issues
         if (error instanceof Error) {
              console.error('Stack:', error.stack);
-             // @ts-ignore
+             // @ts-expect-error sqlMessage exists on MySQL errors but not standard Error
              if (error.sqlMessage) console.error('SQL Message:', error.sqlMessage);
         }
         res.status(500).json({ error: 'Error al desvincular la cuenta.' });
