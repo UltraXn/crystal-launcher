@@ -56,36 +56,21 @@ if (supabaseUrl && supabaseKey) supabase = createClient(supabaseUrl, supabaseKey
 
 import { RowDataPacket } from 'mysql2';
 
-async function syncSupabaseMetadata(userId: string, token: string | undefined, metadata: any) {
-    const sbUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-    const sbAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
-    // Try user token first (more resilient/safer)
-    if (token && sbUrl && sbAnonKey) {
-        try {
-            const userSupabase = createClient(sbUrl, sbAnonKey, { 
-                global: { headers: { Authorization: `Bearer ${token}` } } 
-            });
-            const { error } = await userSupabase.auth.updateUser({ data: metadata });
-            if (!error) return true;
-            console.error('User token sync error:', error);
-        } catch (e) {
-            console.error('User token sync caught error:', e);
+async function syncSupabaseMetadata(userId: string, _token: string | undefined, metadata: any) {
+    if (!supabase) return false;
+    try {
+        const { error } = await supabase.auth.admin.updateUserById(userId, { 
+            user_metadata: metadata 
+        });
+        if (error) {
+            console.error('Supabase Sync Error:', error.message);
+            return false;
         }
+        return true;
+    } catch (e) {
+        console.error('Supabase Sync Exception:', e);
+        return false;
     }
-
-    // Fallback to Admin Client
-    if (supabase) {
-        try {
-            const { error } = await supabase.auth.admin.updateUserById(userId, { user_metadata: metadata });
-            if (!error) return true;
-            console.error('Admin sync error:', error);
-        } catch (e) {
-            console.error('Admin sync caught error:', e);
-        }
-    }
-
-    return false;
 }
 
 export const verifyLinkCode = async (req: Request, res: Response) => {
@@ -95,7 +80,6 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
         const authUserId = user?.id;
         const { code, userId: bodyUserId } = req.body;
         
-        // Prioritize authenticated user ID over body for security
         const targetUserId = authUserId || bodyUserId;
 
         if (!code || !targetUserId) {
@@ -104,7 +88,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
 
         if (!supabase) return res.status(503).json({ error: 'Server configuration error (Supabase)' });
 
-        // 1. Verify Code in MySQL
+        // 1. Verify Code
         const [rows] = await pool.execute<RowDataPacket[]>(
             'SELECT source, source_id, player_name, expires_at FROM universal_links WHERE code = ?',
             [code.toUpperCase()]
@@ -116,54 +100,53 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
 
         const verification = rows[0];
         
-        // Check Expiry
         if (Date.now() > Number(verification.expires_at)) {
             await pool.execute('DELETE FROM universal_links WHERE code = ?', [code.toUpperCase()]);
             return res.status(400).json({ error: 'El código ha expirado.' });
         }
 
-        const source = verification.source;
-        const sourceId = verification.source_id;
-        const playerName = verification.player_name;
+        const { source, source_id: sourceId, player_name: playerName } = verification;
 
-        // 2. Link Account in MySQL (Unified Bridge)
+        // 2. Link Account (Unified Logic)
         if (source === 'minecraft') {
-            // Clean up any existing links for this user OR this minecraft uuid to avoid collisions
-            await pool.execute('UPDATE linked_accounts SET minecraft_uuid = NULL, minecraft_name = NULL WHERE web_user_id = ?', [targetUserId]);
-            await pool.execute('UPDATE linked_accounts SET web_user_id = NULL WHERE minecraft_uuid = ?', [sourceId]);
-            
-            // Now insert or update the consolidated row
-            const query = `
-                INSERT INTO linked_accounts (minecraft_uuid, minecraft_name, web_user_id) 
-                VALUES (?, ?, ?) 
-                ON DUPLICATE KEY UPDATE 
-                    minecraft_name = VALUES(minecraft_name),
-                    web_user_id = VALUES(web_user_id)
-            `;
-            await pool.execute(query, [sourceId, playerName, targetUserId]);
+            // First, remove ANY link currently tied to this Minecraft UUID
+            await pool.execute('DELETE FROM linked_accounts WHERE minecraft_uuid = ?', [sourceId]);
+
+            // Second, check existing data for the WEB user to preserve gacha/discord
+            const [existing] = await pool.execute<RowDataPacket[]>(
+                'SELECT * FROM linked_accounts WHERE web_user_id = ?',
+                [targetUserId]
+            );
+
+            if (existing.length > 0) {
+                const oldRow = existing[0];
+                // Delete old row because PK (minecraft_uuid) is changing
+                await pool.execute('DELETE FROM linked_accounts WHERE web_user_id = ?', [targetUserId]);
+                
+                // Re-insert with new Minecraft data + preserved stats
+                await pool.execute(
+                    `INSERT INTO linked_accounts 
+                    (minecraft_uuid, minecraft_name, web_user_id, discord_id, discord_tag, gacha_balance, unlocked_tiers) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [sourceId, playerName, targetUserId, oldRow.discord_id, oldRow.discord_tag, oldRow.gacha_balance, oldRow.unlocked_tiers]
+                );
+            } else {
+                await pool.execute(
+                    'INSERT INTO linked_accounts (minecraft_uuid, minecraft_name, web_user_id) VALUES (?, ?, ?)',
+                    [sourceId, playerName, targetUserId]
+                );
+            }
         } else if (source === 'discord') {
-            // Clean up existing discord links for this user
-            await pool.execute('UPDATE linked_accounts SET discord_id = NULL, discord_tag = NULL WHERE web_user_id = ?', [targetUserId]);
-            await pool.execute('UPDATE linked_accounts SET web_user_id = NULL WHERE discord_id = ?', [sourceId]);
-
-            const query = `
-                INSERT INTO linked_accounts (discord_id, web_user_id) 
-                VALUES (?, ?) 
-                ON DUPLICATE KEY UPDATE 
-                    web_user_id = VALUES(web_user_id)
-            `;
-            await pool.execute(query, [sourceId, targetUserId]);
+            // Discord logic: much simpler as discord_id is just UNIQUE, not PK
+            await pool.execute('UPDATE linked_accounts SET discord_id = NULL, discord_tag = NULL WHERE discord_id = ?', [sourceId]);
+            await pool.execute('UPDATE linked_accounts SET discord_id = ?, discord_tag = ? WHERE web_user_id = ?', [sourceId, playerName, targetUserId]);
         }
-
-        // Clean up linked rows that might have become empty (no MC and no Discord)
-        await pool.execute('DELETE FROM linked_accounts WHERE minecraft_uuid IS NULL AND discord_id IS NULL');
 
         await pool.execute('DELETE FROM universal_links WHERE code = ?', [code.toUpperCase()]);
 
-        // 3. Sync Supabase user metadata immediately
+        // 3. Sync Meta
         if (source === 'minecraft') {
-            const token = req.headers.authorization?.split(' ')[1];
-            await syncSupabaseMetadata(targetUserId, token, { 
+            await syncSupabaseMetadata(targetUserId, undefined, { 
                 minecraft_uuid: sourceId, 
                 minecraft_nick: playerName 
             });
@@ -174,7 +157,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Link Verification Error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-        // @ts-expect-error sqlMessage exists on MySQL errors
+        // @ts-expect-error sqlMessage might exist
         const sqlError = error?.sqlMessage || '';
         res.status(500).json({ 
             error: 'Error al procesar la vinculación.', 
