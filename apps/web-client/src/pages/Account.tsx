@@ -253,22 +253,41 @@ export default function Account() {
             } 
             else if (unlinkTarget === 'minecraft') {
                 // Minecraft Backend Unlink
-                const res = await fetch(`${API_URL}/minecraft/link/unlink`, {
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+                try {
+                    const session = (await supabase.auth.getSession()).data.session;
+                    if (!session) throw new Error("No hay sesión activa");
+
+                    const res = await fetch(`${API_URL}/minecraft/link/unlink`, {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    })
+                    
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        console.warn('Backend unlink failed, but proceeding with local cleanup:', data.error);
                     }
-                })
-                const data = await res.json()
-                if (!res.ok) throw new Error(data.error || 'Error unlinking Minecraft')
+                } catch (err) {
+                    console.error('Error calling backend unlink:', err);
+                }
                 
-                // Redundancy: Force update metadata from client-side to ensure UI updates immediately
-                // This covers cases where the backend fails to sync with Supabase due to env var issues
-                await supabase.auth.updateUser({
+                // CRITICAL: We clear metadata locally NO MATTER WHAT. 
+                // This "repairs" the UI state for the user if things got out of sync.
+                const { error: metaError } = await supabase.auth.updateUser({
                     data: { minecraft_uuid: null, minecraft_nick: null }
-                })
+                });
+
+                if (metaError) {
+                    console.error('Error clearing local metadata:', metaError);
+                    // If even this fails, the session is likely dead
+                    if (metaError.message.includes('Invalid refresh token')) {
+                        showToast("Sesión expirada. Por favor, re-inicia sesión.", 'error');
+                        return;
+                    }
+                }
                 
-                showToast("Cuenta de Minecraft desvinculada", 'success')
+                showToast("Vínculo eliminado", 'success')
             }
 
             // Close modal first
