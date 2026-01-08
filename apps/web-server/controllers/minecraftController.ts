@@ -172,10 +172,13 @@ export const unlinkAccount = async (req: Request, res: Response) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user = (req as any).user;
         const userId = user?.id;
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.split(' ')[1];
 
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-        if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
-
+        // We need a supabase client, but for metadata update, we can try using the user's token
+        // to avoid dependency on SERVICE_ROLE_KEY if possible, OR fallback to admin if configured.
+        
         // 1. Remove from MySQL (Set Minecraft columns to NULL)
         // First get the minecraft name to sync later
         const [rows] = await pool.execute('SELECT minecraft_name FROM linked_accounts WHERE web_user_id = ?', [userId]);
@@ -188,15 +191,36 @@ export const unlinkAccount = async (req: Request, res: Response) => {
         await pool.execute('DELETE FROM linked_accounts WHERE web_user_id = ? AND minecraft_uuid IS NULL AND discord_id IS NULL', [userId]);
 
         // 2. Clear Supabase Metadata
-        await supabase.auth.admin.updateUserById(
-            userId,
-            {
-                user_metadata: {
-                    minecraft_uuid: null,
-                    minecraft_nick: null
-                }
+        // Try to update using the user's own token first (safer/easier context)
+        try {
+            if (token && process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
+                const userSupabase = createClient(
+                    process.env.VITE_SUPABASE_URL, 
+                    process.env.VITE_SUPABASE_ANON_KEY, 
+                    { global: { headers: { Authorization: `Bearer ${token}` } } }
+                );
+                await userSupabase.auth.updateUser({
+                    data: {
+                        minecraft_uuid: null,
+                        minecraft_nick: null
+                    }
+                });
+            } else if (supabase) {
+                 // Fallback to admin if available and token method failed/skipped
+                 await supabase.auth.admin.updateUserById(
+                    userId,
+                    {
+                        user_metadata: {
+                            minecraft_uuid: null,
+                            minecraft_nick: null
+                        }
+                    }
+                );
             }
-        );
+        } catch (metaError) {
+            console.error("Error updating Supabase metadata (non-fatal):", metaError);
+            // Continue execution, as the primary unlink (MySQL) is done.
+        }
 
         // 3. Sync with CrystalCore Plugin
         if (minecraftName) {
