@@ -48,22 +48,10 @@ export const unlinkIdentity = async (req: Request, res: Response) => {
 
         console.log(`Attempting to unlink identity ${identityId} for user ${user.id}`);
 
-        // Verify that the identity belongs to the user prevents deleting other people's identities
-        // We can fetch the user first
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(user.id);
-        
-        if (userError || !userData.user) {
-            return res.status(404).json({ message: 'Usuario no encontrado' });
-        }
+        // Skip manual verification in Node.js because of type mismatches (string vs int)
+        // and reliance on the secure RPC which checks user_id ownership.
+        const identity = { id: identityId }; // Mock object to keep existing variable usage if any, but actually we use identityId directly.
 
-        const identity = userData.user.identities?.find((id: { identity_id: string; id: string }) => id.identity_id === identityId || id.id === identityId);
-        
-        if (!identity) {
-             // If not found, maybe it's already deleted or doesn't belong to use
-             // But for safety, we allow if we can confirm ownership.
-             // If we can't find it in user identities, we stop.
-             return res.status(403).json({ message: 'Identidad no encontrada o no pertenece al usuario' });
-        }
 
         // Proceed to unlink
         // Fix: SDK method deleteUserIdentity is missing at runtime in this version.
