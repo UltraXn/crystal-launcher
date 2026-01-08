@@ -62,10 +62,27 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
             {/* Minecraft Card */}
             <div className="connection-card minecraft-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    {/* Logo Left */}
-                    <div style={{ background: '#44bd32', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
-                        <FaGamepad />
-                    </div>
+                    {/* Logo Left / Avatar */}
+                    {isLinked ? (
+                        <div style={{ position: 'relative' }}>
+                            <img 
+                                src={`https://mc-heads.net/avatar/${statsDataUsername || mcUsername}`} 
+                                alt={mcUsername}
+                                style={{ width: '45px', height: '45px', borderRadius: '8px', objectFit: 'contain', background: 'rgba(0,0,0,0.2)', border: '2px solid rgba(68, 189, 50, 0.5)' }}
+                            />
+                            <div style={{ position: 'absolute', bottom: -4, right: -4, background: '#1a1a1a', padding: '2px', borderRadius: '4px', display: 'flex', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                <img 
+                                    src="/images/ui/minecraft_logo_icon_168974.png" 
+                                    alt="Minecraft Logo" 
+                                    style={{ width: '18px', height: '18px', objectFit: 'contain' }} 
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ background: '#44bd32', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
+                            <FaGamepad />
+                        </div>
+                    )}
                     
                     {/* Text Middle */}
                     <div style={{ flex: 1 }}>
@@ -74,17 +91,6 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                             {isLinked ? mcUsername : t('account.connections.not_linked')}
                         </p>
                     </div>
-
-                    {/* Avatar Right */}
-                    {isLinked && (
-                        <div style={{ width: '48px', height: '48px', flexShrink: 0 }}>
-                            <img 
-                                src={`https://mc-heads.net/avatar/${statsDataUsername || mcUsername}`} 
-                                alt={mcUsername} 
-                                style={{ width: '100%', height: '100%', borderRadius: '8px', objectFit: 'contain', background: 'rgba(0,0,0,0.2)' }} 
-                            />
-                        </div>
-                    )}
                 </div>
                 
                 <div style={{ marginTop: 'auto' }}>
@@ -236,10 +242,23 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
             {/* Twitch Card */}
             <div className="connection-card twitch-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    {/* Logo Left */}
-                    <div style={{ background: '#9146FF', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
-                        <FaTwitch />
-                    </div>
+                    {/* Logo Left / Avatar */}
+                    {twitchIdentity?.identity_data?.avatar_url ? (
+                        <div style={{ position: 'relative' }}>
+                            <img 
+                                src={twitchIdentity.identity_data.avatar_url} 
+                                alt="Twitch Avatar"
+                                style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(145, 70, 255, 0.5)' }}
+                            />
+                            <div style={{ position: 'absolute', bottom: -2, right: -2, background: '#9146FF', padding: '4px', borderRadius: '50%', display: 'flex', fontSize: '0.6rem', border: '2px solid #1a1a1a' }}>
+                                <FaTwitch />
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ background: '#9146FF', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
+                            <FaTwitch />
+                        </div>
+                    )}
 
                     {/* Text Middle */}
                     <div style={{ flex: 1 }}>
@@ -250,17 +269,6 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                                 : t('account.connections.disconnected')}
                         </p>
                     </div>
-
-                    {/* Avatar Right */}
-                    {twitchIdentity?.identity_data?.avatar_url && (
-                        <div style={{ width: '48px', height: '48px', flexShrink: 0 }}>
-                            <img 
-                                src={twitchIdentity.identity_data.avatar_url} 
-                                alt="Twitch Avatar" 
-                                style={{ width: '100%', height: '100%', borderRadius: '50%' }} 
-                            />
-                        </div>
-                    )}
                 </div>
                 
                 <div style={{ marginTop: 'auto' }}>
