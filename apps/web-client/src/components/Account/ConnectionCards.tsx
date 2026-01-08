@@ -168,10 +168,10 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
             <div className="connection-card discord-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
                     {/* Logo Left / Avatar */}
-                    {isDiscordLinked && (discordIdentity?.identity_data?.avatar_url || discordMetadataAvatar) ? (
+                    {isDiscordLinked && (discordIdentity?.identity_data?.avatar_url || discordIdentity?.identity_data?.image_url || discordIdentity?.identity_data?.picture || discordMetadataAvatar) ? (
                         <div style={{ position: 'relative' }}>
                             <img 
-                                src={discordIdentity?.identity_data?.avatar_url || discordMetadataAvatar} 
+                                src={discordIdentity?.identity_data?.avatar_url || discordIdentity?.identity_data?.image_url || discordIdentity?.identity_data?.picture || discordMetadataAvatar} 
                                 alt="Discord Avatar"
                                 style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(88, 101, 242, 0.5)' }}
                             />
@@ -195,16 +195,6 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                         </p>
                     </div>
 
-                    {/* Avatar Right */}
-                    {discordIdentity?.identity_data?.avatar_url && (
-                        <div style={{ width: '48px', height: '48px', flexShrink: 0 }}>
-                            <img 
-                                src={discordIdentity.identity_data.avatar_url} 
-                                alt="Discord Avatar" 
-                                style={{ width: '100%', height: '100%', borderRadius: '50%' }} 
-                            />
-                        </div>
-                    )}
                 </div>
                 
                 <div style={{ marginTop: 'auto' }}>

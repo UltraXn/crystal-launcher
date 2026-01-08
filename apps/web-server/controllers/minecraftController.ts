@@ -220,23 +220,29 @@ export const checkLinkStatus = async (req: Request, res: Response) => {
                 const discordIdentity = user.identities?.find(i => i.provider === 'discord');
                 if (discordIdentity) {
                     const discordId = discordIdentity.id;
-                    const discordTag = discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.custom_claims?.global_name;
+                    const discordTag = discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.custom_claims?.global_name || discordIdentity.identity_data?.user_name;
+                    const discordAvatar = discordIdentity.identity_data?.avatar_url || discordIdentity.identity_data?.image_url || discordIdentity.identity_data?.picture;
 
                     if (rows.length > 0) {
                         const link = rows[0];
                         // If discord info is missing or outdated in SQL
                         if (link.discord_id !== discordId || link.discord_tag !== discordTag) {
-                            // Handle potential collisions: if this discordId is ALREADY linked to another row, clear it first
+                            // Handle potential collisions
                             await pool.execute('UPDATE linked_accounts SET discord_id = NULL, discord_tag = NULL WHERE discord_id = ?', [discordId]);
-                            // Update current row
                             await pool.execute('UPDATE linked_accounts SET discord_id = ?, discord_tag = ? WHERE web_user_id = ?', [discordId, discordTag, userId]);
-                            // Refresh local 'rows' for the final response
+                            
                             const [newRows] = await pool.execute<RowDataPacket[]>('SELECT * FROM linked_accounts WHERE web_user_id = ?', [userId]);
                             if (newRows.length > 0) rows[0] = newRows[0];
                         }
-                    } else {
-                        // NO MC LINK YET - We can't auto-create the row because minecraft_uuid is the PK and NOT NULL.
-                        // For now, we skip auto-linking Discord-only users unless we change the table schema.
+                    }
+
+                    // Always sync to Supabase metadata to ensure PFP is there
+                    if (discordAvatar) {
+                        await syncSupabaseMetadata(userId as string, req.headers.authorization?.split(' ')[1], {
+                            discord_id: discordId,
+                            discord_tag: discordTag,
+                            discord_avatar: discordAvatar
+                        });
                     }
                 }
             }
@@ -250,11 +256,20 @@ export const checkLinkStatus = async (req: Request, res: Response) => {
             
             // Sync Supabase user metadata (Outward push)
             const token = req.headers.authorization?.split(' ')[1];
+            
+            // Try to preserve existing discord_avatar if we don't have a new one
+            let existingAvatar = null;
+            try {
+                const { data: { user: userData } } = await supabase.auth.admin.getUserById(userId as string);
+                existingAvatar = userData?.user_metadata?.discord_avatar;
+            } catch { /* ignore */ }
+
             await syncSupabaseMetadata(userId as string, token, {
                 minecraft_uuid: link.minecraft_uuid, 
                 minecraft_nick: link.minecraft_name,
                 discord_id: link.discord_id,
                 discord_tag: link.discord_tag,
+                discord_avatar: existingAvatar,
                 gacha_balance: link.gacha_balance
             });
             
