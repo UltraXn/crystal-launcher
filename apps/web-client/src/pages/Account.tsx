@@ -18,6 +18,7 @@ import AchievementCard from '../components/Account/AchievementCard'
 import ConnectionCards from '../components/Account/ConnectionCards'
 import ProfileSettings from '../components/Account/ProfileSettings'
 import AccountMobileNavbar from '../components/Account/AccountMobileNavbar'
+import SuccessModal from '../components/UI/SuccessModal'
 
 interface Thread {
     id: string | number;
@@ -111,6 +112,7 @@ export default function Account() {
     const [manualCode, setManualCode] = useState('')
     const [isVerifying, setIsVerifying] = useState(false)
     const [isUnlinking, setIsUnlinking] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
     const API_URL = import.meta.env.VITE_API_URL
     
@@ -214,9 +216,7 @@ export default function Account() {
             const data = await res.json()
             if (data.linked || data.success) {
                 await supabase.auth.refreshSession()
-                showToast(t('account.connections.verify_success', "¡Cuenta vinculada con éxito!"), 'success')
-                // Wait a bit for the toast and then reload
-                setTimeout(() => window.location.reload(), 1500)
+                setShowSuccessModal(true)
             } else {
                 showToast(data.error || t('account.connections.verify_error', "Código inválido o expirado"), 'error')
             }
@@ -248,8 +248,7 @@ export default function Account() {
                     if (data.linked) {
                         clearInterval(interval)
                         await supabase.auth.refreshSession()
-                        alert(t('account.connections.success_link', "¡Cuenta vinculada exitosamente!"))
-                        window.location.reload()
+                        setShowSuccessModal(true)
                     }
                 } catch (e) {
                     console.error("Polling error", e)
@@ -685,6 +684,15 @@ export default function Account() {
                 message={toast.message}
                 type={toast.type}
                 onClose={() => setToast(prev => ({ ...prev, visible: false }))}
+            />
+
+            <SuccessModal 
+                isOpen={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                onAction={() => window.location.reload()}
+                title={t('account.connections.verify_success', "¡VINCULACIÓN EXITOSA!")}
+                message={t('account.connections.success_link_desc', "Tu cuenta de Minecraft ha sido conectada correctamente a CrystalTides SMP. Ahora tus estadísticas y rangos están sincronizados.")}
+                buttonText={t('common.accept', "GENIAL")}
             />
 
             {/* Mobile Bottom Navbar */}

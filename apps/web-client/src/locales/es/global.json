@@ -464,6 +464,7 @@
         "connections": {
             "title": "Cuentas Conectadas",
             "success_link": "¡Cuenta vinculada exitosamente!",
+            "success_link_desc": "Tu cuenta de Minecraft ha sido conectada correctamente a CrystalTides SMP. Ahora tus estadísticas y rangos están sincronizados.",
             "verify_success": "¡Cuenta vinculada con éxito!",
             "verify_error": "Código inválido o expirado",
             "link_discord": "Vincular Discord",
