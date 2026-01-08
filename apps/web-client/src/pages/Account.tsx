@@ -106,7 +106,7 @@ export default function Account() {
     const [loadingThreads, setLoadingThreads] = useState(false)
     const [isUnlinkModalOpen, setIsUnlinkModalOpen] = useState(false)
     const [identityToUnlink, setIdentityToUnlink] = useState<UserIdentity | null>(null)
-    const [unlinkTarget, setUnlinkTarget] = useState<'provider' | 'minecraft' | null>(null)
+    const [unlinkTarget, setUnlinkTarget] = useState<'provider' | 'minecraft' | 'discord' | null>(null)
     const [linkCode, setLinkCode] = useState<string | null>(null)
     const [linkLoading, setLinkLoading] = useState(false)
     const [manualCode, setManualCode] = useState('')

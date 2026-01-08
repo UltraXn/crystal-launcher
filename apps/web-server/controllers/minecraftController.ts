@@ -56,7 +56,17 @@ if (supabaseUrl && supabaseKey) supabase = createClient(supabaseUrl, supabaseKey
 
 import { RowDataPacket } from 'mysql2';
 
-async function syncSupabaseMetadata(userId: string, _token: string | undefined, metadata: any) {
+interface MetadataSync {
+    minecraft_uuid?: string | null;
+    minecraft_nick?: string | null;
+    discord_id?: string | null;
+    discord_tag?: string | null;
+    discord_avatar?: string | null;
+    gacha_balance?: number | string | null;
+    social_discord?: string | null;
+}
+
+async function syncSupabaseMetadata(userId: string, _token: string | undefined, metadata: MetadataSync) {
     if (!supabase) return false;
     try {
         const { error } = await supabase.auth.admin.updateUserById(userId, { 
