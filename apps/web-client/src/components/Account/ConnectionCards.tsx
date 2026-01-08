@@ -70,7 +70,9 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                     {/* Text Middle */}
                     <div style={{ flex: 1 }}>
                         <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Minecraft</h3>
-                        <p style={{ margin: '4px 0 0', color: '#888', fontSize: '0.85rem' }}>{isLinked ? t('account.connections.linked') : t('account.connections.not_linked')}</p>
+                        <p style={{ margin: '4px 0 0', color: '#888', fontSize: '0.85rem' }}>
+                            {isLinked ? mcUsername : t('account.connections.not_linked')}
+                        </p>
                     </div>
 
                     {/* Avatar Right */}
@@ -88,19 +90,6 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                 <div style={{ marginTop: 'auto' }}>
                     {isLinked ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                            <div className="animate-pop" style={{ 
-                                background: 'linear-gradient(45deg, rgba(76, 175, 80, 0.2), rgba(68, 189, 50, 0.3))', 
-                                border: '1px solid rgba(76, 175, 80, 0.4)',
-                                color: '#4CAF50', 
-                                padding: '1rem', 
-                                borderRadius: '12px', 
-                                textAlign: 'center', 
-                                fontWeight: '700',
-                                boxShadow: '0 4px 15px rgba(76, 175, 80, 0.1)'
-                            }}>
-                                <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: '4px' }}>✨ {t('account.connections.success_link')} ✨</span>
-                                {mcUsername}
-                            </div>
                             <button 
                                 onClick={onUnlinkMinecraft}
                                 style={{ width: '100%', background: 'rgba(231, 76, 60, 0.15)', border: '1px solid rgba(231, 76, 60, 0.3)', color: '#ff6b6b', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background 0.2s' }}
