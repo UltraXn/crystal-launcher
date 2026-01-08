@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import supabase from '../services/supabaseService.js';
-import fetch from 'node-fetch';
+import supabase from '../services/supabaseService.js';
 
 export const register = async (req: Request, res: Response) => {
     try {
@@ -77,41 +77,21 @@ export const unlinkIdentity = async (req: Request, res: Response) => {
             throw new Error("Missing Supabase Configuration");
         }
 
-        // Strategy 1: Try calling the USER endpoint with the ADMIN key.
-        // Attempt to bypass "Manual Linking Disabled" by using service_role on the user endpoint.
-        const userEndpoint = `${supabaseUrl}/auth/v1/user/identities/${identity.id}`;
-        console.log(`Unlink Attempt 1: Calling User Endpoint with Admin Key: ${userEndpoint}`);
-        
-        const response = await fetch(userEndpoint, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${serviceRoleKey}`,
-                'Content-Type': 'application/json',
-                'apikey': serviceRoleKey
-            }
+        // Strategy: Use RPC (Database Function) to delete identity.
+        // We created a 'delete_identity_by_id' function in Postgres that runs with security definer privileges.
+        console.log(`Unlink Attempt (RPC): calling delete_identity_by_id for ${identity.id}`);
+
+        const { error: rpcError } = await supabase.rpc('delete_identity_by_id', { 
+            identity_id_input: identity.id 
         });
 
-        if (response.ok) {
-            return res.json({ success: true, message: 'Identidad desvinculada correctamente (Admin Bypass)' });
+        if (rpcError) {
+             console.error("Unlink RPC Failed:", rpcError);
+             throw new Error(`Error en base de datos: ${rpcError.message}`);
         }
 
-        const responseText = await response.text();
-        console.warn(`Unlink Attempt 1 Failed: ${response.status} - ${responseText}`);
-
-        // Strategy 2: Direct SQL Deletion (Requires 'auth' schema access)
-        // This acts as a fallback if the API is strict.
-        console.log("Unlink Attempt 2: Direct SQL Deletion from auth.identities");
-        
-        const { error: sqlError } = await supabase
-            .schema('auth' as any) // Cast to any because 'auth' might not be in the types
-            .from('identities')
-            .delete()
-            .eq('id', identity.id);
-
-        if (sqlError) {
-             console.error("Unlink Attempt 2 Failed (SQL):", sqlError);
-             throw new Error(`No se pudo desvincular. API: ${response.status}, SQL: ${sqlError.message}`);
-        }
+        console.log("Identity deleted successfully via RPC");
+        res.json({ success: true, message: 'Identidad desvinculada correctamente' });
 
         console.log("Identity deleted successfully via Admin API");
 
