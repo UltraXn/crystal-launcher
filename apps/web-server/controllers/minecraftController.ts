@@ -192,11 +192,15 @@ export const unlinkAccount = async (req: Request, res: Response) => {
 
         // 2. Clear Supabase Metadata
         // Try to update using the user's own token first (safer/easier context)
+        // Try to update using the user's own token first (safer/easier context)
         try {
-            if (token && process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) {
+            const sbUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+            const sbAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+            if (token && sbUrl && sbAnonKey) {
                 const userSupabase = createClient(
-                    process.env.VITE_SUPABASE_URL, 
-                    process.env.VITE_SUPABASE_ANON_KEY, 
+                    sbUrl, 
+                    sbAnonKey, 
                     { global: { headers: { Authorization: `Bearer ${token}` } } }
                 );
                 await userSupabase.auth.updateUser({
