@@ -176,7 +176,7 @@ export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProp
         setEditingUser({ ...editingUser, medals: newMedals });
     };
 
-    const canManageRoles = ['neroferno', 'killu'].includes(user?.user_metadata?.role || '');
+    const canManageRoles = ['neroferno', 'killu', 'killuwu', 'developer'].includes(user?.user_metadata?.role || '');
 
     return (
         <div className="admin-card" style={{ background: 'rgba(10, 10, 15, 0.6)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '24px', padding: '1.5rem' }}>
