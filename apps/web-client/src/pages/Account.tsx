@@ -403,6 +403,10 @@ export default function Account() {
     const discordIdentity = identities.find((id: UserIdentity) => id.provider === 'discord')
     const twitchIdentity = identities.find((id: UserIdentity) => id.provider === 'twitch')
 
+    // Detect manual link via metadata (from bot/manual code)
+    const discordMetadata = user?.user_metadata?.discord_id || user?.user_metadata?.discord_name
+    const isDiscordLinked = !!discordIdentity || !!discordMetadata
+
     useEffect(() => {
         if ((activeTab === 'overview' || activeTab === 'connections') && isLinked) {
             setLoadingStats(true)
@@ -680,6 +684,8 @@ export default function Account() {
                                 linkLoading={linkLoading}
                                 onGenerateCode={handleGenerateCode}
                                 discordIdentity={discordIdentity}
+                                isDiscordLinked={isDiscordLinked}
+                                discordMetadataName={user?.user_metadata?.discord_name}
                                 twitchIdentity={twitchIdentity}
                                 onLinkProvider={handleLinkProvider}
                                 onUnlinkProvider={handleUnlinkProvider}

@@ -12,6 +12,8 @@ export interface ConnectionCardsProps {
     linkLoading: boolean;
     onGenerateCode: () => void;
     discordIdentity?: UserIdentity;
+    isDiscordLinked?: boolean;
+    discordMetadataName?: string;
     twitchIdentity?: UserIdentity;
     onLinkProvider: (provider: string) => void;
     onUnlinkProvider: (identity: UserIdentity) => void;
@@ -34,6 +36,8 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
     linkLoading,
     onGenerateCode,
     discordIdentity,
+    isDiscordLinked,
+    discordMetadataName,
     twitchIdentity,
     onLinkProvider,
     onUnlinkProvider,
@@ -168,8 +172,8 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                     <div style={{ flex: 1 }}>
                         <h3 style={{ margin: 0, color: '#fff', fontSize: '1.1rem' }}>Discord</h3>
                         <p style={{ margin: '4px 0 0', color: '#888', fontSize: '0.85rem' }}>
-                            {discordIdentity 
-                                ? (discordIdentity.identity_data?.full_name || discordIdentity.identity_data?.name || discordIdentity.identity_data?.user_name || t('account.connections.connected')) 
+                            {isDiscordLinked
+                                ? (discordIdentity?.identity_data?.full_name || discordIdentity?.identity_data?.name || discordIdentity?.identity_data?.user_name || discordMetadataName || t('account.connections.connected')) 
                                 : t('account.connections.disconnected')}
                         </p>
                     </div>
@@ -187,9 +191,9 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                 </div>
                 
                 <div style={{ marginTop: 'auto' }}>
-                    {discordIdentity ? (
+                    {isDiscordLinked ? (
                         <button 
-                            onClick={() => onUnlinkProvider(discordIdentity)}
+                            onClick={() => discordIdentity ? onUnlinkProvider(discordIdentity) : alert("Funcionalidad de desvinculación manual en desarrollo")}
                             style={{ width: '100%', background: 'rgba(231, 76, 60, 0.15)', border: '1px solid rgba(231, 76, 60, 0.3)', color: '#ff6b6b', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background 0.2s' }}
                             onMouseOver={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.25)'}
                             onMouseOut={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.15)'}
