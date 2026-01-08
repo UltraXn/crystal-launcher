@@ -76,8 +76,17 @@ async function syncSupabaseMetadata(userId: string, token: string | undefined, m
 
 export const verifyLinkCode = async (req: Request, res: Response) => {
     try {
-        const { code, userId } = req.body;
-        if (!code || !userId) return res.status(400).json({ error: 'Code and UserId required' });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const user = (req as any).user;
+        const authUserId = user?.id;
+        const { code, userId: bodyUserId } = req.body;
+        
+        // Prioritize authenticated user ID over body for security
+        const targetUserId = authUserId || bodyUserId;
+
+        if (!code || !targetUserId) {
+            return res.status(400).json({ error: 'Code and Authentication required' });
+        }
 
         if (!supabase) return res.status(503).json({ error: 'Server configuration error (Supabase)' });
 
@@ -106,11 +115,25 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
         // 2. Link Account in MySQL (Unified Bridge)
         let query = '';
         if (source === 'minecraft') {
-            query = 'INSERT INTO linked_accounts (minecraft_uuid, minecraft_name, web_user_id) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE minecraft_name = ?, web_user_id = ?';
-            await pool.execute(query, [sourceId, playerName, userId, playerName, userId]);
+            // If conflict on minecraft_uuid (PK) -> Update web_user_id
+            // If conflict on web_user_id (UNIQUE) -> Update minecraft_uuid/name (Merge)
+            query = `
+                INSERT INTO linked_accounts (minecraft_uuid, minecraft_name, web_user_id) 
+                VALUES (?, ?, ?) 
+                ON DUPLICATE KEY UPDATE 
+                    minecraft_name = VALUES(minecraft_name),
+                    minecraft_uuid = VALUES(minecraft_uuid),
+                    web_user_id = VALUES(web_user_id)
+            `;
+            await pool.execute(query, [sourceId, playerName, targetUserId, playerName, sourceId, targetUserId]);
         } else if (source === 'discord') {
-            query = 'INSERT INTO linked_accounts (discord_id, web_user_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE web_user_id = ?';
-            await pool.execute(query, [sourceId, userId, userId]);
+            query = `
+                INSERT INTO linked_accounts (discord_id, web_user_id) 
+                VALUES (?, ?) 
+                ON DUPLICATE KEY UPDATE 
+                    web_user_id = VALUES(web_user_id)
+            `;
+            await pool.execute(query, [sourceId, targetUserId, targetUserId]);
         }
 
         if (query) {
@@ -120,7 +143,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
         // 3. Sync Supabase user metadata immediately
         if (source === 'minecraft') {
             const token = req.headers.authorization?.split(' ')[1];
-            await syncSupabaseMetadata(userId, token, { 
+            await syncSupabaseMetadata(targetUserId, token, { 
                 minecraft_uuid: sourceId, 
                 minecraft_nick: playerName 
             });
@@ -130,7 +153,14 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
 
     } catch (error) {
         console.error('Link Verification Error:', error);
-        res.status(500).json({ error: 'Error al procesar la vinculación.' });
+        const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+        // @ts-expect-error sqlMessage exists on MySQL errors
+        const sqlError = error?.sqlMessage || '';
+        res.status(500).json({ 
+            error: 'Error al procesar la vinculación.', 
+            details: errorMessage,
+            sqlError: sqlError
+        });
     }
 };
 
