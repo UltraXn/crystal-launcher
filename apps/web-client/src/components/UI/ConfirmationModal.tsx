@@ -21,8 +21,9 @@ export default function ConfirmationModal({
     message, 
     confirmText = "Confirmar", 
     cancelText = "Cancelar", 
-    isDanger = false 
-}: ConfirmationModalProps) {
+    isDanger = false,
+    isLoading = false
+}: ConfirmationModalProps & { isLoading?: boolean }) {
     if (!isOpen) return null
 
     return (
@@ -45,7 +46,7 @@ export default function ConfirmationModal({
                     justifyContent: 'center',
                     zIndex: 2000
                 }}
-                onClick={onClose}
+                onClick={isLoading ? undefined : onClose}
             >
                 <motion.div
                     initial={{ scale: 0.9, y: 20, opacity: 0 }}
@@ -72,9 +73,14 @@ export default function ConfirmationModal({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        margin: '0 auto 1.5rem auto'
+                        margin: '0 auto 1.5rem auto',
+                        opacity: isLoading ? 0.5 : 1
                     }}>
-                        <FaExclamationTriangle size={30} color={isDanger ? '#e74c3c' : '#f1c40f'} />
+                        {isLoading ? (
+                            <div className="spinner-border" style={{ width: '30px', height: '30px', border: `3px solid ${isDanger ? '#e74c3c' : '#f1c40f'}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                        ) : (
+                            <FaExclamationTriangle size={30} color={isDanger ? '#e74c3c' : '#f1c40f'} />
+                        )}
                     </div>
 
                     <h2 style={{
@@ -93,35 +99,41 @@ export default function ConfirmationModal({
                     <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
                         <button
                             onClick={onClose}
+                            disabled={isLoading}
                             style={{
                                 background: 'transparent',
                                 border: '1px solid #444',
-                                color: '#ccc',
+                                color: isLoading ? '#666' : '#ccc',
                                 padding: '0.8rem 1.5rem',
                                 borderRadius: '8px',
-                                cursor: 'pointer',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
                                 fontSize: '0.9rem',
                                 transition: 'all 0.2s'
                             }}
-                            onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.borderColor = '#666'}
-                            onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => e.currentTarget.style.borderColor = '#444'}
+                            onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => !isLoading && (e.currentTarget.style.borderColor = '#666')}
+                            onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => !isLoading && (e.currentTarget.style.borderColor = '#444')}
                         >
                             {cancelText}
                         </button>
                         <button
                             onClick={onConfirm}
+                            disabled={isLoading}
                             style={{
                                 background: isDanger ? '#e74c3c' : 'var(--accent)',
                                 border: 'none',
                                 color: '#fff',
                                 padding: '0.8rem 1.5rem',
                                 borderRadius: '8px',
-                                cursor: 'pointer',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
                                 fontSize: '0.9rem',
-                                fontWeight: 'bold'
+                                fontWeight: 'bold',
+                                opacity: isLoading ? 0.7 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
                             }}
                         >
-                            {confirmText}
+                            {isLoading ? 'Procesando...' : confirmText}
                         </button>
                     </div>
                 </motion.div>

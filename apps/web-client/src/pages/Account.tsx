@@ -107,6 +107,7 @@ export default function Account() {
     const [identityToUnlink, setIdentityToUnlink] = useState<UserIdentity | null>(null)
     const [linkCode, setLinkCode] = useState<string | null>(null)
     const [linkLoading, setLinkLoading] = useState(false)
+    const [isUnlinking, setIsUnlinking] = useState(false)
 
     const API_URL = import.meta.env.VITE_API_URL
     
@@ -236,6 +237,7 @@ export default function Account() {
 
     const confirmUnlink = async () => {
         if (!identityToUnlink) return
+        setIsUnlinking(true)
         try {
             // Standard Supabase Unlink (Requires "Manual Linking" enabled in Dashboard)
             const { error } = await supabase.auth.unlinkIdentity(identityToUnlink)
@@ -245,14 +247,24 @@ export default function Account() {
                  throw error;
             }
 
+            // Success feedback
+            showToast("Cuenta desvinculada correctamente", 'success')
+            
+            // Close modal first
             setIsUnlinkModalOpen(false)
             setIdentityToUnlink(null)
-            window.location.reload()
+            
+            // Soft refresh session instead of hard reload if possible, otherwise reload after short delay
+            await supabase.auth.refreshSession()
+            window.location.reload() 
+
         } catch (error) {
             console.error("Error unlinking provider:", error)
             const message = error instanceof Error ? error.message : String(error)
             alert("Error unlinking account: " + message)
             setIsUnlinkModalOpen(false)
+        } finally {
+            setIsUnlinking(false)
         }
     }
 
@@ -567,10 +579,13 @@ export default function Account() {
             </div>
             
             
+
+
             <ConfirmationModal 
                 isOpen={isUnlinkModalOpen}
-                onClose={() => setIsUnlinkModalOpen(false)}
+                onClose={() => !isUnlinking && setIsUnlinkModalOpen(false)}
                 onConfirm={confirmUnlink}
+                isLoading={isUnlinking}
                 title="Desvincular cuenta"
                 message="¿Estás seguro? Podrías perder acceso a ciertas características."
             />
