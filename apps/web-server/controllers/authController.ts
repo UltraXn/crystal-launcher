@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import supabase from '../services/supabaseService.js';
+import fetch from 'node-fetch';
 
 export const register = async (req: Request, res: Response) => {
     try {
@@ -66,14 +67,48 @@ export const unlinkIdentity = async (req: Request, res: Response) => {
         }
 
         // Proceed to unlink
-        // Note: deleteUserIdentity takes the identity ID (string)
+        // Fix: SDK method deleteUserIdentity is missing at runtime in this version.
+        // Using direct manual fetch to GoTrue Admin API.
+        
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !serviceRoleKey) {
+            throw new Error("Missing Supabase Configuration");
+        }
+
+        // Endpoint: DELETE /admin/users/:user_id/identities/:identity_id
+        const url = `${supabaseUrl}/auth/v1/admin/users/${user.id}/identities/${identityId}`;
+        
+        console.log(`Manual Admin API Call to: ${url}`);
+
+        const deleteRes = await fetch(url, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${serviceRoleKey}`,
+                'Content-Type': 'application/json',
+                'apikey': serviceRoleKey
+            }
+        });
+
+        if (!deleteRes.ok) {
+            const errorText = await deleteRes.text();
+            console.error("Supabase Admin API Error:", deleteRes.status, errorText);
+            throw new Error(`Admin API Failed: ${errorText}`);
+        }
+
+        console.log("Identity deleted successfully via Admin API");
+
+        /* 
+        // Legacy SDK Call (Failed)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase.auth.admin as any).deleteUserIdentity(identityId);
 
         if (error) {
             console.error("Supabase Admin Unlink Error:", error);
             throw error;
-        }
+        } 
+        */
 
         res.json({ success: true, message: 'Identidad desvinculada correctamente' });
 
