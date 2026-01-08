@@ -241,6 +241,8 @@ export default function Account() {
             const { data: { session } } = await supabase.auth.getSession()
             if (!session) throw new Error("No active session")
 
+            console.log("Unlinking identity:", identityToUnlink.id);
+
             // Use fetch to call our custom endpoint
             const res = await fetch(`${API_URL}/auth/unlink`, {
                 method: 'POST',
@@ -251,9 +253,17 @@ export default function Account() {
                 body: JSON.stringify({ identityId: identityToUnlink.id }) // Uses .id from UserIdentity
             })
 
-            const data = await res.json()
+            let data;
+            const text = await res.text();
+            try {
+                data = JSON.parse(text);
+            } catch {
+                data = { message: text || res.statusText };
+            }
+
             if (!res.ok) {
-                 throw new Error(data.message || "Failed to unlink identity")
+                 console.error("Unlink failed status:", res.status, "Body:", text);
+                 throw new Error(data.message || `Failed to unlink identity (Status: ${res.status})`)
             }
 
             setIsUnlinkModalOpen(false)
