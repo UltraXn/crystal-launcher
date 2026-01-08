@@ -14,10 +14,12 @@ export interface ConnectionCardsProps {
     discordIdentity?: UserIdentity;
     isDiscordLinked?: boolean;
     discordMetadataName?: string;
+    discordMetadataAvatar?: string;
     twitchIdentity?: UserIdentity;
     onLinkProvider: (provider: string) => void;
     onUnlinkProvider: (identity: UserIdentity) => void;
     onUnlinkMinecraft: () => void;
+    onUnlinkDiscord: () => void;
     manualCode?: string;
     onManualCodeChange?: (val: string) => void;
     onVerifyCode?: () => void;
@@ -38,10 +40,12 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
     discordIdentity,
     isDiscordLinked,
     discordMetadataName,
+    discordMetadataAvatar,
     twitchIdentity,
     onLinkProvider,
     onUnlinkProvider,
     onUnlinkMinecraft,
+    onUnlinkDiscord,
     manualCode,
     onManualCodeChange,
     onVerifyCode,
@@ -163,10 +167,23 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
             {/* Discord Card */}
             <div className="connection-card discord-card">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                    {/* Logo Left */}
-                    <div style={{ background: '#5865F2', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
-                        <FaDiscord />
-                    </div>
+                    {/* Logo Left / Avatar */}
+                    {isDiscordLinked && (discordIdentity?.identity_data?.avatar_url || discordMetadataAvatar) ? (
+                        <div style={{ position: 'relative' }}>
+                            <img 
+                                src={discordIdentity?.identity_data?.avatar_url || discordMetadataAvatar} 
+                                alt="Discord Avatar"
+                                style={{ width: '45px', height: '45px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(88, 101, 242, 0.5)' }}
+                            />
+                            <div style={{ position: 'absolute', bottom: -2, right: -2, background: '#5865F2', padding: '4px', borderRadius: '50%', display: 'flex', fontSize: '0.6rem', border: '2px solid #1a1a1a' }}>
+                                <FaDiscord />
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ background: '#5865F2', padding: '12px', borderRadius: '50%', color: '#fff', fontSize: '1.2rem', display: 'flex', flexShrink: 0 }}>
+                            <FaDiscord />
+                        </div>
+                    )}
 
                     {/* Text Middle */}
                     <div style={{ flex: 1 }}>
@@ -193,7 +210,7 @@ const ConnectionCards: React.FC<ConnectionCardsProps> = ({
                 <div style={{ marginTop: 'auto' }}>
                     {isDiscordLinked ? (
                         <button 
-                            onClick={() => discordIdentity ? onUnlinkProvider(discordIdentity) : alert("Funcionalidad de desvinculación manual en desarrollo")}
+                            onClick={() => discordIdentity ? onUnlinkProvider(discordIdentity) : onUnlinkDiscord()}
                             style={{ width: '100%', background: 'rgba(231, 76, 60, 0.15)', border: '1px solid rgba(231, 76, 60, 0.3)', color: '#ff6b6b', padding: '10px', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', transition: 'background 0.2s' }}
                             onMouseOver={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.25)'}
                             onMouseOut={e => e.currentTarget.style.background = 'rgba(231, 76, 60, 0.15)'}

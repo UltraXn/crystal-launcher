@@ -13,5 +13,6 @@ router.post('/link/init', authenticateToken, minecraftController.initWebLink);
 router.get('/link/check', authenticateToken, minecraftController.checkLinkStatus);
 router.post('/link', authenticateToken, minecraftController.verifyLinkCode);
 router.post('/link/unlink', authenticateToken, minecraftController.unlinkAccount);
+router.post('/link/unlink-discord', authenticateToken, minecraftController.unlinkDiscord);
 
 export default router;

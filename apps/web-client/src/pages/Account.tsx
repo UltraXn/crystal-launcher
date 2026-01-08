@@ -322,6 +322,11 @@ export default function Account() {
         setIsUnlinkModalOpen(true)
     }
 
+    const handleUnlinkDiscord = () => {
+        setUnlinkTarget('discord')
+        setIsUnlinkModalOpen(true)
+    }
+
     const confirmUnlink = async () => {
         setIsUnlinking(true)
         try {
@@ -368,6 +373,39 @@ export default function Account() {
                 }
                 
                 showToast("Vínculo eliminado", 'success')
+            }
+            else if (unlinkTarget === 'discord') {
+                // Discord Backend Unlink
+                try {
+                    const session = (await supabase.auth.getSession()).data.session;
+                    if (!session) throw new Error("No hay sesión activa");
+
+                    const res = await fetch(`${API_URL}/minecraft/link/unlink-discord`, {
+                        method: 'POST',
+                        headers: { 
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    })
+                    
+                    if (!res.ok) {
+                        const data = await res.json().catch(() => ({}));
+                        console.warn('Backend discord unlink failed:', data.error);
+                    }
+                } catch (err) {
+                    console.error('Error calling backend discord unlink:', err);
+                }
+                
+                // Clear metadata locally
+                await supabase.auth.updateUser({
+                    data: { 
+                        discord_id: null, 
+                        discord_tag: null, 
+                        discord_avatar: null,
+                        social_discord: null 
+                    }
+                });
+                
+                showToast("Discord desvinculado", 'success')
             }
 
             // Close modal first
@@ -686,10 +724,12 @@ export default function Account() {
                                 discordIdentity={discordIdentity}
                                 isDiscordLinked={isDiscordLinked}
                                 discordMetadataName={user?.user_metadata?.discord_tag || user?.user_metadata?.discord_name || user?.user_metadata?.social_discord}
+                                discordMetadataAvatar={user?.user_metadata?.discord_avatar}
                                 twitchIdentity={twitchIdentity}
                                 onLinkProvider={handleLinkProvider}
                                 onUnlinkProvider={handleUnlinkProvider}
                                 onUnlinkMinecraft={handleUnlinkMinecraft}
+                                onUnlinkDiscord={handleUnlinkDiscord}
                                 manualCode={manualCode}
                                 onManualCodeChange={setManualCode}
                                 onVerifyCode={handleVerifyManualCode}

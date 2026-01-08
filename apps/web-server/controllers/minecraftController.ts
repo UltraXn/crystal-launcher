@@ -90,7 +90,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
 
         // 1. Verify Code
         const [rows] = await pool.execute<RowDataPacket[]>(
-            'SELECT source, source_id, player_name, expires_at FROM universal_links WHERE code = ?',
+            'SELECT source, source_id, player_name, avatar_url, expires_at FROM universal_links WHERE code = ?',
             [code.toUpperCase()]
         );
 
@@ -105,7 +105,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'El código ha expirado.' });
         }
 
-        const { source, source_id: sourceId, player_name: playerName } = verification;
+        const { source, source_id: sourceId, player_name: playerName, avatar_url: avatarUrl } = verification;
 
         // 2. Link Account (Unified Logic)
         if (source === 'minecraft') {
@@ -154,7 +154,8 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
         } else if (source === 'discord') {
             await syncSupabaseMetadata(targetUserId, token, {
                 discord_id: sourceId,
-                discord_tag: playerName
+                discord_tag: playerName,
+                discord_avatar: avatarUrl
             });
         }
 
@@ -354,5 +355,60 @@ export const unlinkAccount = async (req: Request, res: Response) => {
              if (error.sqlMessage) console.error('SQL Message:', error.sqlMessage);
         }
         res.status(500).json({ error: 'Error al desvincular la cuenta.' });
+    }
+};
+
+export const unlinkDiscord = async (req: Request, res: Response) => {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const user = (req as any).user;
+        const userId = user?.id;
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.split(' ')[1];
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        // 1. Remove from MySQL (Set Discord columns to NULL)
+        await pool.execute('UPDATE linked_accounts SET discord_id = NULL, discord_tag = NULL WHERE web_user_id = ?', [userId]);
+        
+        // Clean up if row is fully empty
+        await pool.execute('DELETE FROM linked_accounts WHERE web_user_id = ? AND minecraft_uuid IS NULL AND discord_id IS NULL', [userId]);
+
+        // 2. Clear Supabase Metadata
+        try {
+            const sbUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+            const sbAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+            if (token && sbUrl && sbAnonKey) {
+                const userSupabase = createClient(sbUrl, sbAnonKey, { 
+                    global: { headers: { Authorization: `Bearer ${token}` } } 
+                });
+                await userSupabase.auth.updateUser({
+                    data: {
+                        discord_id: null,
+                        discord_tag: null,
+                        discord_avatar: null,
+                        social_discord: null
+                    }
+                });
+            } else if (supabase) {
+                 await supabase.auth.admin.updateUserById(userId, {
+                    user_metadata: {
+                        discord_id: null,
+                        discord_tag: null,
+                        discord_avatar: null,
+                        social_discord: null
+                    }
+                });
+            }
+        } catch (metaError) {
+            console.error("Error updating Supabase metadata (non-fatal):", metaError);
+        }
+
+        res.json({ success: true, message: 'Discord account unlinked successfully' });
+
+    } catch (error) {
+        console.error('Unlink Discord Error:', error);
+        res.status(500).json({ error: 'Error al desvincular Discord.' });
     }
 };
