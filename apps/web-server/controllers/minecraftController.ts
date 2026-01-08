@@ -4,6 +4,20 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import pool from '../config/database.js';
 import { Request, Response } from 'express';
 
+// Database Schema Fix (Ensures missing columns exist)
+(async () => {
+    try {
+        await pool.execute("ALTER TABLE linked_accounts ADD COLUMN IF NOT EXISTS gacha_balance BIGINT DEFAULT 0 AFTER web_user_id");
+    } catch {
+        // Fallback for older MySQL that doesn't support IF NOT EXISTS in ALTER TABLE
+        try {
+             await pool.execute("ALTER TABLE linked_accounts ADD COLUMN gacha_balance BIGINT DEFAULT 0 AFTER web_user_id");
+        } catch {
+             // Column probably already exists or other error we can't fix here
+        }
+    }
+})();
+
 export const getStatus = async (req: Request, res: Response) => {
     try {
         const host = process.env.MC_SERVER_HOST || 'localhost';
@@ -125,7 +139,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
                     minecraft_uuid = VALUES(minecraft_uuid),
                     web_user_id = VALUES(web_user_id)
             `;
-            await pool.execute(query, [sourceId, playerName, targetUserId, playerName, sourceId, targetUserId]);
+            await pool.execute(query, [sourceId, playerName, targetUserId]);
         } else if (source === 'discord') {
             query = `
                 INSERT INTO linked_accounts (discord_id, web_user_id) 
@@ -133,7 +147,7 @@ export const verifyLinkCode = async (req: Request, res: Response) => {
                 ON DUPLICATE KEY UPDATE 
                     web_user_id = VALUES(web_user_id)
             `;
-            await pool.execute(query, [sourceId, targetUserId, targetUserId]);
+            await pool.execute(query, [sourceId, targetUserId]);
         }
 
         if (query) {
