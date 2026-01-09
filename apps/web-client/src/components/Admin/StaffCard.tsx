@@ -19,11 +19,10 @@ export interface StaffCardProps {
     roleBadge?: string | null;
     onEdit?: () => void;
     onDelete?: () => void;
-    dragHandleProps?: any; // props from @hello-pangea/dnd
+    dragHandleProps?: import('@hello-pangea/dnd').DraggableProvidedDragHandleProps | null;
     innerRef?: React.Ref<HTMLDivElement>;
-    draggableProps?: any; // props from @hello-pangea/dnd
+    draggableProps?: import('@hello-pangea/dnd').DraggableProvidedDraggableProps | null;
     style?: React.CSSProperties;
-    t?: (key: string) => string; // Optional translation function for "Edit/Delete" tooltips
 }
 
 export const StaffCard: React.FC<StaffCardProps> = ({ 
@@ -35,8 +34,7 @@ export const StaffCard: React.FC<StaffCardProps> = ({
     dragHandleProps,
     innerRef,
     draggableProps,
-    style,
-    t // kept as prop but unused in default
+    style
 }) => {
     return (
         <div 

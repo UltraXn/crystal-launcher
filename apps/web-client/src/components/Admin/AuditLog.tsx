@@ -139,7 +139,7 @@ export default function AuditLog({ mockLogs, mockTotal }: AuditLogProps = {}) {
         } finally {
             setLoading(false)
         }
-    }, [filterSource, page, limit, searchTerm])
+    }, [filterSource, page, limit, searchTerm, mockLogs])
 
     useEffect(() => {
         fetchLogs()

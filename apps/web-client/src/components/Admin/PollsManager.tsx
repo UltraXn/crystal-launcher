@@ -89,10 +89,10 @@ export default function PollsManager({ mockActivePoll, mockHistoryPolls }: Polls
         setShowModal(true);
     }
 
-    const handleFormSubmit = async (e: React.FormEvent, data: any) => {
+    const handleFormSubmit = async (_e: React.FormEvent, data: any) => {
         setCreating(true)
         try {
-            const validOptions = data.options.filter((o: any) => o.label.trim() !== '')
+            const validOptions = data.options.filter((o: { label: string }) => o.label.trim() !== '')
             if (validOptions.length < 2) {
                 alert(t('admin.polls.form.error_options'))
                 setCreating(false)
@@ -100,7 +100,7 @@ export default function PollsManager({ mockActivePoll, mockHistoryPolls }: Polls
             }
 
             const closesAt = new Date(Date.now() + data.daysDuration * 24 * 60 * 60 * 1000).toISOString()
-            const payloadOptions = validOptions.map((o: any) => ({
+            const payloadOptions = validOptions.map((o: { label: string; labelEn?: string }) => ({
                 label: o.label,
                 label_en: o.labelEn
             }))
