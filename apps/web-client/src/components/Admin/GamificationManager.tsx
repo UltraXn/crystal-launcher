@@ -3,6 +3,8 @@ import { FaSave, FaPlus, FaTrash, FaTrophy } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import Loader from "../UI/Loader";
 import { MEDAL_ICONS } from '../../utils/MedalIcons';
+import { supabase } from '../../services/supabaseClient';
+import { getAuthHeaders } from '../../services/adminAuth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -24,7 +26,6 @@ export default function GamificationManager() {
     const [settings, setSettings] = useState<GamificationSettings>({});
     const [saving, setSaving] = useState<string | null>(null);
     const [medals, setMedals] = useState<Medal[]>([]);
-    const [prevMedalsStr, setPrevMedalsStr] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     // Fetch settings on mount
@@ -36,14 +37,36 @@ export default function GamificationManager() {
             .finally(() => setLoading(false));
     }, []);
 
+    // Sync medals when settings change
+    useEffect(() => {
+        if (settings?.medal_definitions) {
+            const defs = settings.medal_definitions;
+            try {
+                const parsed = typeof defs === 'string' ? JSON.parse(defs) : defs;
+                setMedals(Array.isArray(parsed) ? parsed : []);
+            } catch { 
+                setMedals([]); 
+            }
+        }
+    }, [settings.medal_definitions]);
+
     const onUpdate = async (key: string, newValue: string) => {
         setSaving(key);
         try {
-            await fetch(`${API_URL}/settings/${key}`, {
+            const { data: { session } } = await supabase.auth.getSession();
+            const headers = { 
+                'Content-Type': 'application/json',
+                ...getAuthHeaders(session?.access_token || null)
+            };
+
+            const res = await fetch(`${API_URL}/settings/${key}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ value: newValue })
             });
+
+            if (!res.ok) throw new Error('Failed to update settings');
+
             setSettings((prev: GamificationSettings) => ({ ...prev, [key]: newValue }));
         } catch (error) {
             console.error(error);
@@ -51,21 +74,6 @@ export default function GamificationManager() {
             setSaving(null);
         }
     };
-
-    // Derived state pattern
-    const medalsStr = settings?.medal_definitions ? (typeof settings.medal_definitions === 'string' ? settings.medal_definitions : JSON.stringify(settings.medal_definitions)) : null;
-
-    if (medalsStr !== prevMedalsStr) {
-        setPrevMedalsStr(medalsStr);
-        if (medalsStr) {
-            try {
-                const parsed = JSON.parse(medalsStr);
-                setMedals(Array.isArray(parsed) ? parsed : []);
-            } catch { setMedals([]); }
-        } else {
-            setMedals([]);
-        }
-    }
 
     const handleAdd = () => {
         setMedals([...medals, { 
