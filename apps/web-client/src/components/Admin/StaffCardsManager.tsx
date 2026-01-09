@@ -90,7 +90,25 @@ export default function StaffCardsManager({ mockCards, mockOnlineStatus }: MockS
             .finally(() => setLoading(false));
 
         // Initial Online Check
-        if (!mockOnlineStatus) {
+            const fetchOnlineStatus = () => {
+                if (mockOnlineStatus) return;
+                fetch(`${API_URL}/server/staff`)
+                    .then(res => res.ok ? res.json() : [])
+                    .then(data => {
+                        if(Array.isArray(data)) {
+                            const statusMap: Record<string, { mc: string, discord: string }> = {};
+                            data.forEach((u: { username: string, mc_status?: string, discord_status?: string }) => {
+                                statusMap[u.username.toLowerCase()] = {
+                                    mc: u.mc_status || 'offline',
+                                    discord: u.discord_status || 'offline'
+                                };
+                            });
+                            setOnlineStaff(statusMap);
+                        }
+                    })
+                    .catch(err => console.error("Error fetching online staff:", err));
+            };
+
             fetchOnlineStatus();
             
             // Poll every 60s
@@ -100,24 +118,7 @@ export default function StaffCardsManager({ mockCards, mockOnlineStatus }: MockS
     }, [mockCards, mockOnlineStatus]);
 
 
-    const fetchOnlineStatus = () => {
-        if (mockOnlineStatus) return;
-        fetch(`${API_URL}/server/staff`)
-            .then(res => res.ok ? res.json() : [])
-            .then(data => {
-                if(Array.isArray(data)) {
-                    const statusMap: Record<string, { mc: string, discord: string }> = {};
-                    data.forEach((u: any) => {
-                        statusMap[u.username.toLowerCase()] = {
-                            mc: u.mc_status || 'offline',
-                            discord: u.discord_status || 'offline'
-                        };
-                    });
-                    setOnlineStaff(statusMap);
-                }
-            })
-            .catch(err => console.error("Error fetching online staff:", err));
-    };
+
 
     const handleSave = async (newCards: StaffCard[]) => {
         setSaving(true);
