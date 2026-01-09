@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaSave, FaPlus, FaTrash, FaTrophy } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
 import Loader from "../UI/Loader";
+import PremiumConfirm from "../UI/PremiumConfirm";
 import { MEDAL_ICONS } from '../../utils/MedalIcons';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthHeaders } from '../../services/adminAuth';
@@ -27,6 +28,12 @@ export default function GamificationManager() {
     const [saving, setSaving] = useState<string | null>(null);
     const [medals, setMedals] = useState<Medal[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // Modal state
+    const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean, medalId: number | null }>({
+        isOpen: false,
+        medalId: null
+    });
 
     // Fetch settings on mount
     useEffect(() => {
@@ -96,9 +103,15 @@ export default function GamificationManager() {
         }]);
     };
 
-    const handleDelete = (id: number) => {
-        if(!confirm(t('admin.gamification.medals.delete_confirm'))) return;
-        setMedals(medals.filter(m => m.id !== id));
+    const handleDeleteClick = (id: number) => {
+        setConfirmDelete({ isOpen: true, medalId: id });
+    };
+
+    const executeDelete = () => {
+        if (confirmDelete.medalId) {
+            setMedals(medals.filter(m => m.id !== confirmDelete.medalId));
+        }
+        setConfirmDelete({ isOpen: false, medalId: null });
     };
 
     const handleChange = (id: number, field: keyof Medal, value: string) => {
@@ -144,7 +157,7 @@ export default function GamificationManager() {
                         <div className="medal-card-accent" style={{ background: medal.color }}></div>
                         
                         <button 
-                            onClick={() => handleDelete(medal.id)}
+                            onClick={() => handleDeleteClick(medal.id)}
                             className="medal-delete-btn"
                             title={t('common.delete', 'Eliminar')}
                         >
@@ -208,6 +221,17 @@ export default function GamificationManager() {
                     </span>
                 </div>
             </div>
+
+            <PremiumConfirm 
+                isOpen={confirmDelete.isOpen}
+                title={t('admin.gamification.medals.delete_title', '¿Borrar medalla?')}
+                message={t('admin.gamification.medals.delete_confirm', '¿Estás seguro de que deseas eliminar esta medalla? Esta acción no se puede deshacer.')}
+                confirmLabel={t('common.delete', 'Eliminar')}
+                onConfirm={executeDelete}
+                onCancel={() => setConfirmDelete({ isOpen: false, medalId: null })}
+                variant="danger"
+            />
         </div>
     );
 }
+
