@@ -114,7 +114,7 @@ export default function StaffCardsManager({ mockCards, mockOnlineStatus }: MockS
             // Poll every 60s
             const interval = setInterval(fetchOnlineStatus, 60000);
             return () => clearInterval(interval);
-        }
+
     }, [mockCards, mockOnlineStatus]);
 
 
