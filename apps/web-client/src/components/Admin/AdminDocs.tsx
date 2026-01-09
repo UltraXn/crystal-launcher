@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { IconType } from 'react-icons';
 import { 
     FaBook, FaBullhorn, FaUserShield, FaClipboardList, FaTerminal, 
-    FaGamepad, FaChevronDown, FaEdit, FaSave, FaTimes, FaListUl, FaUndo
+    FaGamepad, FaChevronDown, FaEdit, FaSave, FaTimes, FaListUl, FaUndo,
+    FaImage, FaSpinner
 } from 'react-icons/fa';
 import MarkdownRenderer from '../UI/MarkdownRenderer';
 import PremiumConfirm from '../UI/PremiumConfirm';
+import PremiumAlert from '../UI/PremiumAlert';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthHeaders } from '../../services/adminAuth';
@@ -189,6 +191,12 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
     const [loading, setLoading] = useState(!mockDocs);
     const [saving, setSaving] = useState(false);
     const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, message: string, variant: 'error' | 'success' }>({
+        isOpen: false,
+        message: '',
+        variant: 'success'
+    });
+    const [uploading, setUploading] = useState(false);
 
     // Fetch docs from DB
     useEffect(() => {
@@ -218,7 +226,7 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
             }
         };
         fetchDocs();
-    }, [defaults]);
+    }, [defaults, mockDocs]);
 
     const activeDoc = docs.find(d => d.id === activeTab) || docs[0] || defaults[0];
 
@@ -253,7 +261,11 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
             setIsEditing(false);
         } catch (err) {
             console.error("Error saving docs:", err);
-            alert(t('admin.docs.save_error'));
+            setAlertConfig({
+                isOpen: true,
+                message: t('admin.docs.save_error'),
+                variant: 'error'
+            });
         } finally {
             setSaving(false);
         }
@@ -267,6 +279,44 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
         const defaultDoc = defaults.find(d => d.id === activeTab);
         if (defaultDoc) setEditContent(defaultDoc.content);
         setIsResetConfirmOpen(false);
+    };
+
+    const handleImageUpload = async (file: File) => {
+        setUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `docs/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('admin-assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('admin-assets')
+                .getPublicUrl(filePath);
+
+            // Insert markdown at cursor or end
+            const imageMarkdown = `\n![Image](${publicUrl})\n`;
+            setEditContent(prev => prev + imageMarkdown);
+            
+            setAlertConfig({
+                isOpen: true,
+                message: t('admin.docs.image_uploaded', 'Imagen subida correctamente'),
+                variant: 'success'
+            });
+        } catch (err) {
+            console.error("Error uploading image:", err);
+            setAlertConfig({
+                isOpen: true,
+                message: t('admin.docs.upload_error', 'Error al subir la imagen'),
+                variant: 'error'
+            });
+        } finally {
+            setUploading(false);
+        }
     };
 
     if (loading) return <div style={{ color: '#aaa', padding: '2rem' }}>{t('admin.docs.loading')}</div>;
@@ -529,12 +579,37 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                     </div>
                     
                     {isEditing ? (
-                        <textarea 
-                            className="docs-editor"
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            placeholder={t('admin.docs.placeholder')}
-                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                            <div className="editor-toolbar" style={{ 
+                                display: 'flex', 
+                                gap: '0.5rem', 
+                                padding: '0.5rem', 
+                                background: 'rgba(255,255,255,0.02)', 
+                                border: '1px solid rgba(255,255,255,0.05)', 
+                                borderRadius: '8px' 
+                            }}>
+                                <label className="btn-icon-premium" style={{ cursor: 'pointer', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                    {uploading ? <FaSpinner className="spin" /> : <FaImage />}
+                                    {uploading ? t('common.uploading', 'Subiendo...') : t('admin.docs.upload_image', 'Subir Imagen')}
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        style={{ display: 'none' }} 
+                                        disabled={uploading}
+                                        onChange={(e) => {
+                                            if (e.target.files?.[0]) handleImageUpload(e.target.files[0]);
+                                        }}
+                                    />
+                                </label>
+                            </div>
+                            <textarea 
+                                className="docs-editor"
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                placeholder={t('admin.docs.placeholder')}
+                                style={{ flex: 1 }}
+                            />
+                        </div>
                     ) : (
                         <div className="markdown-body" style={{ color: '#ddd', lineHeight: 1.6 }}>
                             <MarkdownRenderer content={activeDoc.content} />
@@ -550,6 +625,12 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                 onConfirm={executeReset}
                 onCancel={() => setIsResetConfirmOpen(false)}
                 variant="warning"
+            />
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
             />
         </div>
     );
