@@ -30,11 +30,22 @@ export default function GamificationManager() {
 
     // Fetch settings on mount
     useEffect(() => {
-        fetch(`${API_URL}/settings`)
-            .then(res => res.json())
-            .then(data => setSettings(data))
-            .catch(console.error)
-            .finally(() => setLoading(false));
+        const fetchSettings = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                const headers = getAuthHeaders(session?.access_token || null);
+                
+                const res = await fetch(`${API_URL}/settings`, { headers });
+                const data = await res.json();
+                setSettings(data);
+            } catch (error) {
+                console.error("Error fetching settings:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSettings();
     }, []);
 
     // Sync medals when settings change
