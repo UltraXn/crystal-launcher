@@ -5,6 +5,7 @@ import {
     FaGamepad, FaChevronDown, FaEdit, FaSave, FaTimes, FaListUl, FaUndo
 } from 'react-icons/fa';
 import MarkdownRenderer from '../UI/MarkdownRenderer';
+import PremiumConfirm from '../UI/PremiumConfirm';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthHeaders } from '../../services/adminAuth';
@@ -187,6 +188,7 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
     const [editContent, setEditContent] = useState('');
     const [loading, setLoading] = useState(!mockDocs);
     const [saving, setSaving] = useState(false);
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
     // Fetch docs from DB
     useEffect(() => {
@@ -258,10 +260,13 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
     };
 
     const handleReset = () => {
-        if (window.confirm(t('admin.docs.reset_confirm'))) {
-            const defaultDoc = defaults.find(d => d.id === activeTab);
-            if (defaultDoc) setEditContent(defaultDoc.content);
-        }
+        setIsResetConfirmOpen(true);
+    };
+
+    const executeReset = () => {
+        const defaultDoc = defaults.find(d => d.id === activeTab);
+        if (defaultDoc) setEditContent(defaultDoc.content);
+        setIsResetConfirmOpen(false);
     };
 
     if (loading) return <div style={{ color: '#aaa', padding: '2rem' }}>{t('admin.docs.loading')}</div>;
@@ -537,6 +542,15 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                     )}
                 </div>
             </div>
+            <PremiumConfirm 
+                isOpen={isResetConfirmOpen}
+                title={t('admin.docs.reset_confirm_title', 'Restablecer Sección')}
+                message={t('admin.docs.reset_confirm', '¿Estás seguro de que quieres restablecer esta sección a los valores predeterminados?')}
+                confirmLabel={t('admin.docs.reset', 'Restablecer')}
+                onConfirm={executeReset}
+                onCancel={() => setIsResetConfirmOpen(false)}
+                variant="warning"
+            />
         </div>
     );
 }
