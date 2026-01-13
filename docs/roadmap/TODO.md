@@ -97,6 +97,7 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
   - [/] Infraestructura base y Docker (Hecho).
   - [x] **Asignación de Roles**: Sincronización Web -> Discord.
 - [ ] **Mapa Dinámico**: Integración de Dynmap.
+- [ ] **Tope Dinámico para "Mercader"**: Ajustar el 100% del Playstyle Radar basado en la economía total del servidor (Inflación-aware).
 
 ### ☁️ Infraestructura Futura (VPS)
 
@@ -108,8 +109,8 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 
 ## 🚀 Notas de Mantenimiento
 
-- [ ] **Higiene de Dependencias**: `npm audit fix` regular.
-- [ ] **Monitoreo de Imágenes Base**.
+- [x] **Higiene de Dependencias**: `npm audit fix` ejecutado (0 vulnerabilidades).
+- [x] **Monitoreo de Imágenes Base**: Verificado uso de `node:22-alpine`, `oven/bun:1` y `nginx:alpine` (Versiones mantenidas).
 - [x] **Overrides de Seguridad**: `package.json` protegido.
 
 ### 🔒 Seguridad Avanzada (Fase 9)
@@ -118,21 +119,28 @@ Este documento centraliza el roadmap completo del proyecto, organizando las tare
 - [x] **Whitelist de Comandos**: Lista blanca estricta para comandos web.
 - [x] **Auditoría Web**: Logs inmutables de acciones administrativas.
 
+### 🧹 Deuda Técnica (Post-Auditoría Context7)
+
+- [x] **Migración a React Router v7**: Cambiar imports de `react-router-dom` a `react-router` y adoptar `createBrowserRouter` (40+ archivos afectados). (Arquitectura implementada)
+- [x] **Unificación de Íconos**: Reemplazar `react-icons` por `lucide-react` para reducir bundle size y tener consistencia visual. (Completado)
+- [x] **Limpieza de Animaciones**: Evaluar eliminación de `GSAP` en favor de `framer-motion` si no se usan timelines complejos. (Eliminado)
+- [x] **Soporte Nativo HTML Head**: Reemplazar `react-helmet` (si existe) por soporte nativo de React 19 (`<title>`, `<meta>`). (React 19 Nativo)
+
 ### 🧪 Futuro: Stack Tecnológico & "Wow" Features (2026)
 
 Esta sección define el "Siguiente Nivel" para profesionalizar el portfolio al máximo.
 
 #### Frontend & UX
 
-- [ ] **TanStack Query**: Migrar data-fetching para mejor caché y UX.
-- [ ] **Zustand**: Gestión de estado global ligera y moderna.
+- [x] **TanStack Query**: Migrar data-fetching para mejor caché y UX. (Migración Admin Panel Completada)
+- [x] **Zustand**: Gestión de estado global ligera y moderna. (Instalado v5.0.9)
 - [x] **Live Dashboard**: Implementar **Supabase Realtime** para actualizaciones instantáneas (Chat/Donaciones).
 - [ ] **Live Activity Feed ("El Pulso")**: Stream en tiempo real de logros, eventos y donaciones en la web.
 - [ ] **Mapa 3D Integrado**: Embed de **BlueMap** dentro del dashboard de usuario.
 
 #### DevOps & Mantenimiento
 
-- [ ] **Husky + Commitlint**: Estandarizar commits (`feat:`, `fix:`) antes de subir código.
+- [x] **Husky + Commitlint**: Estandarizar commits (`feat:`, `fix:`) antes de subir código. (Configurado)
 - [ ] **Renovate Bot**: Automatización de actualizaciones de dependencias (`npm`).
 
 #### Observabilidad & Analítica
@@ -145,4 +153,4 @@ Esta sección define el "Siguiente Nivel" para profesionalizar el portfolio al m
 
 - [x] **2FA (TOTP)**: Autenticación de dos factores para el Panel de Admin.
 
-> Última actualización: 28 de Diciembre, 2025
+> Última actualización: 10 de Enero, 2026

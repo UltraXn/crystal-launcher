@@ -46,20 +46,20 @@ export const getLogs = async ({ limit = 50, offset = 0, source, search }: LogQue
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-    if (source) query = query.eq('source', source);
+    if (source && source !== 'all') query = query.eq('source', source);
     if (search) query = query.or(`username.ilike.%${search}%,action.ilike.%${search}%,details.ilike.%${search}%`);
 
     const { data, count, error } = await query;
     if (error) throw error;
 
-    return { logs: data, total: count };
+    return { data: data, total: count };
 };
 
 // Placeholder for CoreProtect
 export const getGameLogs = async (_params: LogQueryParams) => {
     // Future integration with CoreProtect MySQL
     return {
-        logs: [],
+        data: [],
         total: 0,
         message: "Conexión a CoreProtect pendiente."
     };

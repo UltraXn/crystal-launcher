@@ -49,3 +49,7 @@ tools.yaml
 # TestSprite
 **/testsprite_tests/
 testsprite_tests/
+
+# Local Server Dev Environment
+CrystalTidesSMP SV DEV/
+

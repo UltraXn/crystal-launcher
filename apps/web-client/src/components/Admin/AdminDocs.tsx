@@ -1,26 +1,29 @@
 import { useState, useEffect } from 'react';
-import { IconType } from 'react-icons';
+import { LucideIcon } from 'lucide-react';
 import { 
-    FaBook, FaBullhorn, FaUserShield, FaClipboardList, FaTerminal, 
-    FaGamepad, FaChevronDown, FaEdit, FaSave, FaTimes, FaListUl, FaUndo
-} from 'react-icons/fa';
+    Book, Megaphone, Shield, ClipboardList, Terminal, 
+    Gamepad2, ChevronDown, Edit, Save, X, List, Undo2,
+    Image, Loader2
+} from 'lucide-react';
 import MarkdownRenderer from '../UI/MarkdownRenderer';
+import PremiumConfirm from '../UI/PremiumConfirm';
+import PremiumAlert from '../UI/PremiumAlert';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../services/supabaseClient';
 import { getAuthHeaders } from '../../services/adminAuth';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const ICON_MAP: Record<string, IconType> = {
-    'intro': FaBook,
-    'security': FaUserShield,
-    'staff-hub': FaClipboardList,
-    'moderation': FaUserShield,
-    'discord': FaBullhorn,
-    'audit': FaListUl,
-    'console': FaTerminal,
-    'content': FaBullhorn,
-    'gamification': FaGamepad
+const ICON_MAP: Record<string, LucideIcon> = {
+    'intro': Book,
+    'security': Shield,
+    'staff-hub': ClipboardList,
+    'moderation': Shield,
+    'discord': Megaphone,
+    'audit': List,
+    'console': Terminal,
+    'content': Megaphone,
+    'gamification': Gamepad2
 };
 
 const useDocsDefaults = () => {
@@ -30,7 +33,7 @@ const useDocsDefaults = () => {
     {
         id: 'intro',
         title: t('admin.docs.titles.intro', 'Introducción'),
-        icon: FaBook,
+        icon: Book,
         content: `
 # ${t('admin.docs.titles.intro', 'Introducción')}
 
@@ -42,7 +45,7 @@ ${t('admin.docs.content.intro_msg', 'Bienvenido al centro de control. Desde aqu�
     {
         id: 'security',
         title: t('admin.docs.titles.security', 'Seguridad (2FA)'),
-        icon: FaUserShield,
+        icon: Shield,
         content: `
 # 🛡️ ${t('admin.docs.titles.security', 'Seguridad (2FA)')}
 
@@ -56,7 +59,7 @@ ${t('admin.docs.content.security_desc', 'Protección de acceso al panel administ
     {
         id: 'staff-hub',
         title: t('admin.docs.titles.staff_hub', 'Staff Hub'),
-        icon: FaClipboardList,
+        icon: ClipboardList,
         content: `
 # 📋 ${t('admin.docs.titles.staff_hub', 'Staff Hub')}
 
@@ -75,90 +78,93 @@ ${t('admin.docs.content.notes_desc', 'Un muro de post-its compartidos. Úsalo pa
     {
         id: 'moderation',
         title: t('admin.docs.titles.moderation', 'Moderación & Usuarios'),
-        icon: FaUserShield,
+        icon: Shield,
         content: `
 # 👮 ${t('admin.docs.titles.users_manage', 'Gestión de Usuarios')}
 
 ### Users Manager
-${t('admin.docs.content.users_desc', 'Lista completa de usuarios registrados.')}
-- **Roles**: ${t('admin.docs.content.users_roles', 'Asignar roles web (Admin, Mod).')}
-- **Ban**: ${t('admin.docs.content.users_ban', 'Bloquear acceso a la web.')}
+${t('admin.docs.content.users_desc', 'Lista completa de usuarios registrados y control de staff.')}
+- **Roles**: Asignar roles (Admin, Staff, Developer) con jerarquía protegida.
+- **Auditoría**: Cada cambio de rol queda registrado en los logs.
 
-### Tickets System
-${t('admin.docs.content.tickets_desc', 'Centro de soporte. Prioriza y responde tickets de usuarios.')}
+### 🎟️ Tickets System (Soporte)
+Centro de soporte avanzado para la comunidad. 
+- **Modales Premium**: Interfaz mejorada con Portals para evitar errores visuales (z-index).
+- **Gestión**: Prioriza, asigna y resuelve dudas de los usuarios en tiempo real.
         `
     },
     {
         id: 'discord',
         title: t('admin.docs.titles.discord', 'Integración Discord'),
-        icon: FaBullhorn,
+        icon: Megaphone,
         content: `
 # 🤖 ${t('admin.docs.titles.discord', 'Integración Discord')}
 
 ${t('admin.docs.content.discord_desc', 'Sincronización entre la web y la comunidad de Discord.')}
 
 ### 🔗 ${t('admin.docs.content.discord_linking', 'Vinculación')}
-- **CrystalCore**: ${t('admin.docs.content.discord_linking', 'Vinculación de cuentas mediante /link.')}
+- **Sync**: Los roles de Discord se sincronizan automáticamente con la cuenta web.
 
 ### 📢 ${t('admin.docs.content.discord_announcements', 'Anuncios')}
-- **Webhooks**: ${t('admin.docs.content.discord_announcements', 'Anuncios automáticos en el servidor de Discord al publicar noticias.')}
+- **Noticias**: Al publicar una noticia, se envía automáticamente un aviso al canal configurado en Discord.
         `
     },
     {
         id: 'audit',
         title: t('admin.docs.titles.audit', 'Logs de Auditoría'),
-        icon: FaListUl,
+        icon: List,
         content: `
 # 📝 ${t('admin.docs.titles.audit', 'Logs de Auditoría')}
 
-${t('admin.docs.content.audit_desc', 'Registro histórico de todas las acciones administrativas realizadas en la web y el juego.')}
+${t('admin.docs.content.audit_desc', 'Registro histórico de todas las acciones administrativas.')}
 
-- **Filtros**: ${t('admin.docs.tabs.logs', 'Logs')} permite filtrar por origen (Web/Juego) y usuario.
-- **Acciones**: ${t('admin.docs.content.audit_desc', 'Registra cambios en configuración, bans, tickets y más.')}
+- **Transparencia**: Registra quién, cuándo y qué cambió (Roles, Configuración, Gamificación).
+- **Seguridad**: Los logs son inmutables para garantizar la integridad del equipo.
         `
     },
     {
         id: 'console',
         title: t('admin.docs.titles.console', 'Consola & Comandos'),
-        icon: FaTerminal,
+        icon: Terminal,
         content: `
 # 💻 ${t('admin.docs.titles.console_bridge', 'Consola Remota (Secure Bridge)')}
 
-${t('admin.docs.content.console_desc', 'Ejecuta comandos en el servidor de Minecraft de forma segura.')}
+${t('admin.docs.content.console_desc', 'Ejecuta comandos en el servidor de Minecraft en tiempo real.')}
 
-### ${t('admin.docs.content.common_cmds', 'Comandos Comunes')}
-- \`kick <player>\`: ${t('admin.docs.content.cmd_kick', 'Expulsar.')}
-- \`ban <player>\`: ${t('admin.docs.content.cmd_ban', 'Banear.')}
-- \`broadcast <msg>\`: ${t('admin.docs.content.cmd_broadcast', 'Anuncio global.')}
+### 🔥 Seguridad de Acciones
+- **Premium Confirmation**: Toda acción destructiva (Kick, Ban total) requiere confirmación mediante el nuevo sistema de seguridad visual.
         `
     },
     {
         id: 'content',
         title: t('admin.docs.titles.content', 'Gestión de Contenido'),
-        icon: FaBullhorn,
+        icon: Megaphone,
         content: `
 # 📢 ${t('admin.docs.titles.content_web', 'Contenido Web')}
 
-### ${t('admin.docs.content.news', 'Noticias')}
-${t('admin.docs.content.news_desc', 'Editor de posts tipo blog con Markdown.')}
+### 📝 Noticias & Encuestas
+Editor de Markdown integrado para publicar anuncios ricos y votaciones interactivas para los jugadores.
 
-### Broadcasts
-${t('admin.docs.content.broadcast_desc', 'Controla la alerta superior de la web.')}
-
-### ${t('admin.docs.content.polls', 'Encuestas')}
-${t('admin.docs.content.polls_desc', 'Crea votaciones para la comunidad.')}
+### 🛰️ Broadcasts
+Mensajes emergentes globales en la parte superior de la web para avisos de mantenimiento o eventos inminentes.
         `
     },
     {
         id: 'gamification',
-        title: t('admin.docs.titles.gamification', 'Gamificación'),
-        icon: FaGamepad,
+        title: t('admin.docs.titles.gamification', 'Gamificación (Medallas)'),
+        icon: Gamepad2,
         content: `
-# 🎮 Gacha & Stats
+# 🏆 Sistema de Medallas Premium
 
-### ${t('admin.docs.content.gacha_config', 'Configuración Gacha')}
-- **Cooldown**: ${t('admin.docs.content.gacha_cooldown', '24 horas por usuario.')}
-- **${t('admin.docs.content.prizes', 'Premios')}**: ${t('admin.docs.content.gacha_prizes', 'Entrega automática in-game.')}
+Gestión visual completa de los logros y medallas del servidor.
+
+### 🏅 Medal Definitions
+- **Upload Directo**: Ahora puedes subir imágenes personalizadas directamente desde el panel (vía Supabase Storage).
+- **Control de Estética**: Ajuste de colores dinámicos y previsualización en tiempo real.
+- **Iconografía**: Soporte para cientos de iconos de React Icons o archivos PNG/WebP personalizados.
+
+### 🔒 Confirmaciones
+Sistema de eliminación protegido con modales animados para evitar pérdidas accidentales de definiciones de medallas.
         `
     }
 ];
@@ -184,6 +190,13 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
     const [editContent, setEditContent] = useState('');
     const [loading, setLoading] = useState(!mockDocs);
     const [saving, setSaving] = useState(false);
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean, message: string, variant: 'error' | 'success' }>({
+        isOpen: false,
+        message: '',
+        variant: 'success'
+    });
+    const [uploading, setUploading] = useState(false);
 
     // Fetch docs from DB
     useEffect(() => {
@@ -213,7 +226,7 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
             }
         };
         fetchDocs();
-    }, [defaults]);
+    }, [defaults, mockDocs]);
 
     const activeDoc = docs.find(d => d.id === activeTab) || docs[0] || defaults[0];
 
@@ -248,22 +261,67 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
             setIsEditing(false);
         } catch (err) {
             console.error("Error saving docs:", err);
-            alert(t('admin.docs.save_error'));
+            setAlertConfig({
+                isOpen: true,
+                message: t('admin.docs.save_error'),
+                variant: 'error'
+            });
         } finally {
             setSaving(false);
         }
     };
 
     const handleReset = () => {
-        if (window.confirm(t('admin.docs.reset_confirm'))) {
-            const defaultDoc = defaults.find(d => d.id === activeTab);
-            if (defaultDoc) setEditContent(defaultDoc.content);
+        setIsResetConfirmOpen(true);
+    };
+
+    const executeReset = () => {
+        const defaultDoc = defaults.find(d => d.id === activeTab);
+        if (defaultDoc) setEditContent(defaultDoc.content);
+        setIsResetConfirmOpen(false);
+    };
+
+    const handleImageUpload = async (file: File) => {
+        setUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `docs/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('admin-assets')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('admin-assets')
+                .getPublicUrl(filePath);
+
+            // Insert markdown at cursor or end
+            const imageMarkdown = `\n![Image](${publicUrl})\n`;
+            setEditContent(prev => prev + imageMarkdown);
+            
+            setAlertConfig({
+                isOpen: true,
+                message: t('admin.docs.image_uploaded', 'Imagen subida correctamente'),
+                variant: 'success'
+            });
+        } catch (err) {
+            console.error("Error uploading image:", err);
+            setAlertConfig({
+                isOpen: true,
+                message: t('admin.docs.upload_error', 'Error al subir la imagen'),
+                variant: 'error'
+            });
+        } finally {
+            setUploading(false);
         }
     };
 
     if (loading) return <div style={{ color: '#aaa', padding: '2rem' }}>{t('admin.docs.loading')}</div>;
 
-    const ActiveIcon = ICON_MAP[activeDoc?.id] || FaBook;
+    const ActiveIcon = ICON_MAP[activeDoc?.id] || Book;
 
     return (
         <div className="admin-docs-container">
@@ -441,7 +499,7 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                 <h3 style={{ padding: '0 1rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--muted)' }}>{t('admin.docs.index')}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem 0' }}>
                     {docs.map(doc => {
-                        const Icon = ICON_MAP[doc.id] || FaBook;
+                        const Icon = ICON_MAP[doc.id] || Book;
                         return (
                             <button
                                 key={doc.id}
@@ -465,13 +523,13 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
                         <ActiveIcon color="var(--accent)" /> {activeDoc.title}
                     </span>
-                    <FaChevronDown style={{ transform: mobileMenuOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
+                    <ChevronDown style={{ transform: mobileMenuOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }} />
                 </button>
                 
                 {mobileMenuOpen && (
                     <div className="mobile-dropdown-list">
                         {docs.map(doc => {
-                            const Icon = ICON_MAP[doc.id] || FaBook;
+                            const Icon = ICON_MAP[doc.id] || Book;
                             return (
                                 <div 
                                     key={doc.id}
@@ -503,30 +561,55 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                             {isEditing ? (
                                 <>
                                     <button onClick={handleReset} className="btn-secondary" style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.05)' }} title={t('admin.docs.reset')}>
-                                        <FaUndo />
+                                        <Undo2 />
                                     </button>
                                     <button onClick={() => setIsEditing(false)} className="btn-secondary" style={{ color: '#ef4444' }}>
-                                        <FaTimes /> {t('admin.actions.cancel')}
+                                        <X /> {t('admin.actions.cancel')}
                                     </button>
                                     <button onClick={handleSave} className="btn-primary" disabled={saving}>
-                                        <FaSave /> {saving ? t('admin.docs.saving') : t('admin.actions.save')}
+                                        <Save /> {saving ? t('admin.docs.saving') : t('admin.actions.save')}
                                     </button>
                                 </>
                             ) : (
                                 <button onClick={() => setIsEditing(true)} className="btn-primary" style={{ background: 'rgba(22, 140, 128, 0.2)', border: '1px solid var(--accent)', color: 'var(--accent)' }}>
-                                    <FaEdit /> {t('admin.docs.edit_section')}
+                                    <Edit /> {t('admin.docs.edit_section')}
                                 </button>
                             )}
                         </div>
                     </div>
                     
                     {isEditing ? (
-                        <textarea 
-                            className="docs-editor"
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            placeholder={t('admin.docs.placeholder')}
-                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+                            <div className="editor-toolbar" style={{ 
+                                display: 'flex', 
+                                gap: '0.5rem', 
+                                padding: '0.5rem', 
+                                background: 'rgba(255,255,255,0.02)', 
+                                border: '1px solid rgba(255,255,255,0.05)', 
+                                borderRadius: '8px' 
+                            }}>
+                                <label className="btn-icon-premium" style={{ cursor: 'pointer', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                                    {uploading ? <Loader2 className="spin" /> : <Image />}
+                                    {uploading ? t('common.uploading', 'Subiendo...') : t('admin.docs.upload_image', 'Subir Imagen')}
+                                    <input 
+                                        type="file" 
+                                        accept="image/*" 
+                                        style={{ display: 'none' }} 
+                                        disabled={uploading}
+                                        onChange={(e) => {
+                                            if (e.target.files?.[0]) handleImageUpload(e.target.files[0]);
+                                        }}
+                                    />
+                                </label>
+                            </div>
+                            <textarea 
+                                className="docs-editor"
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                placeholder={t('admin.docs.placeholder')}
+                                style={{ flex: 1 }}
+                            />
+                        </div>
                     ) : (
                         <div className="markdown-body" style={{ color: '#ddd', lineHeight: 1.6 }}>
                             <MarkdownRenderer content={activeDoc.content} />
@@ -534,6 +617,21 @@ export default function AdminDocs({ mockDocs }: AdminDocsProps = {}) {
                     )}
                 </div>
             </div>
+            <PremiumConfirm 
+                isOpen={isResetConfirmOpen}
+                title={t('admin.docs.reset_confirm_title', 'Restablecer Sección')}
+                message={t('admin.docs.reset_confirm', '¿Estás seguro de que quieres restablecer esta sección a los valores predeterminados?')}
+                confirmLabel={t('admin.docs.reset', 'Restablecer')}
+                onConfirm={executeReset}
+                onCancel={() => setIsResetConfirmOpen(false)}
+                variant="warning"
+            />
+            <PremiumAlert 
+                isOpen={alertConfig.isOpen}
+                message={alertConfig.message}
+                variant={alertConfig.variant}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 }

@@ -1,90 +1,60 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 import { useAuth } from "../../context/AuthContext"
 
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../services/supabaseClient'
-import { getAuthHeaders } from '../../services/adminAuth'
 import { sendDiscordLog } from '../../services/discordService'
 
-const API_URL = import.meta.env.VITE_API_URL
-import { FaSearch } from 'react-icons/fa'
+import { Search } from 'lucide-react'
+import { 
+    useAdminSettings, 
+    useSearchUsers, 
+    useUpdateUserRole, 
+    useUpdateUserMetadata 
+} from '../../hooks/useAdminData'
 
 import UsersTable from './Users/UsersTable'
 import UserMedalsModal from './Users/UserMedalsModal'
+import UserAchievementsModal from './Users/UserAchievementsModal'
 import UserRoleModal from './Users/UserRoleModal'
-import { UserDefinition, MedalDefinition } from './Users/types'
+import { UserDefinition, MedalDefinition, AchievementDefinition } from './Users/types'
 
 interface UsersManagerProps {
     mockUsers?: UserDefinition[];
     mockMedals?: MedalDefinition[];
+    mockAchievements?: AchievementDefinition[];
 }
 
-export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProps = {}) {
+export default function UsersManager({ mockUsers }: UsersManagerProps = {}) {
     const { t } = useTranslation()
     const [users, setUsers] = useState<UserDefinition[]>(mockUsers || [])
-    const [loading, setLoading] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const [hasSearched, setHasSearched] = useState(!!mockUsers) // Assume searched if mocks provided
     
-    // Medal Management State
-    const [availableMedals, setAvailableMedals] = useState<MedalDefinition[]>(mockMedals || [])
     const [editingUser, setEditingUser] = useState<UserDefinition | null>(null)
-    const [savingMedals, setSavingMedals] = useState(false)
-
-    // Role Change Modal State
+    const [editingType, setEditingType] = useState<'medals' | 'achievements' | null>(null)
     const [roleChangeModal, setRoleChangeModal] = useState<{ userId: string, newRole: string } | null>(null)
+
+    // TanStack Query Hooks
+    const { data: adminSettings } = useAdminSettings();
+    const searchMutation = useSearchUsers();
+    const updateRoleMutation = useUpdateUserRole();
+    const updateMetadataMutation = useUpdateUserMetadata();
 
     const { user } = useAuth() as { user: UserDefinition | null } 
 
-    // Fetch available medals on load
-    useEffect(() => {
-        if (mockMedals) return;
-        fetch(`${API_URL}/settings`)
-            .then(res => {
-                if(!res.ok) throw new Error("Fetch failed");
-                return res.json();
-            })
-            .then(data => {
-                if(data.medal_definitions) {
-                    try {
-                        const parsed = typeof data.medal_definitions === 'string' ? JSON.parse(data.medal_definitions) : data.medal_definitions;
-                        setAvailableMedals(Array.isArray(parsed) ? parsed : []);
-                    } catch { setAvailableMedals([]); }
-                }
-            })
-            .catch(console.warn);
-    }, [mockMedals]);
+    const availableMedals = adminSettings?.medals || [];
+    const availableAchievements = adminSettings?.achievements || [];
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!searchQuery.trim()) return
 
-        try {
-            setLoading(true)
-            setHasSearched(true)
-            
-            const { data: { session } } = await supabase.auth.getSession();
-            const headers = getAuthHeaders(session?.access_token || null);
-
-            const res = await fetch(`${API_URL}/users?search=${encodeURIComponent(searchQuery)}`, { headers })
-            if(res.ok) {
-                const response = await res.json()
-                if (Array.isArray(response)) {
-                    setUsers(response)
-                } else if (response.data && Array.isArray(response.data)) {
-                    setUsers(response.data);
-                } else {
-                    console.error("Unexpected users response format:", response);
-                    setUsers([]);
-                    if (response.error || response.message) alert(response.error || response.message);
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching users", error)
-        } finally {
-            setLoading(false)
-        }
+        setHasSearched(true)
+        searchMutation.mutate(searchQuery, {
+            onSuccess: (data) => setUsers(data)
+        });
     }
 
     const handleRoleChange = (userId: string, newRole: string) => {
@@ -95,19 +65,8 @@ export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProp
         if (!roleChangeModal) return;
         const { userId, newRole } = roleChangeModal;
 
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const headers = { 
-                'Content-Type': 'application/json',
-                ...getAuthHeaders(session?.access_token || null)
-            };
-
-            const res = await fetch(`${API_URL}/users/${userId}/role`, {
-                method: 'PATCH',
-                headers,
-                body: JSON.stringify({ role: newRole })
-            })
-            if(res.ok) {
+        updateRoleMutation.mutate({ userId, role: newRole }, {
+            onSuccess: async () => {
                 // Determine target user name for log
                 const targetUser = users.find(u => u.id === userId);
                 const targetName = targetUser?.username || targetUser?.email || userId;
@@ -126,41 +85,38 @@ export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProp
                     window.location.reload();
                 }
                 setRoleChangeModal(null);
-            } else {
+            },
+            onError: () => {
                 alert(t('admin.users.error_role'))
             }
-        } catch (error) {
-            console.error(error)
-        }
+        });
     }
 
-    const handleSaveMedals = async () => {
-        if (!editingUser) return;
-        setSavingMedals(true);
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const headers = { 
-                'Content-Type': 'application/json',
-                ...getAuthHeaders(session?.access_token || null)
-            };
+    const handleSaveMetadata = async () => {
+        if (!editingUser || !editingType) return;
+        
+        const values = editingType === 'medals' 
+            ? editingUser.medals 
+            : editingUser.achievements;
 
-            const res = await fetch(`${API_URL}/users/${editingUser.id}/metadata`, {
-                method: 'PATCH',
-                headers,
-                body: JSON.stringify({ metadata: { medals: editingUser.medals } })
-            });
+        updateMetadataMutation.mutate({ 
+            userId: editingUser.id, 
+            type: editingType, 
+            values: values || [] 
+        }, {
+            onSuccess: () => {
+                const payload = editingType === 'medals' 
+                    ? { medals: editingUser.medals } 
+                    : { achievements: editingUser.achievements };
 
-            if (res.ok) {
-                setUsers(users.map(u => u.id === editingUser.id ? { ...u, medals: editingUser.medals } : u));
+                setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...payload } : u));
                 setEditingUser(null);
-            } else {
-                alert(t('admin.users.error_medals'));
+                setEditingType(null);
+            },
+            onError: () => {
+                alert(t('admin.users.error_update', 'Error al actualizar'));
             }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setSavingMedals(false);
-        }
+        });
     };
 
     const toggleMedal = (medalId: number) => {
@@ -174,6 +130,19 @@ export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProp
             newMedals = [...newMedals, medalId];
         }
         setEditingUser({ ...editingUser, medals: newMedals });
+    };
+
+    const toggleAchievement = (achievementId: string | number) => {
+        if (!editingUser) return;
+        const hasAchievement = editingUser.achievements?.includes(achievementId);
+        let newAchievements = editingUser.achievements || [];
+        
+        if (hasAchievement) {
+            newAchievements = newAchievements.filter(id => id !== achievementId);
+        } else {
+            newAchievements = [...newAchievements, achievementId];
+        }
+        setEditingUser({ ...editingUser, achievements: newAchievements });
     };
 
     const canManageRoles = ['neroferno', 'killu', 'killuwu', 'developer'].includes(user?.user_metadata?.role || '');
@@ -196,31 +165,47 @@ export default function UsersManager({ mockUsers, mockMedals }: UsersManagerProp
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    <FaSearch style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                    <Search style={{ position: 'absolute', left: '1.2rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
                 </div>
-                <button type="submit" className="modal-btn-primary" style={{ flex: '1 1 auto', minWidth: '140px', height: '52px', borderRadius: '16px', padding: '0 2rem' }}>
-                    {t('admin.users.search_btn')}
+                <button type="submit" disabled={searchMutation.isPending} className="modal-btn-primary" style={{ flex: '1 1 auto', minWidth: '140px', height: '52px', borderRadius: '16px', padding: '0 2rem' }}>
+                    {searchMutation.isPending ? t('common.searching', 'Buscando...') : t('admin.users.search_btn')}
                 </button>
             </form>
 
             <UsersTable 
                 users={users} 
-                loading={loading} 
+                loading={searchMutation.isPending} 
                 hasSearched={hasSearched} 
                 canManageRoles={canManageRoles} 
-                onEditMedals={setEditingUser} 
+                onEditMedals={(u) => { setEditingUser(u); setEditingType('medals'); }}
+                onEditAchievements={(u) => { 
+                    setEditingUser(u); 
+                    setEditingType('achievements'); 
+                }}
                 onRoleChange={handleRoleChange} 
             />
 
             {/* Medals Modal */}
-            {editingUser && (
+            {editingUser && editingType === 'medals' && (
                 <UserMedalsModal 
                     user={editingUser} 
-                    availableMedals={availableMedals} 
-                    onClose={() => setEditingUser(null)} 
-                    onSave={handleSaveMedals} 
-                    saving={savingMedals} 
+                    availableMedals={availableMedals as MedalDefinition[]} 
+                    onClose={() => { setEditingUser(null); setEditingType(null); }} 
+                    onSave={handleSaveMetadata} 
+                    saving={updateMetadataMutation.isPending} 
                     onToggleMedal={toggleMedal} 
+                />
+            )}
+
+            {/* Achievements Modal */}
+            {editingUser && editingType === 'achievements' && (
+                <UserAchievementsModal 
+                    user={editingUser} 
+                    availableAchievements={availableAchievements as AchievementDefinition[]} 
+                    onClose={() => { setEditingUser(null); setEditingType(null); }} 
+                    onSave={handleSaveMetadata} 
+                    saving={updateMetadataMutation.isPending} 
+                    onToggleAchievement={toggleAchievement} 
                 />
             )}
 

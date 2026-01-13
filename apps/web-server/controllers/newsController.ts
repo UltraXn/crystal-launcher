@@ -139,8 +139,15 @@ export const getNewsById = async (req: Request, res: Response) => {
             .update({ views: newViews })
             .eq('id', newsItem.id); // Always update by ID once found
 
+        // Fetch Author Fresh Data (Sync with Forum logic)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, full_name, avatar_url, role, status_message, avatar_preference, community_pref, minecraft_uuid, minecraft_nick, social_discord, social_avatar_url')
+            .eq('id', newsItem.author_id)
+            .maybeSingle();
+
         // Retornamos el item con las vistas actualizadas (optimista)
-        res.status(200).json({ ...newsItem, views: newViews });
+        res.status(200).json({ ...newsItem, views: newViews, author_data_fresh: profile });
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         res.status(500).json({ error: message });
@@ -168,12 +175,25 @@ export const getCommentsByNewsId = async (req: Request, res: Response) => {
 
         const { data, error } = await supabase
             .from('comments')
-            .select('*')
+            .select('*, profiles!comments_user_id_fkey(*)')
             .eq('news_id', newsId)
             .order('created_at', { ascending: true });
 
         if (error) throw error;
-        res.status(200).json(data);
+
+        // Map join result to match forum structure
+        interface JoinedComment {
+            profiles?: unknown;
+            [key: string]: unknown;
+        }
+
+        const mappedComments = (data as JoinedComment[]).map(c => ({
+             ...c,
+             author_data_fresh: Array.isArray(c.profiles) ? c.profiles[0] : (c.profiles || null),
+             profiles: undefined
+        }));
+
+        res.status(200).json(mappedComments);
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         res.status(500).json({ error: message });
@@ -233,7 +253,7 @@ export const createComment = async (req: Request, res: Response) => {
             .from('comments')
             .insert([{
                 news_id: newsId,
-                // user_id removed as column does not exist
+                user_id: user.id,
                 user_name: finalUsername,
                 user_avatar: finalAvatar,
                 content,

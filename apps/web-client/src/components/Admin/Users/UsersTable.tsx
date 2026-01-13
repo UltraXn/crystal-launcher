@@ -1,4 +1,4 @@
-import { FaSearch, FaMedal } from 'react-icons/fa';
+import { Search, Medal, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserDefinition } from './types';
 import { UserRoleBadge } from './UserRoleBadge';
@@ -10,10 +10,11 @@ interface UsersTableProps {
     hasSearched: boolean;
     canManageRoles: boolean;
     onEditMedals: (user: UserDefinition) => void;
+    onEditAchievements: (user: UserDefinition) => void;
     onRoleChange: (userId: string, role: string) => void;
 }
 
-export default function UsersTable({ users, loading, hasSearched, canManageRoles, onEditMedals, onRoleChange }: UsersTableProps) {
+export default function UsersTable({ users, loading, hasSearched, canManageRoles, onEditMedals, onEditAchievements, onRoleChange }: UsersTableProps) {
     const { t } = useTranslation();
 
     return (
@@ -56,28 +57,54 @@ export default function UsersTable({ users, loading, hasSearched, canManageRoles
                                 <UserRoleBadge role={u.role || 'user'} />
                             </td>
                             <td className="th-mobile-hide" style={{ border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', borderRight: 'none' }}>
-                                <button 
-                                    onClick={() => onEditMedals(u)}
-                                    style={{ 
-                                        background: u.medals && u.medals.length > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
-                                        border: u.medals && u.medals.length > 0 ? '1px solid rgba(251, 191, 36, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)', 
-                                        color: u.medals && u.medals.length > 0 ? '#fbbf24' : 'rgba(255, 255, 255, 0.4)',
-                                        borderRadius: '10px',
-                                        padding: '0.5rem 1rem',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '0.6rem',
-                                        fontSize: '0.85rem',
-                                        fontWeight: '600',
-                                        transition: 'all 0.2s',
-                                        whiteSpace: 'nowrap'
-                                    }}
-                                    className="hover-lift"
-                                >
-                                    <FaMedal /> {u.medals?.length || 0} {t('admin.users.medals')}
-                                </button>
+                                <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                                    <button 
+                                        onClick={() => onEditMedals(u)}
+                                        style={{ 
+                                            background: u.medals && u.medals.length > 0 ? 'rgba(251, 191, 36, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
+                                            border: u.medals && u.medals.length > 0 ? '1px solid rgba(251, 191, 36, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)', 
+                                            color: u.medals && u.medals.length > 0 ? '#fbbf24' : 'rgba(255, 255, 255, 0.4)',
+                                            borderRadius: '10px',
+                                            padding: '0.4rem 0.8rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            fontSize: '0.8rem',
+                                            fontWeight: '600',
+                                            transition: 'all 0.2s',
+                                            whiteSpace: 'nowrap',
+                                            width: '100%'
+                                        }}
+                                        className="hover-lift"
+                                    >
+                                        <Medal size={14} /> {u.medals?.length || 0} {t('admin.users.medals', 'Medallas')}
+                                    </button>
+                                    <button 
+                                        onClick={() => onEditAchievements(u)}
+                                        style={{ 
+                                            background: u.achievements && u.achievements.length > 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255, 255, 255, 0.05)', 
+                                            border: u.achievements && u.achievements.length > 0 ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)', 
+                                            color: u.achievements && u.achievements.length > 0 ? '#10b981' : 'rgba(255, 255, 255, 0.4)',
+                                            borderRadius: '10px',
+                                            padding: '0.4rem 0.8rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            fontSize: '0.8rem',
+                                            fontWeight: '600',
+                                            transition: 'all 0.2s',
+                                            whiteSpace: 'nowrap',
+                                            width: '100%'
+                                        }}
+                                        className="hover-lift"
+                                    >
+                                        <Trophy size={14} /> {u.achievements?.length || 0} {t('admin.users.achievements', 'Logros')}
+                                    </button>
+                                </div>
                             </td>
                             {canManageRoles && (
                                 <td className="user-cell-actions" style={{ border: '1px solid rgba(255,255,255,0.05)', borderLeft: 'none', borderRadius: '0 16px 16px 0', paddingRight: '1.25rem' }}>
@@ -108,14 +135,14 @@ export default function UsersTable({ users, loading, hasSearched, canManageRoles
             {/* Empty states */}
             {users.length === 0 && hasSearched && !loading && (
                 <div style={{ padding: '4rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-                    <FaSearch size={48} opacity={0.2} />
+                    <Search size={48} opacity={0.2} />
                     <div>{t('admin.users.no_results')}</div>
                 </div>
             )}
             {users.length === 0 && !hasSearched && (
                 <div style={{ padding: '4rem', textAlign: 'center', color: 'rgba(255,255,255,0.4)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <FaSearch size={24} opacity={0.5} />
+                        <Search size={24} opacity={0.5} />
                     </div>
                     <div>{t('admin.users.initial_msg')}</div>
                 </div>

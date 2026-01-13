@@ -471,3 +471,228 @@ input[type="checkbox"]:checked::after {
   }
 }
 
+/* Global Admin Primary Button */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.6rem;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================
+   WIKI MANAGER STYLES
+   ========================================= */
+
+.wiki-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+
+.wiki-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.search-box-wrapper {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 300px;
+  transition: all 0.2s;
+}
+
+.search-box:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.search-icon {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-box input {
+  background: none;
+  border: none;
+  color: #fff;
+  outline: none;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Wiki Mobile Responsiveness */
+@media (max-width: 768px) {
+  .wiki-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-box-wrapper {
+    width: 100%;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .wiki-manager .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Confirmed class name from WikiArticleList.tsx */
+  .article-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================
+   PREMIUM MODAL BUTTONS
+   ========================================= */
+.modal-btn-primary {
+    height: 52px;
+    padding: 0 2.5rem;
+    border-radius: 18px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 1000;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px rgba(var(--accent-rgb), 0.2);
+    flex-shrink: 0;
+}
+
+.modal-btn-primary:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(var(--accent-rgb), 0.4);
+    filter: brightness(1.1);
+}
+
+.modal-btn-primary:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.modal-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.modal-btn-secondary {
+    height: 52px;
+    padding: 0 2rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.modal-btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* --- Mini Premium Buttons (Translation, etc) --- */
+.btn-premium-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-premium-mini:hover:not(:disabled) {
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.btn-premium-mini:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-premium-mini svg {
+    width: 14px;
+    height: 14px;
+}

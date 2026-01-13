@@ -1,128 +1,175 @@
+/* Account / Login Pages */
 .account-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    padding-top: 6rem;
-    background-image: url('https://images.unsplash.com/photo-1614726365778-4395e2d67d73?q=80&w=2670&auto=format&fit=crop');
-    background-size: cover;
-    background-position: center;
     position: relative;
+    min-height: 100vh;
+    padding-top: 120px; /* More space for navbar */
+    padding-bottom: 80px; /* Space for footer */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column; /* Allow stacking */
+    background: radial-gradient(circle at center, #1b262c 0%, #0b0c10 100%);
+    overflow: hidden; /* Restore this to clip the ::before 200% height */
+    box-sizing: border-box;
 }
 
+/* Background Particles (Pseudo) */
 .account-page::before {
-    content: '';
+    content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(2, 1, 3, 0.7);
-    backdrop-filter: blur(8px);
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background: url('/images/ui/noise.png'); /* If available */
+    opacity: 0.05;
+    pointer-events: none;
+    animation: spin 100s linear infinite;
 }
+
 
 .account-container {
     position: relative;
-    z-index: 2;
+    z-index: 10;
     width: 100%;
-    max-width: 450px;
+    max-width: 480px; /* Slimmer, not too wide */
+    padding: 2rem;
 }
 
 .account-card {
-    background: rgba(15, 15, 20, 0.6);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(14, 18, 22, 0.7); /* Slightly darker/more opaque for less noise */
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05); /* More subtle border */
     border-radius: 20px;
-    padding: 3rem 2.5rem;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    padding: 2rem 2.5rem; /* Less vertical padding */
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .account-header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
 }
 
 .account-header h2 {
     font-size: 2rem;
-    background: linear-gradient(to right, #89D9D1, #168C80, #168C80);
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #a5f3fc 100%);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    background-clip: text;
     margin-bottom: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
 }
 
 .account-header p {
-    color: var(--muted);
+    color: var(--muted-foreground);
     font-size: 0.95rem;
 }
 
-.btn-submit {
-    width: 100%;
-    background: linear-gradient(135deg, #0C5952 0%, #168C80 100%);
-    border: none;
-    padding: 1rem;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: 700;
-    font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.account-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-group input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(137, 217, 209, 0.1);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.btn-submit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.9rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
     margin-top: 1rem;
 }
 
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(12, 89, 82, 0.3);
-    filter: brightness(1.1);
+    box-shadow: 0 10px 20px -5px rgba(22, 140, 128, 0.4);
+    background: var(--bg-alt);
+}
+
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .account-footer {
-    margin-top: 2rem;
     text-align: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 1.5rem;
+    margin-top: 1.5rem;
 }
 
 .account-footer p {
-    color: var(--muted);
     font-size: 0.9rem;
+    color: var(--muted-foreground);
     margin-bottom: 1rem;
 }
 
 .btn-text {
-    background: none;
-    border: none;
     color: var(--accent);
-    font-weight: 700;
-    cursor: pointer;
-    font-size: inherit;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    padding: 0;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
 }
 
 .btn-text:hover {
     color: #fff;
+    text-decoration: underline;
 }
 
 .back-link {
     display: inline-block;
-    color: var(--muted);
+    color: var(--muted-foreground);
     font-size: 0.85rem;
     text-decoration: none;
-    transition: var(--speed);
+    transition: color 0.2s;
 }
 
 .back-link:hover {
-    color: var(--accent);
-    transform: translateX(-5px);
+    color: white;
 }

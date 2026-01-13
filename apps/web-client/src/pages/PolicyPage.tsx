@@ -6,7 +6,7 @@ import Loader from '../components/UI/Loader';
 import { getPolicy, Policy } from '../services/policyService';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
-import { FaShieldAlt, FaFileContract, FaClock, FaHeadset, FaArrowLeft } from 'react-icons/fa';
+import { Shield, FileText, Clock, Headset, ArrowLeft } from 'lucide-react';
 
 export default function PolicyPage() {
     const { slug } = useParams<{ slug: string }>();
@@ -45,17 +45,17 @@ export default function PolicyPage() {
     if (error || !policy) return (
         <Section>
             <div style={{ minHeight: '60vh', textAlign: 'center', padding: '5rem' }}>
-                <FaShieldAlt size={64} color="var(--accent-dim)" style={{ opacity: 0.3, marginBottom: '2rem' }} />
+                <Shield size={64} color="var(--accent-dim)" style={{ opacity: 0.3, marginBottom: '2rem' }} />
                 <h2>{t('policies.not_found', 'Política no encontrada')}</h2>
                 <p style={{ color: 'var(--muted)' }}>Lo sentimos, la página que buscas no existe o ha sido movida.</p>
                 <Link to="/" className="btn-primary" style={{ marginTop: '2rem', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                    <FaArrowLeft /> {t('common.back_home', 'Volver al Inicio')}
+                    <ArrowLeft size={18} /> {t('common.back_home', 'Volver al Inicio')}
                 </Link>
             </div>
         </Section>
     );
 
-    const Icon = policy.slug === 'privacy' ? FaShieldAlt : FaFileContract;
+    const Icon = policy.slug === 'privacy' ? Shield : FileText;
 
     const displayTitle = (i18n.language === 'en' && policy.title_en) ? policy.title_en : policy.title;
     const displayContent = (i18n.language === 'en' && policy.content_en) ? policy.content_en : policy.content;
@@ -85,7 +85,7 @@ export default function PolicyPage() {
                     boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
                 }}
             >
-                <FaArrowLeft /> {t('common.back', 'Volver')}
+                <ArrowLeft size={18} /> {t('common.back', 'Volver')}
             </Link>
 
             <div style={{
@@ -188,7 +188,7 @@ export default function PolicyPage() {
                         color: '#aaa',
                         fontSize: '0.9rem'
                     }}>
-                        <FaClock size={12} color="var(--accent)" />
+                        <Clock size={12} color="var(--accent)" />
                         <span style={{ fontWeight: 500, letterSpacing: '0.5px' }}>
                             {t('policies.last_update', 'Última actualización')}: <span style={{ color: '#fff' }}>{new Date(policy.updated_at).toLocaleDateString()}</span>
                         </span>
@@ -227,7 +227,7 @@ export default function PolicyPage() {
 
                 <div style={{ marginTop: '4rem', textAlign: 'center', color: '#666', fontSize: '0.85rem', paddingBottom: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', background: 'rgba(255,255,255,0.02)', padding: '1.5rem 3rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem' }}>{t('policies.contact_support', '¿Tienes dudas sobre nuestras políticas?')}</span>
+                         <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem' }}>{t('policies.contact_support_msg', '¿Tienes dudas sobre nuestras políticas?')}</span>
                          <Link 
                             to="/support" 
                             className="hover-lift"
@@ -243,7 +243,7 @@ export default function PolicyPage() {
                                 boxShadow: '0 4px 15px rgba(var(--accent-rgb), 0.3)'
                             }}
                         >
-                            <FaHeadset size={18} /> Contactar Soporte
+                            <Headset size={18} /> {t('policies.contact_support_btn', 'Contactar Soporte')}
                         </Link>
                     </div>
                     <p style={{ margin: '1rem 0 0', opacity: 0.5 }}>© {new Date().getFullYear()} CrystalTides SMP.</p>

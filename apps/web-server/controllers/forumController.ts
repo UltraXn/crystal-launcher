@@ -27,7 +27,7 @@ export const getUserThreads = async (req: Request, res: Response) => {
 export const getThread = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const data = await forumService.getThread(parseInt(id));
+        const data = await forumService.getThread(id);
         res.json(data);
     } catch {
         res.status(404).json({ error: "Thread not found" });
@@ -41,14 +41,12 @@ export const getThread = async (req: Request, res: Response) => {
 export const getThreadFull = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const threadId = parseInt(id);
-
-        if (isNaN(threadId)) return res.status(400).json({ error: "Invalid Thread ID" });
 
         // Fetch Thread (includes Poll) and Posts in parallel
+        // forumService.getThread handles both numeric ID and slug strings
         const [thread, posts] = await Promise.all([
-            forumService.getThread(threadId),
-            forumService.getPosts(threadId)
+            forumService.getThread(id),
+            forumService.getPosts(id)
         ]);
 
         res.json({ ...thread, posts });
@@ -70,7 +68,7 @@ export const createThread = async (req: Request, res: Response) => {
 
 export const getPosts = async (req: Request, res: Response) => {
     try {
-        const data = await forumService.getPosts(parseInt(req.params.id));
+        const data = await forumService.getPosts(req.params.id);
         res.json(data);
     } catch (e) { 
         const message = e instanceof Error ? e.message : String(e);
@@ -80,7 +78,7 @@ export const getPosts = async (req: Request, res: Response) => {
 
 export const createPost = async (req: Request, res: Response) => {
     try {
-        const result = await forumService.createPost({...req.body, thread_id: parseInt(req.params.id)});
+        const result = await forumService.createPost({...req.body, thread_id: req.params.id});
         res.status(201).json(result);
     } catch (e) { 
         const message = e instanceof Error ? e.message : String(e);
@@ -101,7 +99,7 @@ export const getStats = async (req: Request, res: Response) => {
 export const updateThread = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const result = await forumService.updateThread(parseInt(id), req.body);
+        const result = await forumService.updateThread(id, req.body);
         res.json(result);
     } catch (e) { 
         const message = e instanceof Error ? e.message : String(e);
@@ -112,7 +110,7 @@ export const updateThread = async (req: Request, res: Response) => {
 export const deleteThread = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        await forumService.deleteThread(parseInt(id));
+        await forumService.deleteThread(id);
         res.json({ message: "Thread deleted" });
     } catch (e) { 
         const message = e instanceof Error ? e.message : String(e);
