@@ -53,12 +53,14 @@ async function translateText(text: string): Promise<string> {
 
 const MedalCard = ({ medal, onSave, onDelete }: { medal: Medal, onSave: (m: Medal) => void, onDelete: () => void }) => {
     const [isEditing, setIsEditing] = useState(false);
+
     const [isTranslating, setIsTranslating] = useState(false); // Loading state
     const [formData, setFormData] = useState<Medal>(medal);
 
     useEffect(() => {
         setFormData(medal);
     }, [medal]);
+
 
 
     const handleSave = () => {
@@ -241,27 +243,21 @@ const MedalCard = ({ medal, onSave, onDelete }: { medal: Medal, onSave: (m: Meda
                 )}
             </div>
 
-            <PremiumConfirm 
-                isOpen={confirmDelete.isOpen}
-                title={t('admin.gamification.medals.delete_title', '¿Borrar medalla?')}
-                message={t('admin.gamification.medals.delete_confirm', '¿Estás seguro de que deseas eliminar esta medalla? Esta acción no se puede deshacer.')}
-                confirmLabel={t('common.delete', 'Eliminar')}
-                onConfirm={executeDelete}
-                onCancel={() => setConfirmDelete({ isOpen: false, medalId: null })}
-                variant="danger"
-            />
+
         </div>
     );
 };
 
 const AchievementCard = ({ achievement, onSave, onDelete }: { achievement: Achievement, onSave: (a: Achievement) => void, onDelete: () => void }) => {
     const [isEditing, setIsEditing] = useState(false);
+
     const [isTranslating, setIsTranslating] = useState(false);
     const [formData, setFormData] = useState<Achievement>(achievement);
 
     useEffect(() => {
         setFormData(achievement);
     }, [achievement]);
+
 
     const handleSave = () => {
         onSave(formData);

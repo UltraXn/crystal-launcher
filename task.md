@@ -2,7 +2,8 @@
 
 ## 🛠️ En Progreso
 
-- [ ] **Hotfix Layout Mantenimiento**: Logo y layout en `Maintenance.tsx` [ID: FIX-001] (En curso)
+- [ ] **Hotfix Layout Mantenimiento**: Logo y layout en `Maintenance.tsx` [ID: FIX-001]
+- [ ] **Depuración CI/CD**: Resolver fallos en GitHub Actions tras merge/conflictos [ID: CI-001]
 
 ## 📌 Deuda Técnica / Pendiente
 
