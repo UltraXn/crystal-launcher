@@ -26,13 +26,17 @@ export default function Maintenance() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
             >
-                <motion.div 
-                    animate={{ rotate: [0, 10, -10, 0] }} 
-                    transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                    style={{ fontSize: '5rem', color: 'var(--accent)', marginBottom: '1rem' }}
-                >
-                    <Wrench size={80} />
-                </motion.div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3rem', marginBottom: '2rem' }}>
+                    <img src="/images/ui/logo.webp" alt="CrystalTides Logo" style={{ height: '120px', width: 'auto', objectFit: 'contain' }} />
+                    <motion.div 
+                        animate={{ rotate: [0, 10, -10, 0] }} 
+                        transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                        style={{ fontSize: '6rem', color: 'var(--accent)' }}
+                    >
+                        <Wrench size={80} />
+                    </motion.div>
+                </div>
+
                 
                 <h1 style={{ fontSize: '3rem', fontWeight: '800', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '2px' }}>
                     En Mantenimiento
