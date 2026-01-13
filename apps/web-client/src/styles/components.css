@@ -38,8 +38,13 @@
 
   .btn-secondary {
     background: transparent;
-    color: var(--muted); /* Was #fff in inline style but muted is better base */
-    border: 1px solid rgba(255,255,255,0.2) !important; /* Force override generic borders */
+    color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    padding: 0.6rem 1.5rem;
+    border-radius: var(--radius);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.3s ease;
   }
 

@@ -1,10 +1,12 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Save, X } from "lucide-react"
+import { Save, X, Loader2 } from "lucide-react"
+
+// ... (existing imports)
+
 import { useTranslation } from "react-i18next"
 import { TFunction } from "i18next"
 import { WikiArticle } from "../../../services/wikiService"
-import Loader from "../../UI/Loader"
 
 interface WikiArticleFormModalProps {
     isOpen: boolean;
@@ -100,8 +102,12 @@ function WikiArticleForm({
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
                 <button type="button" onClick={onClose} style={{ padding: '0.8rem 2rem', color: '#666', background: 'transparent', border: 'none', cursor: 'pointer' }}>{t('admin.wiki.cancel')}</button>
-                <button type="submit" disabled={saving} className="btn-primary" style={{ padding: '0.8rem 3rem' }}>
-                    {saving ? <Loader /> : <>{isEditing ? <><Save style={{marginRight: '8px'}} /> {t('admin.wiki.update_btn')}</> : <><Save style={{marginRight: '8px'}} /> {t('admin.wiki.publish_btn')}</>}</>}
+                <button type="submit" disabled={saving} className="btn-primary" style={{ padding: '0.8rem 3rem', minWidth: '180px', display: 'flex', justifyContent: 'center' }}>
+                    {saving ? (
+                        <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                        <>{isEditing ? <><Save style={{marginRight: '8px'}} /> {t('admin.wiki.update_btn')}</> : <><Save style={{marginRight: '8px'}} /> {t('admin.wiki.publish_btn')}</>}</>
+                    )}
                 </button>
             </div>
         </form>

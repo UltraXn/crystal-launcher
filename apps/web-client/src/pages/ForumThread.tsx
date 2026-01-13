@@ -8,6 +8,22 @@ import PollDisplay from "../components/Forum/PollDisplay"
 import { useTranslation } from "react-i18next"
 import { supabase } from '../services/supabaseClient'
 import MarkdownRenderer from "../components/UI/MarkdownRenderer"
+import { slugify } from "../utils/slugify"
+
+interface ForumAuthorData {
+    username: string;
+    full_name: string;
+    avatar_url: string;
+    role: string;
+    status_message: string;
+    avatar_preference?: string;
+    community_pref?: string;
+    minecraft_uuid?: string;
+    minecraft_nick?: string;
+    social_discord?: string;
+    discord_tag?: string;
+    social_avatar_url?: string;
+}
 
 interface Thread {
     id: string | number;
@@ -28,6 +44,7 @@ interface Thread {
     locked: boolean;
     title_en?: string;
     content_en?: string;
+    author_data_fresh?: ForumAuthorData;
 }
 
 interface Comment {
@@ -38,12 +55,26 @@ interface Comment {
     role: string;
     date: string;
     content: string;
+    author_data_fresh?: ForumAuthorData;
 }
 
 interface PendingImageRepl {
     blob: Blob;
     preview: string;
 }
+
+const RANK_IMAGES: Record<string, string> = {
+    'admin': '/ranks/admin.png',
+    'developer': '/ranks/developer.png',
+    'moderator': '/ranks/moderator.png',
+    'helper': '/ranks/helper.png',
+    'staff': '/ranks/staff.png',
+    'donador': '/ranks/rank-donador.png',
+    'fundador': '/ranks/rank-fundador.png',
+    'killu': '/ranks/rank-killu.png',
+    'neroferno': '/ranks/rank-neroferno.png',
+    'user': '/ranks/user.png',
+};
 
 // Simple helper to compress images (reused)
 const compressImage = async (file: File): Promise<Blob> => {
@@ -100,7 +131,9 @@ interface Poll {
 // MarkdownRenderer is now imported from shared components
 
 export default function ForumThread() {
-    const { type, id } = useParams<{ type: 'news' | 'topic', id: string }>()
+    const params = useParams<{ type?: string, id?: string }>()
+    const type = params.id ? (params.type || 'topic') : 'topic'
+    const id = params.id || params.type // This is the slug or ID from the URL
     const { user } = useAuth()
     const navigate = useNavigate()
     const [thread, setThread] = useState<Thread | null>(null)
@@ -154,7 +187,8 @@ export default function ForumThread() {
                     views: threadData.views || 0,
                     poll: threadData.poll || null,
                     pinned: threadData.pinned || false,
-                    locked: threadData.locked || false
+                    locked: threadData.locked || false,
+                    author_data_fresh: threadData.author_data_fresh
                 })
 
                 setEditThreadData({ title: threadData.title, content: threadData.content })
@@ -178,7 +212,8 @@ export default function ForumThread() {
                         author_role?: string, 
                         user_role?: string, 
                         created_at: string, 
-                        content: string 
+                        content: string,
+                        author_data_fresh?: ForumAuthorData
                     }) => ({
                         id: c.id,
                         user: (isTopic ? c.author_name : c.user_name) || "Anónimo",
@@ -186,7 +221,8 @@ export default function ForumThread() {
                         avatar: (isTopic ? c.author_avatar : c.user_avatar) || null,
                         role: (isTopic ? c.author_role : c.user_role) || "user",
                         date: new Date(c.created_at).toLocaleDateString() + " " + new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                        content: c.content
+                        content: c.content,
+                        author_data_fresh: c.author_data_fresh
                     })))
                 } else {
                     setComments([])
@@ -204,15 +240,17 @@ export default function ForumThread() {
         fetchAllData()
     }, [id, type, isTopic, API_URL, t])
 
-    const isOwnerOrAdmin = (targetUserId: string | null) => {
-        if (!user) return false;
-        const isAdmin = ['admin','neroferno', 'killu', 'helper'].includes(user.user_metadata?.role);
-        return isAdmin || (user.id === targetUserId);
-    }
-
     const isAdmin = () => {
         if (!user) return false;
-        return ['admin', 'neroferno', 'killu', 'helper'].includes(user.user_metadata?.role);
+        const role = (user.user_metadata?.role || '').toLowerCase();
+        const username = (user.user_metadata?.username || user.user_metadata?.name || '').toLowerCase();
+        return ['admin', 'staff', 'helper', 'moderator', 'developer', 'neroferno', 'killu'].includes(role) || 
+               ['admin', 'neroferno', 'killu'].includes(username);
+    }
+
+    const isOwnerOrAdmin = (targetUserId: string | null) => {
+        if (!user) return false;
+        return isAdmin() || (user.id === targetUserId);
     }
 
     const handleUpdateThread = async () => {
@@ -277,7 +315,7 @@ export default function ForumThread() {
     }
 
     const handleDeleteThread = () => {
-        if (id) setDeleteModal({ type: 'thread', id: id });
+        if (thread?.id) setDeleteModal({ type: 'thread', id: thread.id });
     }
 
     const handleUpdatePost = async (postId: string | number) => {
@@ -503,49 +541,113 @@ export default function ForumThread() {
                                     </h1>
                             )}
 
-                            <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                                    <div style={{ width: '40px', height: '40px', background: '#333', borderRadius: '50%', overflow:'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        {thread.author_avatar ? <img src={thread.author_avatar} alt="author" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User color="#ccc" />}
-                                    </div>
-                                    <div>
-                                        <Link to={`/u/${thread.author}`} style={{ color: '#fff', fontWeight: 'bold', textDecoration: 'none' }} className="username-link">
-                                            {thread.author}
-                                        </Link>
-                                        <div style={{ color: 'var(--muted)', fontSize: '0.8rem' }}><RoleBadge role={thread.author_role} username={thread.author} /></div>
-                                    </div>
+                            <div className="flex items-center justify-between mt-8 mb-6 pb-6 border-b border-white/5">
+                                <div className="flex items-center gap-4 group/author relative p-2">
+                                    {(() => {
+                                        const metadata = thread.author_data_fresh;
+                                        const pref = metadata?.avatar_preference || 'minecraft';
+                                        const mcNick = metadata?.minecraft_nick;
+                                        const useMinecraft = pref === 'minecraft' && mcNick;
+
+                                        const displayAvatar = useMinecraft 
+                                            ? `https://mc-heads.net/avatar/${mcNick}/128`
+                                            : (metadata?.social_avatar_url || metadata?.avatar_url || thread.author_avatar || `https://ui-avatars.com/api/?name=${thread.author}`);
+
+                                        const statusMessage = metadata?.status_message;
+                                        const displayName = useMinecraft 
+                                            ? (mcNick || thread.author) 
+                                            : (metadata?.full_name || metadata?.username || thread.author);
+                                        const roleRaw = (metadata?.role || thread.author_role || 'user').toLowerCase();
+                                        const roleImage = RANK_IMAGES[roleRaw] || (roleRaw.includes('donador') ? RANK_IMAGES['donador'] : RANK_IMAGES['user']);
+
+                                        return (
+                                            <>
+                                                {/* Header Trigger: Avatar + Name info */}
+                                                <div className="flex items-center gap-4 cursor-pointer">
+                                                    <div className="w-14 h-14 rounded-2xl bg-black/20 border border-white/10 overflow-hidden shadow-lg transition-transform group-hover/author:scale-105">
+                                                        <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div className="flex flex-col text-left">
+                                                        <Link to={`/u/${slugify(thread.author)}`} className="font-bold text-white hover:text-(--accent) transition-colors leading-tight">
+                                                            {displayName}
+                                                        </Link>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <RoleBadge role={thread.author_role} username={thread.author} />
+                                                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">• {thread.date}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Premium Tooltip implementation - Sync with ProfileWall */}
+                                                <div className="absolute bottom-full left-0 mb-4 opacity-0 group-hover/author:opacity-100 transition-all duration-200 pointer-events-none z-50 w-72 bg-[#0a0a0a]/98 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-2xl p-5 translate-y-2 group-hover/author:translate-y-0 text-left">
+                                                    <div className="flex items-center gap-4 mb-4 border-b border-white/5 pb-4">
+                                                        <img src={displayAvatar} className="w-12 h-12 rounded-xl shadow-inner border border-white/10" alt="Avatar" />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-bold text-white text-sm leading-tight truncate">{displayName}</p>
+                                                            {statusMessage && (
+                                                                <p className="text-[10px] text-gray-400 italic mt-0.5 line-clamp-2 leading-relaxed">"{statusMessage}"</p>
+                                                            )}
+                                                            <div className="mt-2">
+                                                                <img src={roleImage} alt={roleRaw} className="h-4 object-contain object-left" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-2 text-xs text-gray-400">
+                                                        {mcNick && (
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-bold uppercase tracking-wider text-[10px] opacity-70">Minecraft</span>
+                                                                <span className="text-white font-mono">{mcNick}</span>
+                                                            </div>
+                                                        )}
+                                                        {(metadata?.social_discord || metadata?.discord_tag) && (
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-bold uppercase tracking-wider text-[10px] opacity-70">Discord</span>
+                                                                <span className="text-indigo-300">{metadata?.social_discord || metadata?.discord_tag}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-bold uppercase tracking-wider text-[10px] opacity-70">Rol</span>
+                                                            <span className="text-white capitalize">{roleRaw}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
 
-                                 {/* Owner/Admin Actions for Thread */}
                                 {isTopic && isOwnerOrAdmin(thread.author_id) && !isEditingThread && (
-                                    <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
+                                    <div className="flex items-center gap-3">
                                         {/* Mod Tools - Only for Staff */}
                                         {isAdmin() && (
-                                            <>
-                                                <button onClick={togglePin} className="btn-icon" title={thread.pinned ? "Desfijar" : "Fijar"} style={{ background: 'transparent', border: 'none', color: thread.pinned ? 'var(--accent)' : '#888', cursor: 'pointer' }}>
-                                                    <Pin size={16} style={{ transform: thread.pinned ? 'rotate(0deg)' : 'rotate(45deg)', transition: 'all 0.3s' }} />
+                                            <div className="flex items-center gap-2 bg-black/20 p-1.5 rounded-lg border border-white/5">
+                                                <button onClick={togglePin} className="p-1 hover:bg-white/5 rounded transition-colors" title={thread.pinned ? "Desfijar" : "Fijar"}>
+                                                    <Pin size={14} className={thread.pinned ? 'text-(--accent)' : 'text-gray-500'} style={{ transform: thread.pinned ? 'rotate(0deg)' : 'rotate(45deg)', transition: 'all 0.3s' }} />
                                                 </button>
-                                                <button onClick={toggleLock} className="btn-icon" title={thread.locked ? "Desbloquear" : "Bloquear"} style={{ background: 'transparent', border: 'none', color: thread.locked ? '#ef4444' : '#888', cursor: 'pointer' }}>
-                                                    {thread.locked ? <Lock size={16} /> : <Unlock size={16} />}
+                                                <button onClick={toggleLock} className="p-1 hover:bg-white/5 rounded transition-colors" title={thread.locked ? "Desbloquear" : "Bloquear"}>
+                                                    {thread.locked ? <Lock size={14} className="text-red-500" /> : <Unlock size={14} className="text-gray-500" />}
                                                 </button>
-                                            </>
+                                            </div>
                                         )}
                                         
-                                        <button onClick={() => setIsEditingThread(true)} className="btn-icon" title="Editar" style={{ background: 'transparent', border: 'none', color: 'var(--accent)', cursor: 'pointer', marginLeft: '0.5rem' }}>
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={handleDeleteThread} className="btn-icon" title="Eliminar" style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>
-                                            <Trash2 size={18} />
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => setIsEditingThread(true)} className="p-2 bg-(--accent)/10 hover:bg-(--accent)/20 text-(--accent) rounded-xl transition-all" title="Editar">
+                                                <Edit size={16} />
+                                            </button>
+                                            <button onClick={handleDeleteThread} className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all" title="Eliminar">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                                 {isEditingThread && (
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                        <button onClick={handleUpdateThread} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', gap: '0.5rem' }}>
-                                            <Check /> Guardar
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={handleUpdateThread} className="btn-primary" style={{ padding: '0.5rem 1rem', display: 'flex', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                            <Check size={16} /> Guardar
                                         </button>
-                                        <button onClick={() => setIsEditingThread(false)} className="btn-secondary" style={{ padding: '0.5rem 1rem', display: 'flex', gap: '0.5rem' }}>
-                                            <X /> Cancelar
+                                        <button onClick={() => setIsEditingThread(false)} className="btn-secondary" style={{ padding: '0.5rem 1rem', display: 'flex', gap: '0.5rem', fontSize: '0.8rem' }}>
+                                            <X size={16} /> Cancelar
                                         </button>
                                     </div>
                                 )}
@@ -586,28 +688,106 @@ export default function ForumThread() {
                     </h3>
 
                     <div className="comments-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginBottom: '3rem' }}>
-                        {comments.map(comment => (
+                        {comments.map((comment) => (
                             <div key={comment.id} style={{ display: 'flex', gap: '1rem' }}>
-                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#333', overflow: 'hidden', flexShrink: 0 }}>
-                                    {comment.avatar ? <img src={comment.avatar} alt="user" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : <User color="#888" style={{padding:'8px'}}/>}
+                                {/* Avatar Sidebar with Tooltip */}
+                                <div className="flex items-center shrink-0 group/comment relative">
+                                    {(() => {
+                                        const metadata = comment.author_data_fresh;
+                                        const pref = metadata?.avatar_preference || 'minecraft';
+                                        const mcNick = metadata?.minecraft_nick;
+                                        const useMinecraft = pref === 'minecraft' && mcNick;
+
+                                        const displayAvatar = useMinecraft 
+                                            ? `https://mc-heads.net/avatar/${mcNick}/128`
+                                            : (metadata?.social_avatar_url || metadata?.avatar_url || comment.avatar || `https://ui-avatars.com/api/?name=${comment.user}`);
+
+                                        const statusMessage = metadata?.status_message;
+                                        const displayName = useMinecraft 
+                                            ? (mcNick || comment.user) 
+                                            : (metadata?.full_name || metadata?.username || comment.user);
+                                        const roleRaw = (metadata?.role || comment.role || 'user').toLowerCase();
+                                        const roleImage = RANK_IMAGES[roleRaw] || (roleRaw.includes('donador') ? RANK_IMAGES['donador'] : RANK_IMAGES['user']);
+
+                                        return (
+                                            <>
+                                                {/* Unified Avatar + Trigger Area */}
+                                                <div className="w-12 h-12 rounded-xl bg-black/20 border border-white/10 overflow-hidden cursor-pointer shadow-lg transition-transform group-hover/comment:scale-105">
+                                                    <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
+                                                </div>
+
+                                                {/* Premium Tooltip implementation - Sync with ProfileWall */}
+                                                <div className="absolute bottom-full left-0 mb-3 opacity-0 group-hover/comment:opacity-100 transition-all duration-300 pointer-events-none z-50 w-64 bg-[#0a0a0a]/95 border border-white/10 rounded-xl shadow-2xl backdrop-blur-xl p-4 translate-y-2 group-hover/comment:translate-y-0 text-left">
+                                                    <div className="flex items-center gap-3 mb-3 border-b border-white/5 pb-3">
+                                                        <img src={displayAvatar} className="w-10 h-10 rounded-lg shadow-inner border border-white/10" alt="Avatar" />
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="font-bold text-white text-sm leading-tight truncate">{displayName}</p>
+                                                            {statusMessage && (
+                                                                <p className="text-[10px] text-gray-400 italic mt-0.5 line-clamp-2">"{statusMessage}"</p>
+                                                            )}
+                                                            <div className="mt-1">
+                                                                <img src={roleImage} alt={roleRaw} className="h-4 object-contain object-left" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-2 text-xs text-gray-400">
+                                                        {mcNick && (
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-bold uppercase tracking-wider text-[10px] opacity-70">Minecraft</span>
+                                                                <span className="text-white font-mono">{mcNick}</span>
+                                                            </div>
+                                                        )}
+                                                        {(metadata?.social_discord || metadata?.discord_tag) && (
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="font-bold uppercase tracking-wider text-[10px] opacity-70">Discord</span>
+                                                                <span className="text-indigo-300">{metadata?.social_discord || metadata?.discord_tag}</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-bold uppercase tracking-wider text-[10px] opacity-70">Rol</span>
+                                                            <span className="text-white capitalize">{roleRaw}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
-                                <div style={{ flexGrow: 1 }}>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                                            <Link to={`/u/${comment.user}`} style={{ color: 'var(--accent)', fontWeight: 'bold', textDecoration: 'none' }} className="username-link">
-                                                {comment.user}
-                                            </Link>
+
+                                {/* Content Area */}
+                                <div className="flex-1">
+                                    <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            {(() => {
+                                                const metadata = comment.author_data_fresh;
+                                                const pref = metadata?.avatar_preference || 'minecraft';
+                                                const mcNick = metadata?.minecraft_nick;
+                                                const useMinecraft = pref === 'minecraft' && mcNick;
+                                                
+                                                const displayName = useMinecraft 
+                                                    ? (mcNick || comment.user) 
+                                                    : (metadata?.full_name || metadata?.username || comment.user);
+                                                
+                                                return (
+                                                    <Link to={`/u/${slugify(comment.user)}`} className="font-bold text-(--accent) hover:text-white transition-colors">
+                                                        {displayName}
+                                                    </Link>
+                                                );
+                                            })()}
                                             <RoleBadge role={comment.role} username={comment.user} />
-                                            <span style={{ color: 'var(--muted)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>• {comment.date}</span>
+                                            <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider opacity-70">• {comment.date}</span>
                                         </div>
+                                        
                                         {/* Actions for Comment */}
                                         {isOwnerOrAdmin(comment.user_id) && editingPostId !== comment.id && (
-                                            <div style={{ display: 'flex', gap: '0.5rem', marginLeft: 'auto' }}>
-                                                <button onClick={() => { setEditingPostId(comment.id); setEditPostContent(comment.content); }} style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', fontSize: '0.8rem' }}>Editar</button>
-                                                <button onClick={() => handleDeletePost(comment.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem' }}>Eliminar</button>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => { setEditingPostId(comment.id); setEditPostContent(comment.content); }} className="text-[11px] font-black uppercase tracking-tighter text-gray-500 hover:text-(--accent) transition-colors">Editar</button>
+                                                <button onClick={() => handleDeletePost(comment.id)} className="text-[11px] font-black uppercase tracking-tighter text-red-500/70 hover:text-red-500 transition-colors">Eliminar</button>
                                             </div>
                                         )}
                                     </div>
+
 
                                     {editingPostId === comment.id ? (
                                         <div style={{ marginTop: '0.5rem' }}>

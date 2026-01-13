@@ -1,406 +1,155 @@
-# ☁️ Supabase Integration
+# ☁️ Integración con Supabase
 
-> **Backend-as-a-Service powering CrystalTides web platform**
+> **Backend-as-a-Service (BaaS) que impulsa la plataforma web de CrystalTides.**
 
-Supabase provides authentication, database, storage, and realtime capabilities for the CrystalTides web ecosystem.
-
----
-
-## 🎯 Overview
-
-### What is Supabase?
-
-Supabase is an open-source Firebase alternative built on PostgreSQL. It provides:
-- **Authentication**: Email/password, OAuth (Discord, Google)
-- **Database**: PostgreSQL with Row Level Security (RLS)
-- **Storage**: File storage with CDN
-- **Realtime**: WebSocket subscriptions for live data
-- **Edge Functions**: Serverless functions
-
-### Project Details
-
-- **Project Name**: `[Your Project Name]`
-- **URL**: `https://[your-project-id].supabase.co`
-- **Region**: `[your-region]` (e.g., `us-east-1`, `eu-west-1`)
-- **Plan**: Free Tier / Pro (500MB DB, 1GB Storage on free tier)
+Supabase proporciona autenticación, base de datos (PostgreSQL), almacenamiento de archivos y capacidades en tiempo real para el ecosistema web de CrystalTides.
 
 ---
 
-## 🔐 Authentication
+## 🎯 Visión General
 
-### Providers
+### ¿Qué es Supabase?
 
-1. **Email/Password** - Primary registration method
-2. **Discord OAuth** - Social login for community members
-3. **Google OAuth** - Planned for future
+Supabase es una alternativa de código abierto a Firebase construida sobre PostgreSQL. Proporciona:
 
-### Authentication Flow
+- **Autenticación**: Email/contraseña y OAuth (Discord integrado).
+- **Base de Datos**: PostgreSQL con Seguridad a Nivel de Fila (RLS).
+- **Almacenamiento**: Almacenamiento de archivos con CDN.
+- **Realtime**: Suscripciones vía WebSocket para datos en vivo.
+- **Edge Functions**: Funciones serverless (Deno).
+
+### Detalles del Proyecto
+
+- **URL**: `https://gyoqnqvqhuxlcbrvtfia.supabase.co`
+- **Estado**: Activo
+- **Plan**: Free Tier (500MB DB / 1GB Storage)
+
+---
+
+## 🔐 Autenticación
+
+### Proveedores
+
+1. **Email/Contraseña**: Método de registro principal.
+2. **Discord OAuth**: Login social prioritario para la comunidad de Minecraft.
+3. **Microsoft OAuth**: Planeado para sincronización de cuentas oficiales.
+
+### Flujo de Autenticación
 
 ```mermaid
 sequenceDiagram
-    participant User as 👤 User
+    participant User as 👤 Usuario
     participant Web as 🌐 Web Client
     participant SB as ☁️ Supabase Auth
     participant DB as 🗄️ PostgreSQL
 
-    User->>Web: Enter credentials
+    User->>Web: Ingresa credenciales
     Web->>SB: signInWithPassword()
-    SB->>SB: Verify credentials
-    SB->>DB: Fetch user profile
-    SB-->>Web: JWT Token + User Data
-    Web->>Web: Store in localStorage
-    Web-->>User: Redirect to dashboard
-```
-
-### Code Examples
-
-**Sign Up**:
-```typescript
-const { data, error } = await supabase.auth.signUp({
-  email: 'user@example.com',
-  password: 'securePassword123',
-  options: {
-    data: {
-      username: 'PlayerName'
-    }
-  }
-})
-```
-
-**Sign In**:
-```typescript
-const { data, error } = await supabase.auth.signInWithPassword({
-  email: 'user@example.com',
-  password: 'securePassword123'
-})
-```
-
-**Discord OAuth**:
-```typescript
-const { data, error } = await supabase.auth.signInWithOAuth({
-  provider: 'discord',
-  options: {
-    redirectTo: `${window.location.origin}/auth/callback`,
-    scopes: 'identify email guilds'
-  }
-})
+    SB->>SB: Verifica credenciales
+    SB->>DB: Obtiene perfil de usuario
+    SB-->>Web: Token JWT + Datos de Usuario
+    Web->>Web: Almacena en localStorage
+    Web-->>User: Redirige al dashboard
 ```
 
 ---
 
-## 🗄️ Database (PostgreSQL)
+## 🗄️ Base de Datos (PostgreSQL)
 
-### Schema Overview
+### Esquema Simplificado
 
 ```mermaid
 erDiagram
-    users ||--o{ news : "authors"
-    users ||--o{ tickets : "creates"
-    users ||--o{ forum_threads : "creates"
-    news ||--o{ comments : "has"
-    forum_threads ||--o{ forum_posts : "contains"
-    tickets ||--o{ ticket_messages : "contains"
+    users ||--o{ news : "autor de"
+    users ||--o{ tickets : "crea"
+    users ||--o{ forum_threads : "inicia"
+    news ||--o{ comments : "tiene"
+    forum_threads ||--o{ forum_posts : "contiene"
+    tickets ||--o{ ticket_messages : "mensajes"
 ```
 
-### Key Tables
+### Tablas Críticas
 
-#### `users`
-```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  email TEXT UNIQUE NOT NULL,
-  username TEXT UNIQUE NOT NULL,
-  discord_id TEXT UNIQUE,
-  minecraft_uuid TEXT UNIQUE,
-  avatar_url TEXT,
-  role TEXT DEFAULT 'user',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+#### `users` (Extendida de auth.users)
 
-#### `news`
-```sql
-CREATE TABLE news (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  author_id UUID REFERENCES users(id),
-  category TEXT,
-  published BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+Almacena la relación entre la identidad web y la identidad in-game.
 
-#### `tickets`
-```sql
-CREATE TABLE tickets (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id),
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  status TEXT DEFAULT 'open',
-  priority TEXT DEFAULT 'medium',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+- `minecraft_uuid`: UUID único del jugador en Minecraft.
+- `discord_id`: ID de Discord para sincronización de roles.
+- `role`: (`user`, `staff`, `admin`).
 
-### Row Level Security (RLS)
+#### `news` y `wiki`
 
-**Users Table**:
-```sql
--- Users can view their own profile
-CREATE POLICY "Users view own profile"
-  ON users FOR SELECT
-  USING (auth.uid() = id);
+Gestionadas a través de **TanStack Query** en el frontend para una carga ultrarrápida.
 
--- Users can update their own profile
-CREATE POLICY "Users update own profile"
-  ON users FOR UPDATE
-  USING (auth.uid() = id);
+### Seguridad a Nivel de Fila (RLS)
 
--- Admins can view all users
-CREATE POLICY "Admins view all"
-  ON users FOR SELECT
-  USING (
-    (SELECT role FROM users WHERE id = auth.uid()) = 'admin'
-  );
-```
+Todas nuestras tablas tienen RLS habilitado.
 
-**News Table**:
-```sql
--- Anyone can view published news
-CREATE POLICY "Public read published news"
-  ON news FOR SELECT
-  USING (published = true);
-
--- Admins can manage news
-CREATE POLICY "Admins manage news"
-  ON news FOR ALL
-  USING (
-    (SELECT role FROM users WHERE id = auth.uid()) IN ('admin', 'moderator')
-  );
-```
+- **Usuarios**: Solo pueden ver y editar su propio perfil.
+- **Staff**: Permisos de lectura/escritura en noticias y tickets.
+- **Público**: Solo lectura en noticias publicadas.
 
 ---
 
-## 📦 Storage
+## 📦 Almacenamiento (Storage)
 
-### Buckets
+### Buckets Actuales
 
-1. **`avatars`** (Public)
-   - User profile pictures
-   - Max size: 2MB
-   - Formats: `.jpg`, `.png`, `.webp`
-
-2. **`skins`** (Public)
-   - Minecraft skins (64x64)
-   - Max size: 500KB
-
-3. **`news-media`** (Public)
-   - News article images
-   - Max size: 5MB
-
-### Upload Example
-
-```typescript
-// Upload avatar
-const { data, error } = await supabase.storage
-  .from('avatars')
-  .upload(`${userId}/avatar.png`, file, {
-    cacheControl: '3600',
-    upsert: true
-  })
-
-// Get public URL
-const { data: { publicUrl } } = supabase.storage
-  .from('avatars')
-  .getPublicUrl(`${userId}/avatar.png`)
-```
+1. **`avatars`**: Fotos de perfil de usuario.
+2. **`skins`**: Almacenamiento de archivos `.png` de skins de Minecraft (64x64).
+3. **`news-media`**: Imágenes para artículos del blog.
 
 ---
 
-## ⚡ Realtime Subscriptions
+## ⚡ Capacidades Realtime
 
-### Live News Feed
+Utilizamos el canal de Realtime de Supabase para:
 
-```typescript
-const subscription = supabase
-  .channel('news-updates')
-  .on('postgres_changes', {
-    event: 'INSERT',
-    schema: 'public',
-    table: 'news',
-    filter: 'published=eq.true'
-  }, (payload) => {
-    console.log('New article:', payload.new)
-    // Update UI in real-time
-  })
-  .subscribe()
-```
-
-### Ticket Status Updates
-
-```typescript
-supabase
-  .channel(`ticket-${ticketId}`)
-  .on('postgres_changes', {
-    event: 'UPDATE',
-    schema: 'public',
-    table: 'tickets',
-    filter: `id=eq.${ticketId}`
-  }, (payload) => {
-    // Notify user of status change
-  })
-  .subscribe()
-```
+- **Notificaciones de Tickets**: Los miembros del staff reciben alertas instantáneas cuando se crea un ticket.
+- **Dashboard Overview**: Estadísticas vitales que se actualizan sin refrescar la página.
+- **Chat Sync**: Sincronización básica de comentarios y mensajes.
 
 ---
 
-## 🔗 MySQL Synchronization
+## 🔗 Sincronización con MySQL (Global Link)
 
-### Account Linking Flow
+Dado que el servidor de Minecraft usa MySQL para datos masivos (LuckPerms, CoreProtect), usamos el **API Server (Node.js)** como puente:
 
-```mermaid
-sequenceDiagram
-    participant Web as 🌐 Web Client
-    participant SB as ☁️ Supabase
-    participant WS as ⚙️ Web Server
-    participant MySQL as 🗄️ MySQL
-    participant MC as 🎮 Minecraft
-
-    Web->>SB: User registers
-    SB-->>Web: User ID created
-    Web->>WS: Request link code
-    WS->>MySQL: INSERT INTO universal_links
-    MySQL-->>WS: Link code
-    WS-->>Web: Display code
-    
-    MC->>MySQL: /link <code>
-    MySQL->>WS: Webhook notification
-    WS->>SB: UPDATE users SET minecraft_uuid
-    WS->>MySQL: INSERT INTO linked_accounts
-```
-
-### Sync Code Example
-
-```typescript
-// Web Server (Node.js)
-async function linkMinecraftAccount(supabaseUserId: string, linkCode: string) {
-  // 1. Verify code in MySQL
-  const [rows] = await mysqlPool.query(
-    'SELECT minecraft_uuid FROM universal_links WHERE code = ?',
-    [linkCode]
-  )
-  
-  if (rows.length === 0) throw new Error('Invalid code')
-  
-  const { minecraft_uuid } = rows[0]
-  
-  // 2. Update Supabase
-  await supabase
-    .from('users')
-    .update({ minecraft_uuid })
-    .eq('id', supabaseUserId)
-  
-  // 3. Update MySQL
-  await mysqlPool.query(
-    'INSERT INTO linked_accounts (minecraft_uuid, web_user_id) VALUES (?, ?)',
-    [minecraft_uuid, supabaseUserId]
-  )
-}
-```
+1. El usuario solicita un código de vinculación en la Web.
+2. El API Server genera un código en MySQL.
+3. El usuario usa `/link <code>` in-game.
+4. Un webhook activa la actualización del `minecraft_uuid` en la tabla `users` de Supabase.
 
 ---
 
-## 🛡️ Security Best Practices
+## 🛡️ Seguridad y Variables de Entorno
 
-### Environment Variables
+### Configuración de Frontend (.env)
 
 ```env
-# Frontend (.env)
-VITE_SUPABASE_URL=https://gyoqngvqhuxlcbivtfia.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGc... # PUBLIC (safe to expose)
-
-# Backend (.env)
-SUPABASE_URL=https://gyoqngvqhuxlcbivtfia.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGc... # PRIVATE (never expose)
+VITE_SUPABASE_URL=https://gyoqnqvqhuxlcbrvtfia.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbG... (Public Key)
 ```
 
-### Rate Limiting
+### Configuración de Backend
 
-- **Auth**: 30 attempts/hour per IP
-- **Database**: 100 requests/second
-- **Storage**: 50 uploads/minute
-
-### CORS Configuration
-
-Only allow requests from:
-- `crystaltides.com`
-- `localhost:5173` (development)
+Utilizamos la `SERVICE_ROLE_KEY` (privada) únicamente en el servidor Node.js para realizar operaciones administrativas que requieren saltar el RLS (ej: vinculación forzada de cuentas).
 
 ---
 
-## 📊 Monitoring
-
-### Current Usage
-
-- **Database Size**: ~50MB / 500MB (10%)
-- **Storage**: ~200MB / 1GB (20%)
-- **Active Users**: ~50
-- **Monthly Requests**: ~10,000
-
-### Alerts
-
-Set up alerts for:
-- Database size > 450MB (90%)
-- Storage > 900MB (90%)
-- Error rate > 5%
-
----
-
-## 🚀 Deployment
-
-### Client Configuration
+## 🚀 Despliegue y Cliente
 
 ```typescript
 // lib/supabaseClient.ts
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
 export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-)
-```
-
-### Server Configuration
-
-```typescript
-// server/supabase.ts
-import { createClient } from '@supabase/supabase-js'
-
-export const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Bypass RLS
-)
+  import.meta.env.VITE_SUPABASE_ANON_KEY,
+);
 ```
 
 ---
 
-## 📚 Related Documentation
-
-- [[Database Schema](./DATABASE_SCHEMA.md)] - Complete schema documentation
-- [[Authentication](../api/AUTHENTICATION.md)] - Auth flows and JWT
-- [[Web Client](../components/WEB_CLIENT.md)] - Frontend implementation
-- [[Web Server](../components/WEB_SERVER.md)] - Backend integration
-
----
-
-## 🔗 External Resources
-
-- [Supabase Documentation](https://supabase.com/docs)
-- [PostgreSQL RLS Guide](https://supabase.com/docs/guides/auth/row-level-security)
-- [Realtime Guide](https://supabase.com/docs/guides/realtime)
-
----
-
-_Last updated: January 10, 2026_
+_Última actualización: 12 de enero, 2026_

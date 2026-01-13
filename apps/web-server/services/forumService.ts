@@ -118,7 +118,14 @@ export const getThread = async (id: number | string) => {
          poll = await pollService.getPollById(thread.poll_id);
     }
     
-    return { ...thread, poll };
+    // Fetch Author Profile Fresh Data
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url, role, status_message, avatar_preference, community_pref, minecraft_uuid, minecraft_nick, social_discord, social_avatar_url')
+        .eq('id', thread.user_id)
+        .maybeSingle();
+        
+    return { ...thread, poll, author_data_fresh: profile };
 };
 
 export const createThread = async ({ category_id, title, content, user_data, poll_data }: CreateThreadData) => {
@@ -167,15 +174,58 @@ export const createThread = async ({ category_id, title, content, user_data, pol
     return thread;
 };
 
-export const getPosts = async (threadId: number) => {
-    const { data, error } = await supabase.from('forum_posts').select('*').eq('thread_id', threadId).order('created_at', {ascending:true});
-    if(error) throw error;
-    return data;
+export const getPosts = async (threadIdOrSlug: number | string) => {
+    let threadId: number;
+    
+    if (typeof threadIdOrSlug === 'string' && !/^\d+$/.test(threadIdOrSlug)) {
+        // It's a slug, find the ID first
+        const { data: thread, error } = await supabase
+            .from('forum_threads')
+            .select('id')
+            .eq('slug', threadIdOrSlug)
+            .single();
+        if (error || !thread) return [];
+        threadId = thread.id;
+    } else {
+        threadId = typeof threadIdOrSlug === 'number' ? threadIdOrSlug : parseInt(threadIdOrSlug);
+    }
+
+    const { data: posts, error } = await supabase.from('forum_posts').select('*').eq('thread_id', threadId).order('created_at', {ascending:true});
+    if(error) {
+        console.error("Error fetching posts for thread:", threadId, error);
+        throw error;
+    }
+    
+    if (!posts || posts.length === 0) return [];
+
+    // Fetch Profiles
+    const userIds = [...new Set(posts.map((p: ForumPost) => p.user_id).filter(id => !!id))];
+    const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url, role, status_message, avatar_preference, community_pref, minecraft_uuid, minecraft_nick, social_discord, social_avatar_url')
+        .in('id', userIds);
+    
+    const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+    return posts.map((p: ForumPost) => ({
+        ...p,
+        author_data_fresh: profileMap.get(p.user_id) || null
+    }));
 };
 
-export const createPost = async ({ thread_id, content, user_data }: { thread_id: number; content: string; user_data: { id: string; name: string; avatar: string; role: string } }) => {
+export const createPost = async ({ thread_id, content, user_data }: { thread_id: number | string; content: string; user_data: { id: string; name: string; avatar: string; role: string } }) => {
+    let resolvedThreadId: number;
+
+    if (typeof thread_id === 'string' && !/^\d+$/.test(thread_id)) {
+        const { data: thread } = await supabase.from('forum_threads').select('id').eq('slug', thread_id).single();
+        if (!thread) throw new Error("Thread not found");
+        resolvedThreadId = thread.id;
+    } else {
+        resolvedThreadId = typeof thread_id === 'number' ? thread_id : parseInt(thread_id);
+    }
+
     const { data, error } = await supabase.from('forum_posts').insert([{
-        thread_id, 
+        thread_id: resolvedThreadId, 
         content, 
         user_id: user_data.id, 
         author_name: user_data.name, 
@@ -283,15 +333,35 @@ export const getCategoryStats = async () => {
     return stats;
 }
 
-export const updateThread = async (id: number, updates: Partial<ForumThread>) => {
-    const { data, error } = await supabase.from('forum_threads').update(updates).eq('id', id).select().single();
+export const updateThread = async (idOrSlug: number | string, updates: Partial<ForumThread>) => {
+    let threadId: number;
+    
+    if (typeof idOrSlug === 'string' && !/^\d+$/.test(idOrSlug)) {
+        const { data: thread } = await supabase.from('forum_threads').select('id').eq('slug', idOrSlug).single();
+        if (!thread) throw new Error("Thread not found");
+        threadId = thread.id;
+    } else {
+        threadId = typeof idOrSlug === 'number' ? idOrSlug : parseInt(idOrSlug);
+    }
+
+    const { data, error } = await supabase.from('forum_threads').update(updates).eq('id', threadId).select().single();
     if(error) throw error;
     return data;
 };
 
-export const deleteThread = async (id: number) => {
+export const deleteThread = async (idOrSlug: number | string) => {
+    let threadId: number;
+    
+    if (typeof idOrSlug === 'string' && !/^\d+$/.test(idOrSlug)) {
+        const { data: thread } = await supabase.from('forum_threads').select('id').eq('slug', idOrSlug).single();
+        if (!thread) throw new Error("Thread not found");
+        threadId = thread.id;
+    } else {
+        threadId = typeof idOrSlug === 'number' ? idOrSlug : parseInt(idOrSlug);
+    }
+
     // 1. Fetch thread first to check for poll
-    const { data: thread } = await supabase.from('forum_threads').select('poll_id').eq('id', id).single();
+    const { data: thread } = await supabase.from('forum_threads').select('poll_id').eq('id', threadId).single();
 
     // 2. Delete Poll if exists
     if (thread && thread.poll_id) {
@@ -299,10 +369,10 @@ export const deleteThread = async (id: number) => {
     }
 
     // 3. Delete posts
-    await supabase.from('forum_posts').delete().eq('thread_id', id);
+    await supabase.from('forum_posts').delete().eq('thread_id', threadId);
     
     // 4. Delete thread
-    const { error } = await supabase.from('forum_threads').delete().eq('id', id);
+    const { error } = await supabase.from('forum_threads').delete().eq('id', threadId);
     if(error) throw error;
 };
 

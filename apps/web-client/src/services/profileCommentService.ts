@@ -1,7 +1,5 @@
 import { supabase } from './supabaseClient'
 
-
-
 export interface ProfileComment {
     id: number;
     content: string;
@@ -11,6 +9,13 @@ export interface ProfileComment {
         username: string;
         avatar_url: string;
         role: string;
+        metadata?: Record<string, unknown>;
+        social_avatar_url?: string;
+        avatar_preference?: string;
+        minecraft_nick?: string;
+        status_message?: string;
+        full_name?: string;
+        discord_tag?: string;
     };
 }
 
@@ -19,10 +24,16 @@ export const getProfileComments = async (profileId: string): Promise<ProfileComm
         .from('profile_comments')
         .select(`
             *,
-            author:author_id (
+            author:profiles!author_id (
                 username,
                 avatar_url,
-                role
+                role,
+                social_avatar_url,
+                avatar_preference,
+                minecraft_nick,
+                status_message,
+                full_name,
+                discord_tag
             )
         `)
         .eq('profile_id', profileId)
@@ -45,10 +56,16 @@ export const postProfileComment = async (profileId: string, content: string): Pr
         })
         .select(`
             *,
-            author:author_id (
+            author:profiles!author_id (
                 username,
                 avatar_url,
-                role
+                role,
+                social_avatar_url,
+                avatar_preference,
+                minecraft_nick,
+                status_message,
+                full_name,
+                discord_tag
             )
         `)
         .single()

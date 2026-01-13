@@ -176,7 +176,7 @@ export default function ForumCategory() {
                         <div className="flex flex-col gap-4">
                             {threads.map(thread => (
                                 <Link 
-                                    to={String(categoryId) === "1" ? `/forum/thread/news/${thread.slug || thread.id}` : `/forum/thread/${thread.slug || thread.id}`} 
+                                    to={String(categoryId) === "1" ? `/forum/thread/news/${thread.slug || thread.id}` : `/forum/thread/topic/${thread.slug || thread.id}`} 
                                     key={thread.id} 
                                     className="group block"
                                 >

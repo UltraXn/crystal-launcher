@@ -1,98 +1,73 @@
-# 🏗️ Arquitectura de CrystalTides
+# 🏗️ Arquitectura de CrystalTides (Master Overview)
 
-CrystalTides no es solo una página web; es un ecosistema completo que integra Web, Juego (Minecraft) y Comunidad (Discord).
+CrystalTides es un ecosistema de alta fidelidad que integra Web, Juego (Minecraft) y Cliente Nativo bajo una infraestructura unificada.
 
 ## 🧩 Componentes Principales
 
-### 1. Frontend (Cliente)
+### 1. Web Suite (Portal & Admin)
 
-- **Tecnología**: React + Vite + TypeScript.
-- **Estilos**: CSS Modules / Styled Components con diseño "Glassmorphism" premium.
-- **Rol**: Interfaz visual puramente consumidora de API. No contiene lógica de negocio sensible ni accesos a BD.
+- **Tecnología**: React 19 + Vite 6 + TypeScript + Tailwind 4.
+- **Estado**: Migrado a TanStack Query (v5) y Zod para validación.
+- **Rol**: Interfaz visual de alta gama con Glassmorphism para gestión de usuarios, noticias, tickets y gacha.
 
-### 2. Backend (API Server)
+### 2. Backend (Supabase + API Server)
 
-- **Tecnología**: Node.js + Express + TypeScript.
-- **Seguridad**:
-  - **API First**: Toda la lógica pasa por endpoints RESTful seguros.
-  - **JWT Auth**: Autenticación de usuarios vía Supabase Auth.
-  - **Middleware de Roles**: Protección granular de rutas (`isAdmin`, `isStaff`).
-- **Swagger**: Documentación automática disponible en `/api/docs`.
+- **Capa Híbrida**:
+  - **Supabase**: Maneja Auth, Realtime y la base de datos de "estado caliente".
+  - **Node.js Express 5**: Actúa como orquestador para operaciones complejas, Webhooks y el CrystalBridge.
+- **Seguridad**: JWT (Supabase) + Middleware de roles (`isAdmin`).
 
-### 3. Bases de Datos (Estrategia Multi-DB)
+### 3. CrystalLauncher (Native Core) 🦋
 
-Utilizamos una arquitectura híbrida optimizada para cada caso de uso:
+- **Tecnología**: Flutter 3.x + Rust (Native DLL via FFI).
+- **Enfoque 2026**: Manejo nativo de procesos Java, actualizaciones delta y validación de integridad mediante el núcleo en Rust.
 
-| Base de Datos | Tecnología | Uso Principal                                 | Ubicación        |
-| ------------- | ---------- | --------------------------------------------- | ---------------- |
-| **Web DB**    | PostgreSQL | Usuarios Web, Foros, Tickets, Noticias, Gacha | Supabase (Cloud) |
-| **Server DB** | MySQL      | Datos del Pluging Plan, LuckPerms, Economía   | HolyHosting      |
-| **Logs DB**   | MySQL      | CoreProtect (Bloques y acciones masivas)      | HolyHosting      |
+### 4. CrystalCore (Minecraft Plugin) 💎
 
-### 4. CrystalBridge (Integración Minecraft) 🌉
-
-El "arma secreta" para conectar la Web con el Servidor de forma segura sin abrir puertos peligrosos (RCON).
-
-- **Inbox Pattern**:
-  1. La Web (Gacha/Tienda) inserta un comando en una cola MySQL (`web_pending_commands`).
-  2. El Plugin **CrystalCore** en el servidor lee esta tabla periódicamente.
-  3. Ejecuta el comando localmente y marca la tarea como completada.
-- **Ventajas**: Funciona asíncronamente (incluso si el server está offline) y no requiere exponer puertos UDP.
-
-### 5. Pterodactyl Integration 🦖
-
-Para acciones administrativas inmediatas (Baneos, Kicks, Reinicios), la API se comunica directamente con el panel de hosting Pterodactyl vía HTTP seguro.
+- **Tecnología**: Java 21 + Paper API.
+- **Rol**: El "brazo ejecutor" dentro del servidor. Escucha el Bridge y aplica cambios en tiempo real (roles, items, estadísticas).
 
 ---
 
-## 📖 Documentación de Funcionalidades
+## 🗄️ Estrategia de Datos Dual
 
-- [🦋 CrystalLauncher (Cliente Híbrido)](../components/LAUNCHER.md)
-- [🧠 Game Bridge (Agente In-Game)](../components/GAME_AGENT.md)
-- [🛡️ Staff Hub (Gestión Interna)](../features/STAFF_HUB.md)
+| Base de Datos | Tecnología | Uso Principal                              | Proveedor        |
+| :------------ | :--------- | :----------------------------------------- | :--------------- |
+| **Web DB**    | PostgreSQL | Perfiles, Tickets, Foro, Configuración     | Supabase (Cloud) |
+| **Server DB** | MySQL      | LuckPerms, Economía, Estadísticas de juego | HolyHosting      |
+| **Audit DB**  | MySQL      | CoreProtect (Bloques y transacciones)      | HolyHosting      |
+
+---
+
+## 🌉 Conectividad (El Bridge)
+
+El **CrystalBridge V2** elimina el uso de RCON mediante un sistema híbrido:
+
+1. **Inbox (MySQL)**: Los comandos se encolan para asegurar que se ejecuten aunque el servidor esté offline.
+2. **WebSocket (Realtime)**: Una señal instantánea avisa al plugin para procesar la cola en <50ms.
+
+---
+
+## 📂 Navegación de Documentación
+
+### Arquitectura Técnica
+
 - [🌉 CrystalBridge (Integración Server)](./CRYSTAL_BRIDGE.md)
-- [🎰 Sistema Gacha (KilluCoin)](../features/GACHA_SYSTEM.md)
-- [🏛️ Foro y Comunidad](../features/FORUM_SYSTEM.md)
-- [👤 Perfiles y Estadísticas](../features/USER_PROFILES.md)
-- [🎨 Arquitectura Frontend](../components/WEB_CLIENT.md)
-- [🛡️ Calidad de Código y Estándares](../operations/CODE_QUALITY.md)
+- [🦀 Rust-Java Native Bridge](./RUST_JAVA_BRIDGE.md)
+- [☁️ Integración Supabase](./SUPABASE_INTEGRATION.md)
+
+### Componentes y Apps
+
+- [🦋 CrystalLauncher](../components/LAUNCHER.md)
+- [🌐 Web Client & Dashboard](../components/WEB_CLIENT.md)
+- [🤖 Discord Sync Bot](../components/DISCORD_BOT.md)
+
+### Funcionalidades (Features)
+
+- [🎰 Sistema Gacha](../features/GACHA_SYSTEM.md)
+- [🛡️ Staff Hub](../features/STAFF_HUB.md)
+- [👤 Perfiles y Skins](../features/USER_PROFILES.md)
 
 ---
 
-## 🔄 Flujos Clave
-
-### A. Sistema Gacha (Ejemplo Completo)
-
-1. **Frontend**: Usuario hace click en "Tirar". Llama a `POST /api/gacha/roll`.
-2. **API**:
-   - Verifica saldo/cooldown en Supabase.
-   - Calcula premio (RNG seguro en servidor).
-   - Guarda el resultado en historial (Supabase).
-   - **Bridge**: Inserta el comando de entrega (`give diamond 1`) en la cola MySQL.
-3. **Minecraft**: CrystalCore detecta el comando y entrega el item al jugador in-game.
-
-### B. Estadísticas de Jugador
-
-1. **API**: Recibe petición `GET /player-stats/:user`.
-2. **Service**:
-   - Consulta MySQL (Sessions) para tiempo de juego.
-   - Consulta MySQL (LuckPerms) para rango.
-   - Consulta MySQL (CoreProtect) para bloques minados (optimizada).
-3. **Response**: Devuelve un JSON unificado al Frontend.
-
----
-
-## 📂 Estructura de Carpetas (Monorepo)
-
-```
-/
-├── apps/
-│   ├── web-client/         # [Portal Web & Dashboard](../apps/web-client/)
-│   ├── web-server/         # [Backend API REST](../apps/web-server/)
-│   ├── discord-bot/        # [Bot de Moderación & Sync](../apps/discord-bot/)
-│   └── launcher/           # [CrystalLauncher (Flutter)](../apps/launcher/)
-├── plugins/
-│   └── crystalcore/        # [Plugin Spigot/Paper](../plugins/crystalcore/)
-├── packages/               # Librerías compartidas (UI, TS Config, etc)
-└── docs/                   # [Documentación Central](../docs/)
-```
+_Documentación técnica actualizada: 12 de Enero, 2026_

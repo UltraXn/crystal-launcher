@@ -34,8 +34,19 @@ import ShareableCard from "../components/Account/ShareableCard";
 
 
 
+interface TranslatableItem {
+  id?: string | number;
+  name: string;
+  description: string;
+  criteria?: string;
+  name_en?: string;
+  description_en?: string;
+  criteria_en?: string;
+  [key: string]: unknown;
+}
+
 export default function Account() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -255,6 +266,28 @@ export default function Account() {
         setIsUnlinkModalOpen(false);
       }
     });
+  };
+  const getLocalizedText = (item: TranslatableItem, field: 'name' | 'description' | 'criteria', fallbackTranslationKey?: string) => {
+    const isEnglish = i18n.language.startsWith('en');
+    
+    // 1. Priority: Dynamic English content from DB
+    if (isEnglish) {
+        if (field === 'name' && item.name_en) return item.name_en;
+        if (field === 'description' && item.description_en) return item.description_en;
+        if (field === 'criteria' && item.criteria_en) return item.criteria_en;
+    }
+
+    // 2. Secondary: Static Translation (if key provided and exists)
+    // Note: We use the spanish text as default value for t()
+    if (fallbackTranslationKey) {
+        const defaultValue = item[field] as string | undefined;
+        const translation = t(fallbackTranslationKey, { defaultValue: defaultValue || "" });
+        // If translation is different from key (meaning it was found) OR distinct from default (if t returns default on missing)
+        return translation;
+    }
+
+    // 3. Fallback: Default DB text (Spanish)
+    return item[field];
   };
 
 
@@ -688,9 +721,9 @@ export default function Account() {
                     return (
                       <AchievementCard
                         key={achievement.id}
-                        title={achievement.name}
-                        description={achievement.description}
-                        criteria={achievement.criteria}
+                        title={getLocalizedText(achievement, 'name', `account.achievements.items.${achievement.id}`) as string}
+                        description={getLocalizedText(achievement, 'description', `account.achievements.items.${achievement.id}_desc`) as string}
+                        criteria={getLocalizedText(achievement, 'criteria', `account.achievements.items.${achievement.id}_criteria`) as string}
                         icon={renderedIcon}
                         unlocked={isUnlocked}
                         onShare={
@@ -930,10 +963,10 @@ export default function Account() {
                             marginBottom: "0.5rem",
                           }}
                         >
-                          {def.name}
+                          {getLocalizedText(def, 'name', `account.medals.items.${medalId}.title`) as string}
                         </h3>
                         <p style={{ color: "#ccc", fontSize: "0.85rem" }}>
-                          {def.description}
+                          {getLocalizedText(def, 'description', `account.medals.items.${medalId}.desc`) as string}
                         </p>
                       </div>
                     );

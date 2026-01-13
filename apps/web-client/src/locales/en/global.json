@@ -600,6 +600,7 @@
         "admin_panel": "Admin Panel",
         "settings": {
             "title": "Settings",
+            "language": "Language / Idioma",
             "security": "Security",
             "privacy": "Privacy",
             "profile_info": "Profile Information",
@@ -628,7 +629,13 @@
             "save_profile": "Update Profile",
             "pass_mismatch": "Passwords do not match",
             "pass_min_chars": "Minimum 6 characters",
-            "success_profile": "Profile updated successfully"
+            "success_profile": "Profile updated successfully",
+            "community_pref": "Community Preferences",
+            "status_msg": "Status Message (Short)",
+            "notifications": "Notifications",
+            "notify_events": "Global Events",
+            "notify_mentions": "Mentions / Replies",
+            "status_placeholder": "Ex: Exploring the End..."
         },
         "security": {
             "2fa_title": "Two-Factor Authentication",

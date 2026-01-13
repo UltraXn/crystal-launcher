@@ -30,5 +30,10 @@
     color: var(--text);
     font-family: "Inter", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    cursor: url('/images/ui/cursor.webp'), auto;
+  }
+
+  a, button, [role="button"], input[type="button"], input[type="submit"], select, .cursor-pointer {
+    cursor: url('/images/ui/cursor.webp'), pointer !important;
   }
 }

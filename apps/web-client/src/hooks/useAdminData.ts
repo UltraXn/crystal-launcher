@@ -837,7 +837,7 @@ export const useAuditLogs = (page: number, limit: number, search: string, source
         queryKey: ['admin', 'audit-logs', page, limit, search, source],
         queryFn: async () => {
             const session = (await supabase.auth.getSession()).data.session;
-            const res = await fetch(`${API_URL}/admin/logs?page=${page}&limit=${limit}&search=${search}&source=${source}`, {
+            const res = await fetch(`${API_URL}/logs?page=${page}&limit=${limit}&search=${search}&source=${source}`, {
                 headers: getAuthHeaders(session?.access_token || null)
             });
             if (!res.ok) throw new Error('Failed to fetch audit logs');

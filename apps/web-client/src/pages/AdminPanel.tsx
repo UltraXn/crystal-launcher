@@ -23,6 +23,7 @@ import '../styles/admin_news.css'
 import '../styles/admin_gamification.css'
 import '../styles/admin_donors.css'
 import '../styles/admin_donations.css'
+import '../styles/admin_audit.css'
 
 // Sub-componentes del Admin Panel
 import DashboardOverview from "../components/Admin/DashboardOverview"

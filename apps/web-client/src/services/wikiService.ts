@@ -9,6 +9,7 @@ export interface WikiArticle {
     title: string;
     content: string;
     category: string;
+    description?: string; // Added description field
     author_id: string;
     created_at: string;
     updated_at: string;

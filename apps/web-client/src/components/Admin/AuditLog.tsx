@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Globe, Gamepad2, User, Search, Filter, Calendar } from 'lucide-react'
+import { Globe, Gamepad2, User, Search, Filter, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from "react-i18next"
 import Loader from "../UI/Loader"
 import { useAuditLogs } from "../../hooks/useAdminData"
@@ -192,19 +192,27 @@ export default function AuditLog({ mockLogs, mockTotal }: AuditLogProps = {}) {
 
             {totalPages > 1 && (
                 <div className="audit-pagination">
+
                     <button 
                         disabled={page === 1} 
                         onClick={() => setPage(page - 1)}
                         className="pagination-btn"
+                        title={t('common.previous')}
                     >
-                        {t('common.previous')}
+                        <ChevronLeft size={18} />
                     </button>
                     <div className="pagination-pages">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            let p = page - 2 + i;
-                            if (p < 1) p = i + 1;
-                            if (p > totalPages) return null;
-                            return (
+                        {(() => {
+                            const maxButtons = 5;
+                            let startPage = Math.max(1, page - 2);
+                            const endPage = Math.min(totalPages, Math.max(1, startPage + maxButtons - 1));
+                            
+                            // Adjust start if we hit the end
+                            if (endPage - startPage + 1 < maxButtons) {
+                                startPage = Math.max(1, endPage - maxButtons + 1);
+                            }
+
+                            return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(p => (
                                 <button 
                                     key={p}
                                     className={`page-num ${page === p ? 'active' : ''}`}
@@ -212,15 +220,16 @@ export default function AuditLog({ mockLogs, mockTotal }: AuditLogProps = {}) {
                                 >
                                     {p}
                                 </button>
-                            )
-                        })}
+                            ));
+                        })()}
                     </div>
                     <button 
                         disabled={page === totalPages} 
                         onClick={() => setPage(page + 1)}
                         className="pagination-btn"
+                        title={t('common.next')}
                     >
-                        {t('common.next')}
+                        <ChevronRight size={18} />
                     </button>
                 </div>
             )}

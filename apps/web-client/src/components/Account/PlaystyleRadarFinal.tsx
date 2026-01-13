@@ -53,12 +53,12 @@ const PlaystyleRadarFinal: React.FC<PlaystyleRadarProps> = ({ stats }) => {
 
     return (
         <div className="w-full h-[300px] relative">
-             <ResponsiveContainer width="100%" height={300}>
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={scores}>
+            <ResponsiveContainer width="100%" height={300}>
+                <RadarChart cx="50%" cy="50%" outerRadius="65%" data={scores}>
                     <PolarGrid stroke="rgba(255,255,255,0.05)" />
                     <PolarAngleAxis 
                         dataKey="subject" 
-                        tick={{ fill: '#666', fontSize: 10, fontWeight: 900, letterSpacing: '1px' }} 
+                        tick={{ fill: '#666', fontSize: 11, fontWeight: 800, letterSpacing: '0.5px' }} 
                     />
                     <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                     <Radar

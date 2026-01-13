@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { User as UserIcon, Camera, Shield, Twitter, Link, Lock, FileCode } from 'lucide-react';
+import { User as UserIcon, Camera, Shield, Twitter, Link, Lock, FileCode, Youtube, Coffee, Globe } from 'lucide-react';
 import { User, UserIdentity } from '@supabase/supabase-js';
 
 import Loader from '../UI/Loader';
@@ -25,7 +25,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     twitchIdentity,
     showToast 
 }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     
     // Mutations (TanStack Query)
     const { mutate: updateProfile, isPending: isSavingProfile } = useUpdateProfile();
@@ -44,13 +44,18 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             social_youtube: user?.user_metadata?.social_youtube || "",
             social_kofi: user?.user_metadata?.social_kofi || "",
             avatar_preference: user?.user_metadata?.avatar_preference || "minecraft",
-            profile_banner_url: user?.user_metadata?.profile_banner_url || ""
+            profile_banner_url: user?.user_metadata?.profile_banner_url || "",
+            status_message: user?.user_metadata?.status_message || "",
+            notify_events: user?.user_metadata?.notify_events ?? true,
+            notify_mentions: user?.user_metadata?.notify_mentions ?? true
         }
     });
 
     const avatarPreference = useWatch({ control, name: 'avatar_preference' });
     const bannerUrl = useWatch({ control, name: 'profile_banner_url' });
     const bioValue = useWatch({ control, name: 'bio' });
+    const notifyEvents = useWatch({ control, name: 'notify_events' });
+    const notifyMentions = useWatch({ control, name: 'notify_mentions' });
 
     useEffect(() => {
         if (!user) return;
@@ -65,7 +70,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         if (twitchIdentity) {
             const name = twitchIdentity.identity_data?.name || twitchIdentity.identity_data?.login;
             if (name && !user.user_metadata?.social_twitch) {
-                 setValue('social_twitch', `https://twitch.tv/${name}`)
+                setValue('social_twitch', `https://twitch.tv/${name}`)
             }
         }
     }, [discordIdentity, twitchIdentity, user, setValue]);
@@ -139,7 +144,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                                 className={`flex items-center gap-4 p-5 rounded-2xl border transition-all ${avatarPreference === 'social' ? 'bg-(--accent)/10 border-(--accent)/40 shadow-lg shadow-(--accent)/5' : 'bg-white/2 border-white/5 hover:bg-white/5 hover:border-white/10'}`}
                             >
                                 <img 
-                                    src={user?.user_metadata?.avatar_url || "https://ui-avatars.com/api/?name=" + (user?.user_metadata?.full_name || "User")} 
+                                    src={user?.user_metadata?.picture || user?.user_metadata?.avatar_url || "https://ui-avatars.com/api/?name=" + (user?.user_metadata?.full_name || "User")} 
                                     alt="Social" 
                                     className="w-12 h-12 rounded-xl object-cover" 
                                 />
@@ -184,6 +189,63 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                             </div>
                         </div>
                     </div>
+
+                    
+                    {/* Community Settings (Filler for layout balance) */}
+                    <div className="bg-white/2 border border-white/5 rounded-4xl p-8 space-y-6">
+                        <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
+                             {t('account.settings.community_pref', 'Preferencias de Comunidad')}
+                        </label>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Status Message */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1">
+                                    {t('account.settings.status_msg', 'Mensaje de Estado (Corto)')}
+                                </label>
+                                <div className="relative group/status">
+                                    <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-500 group-focus-within/status:text-(--accent) transition-colors">
+                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                    </div>
+                                    <input 
+                                        {...register('status_message')}
+                                        placeholder={t('account.settings.status_placeholder', 'Ej: Explorando el End...')}
+                                        className="w-full bg-black/20 border border-white/5 rounded-2xl py-4 pl-10 pr-4 text-xs font-bold text-white placeholder:text-gray-700 focus:outline-none focus:border-white/20 transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Notification Toggles */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-600 ml-1 mb-2 block">
+                                    {t('account.settings.notifications', 'Notificaciones')}
+                                </label>
+                                <div className="flex flex-col gap-3">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setValue('notify_events', !notifyEvents, { shouldDirty: true })}
+                                        className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5 hover:bg-white/5 transition-all group"
+                                    >
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-gray-200 transition-colors">{t('account.settings.notify_events', 'Eventos Globales')}</span>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${notifyEvents ? 'bg-green-500/20' : 'bg-white/10'}`}>
+                                            <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 shadow-sm ${notifyEvents ? 'bg-green-500 left-4' : 'bg-gray-400 left-1'}`} />
+                                        </div>
+                                    </button>
+
+                                    <button 
+                                        type="button"
+                                        onClick={() => setValue('notify_mentions', !notifyMentions, { shouldDirty: true })}
+                                        className="flex items-center justify-between p-3 bg-black/20 rounded-xl border border-white/5 hover:bg-white/5 transition-all group"
+                                    >
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-gray-200 transition-colors">{t('account.settings.notify_mentions', 'Menciones / Respuestas')}</span>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${notifyMentions ? 'bg-green-500/20' : 'bg-white/10'}`}>
+                                            <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 shadow-sm ${notifyMentions ? 'bg-green-500 left-4' : 'bg-gray-400 left-1'}`} />
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Sidebar Settings (Left Column) */}
@@ -209,6 +271,34 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         </div>
                     </div>
 
+                    {/* Language Settings */}
+                    <div className="bg-white/2 border border-white/5 rounded-4xl p-8 space-y-6">
+                        <div className="flex items-center gap-4 text-(--accent)">
+                            <Globe className="text-xl" />
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em]">{t('account.settings.language', 'Idioma / Language')}</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <button 
+                                type="button"
+                                onClick={() => i18n.changeLanguage('es')} // Assuming i18n is available from useTranslation deconstruction
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${i18n.language.startsWith('es') ? 'bg-(--accent)/10 border-(--accent)/40 shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]' : 'bg-black/20 border-white/5 hover:bg-white/5 hover:border-white/10'}`}
+                            >
+                                <span className="text-2xl">🇪🇸</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${i18n.language.startsWith('es') ? 'text-(--accent)' : 'text-gray-500'}`}>Español</span>
+                            </button>
+
+                            <button 
+                                type="button"
+                                onClick={() => i18n.changeLanguage('en')}
+                                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${i18n.language.startsWith('en') ? 'bg-(--accent)/10 border-(--accent)/40 shadow-[0_0_15px_rgba(var(--accent-rgb),0.1)]' : 'bg-black/20 border-white/5 hover:bg-white/5 hover:border-white/10'}`}
+                            >
+                                <span className="text-2xl">🇺🇸</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${i18n.language.startsWith('en') ? 'text-(--accent)' : 'text-gray-500'}`}>English</span>
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Social Links Section (Moved Here) */}
                     <div className="bg-white/2 border border-white/5 rounded-4xl p-8 space-y-6">
                         <label className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">
@@ -223,16 +313,13 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                                     </svg>
                                 ), color: '#5865F2', label: 'Discord' },
                                 { id: 'social_twitter', icon: Twitter, color: '#1da1f2', label: 'Twitter' },
+                                { id: 'social_youtube', icon: Youtube, color: '#ff0000', label: 'YouTube' },
                                 { id: 'social_twitch', icon: (props: React.SVGProps<SVGSVGElement>) => (
                                     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
                                         <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
                                     </svg>
                                 ), color: '#9146FF', label: 'Twitch' },
-                                { id: 'social_kofi', icon: (props: React.SVGProps<SVGSVGElement>) => (
-                                    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-                                        <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.724c-.304 0-.553.243-.553.543v10.812c0 .301.249.544.553.544H10.741c1.389 0 2.496 1.311 2.496 2.679 0 1.367-1.106 2.476-2.496 2.476H3.857c-.301 0-.544.25-.544.553v.681c0 .302.243.553.544.553h6.884c3.285 0 5.619-2.633 5.619-5.65v-.601c0-.446.365-.806.811-.806h.452c3.035 0 6.223-1.647 6.223-6.155a5.807 5.807 0 00-.165-1.545zM19.141 12.18h-.129l-.292.011c-.139 0-.251-.112-.251-.251V5.556c0-.421.314-.735.735-.735a4.484 4.484 0 01 2.399.641c.421.28.665.735.665 1.201.011 3.265-2.036 5.516-3.127 5.516z"/><path d="M9.133 9.133s-.309-1.233-1.543-1.233c-1.232 0-1.542 1.233-1.542 1.233s-.31 1.234.617 1.234H8.514c.928.001.619-1.234.619-1.234z"/>
-                                    </svg>
-                                ), color: '#00AF96', label: 'Ko-Fi' }
+                                { id: 'social_kofi', icon: Coffee, color: '#00AF96', label: 'Ko-Fi' }
                             ].map((item) => (
                                 <div key={item.id} className="relative group/social">
                                     <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none group-focus-within/social:scale-110 transition-transform" style={{ color: item.color }}>

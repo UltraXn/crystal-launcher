@@ -55,6 +55,7 @@ const router = createBrowserRouter([
             { path: "forum", element: <LazyWrapper><Forum /></LazyWrapper> },
             { path: "forum/create", element: <LazyWrapper><CreateThread /></LazyWrapper> },
             { path: "forum/:id", element: <LazyWrapper><ForumCategory /></LazyWrapper> },
+            { path: "forum/thread/:id", element: <LazyWrapper><ForumThread /></LazyWrapper> },
             { path: "forum/thread/:type/:id", element: <LazyWrapper><ForumThread /></LazyWrapper> },
             { path: "map", element: <LazyWrapper><Map /></LazyWrapper> },
             { path: "status", element: <LazyWrapper><Status /></LazyWrapper> },

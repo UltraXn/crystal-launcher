@@ -25,7 +25,7 @@ export default function WikiManager({ mockArticles }: WikiManagerProps = {}) {
     const updateMutation = useUpdateWikiArticle();
     const deleteMutation = useDeleteWikiArticle();
 
-    const articles = mockArticles || fetchArticlesData;
+    const articles = mockArticles || (Array.isArray(fetchArticlesData) ? fetchArticlesData : []);
 
     // Form State
     const [isEditing, setIsEditing] = useState(false)
@@ -35,12 +35,22 @@ export default function WikiManager({ mockArticles }: WikiManagerProps = {}) {
     const handleSave = async (formData: Partial<WikiArticle>) => {
         if (!formData.title || !formData.slug || !formData.content) return
 
+        // Ensure required fields for API
+        const payload = {
+            ...formData,
+            title: formData.title, // TS knows these are defined due to early return check
+            slug: formData.slug,
+            content: formData.content,
+            category: formData.category || 'general',
+            description: formData.description || formData.content.substring(0, 100), // Priority: Explicit > Auto-generated
+        } as WikiArticle & { description: string }; // Assert strict description to satisfy WikiPayload
+
         if (editingId) {
-            updateMutation.mutate({ id: editingId, payload: formData }, {
+            updateMutation.mutate({ id: editingId, payload }, {
                 onSuccess: () => setIsEditing(false)
             });
         } else {
-            createMutation.mutate(formData, {
+            createMutation.mutate(payload, {
                 onSuccess: () => setIsEditing(false)
             });
         }
@@ -70,29 +80,15 @@ export default function WikiManager({ mockArticles }: WikiManagerProps = {}) {
 
     return (
         <div className="wiki-manager">
-             <div className="manager-header" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '2rem'
-                }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div className="search-box" style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
-                        background: 'rgba(255, 255, 255, 0.05)', 
-                        padding: '0.5rem 1rem', 
-                        borderRadius: '8px', 
-                        border: '1px solid rgba(255, 255, 255, 0.1)' 
-                    }}>
-                        <Search className="text-white/20" style={{ color: 'rgba(255,255,255,0.4)' }} />
+            <div className="manager-header wiki-header">
+                <div className="search-box-wrapper">
+                    <div className="search-box">
+                        <Search className="search-icon" size={18} />
                         <input 
                             type="text" 
                             placeholder={t('admin.wiki.search_placeholder')} 
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            style={{ background: 'none', border: 'none', color: '#fff', outline: 'none' }}
                         />
                     </div>
                 </div>

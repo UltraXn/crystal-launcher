@@ -178,12 +178,13 @@ export default function DonorFormModal({ donor, isNew, onClose, onSave, saving }
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <label className="admin-label-premium">{t('admin.donors.form.desc')}</label>
                                     <button 
-                                        className="btn-secondary" 
-                                        style={{ fontSize: '0.7rem', height: '28px', padding: '0 10px' }}
+                                        type="button"
+                                        className="btn-premium-mini" 
                                         onClick={() => handleTranslate(formData.description, 'en', 'description_en')}
                                         disabled={translating || !formData.description}
                                     >
-                                        {translating ? <Loader2 className="spin" /> : <Globe />} {t('admin.donors.form.translate_en')}
+                                        {translating ? <Loader2 className="spin" size={14} /> : <Globe size={14} />} 
+                                        {t('admin.donors.form.translate_en')}
                                     </button>
                                 </div>
                                 <textarea 
@@ -199,12 +200,13 @@ export default function DonorFormModal({ donor, isNew, onClose, onSave, saving }
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                                     <label className="admin-label-premium">{t('admin.donors.form.desc_en')}</label>
                                     <button 
-                                        className="btn-secondary" 
-                                        style={{ fontSize: '0.7rem', height: '28px', padding: '0 10px' }}
+                                        type="button"
+                                        className="btn-premium-mini" 
                                         onClick={() => handleTranslate(formData.description_en || '', 'es', 'description')}
                                         disabled={translating || !formData.description_en}
                                     >
-                                        {translating ? <Loader2 className="spin" /> : <Globe />} {t('admin.donors.form.translate_es')}
+                                        {translating ? <Loader2 className="spin" size={14} /> : <Globe size={14} />} 
+                                        {t('admin.donors.form.translate_es')}
                                     </button>
                                 </div>
                                 <textarea 
@@ -243,10 +245,17 @@ export default function DonorFormModal({ donor, isNew, onClose, onSave, saving }
                         </div>
                     </div>
 
-                    <div className="poll-form-footer" style={{ marginTop: '2rem' }}>
-                        <button className="btn-secondary" onClick={onClose}>{t('admin.donors.form.cancel')}</button>
-                        <button className="modal-btn-primary" onClick={handleSubmit} disabled={saving} style={{ height: '50px', padding: '0 2.5rem' }}>
-                            {saving ? <Loader2 className="spin" /> : <><CheckCircle /> {t('admin.donors.form.save')}</>}
+                    <div className="poll-form-footer" style={{ marginTop: '2.5rem', padding: '1.5rem 2.5rem' }}>
+                        <button type="button" className="modal-btn-secondary" onClick={onClose} style={{ height: '52px' }}>
+                            {t('admin.donors.form.cancel')}
+                        </button>
+                        <button 
+                            className="modal-btn-primary" 
+                            onClick={handleSubmit} 
+                            disabled={saving} 
+                            style={{ height: '52px', padding: '0 3rem', flex: 'none' }}
+                        >
+                            {saving ? <Loader2 className="spin" /> : <><CheckCircle size={20} /> {t('admin.donors.form.save')}</>}
                         </button>
                     </div>
                 </div>

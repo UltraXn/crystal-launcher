@@ -501,7 +501,8 @@
                 "social_note": "* Social: +30 pts por rango Donador, Fundador, Killuwu, Neroferno, Developer o Staff."
             }
         },
-        "medals_title": "Mis Medallas",
+       "medals_title": "Mis Medallas",
+
         "no_medals": "Aún no tienes medallas especiales.",
 
         "unlink_confirm_title": "Desvincular cuenta",
@@ -596,39 +597,37 @@
             "confirm_unlink": "Sí, desvincular",
             "cancel": "Cancelar"
         },
-        "admin_panel": "Panel Admin",
         "settings": {
             "title": "Configuración",
-            "security": "Seguridad",
-            "privacy": "Privacidad",
-            "profile_info": "Información del Perfil",
-            "banner": "Banner del Perfil",
-            "no_banner": "Sin Banner",
-            "banner_placeholder": "URL de la imagen (ej: https://imgur.com/...)",
-            "new_password": "Nueva Contraseña",
-            "confirm_password": "Confirmar Contraseña",
-            "update_password": "Actualizar Contraseña",
-            "public_stats": "Mostrar estadísticas públicamente",
-            "public_stats_desc": "Permite que otros usuarios vean tus estadísticas de juego.",
-            "success_password": "¡Contraseña actualizada correctamente!",
-            "success_privacy": "Preferencias de privacidad guardadas.",
+            "language": "Idioma / Language",
             "avatar_pref": "Preferencia de Avatar",
             "mc_head": "Minecraft Head",
             "social_web": "Social / Web",
-            "avatar_hint": "* Selecciona qué imagen prefieres ver en tu perfil público y barra de navegación.",
-            "bio_label": "Biografía (Markdown opcional)",
-            "bio_ph": "Cuéntanos un poco sobre ti...",
-            "max_chars": "MAX 500 CARS",
+            "banner": "Banner del Perfil",
+            "no_banner": "Sin Banner",
+            "banner_placeholder": "URL de la imagen (ej: https://imgur.com/...)",
+            "privacy": "Privacidad",
+            "public_stats": "Público",
+            "public_stats_desc": "Estadísticas visibles.",
             "social_links": "Redes Sociales",
-            "username_ph": "nombredeusuario",
-            "twitter_ph": "Twitter (ej: @miusuario)",
-            "twitch_ph": "Canal de Twitch",
-            "kofi_ph": "URL de Ko-Fi",
+            "bio_label": "Biografía",
+            "bio_ph": "Cuenta tu historia...",
+            "markdown_support": "Soporte Markdown",
+            "security": "Seguridad",
+            "new_password": "Nueva Contraseña",
+            "confirm_password": "Confirmar",
+            "update_password": "Actualizar Password",
             "save_profile": "Actualizar Perfil",
-            "pass_mismatch": "Las contraseñas no coinciden",
-            "pass_min_chars": "Mínimo 6 caracteres",
-            "success_profile": "Perfil actualizado correctamente"
+            "success_password": "¡Contraseña actualizada!",
+            "community_pref": "Preferencias de Comunidad",
+            "status_msg": "Mensaje de Estado (Corto)",
+            "notifications": "Notificaciones",
+            "notify_events": "Eventos Globales",
+            "notify_mentions": "Menciones / Respuestas",
+            "status_placeholder": "Ej: Explorando el End..."
         },
+        "admin_panel": "Panel Admin",
+
         "security": {
             "2fa_title": "Autenticación de Dos Factores",
             "2fa_active": "Tu cuenta está protegida con 2FA.",
@@ -1384,6 +1383,12 @@
             }
         },
         "gamification": {
+            "medals_tab": "Medallas",
+            "achievements_tab": "Logros",
+            "add_medal": "Añadir Medalla",
+            "add_achievement": "Añadir Logro",
+            "delete_title": "¿Eliminar elemento?",
+            "delete_desc": "Esta acción no se puede deshacer. ¿Estás seguro?",
             "medals": {
                 "title": "Gestión de Medallas",
                 "new_medal_default": "Nueva Medalla",
@@ -1498,6 +1503,22 @@
             "filter_all": "TODOS",
             "filter_web": "WEB",
             "filter_game": "JUEGO"
+        },
+        "audit": {
+            "title": "Registro de Auditoría",
+            "subtitle": "Historial detallado de todas las acciones administrativas y eventos del sistema.",
+            "search_placeholder": "Buscar por usuario, acción o detalles...",
+            "source_all": "TODOS",
+            "source_web": "WEB",
+            "source_game": "JUEGO",
+            "showing": "Mostrando {{count}} de {{total}} eventos",
+            "no_logs_found": "No se encontraron registros",
+            "try_adjust_filters": "Intenta ajustar los filtros o la búsqueda.",
+            "table_date": "FECHA",
+            "table_user": "USUARIO",
+            "table_source": "FUENTE",
+            "table_action": "ACCIÓN",
+            "table_details": "DETALLES"
         },
 
         "notifications": {

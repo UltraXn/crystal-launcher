@@ -202,19 +202,25 @@ export const getPublicProfile = async (identifier: string) => {
     const { data: { users }, error } = await supabase.auth.admin.listUsers();
     if (error) throw error;
 
-    const searchTerm = identifier.toLowerCase();
+    const searchTerm = identifier.toLowerCase().replace(/[-_]/g, ' '); // Map neroferno_ultranix back to Neroferno Ultranix
+    const searchTermWithUnderscore = identifier.toLowerCase().replace(/ /g, '_');
+    const searchTermWithDash = identifier.toLowerCase().replace(/ /g, '-');
 
     const target = users?.find((u) => {
         const meta = u.user_metadata || {};
-        return (meta.username && meta.username.toLowerCase() === searchTerm) ||
-               (meta.full_name && meta.full_name.toLowerCase() === searchTerm) ||
-               (meta.minecraft_nick && meta.minecraft_nick.toLowerCase() === searchTerm) ||
-               (meta.minecraft_uuid && meta.minecraft_uuid === identifier); // UUID is usually exact
+        const uUsername = (meta.username || '').toLowerCase();
+        const uFullName = (meta.full_name || '').toLowerCase();
+        const uMcNick = (meta.minecraft_nick || '').toLowerCase();
+        
+        return uUsername === searchTerm || uUsername === searchTermWithUnderscore || uUsername === searchTermWithDash ||
+               uFullName === searchTerm || uFullName === searchTermWithUnderscore || uFullName === searchTermWithDash ||
+               uMcNick === searchTerm || uMcNick === searchTermWithUnderscore || uMcNick === searchTermWithDash ||
+               (meta.minecraft_uuid && meta.minecraft_uuid === identifier);
     });
 
     if (!target) return null;
 
-    // Determine display name: specific Minecraft Nick > Web Username > Full Name
+    // Determine displayName for UI
     const displayName = target.user_metadata?.minecraft_nick || 
                         target.user_metadata?.username || 
                         target.user_metadata?.full_name || 
@@ -222,8 +228,10 @@ export const getPublicProfile = async (identifier: string) => {
 
     return {
         id: target.id,
-        username: displayName, // Show Minecraft Name if available
-        original_username: target.user_metadata?.username, // Keep track of login/original name
+        username: displayName,
+        minecraft_nick: target.user_metadata?.minecraft_nick,
+        original_username: target.user_metadata?.username,
+        full_name: target.user_metadata?.full_name,
         role: target.user_metadata?.role || 'user',
         medals: target.user_metadata?.medals || [],
         avatar_url: target.user_metadata?.avatar_url,
@@ -237,6 +245,7 @@ export const getPublicProfile = async (identifier: string) => {
         social_twitch: target.user_metadata?.social_twitch,
         social_youtube: target.user_metadata?.social_youtube,
         minecraft_uuid: target.user_metadata?.minecraft_uuid,
+        social_avatar_url: target.user_metadata?.picture || target.user_metadata?.avatar_url,
         avatar_preference: target.user_metadata?.avatar_preference || 'minecraft'
     };
 };

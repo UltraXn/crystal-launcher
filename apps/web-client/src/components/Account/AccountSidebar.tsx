@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Medal, X, LogOut, Trophy, Server, Camera, PenTool, MessageSquare, Shield, Link as LinkIcon, Settings } from 'lucide-react';
+import { Medal, X, LogOut, Trophy, LayoutDashboard, Camera, PenTool, MessageSquare, Shield, Link as LinkIcon, Settings } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import { compressImage } from '../../utils/imageOptimizer';
@@ -171,6 +171,15 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({
                             </h3>
                         )}
                         <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate max-w-[200px]">{user.email}</p>
+                        
+                        {user.user_metadata?.status_message && (
+                            <div className="mt-3 bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 flex items-center justify-center gap-2 max-w-full">
+                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                <p className="text-[10px] font-bold text-gray-400 italic truncate max-w-[180px]">
+                                    "{user.user_metadata.status_message}"
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {isAdmin && (
@@ -181,8 +190,8 @@ const AccountSidebar: React.FC<AccountSidebarProps> = ({
                 </div>
 
                 {/* Nav Links */}
-                <nav className="flex-1 space-y-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/5 pb-24 lg:pb-0">
-                    <NavButton active={activeTab === 'overview'} onClick={() => handleNav('overview')} icon={<Server />} label={t('account.nav.overview')} />
+                <nav className="flex-1 space-y-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-24 lg:pb-0">
+                    <NavButton active={activeTab === 'overview'} onClick={() => handleNav('overview')} icon={<LayoutDashboard />} label={t('account.nav.overview')} />
                     <NavButton active={activeTab === 'posts'} onClick={() => handleNav('posts')} icon={<MessageSquare />} label={t('account.nav.posts')} />
                     <NavButton active={activeTab === 'medals'} onClick={() => handleNav('medals')} icon={<Medal />} label={t('account.nav.medals', 'Medallas')} />
                     <NavButton active={activeTab === 'achievements'} onClick={() => handleNav('achievements')} icon={<Trophy />} label={t('account.nav.achievements')} />
