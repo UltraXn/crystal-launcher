@@ -125,7 +125,7 @@ export default function Suggestions() {
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 max-w-[1400px] mx-auto px-4">
 
                     {/* IZQUIERDA: FORMULARIO (3/5) */}
-                    <div className="lg:col-span-3">
+                    <div className="lg:col-span-3 suggestion-column">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="w-12 h-12 rounded-2xl bg-(--accent)/10 flex items-center justify-center text-(--accent) text-xl border border-(--accent)/20">
                                 <Send />
@@ -206,7 +206,7 @@ export default function Suggestions() {
                     </div>
 
                     {/* DERECHA: VOTACIONES (2/5) */}
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 polls-column">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="w-12 h-12 rounded-2xl bg-(--accent)/10 flex items-center justify-center text-(--accent) text-xl border border-(--accent)/20">
                                 <BarChart2 />

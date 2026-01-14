@@ -39,7 +39,35 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://www.google.com", "https://www.gstatic.com", "https://static.cloudflareinsights.com"],
+            connectSrc: [
+                "'self'", 
+                "https://*.supabase.co", 
+                "wss://*.supabase.co", 
+                "wss://*.crystaltidessmp.net", 
+                "https://crystaltidessmp.net", 
+                "https://api.crystaltidessmp.net",
+                "https://*.supabase.co"
+            ],
+            frameSrc: ["'self'", "https://www.google.com"],
+            imgSrc: ["'self'", "data:", "https://*.supabase.co", "https://mc-heads.net", "https://minotar.net"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+        },
+    },
+    permissionsPolicy: {
+        features: {
+            camera: ["'none'"],
+            microphone: ["'none'"],
+            geolocation: ["'none'"],
+            interestCohort: ["'none'"],
+            // Note: 'vr' is deprecated and causing warnings in modern browsers
+        }
+    }
+}));
 app.use('/api', apiLimiter); // Global limit for all API routes
 
 import hpp from 'hpp';

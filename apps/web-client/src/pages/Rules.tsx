@@ -3,7 +3,7 @@ import Section from "../components/Layout/Section"
 import { 
     Info, ShieldCheck, MessageSquare, Swords, Trees, 
     Palette, Video, Scale, Shield, Plus, Edit2, 
-    Trash2, Save, Gavel, X, UserRound, Globe, Megaphone,
+    Trash2, Save, Gavel,    X, UserRound, Globe,
     Users, Loader2, Languages
 } from "lucide-react"
 import { gsap } from "gsap"
@@ -396,7 +396,7 @@ export default function Rules() {
                             const accent = rule.color || config.color;
                             
                             return (
-                                <div key={rule.id} className="relative p-8 bg-black/60 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden hover:-translate-y-2 hover:shadow-2xl hover:shadow-(--accent)/10 hover:border-(--accent)/30 transition-all duration-300 h-full flex flex-col gap-6 group">
+                                <div key={rule.id} className="rule-card-premium relative p-8 bg-black/60 backdrop-blur-xl border border-white/5 rounded-3xl overflow-hidden hover:-translate-y-2 hover:shadow-2xl hover:shadow-(--accent)/10 hover:border-(--accent)/30 transition-all duration-300 h-full flex flex-col gap-6 group">
                                     <div className="absolute top-8 right-8 text-5xl font-black text-white/5 font-sans select-none group-hover:text-white/10 group-hover:scale-110 transition-all pointer-events-none">#{String(rule.globalIndex).padStart(2, '0')}</div>
                                     
                                     {isStaff && (
