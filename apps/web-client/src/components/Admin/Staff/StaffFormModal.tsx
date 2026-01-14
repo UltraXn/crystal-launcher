@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Save, UserPen } from 'lucide-react';
 
@@ -58,15 +58,30 @@ interface StaffFormModalProps {
 
 export default function StaffFormModal({ userData, isNew, onClose, onSave, saving }: StaffFormModalProps) {
     const { t } = useTranslation();
-    const [formData, setFormData] = useState<StaffCardData>({
-        id: 0,
-        name: '',
-        role: 'Usuario',
-        description: '',
-        image: '',
-        color: '#db7700',
-        socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+    const [formData, setFormData] = useState<StaffCardData>(() => {
+        if (userData) return userData;
+        if (isNew) return {
+            id: Date.now(),
+            name: '',
+            role: 'Usuario',
+            description: '',
+            image: '',
+            color: '#db7700',
+            socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+        };
+        return {
+            id: 0,
+            name: '',
+            role: 'Usuario',
+            description: '',
+            image: '',
+            color: '#db7700',
+            socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+        };
     });
+
+    // We don't need the useEffect anymore because the component is keyed by userData.id in the parent
+    // or it's unmounted/remounted when switching between edit/new.
 
     const PRESET_ROLES = useMemo(() => [
         { value: 'Neroferno', label: t('admin.staff.roles.neroferno', 'Neroferno'), color: '#8b5cf6', badge: '/ranks/rank-neroferno.png' },
@@ -79,25 +94,6 @@ export default function StaffFormModal({ userData, isNew, onClose, onSave, savin
         { value: 'Usuario', label: t('admin.staff.roles.user', 'Usuario'), color: '#db7700', badge: '/ranks/user.png' },
         { value: 'Custom', label: t('admin.staff.roles.custom', 'Custom'), color: '#ffffff', badge: null }
     ], [t]);
-
-    useEffect(() => {
-
-        if (userData) {
-            // Only update if ID changed to avoid loops, or relying on parent to handle key
-            // Ideally parent should key on userData.id
-            setFormData(prev => prev.id === userData.id ? prev : userData);
-        } else if (isNew) {
-            setFormData(prev => prev.id === 0 ? {
-                id: Date.now(),
-                name: '',
-                role: 'Usuario',
-                description: '',
-                image: '',
-                color: '#db7700',
-                socials: { twitter: '', discord: '', youtube: '', twitch: '' }
-            } : prev);
-        }
-    }, [userData, isNew]);
 
     const handleChange = (field: keyof StaffCardData, value: string | number | boolean | object) => {
         setFormData(prev => ({ ...prev, [field]: value }));

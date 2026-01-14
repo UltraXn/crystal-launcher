@@ -63,7 +63,9 @@ async function main() {
     // Ensure dir exists
     try {
         await fs.mkdir(BACKUP_DIR, { recursive: true });
-    } catch (e) {}
+    } catch (e) {
+        // Ignored: Directory might already exist
+    }
 
     await backupDatabase(DB_GENERAL, 'General');
     await backupDatabase(DB_SPECIALIZED, 'Specialized');
