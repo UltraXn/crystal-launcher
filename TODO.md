@@ -17,6 +17,7 @@
 - [x] **Validation Debt**: Implementar validación de esquemas Zod en controladores de `web-server` (✅ Completado 100% - Enero 10, 2026).
 - [x] **TanStack Query Migration**: Migración completa del Admin Panel (✅ Completado 100% - Enero 10, 2026).
 - [x] **Documentation Structure**: Reorganización de `docs/` con estructura modular (✅ Completado - Enero 10, 2026).
+- [x] **Fix Consola & Headers**: CSP (Supabase WSS), Permissions-Policy (VR), GSAP Targets y Three.js Duplicates (✅ Enero 13, 2026).
 - [x] **MCP Toolbox Configuration**: Fix de `tools.yaml` para soporte SQL dinámico (✅ Completado - Enero 10, 2026).
 
 ## Ideas & Backlog

@@ -2,12 +2,13 @@
 
 ## 🛠️ En Progreso
 
-- [x] **Hotfix Layout Mantenimiento**: Logo y layout en `Maintenance.tsx` [ID: FIX-001]
-- [x] **Depuración CI/CD**: Resolver fallos en GitHub Actions y limpiar linting [ID: CI-001]
+- [x] **Hotfix Layout Mantenimiento**: Logo y layout en `Maintenance.tsx` [ID: FIX-001] ✅
+- [x] **Depuración CI/CD & Consola**: Resolver fallos en GitHub Actions, limpiar CSP/Permissions-Policy y errores de GSAP/Three.js [ID: CI-001] ✅
 
 ## 📌 Deuda Técnica / Pendiente
 
 - [ ] Verificar consistencia de `task.md` vs `docs/roadmap/TODO.md`
+- [ ] **Restauración de Tests Unitarios**: Reemplazar `smoke.test.ts` con tests reales migrados de las versiones anteriores.
 
 ## ✅ Completado
 
