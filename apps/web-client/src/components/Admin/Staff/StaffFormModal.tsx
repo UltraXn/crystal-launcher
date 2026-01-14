@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Save, UserPen } from 'lucide-react';
 
@@ -58,14 +58,18 @@ interface StaffFormModalProps {
 
 export default function StaffFormModal({ userData, isNew, onClose, onSave, saving }: StaffFormModalProps) {
     const { t } = useTranslation();
-    const [formData, setFormData] = useState<StaffCardData>({
-        id: 0,
-        name: '',
-        role: 'Usuario',
-        description: '',
-        image: '',
-        color: '#db7700',
-        socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+    // Initialize state from props to avoid the need for an immediate effect update on mount
+    const [formData, setFormData] = useState<StaffCardData>(() => {
+        if (userData) return userData;
+        return {
+            id: Date.now(),
+            name: '',
+            role: 'Usuario',
+            description: '',
+            image: '',
+            color: '#db7700',
+            socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+        };
     });
 
     const PRESET_ROLES = useMemo(() => [
@@ -80,24 +84,31 @@ export default function StaffFormModal({ userData, isNew, onClose, onSave, savin
         { value: 'Custom', label: t('admin.staff.roles.custom', 'Custom'), color: '#ffffff', badge: null }
     ], [t]);
 
-    useEffect(() => {
+    // Track the last ID we synced with to support "Reset State on Prop Change" pattern
+    // Reference: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    const [lastSyncedId, setLastSyncedId] = useState<string | number | null>(() => userData?.id || (isNew ? 'NEW' : null));
 
+    const currentId = userData?.id || (isNew ? 'NEW' : null);
+
+    // If the prop (userData ID or isNew status) has changed since we last rendered/synced:
+    // We update the state *during* render. React will immediately re-run the component with the new state
+    // before painting, avoiding the flicker and the useEffect warning.
+    if (currentId !== lastSyncedId) {
+        setLastSyncedId(currentId);
         if (userData) {
-            // Only update if ID changed to avoid loops, or relying on parent to handle key
-            // Ideally parent should key on userData.id
-            setFormData(prev => prev.id === userData.id ? prev : userData);
+            setFormData(userData);
         } else if (isNew) {
-            setFormData(prev => prev.id === 0 ? {
-                id: Date.now(),
+            setFormData({
+                id: 0,
                 name: '',
                 role: 'Usuario',
                 description: '',
                 image: '',
                 color: '#db7700',
                 socials: { twitter: '', discord: '', youtube: '', twitch: '' }
-            } : prev);
+            });
         }
-    }, [userData, isNew]);
+    }
 
     const handleChange = (field: keyof StaffCardData, value: string | number | boolean | object) => {
         setFormData(prev => ({ ...prev, [field]: value }));
