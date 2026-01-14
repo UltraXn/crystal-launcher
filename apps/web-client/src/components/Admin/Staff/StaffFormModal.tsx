@@ -58,17 +58,9 @@ interface StaffFormModalProps {
 
 export default function StaffFormModal({ userData, isNew, onClose, onSave, saving }: StaffFormModalProps) {
     const { t } = useTranslation();
+    // Initialize state from props to avoid the need for an immediate effect update on mount
     const [formData, setFormData] = useState<StaffCardData>(() => {
         if (userData) return userData;
-        if (isNew) return {
-            id: Date.now(),
-            name: '',
-            role: 'Usuario',
-            description: '',
-            image: '',
-            color: '#db7700',
-            socials: { twitter: '', discord: '', youtube: '', twitch: '' }
-        };
         return {
             id: 0,
             name: '',
@@ -79,9 +71,6 @@ export default function StaffFormModal({ userData, isNew, onClose, onSave, savin
             socials: { twitter: '', discord: '', youtube: '', twitch: '' }
         };
     });
-
-    // We don't need the useEffect anymore because the component is keyed by userData.id in the parent
-    // or it's unmounted/remounted when switching between edit/new.
 
     const PRESET_ROLES = useMemo(() => [
         { value: 'Neroferno', label: t('admin.staff.roles.neroferno', 'Neroferno'), color: '#8b5cf6', badge: '/ranks/rank-neroferno.png' },
@@ -94,6 +83,32 @@ export default function StaffFormModal({ userData, isNew, onClose, onSave, savin
         { value: 'Usuario', label: t('admin.staff.roles.user', 'Usuario'), color: '#db7700', badge: '/ranks/user.png' },
         { value: 'Custom', label: t('admin.staff.roles.custom', 'Custom'), color: '#ffffff', badge: null }
     ], [t]);
+
+    // Track the last ID we synced with to support "Reset State on Prop Change" pattern
+    // Reference: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    const [lastSyncedId, setLastSyncedId] = useState<string | number | null>(() => userData?.id || (isNew ? 'NEW' : null));
+
+    const currentId = userData?.id || (isNew ? 'NEW' : null);
+
+    // If the prop (userData ID or isNew status) has changed since we last rendered/synced:
+    // We update the state *during* render. React will immediately re-run the component with the new state
+    // before painting, avoiding the flicker and the useEffect warning.
+    if (currentId !== lastSyncedId) {
+        setLastSyncedId(currentId);
+        if (userData) {
+            setFormData(userData);
+        } else if (isNew) {
+            setFormData({
+                id: 0,
+                name: '',
+                role: 'Usuario',
+                description: '',
+                image: '',
+                color: '#db7700',
+                socials: { twitter: '', discord: '', youtube: '', twitch: '' }
+            });
+        }
+    }
 
     const handleChange = (field: keyof StaffCardData, value: string | number | boolean | object) => {
         setFormData(prev => ({ ...prev, [field]: value }));
