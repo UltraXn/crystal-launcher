@@ -668,6 +668,7 @@
         "placed": "Colocados",
         "private_stats": "Las estadísticas de este jugador son privadas.",
         "skin": "Skin",
+        "playstyle_title": "Gráfico de Estilo",
         "wall": {
             "title": "Muro de Comentarios",
             "placeholder": "Escribe algo en este muro...",
