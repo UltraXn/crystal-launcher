@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { User, Provider, AuthResponse, OAuthResponse } from '@supabase/supabase-js';
@@ -14,7 +15,6 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     return useContext(AuthContext) as AuthContextType;
 };

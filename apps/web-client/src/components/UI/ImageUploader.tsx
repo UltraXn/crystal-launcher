@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, Loader2 } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
-import { useTranslation } from 'react-i18next';
+// Redundant import removed
 
 interface ImageUploaderProps {
     onImageUploaded: (url: string) => void;
@@ -18,7 +18,7 @@ export default function ImageUploader({
     folderPath = 'uploads',
     className = ''
 }: ImageUploaderProps) {
-    const { t } = useTranslation();
+    // const { t } = useTranslation();
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,14 +72,14 @@ export default function ImageUploader({
             const webpBlob = await processImage(file);
             const fileName = `${folderPath}/${Date.now()}_${Math.random().toString(36).substring(7)}.webp`;
             
-            const { data, error } = await supabase.storage
+            const { error: uploadError } = await supabase.storage
                 .from(bucketName)
                 .upload(fileName, webpBlob, {
                     contentType: 'image/webp',
                     upsert: true
                 });
 
-            if (error) throw error;
+            if (uploadError) throw uploadError;
 
             const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(fileName);
             onImageUploaded(publicUrl);

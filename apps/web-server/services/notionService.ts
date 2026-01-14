@@ -16,15 +16,18 @@ export const getNotionTasks = async () => {
     }
 
     try {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         const response = await (notion.databases as any).query({
             database_id: DATABASE_ID,
             // You can add filters here, e.g., status != 'Done'
         });
 
         // Simplified mapping - adjusts based on user's actual DB schema
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         return response.results.map((page: any) => {
             const props = page.properties;
             // Robustly try to find 'Name' or 'Title' property
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
             const titleProp = props.Name || props.Title || props.Task || Object.values(props).find((p: any) => p.id === 'title');
             const statusProp = props.Status || props.State;
             const dateProp = props.Date || props.Due || props.Timeline;
