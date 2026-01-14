@@ -486,7 +486,7 @@
             "verify_btn": "Verificar Ahora",
             "playstyle": {
                 "title": "Estilo de Juego",
-                "metrics_title": "Métricas de Estilo",
+                "metrics_title": "Métricas de Estilo de Juego",
                 "style": "Estilo",
                 "goal": "Meta (100%)",
                 "constructor": "Constructor",
