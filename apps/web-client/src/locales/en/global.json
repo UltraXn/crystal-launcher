@@ -492,7 +492,7 @@
                 "metrics_title": "Playstyle Metrics",
                 "style": "Style",
                 "goal": "Goal (100%)",
-                "constructor": "Constructor",
+                "constructor": "Builder",
                 "fighter": "Fighter",
                 "explorer": "Explorer",
                 "merchant": "Merchant",
