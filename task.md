@@ -2,8 +2,8 @@
 
 ## 🛠️ En Progreso
 
-- [ ] **Hotfix Layout Mantenimiento**: Logo y layout en `Maintenance.tsx` [ID: FIX-001]
-- [ ] **Depuración CI/CD**: Resolver fallos en GitHub Actions tras merge/conflictos [ID: CI-001]
+- [x] **Hotfix Layout Mantenimiento**: Logo y layout en `Maintenance.tsx` [ID: FIX-001]
+- [x] **Depuración CI/CD**: Resolver fallos en GitHub Actions y limpiar linting [ID: CI-001]
 
 ## 📌 Deuda Técnica / Pendiente
 
@@ -23,4 +23,5 @@
     - [x] `TicketDetailModal.tsx`
     - [x] `PremiumConfirm.tsx`
   - [x] Push a `main`
+- [x] **CI Quality Check**: Verificación exitosa de Lint y Build en Client, Server y Shared
 - [x] Stash de cambios locales en `fix/maintenance-page-layout`

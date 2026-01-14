@@ -63,7 +63,7 @@ async function main() {
     // Ensure dir exists
     try {
         await fs.mkdir(BACKUP_DIR, { recursive: true });
-    } catch (e) {
+    } catch {
         // Ignored: Directory might already exist
     }
 
