@@ -58,15 +58,6 @@ app.use(helmet({
             styleSrc: ["'self'", "'unsafe-inline'"],
         },
     },
-    permissionsPolicy: {
-        features: {
-            camera: ["'none'"],
-            microphone: ["'none'"],
-            geolocation: ["'none'"],
-            interestCohort: ["'none'"],
-            // Note: 'vr' is deprecated and causing warnings in modern browsers
-        }
-    }
 }));
 app.use('/api', apiLimiter); // Global limit for all API routes
 

@@ -34,7 +34,6 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(dirname, 'src'),
         '/src': path.resolve(dirname, 'src'),
-        'three': path.resolve(dirname, 'node_modules/three'),
         '@crystaltides/shared': path.resolve(dirname, '../../packages/shared/src/index.ts'),
       },
     },
