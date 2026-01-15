@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Skin Viewer</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background-color: transparent;
+      }
+      canvas {
+        display: block;
+        outline: none;
+      }
+    </style>
+    <!-- Skinview3d Bundle (We will use a CDN for now or need to download it locally) -->
+    <!-- Ideally for a launcher, we download this file locally. For this step, I'll assume we can link it or mock it. 
+         To be robust, I will include a small script to load from CDN or fallback. -->
+    <script src="https://bs-community.github.io/skinview3d/js/skinview3d.bundle.js"></script>
+  </head>
+  <body>
+    <canvas id="skin_container"></canvas>
+
+    <script>
+      let skinViewer;
+
+      function init() {
+        skinViewer = new skinview3d.SkinViewer({
+          canvas: document.getElementById('skin_container'),
+          width: window.innerWidth,
+          height: window.innerHeight,
+          skin: 'https://textures.minecraft.net/texture/344af588-8a7e-4053-9f03-92d68d96b86c', // Default: UltraXn skin or generic
+          background: null, // Transparent
+        });
+
+        // Lighting
+        skinViewer.lighting.globalLight.intensity = 0.8;
+        skinViewer.lighting.cameraLight.intensity = 0.6;
+
+        // Idle Animation
+        skinViewer.animation = new skinview3d.IdleAnimation();
+        skinViewer.animation.speed = 0.5;
+
+        // Adjust camera
+        skinViewer.camera.position.z = 60;
+        skinViewer.zoom = 0.9;
+        skinViewer.fov = 70;
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+          skinViewer.width = window.innerWidth;
+          skinViewer.height = window.innerHeight;
+        });
+      }
+
+      // Bridge function to be called from Flutter
+      function setSkin(skinUrl) {
+        if (skinViewer) {
+          skinViewer.loadSkin(skinUrl);
+        }
+      }
+
+      // Wait for lib to load
+      window.onload = init;
+    </script>
+  </body>
+</html>

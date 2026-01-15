@@ -1,67 +1,62 @@
-# 🦋 CrystalTides Launcher
+# 🚀 Crystal Launcher (V2.0)
 
-Un launcher de Minecraft modular y de alto rendimiento construido con **Flutter** y **Rust**. Inspirado en la estética de Lunar Client, diseñado para el ecosistema CrystalTides.
+El cliente oficial para **CrystalTides SMP**, rediseñado desde cero en **Flutter** + **Rust**.
 
 ## 🏗️ Arquitectura
 
-El launcher sigue una arquitectura de procesos desacoplada:
+El launcher sigue un diseño híbrido para maximizar rendimiento y estética:
 
-- **UI en Flutter**: Una interfaz premium basada en glassmorphism para la gestión del juego y ajustes.
-- **Puente Nativo (Rust)**: Backend de alto rendimiento que maneja criptografía, bases de datos locales (SQLite) y parches en caliente.
-- **Motor de Minecraft (Engine)**: Una capa de orquestación personalizada para la gestión de versiones y descarga de activos.
+- **Frontend**: Flutter (Dart). Renderiza la UI a 60FPS con estética "Crystal Dark".
+- **Backend Core**: Rust (Crate nativo). Maneja la lógica pesada (Hash checking, Launching, Memory Mgmt).
+- **Bridge**: Dart FFI (Foreign Function Interface) conecta Flutter con Rust.
+- **Persistencia**:
+  - **Drift (SQLite)**: Almacena configuraciones locales (RAM, rutas, resolución).
+  - **Secure Storage**: Almacena tokens de sesión (JWT) de forma segura.
 
-## 🚀 Características Clave
+## 📂 Estructura de Carpetas
 
-### ⚡ Descubrimiento Híbrido de Activos (Alta Velocidad)
-
-El `MinecraftEngine` implementa una estrategia de **Descubrimiento Primero** para maximizar la eficiencia:
-
-- **Reutilización Estándar**: Detecta automáticamente tu carpeta `%APPDATA%\.minecraft` (Windows) y las rutas del directorio personal en macOS/Linux.
-- **Cero Redundancia**: Si los activos o librerías ya existen en tu instalación estándar de Minecraft, el launcher los **clona o enlaza** en lugar de descargarlos de nuevo.
-- **Aislamiento**: Los archivos personalizados de CrystalTides se mantienen separados, asegurando que tu instalación vanilla permanezca intacta.
-
-### 🧠 Integración con Game-Bridge
-
-Inyecta de forma fluida el [Agente Crystal](https://github.com/UltraXn/crystal-agent) en procesos reales de Minecraft para HUDs y lógica dentro del juego.
-
-### 🎨 UI/UX Premium
-
-- **Glassmorphism**: Estética moderna de cristal esmerilado con animaciones a 60FPS.
-- **Navegación con Estado**: Interfaz basada en barra lateral con integración profunda para ajustes y progreso de lanzamiento.
-- **Animaciones Rive**: Gráficos vectoriales interactivos para una sensación de interfaz "viva".
-
-## 📁 Estructura del Proyecto
-
-- `lib/`: Código fuente de Flutter.
-  - `services/`: Lógica central (MinecraftEngine, LaunchService, DownloadService).
-  - `ui/`: Páginas y widgets personalizados.
-  - `data/`: Persistencia basada en Drift.
-- `native/`: El crate de Rust para el puente nativo.
-- `windows/`: Corredor C++ específico de Windows y configuración de FFI.
+```
+apps/launcher/
+├── lib/
+│   ├── layouts/     # Shells principales (MainLayout)
+│   ├── pages/       # Pantallas (HomePage, SettingsPage)
+│   ├── widgets/     # Componentes reusables (NewsCard, PlayButton)
+│   ├── services/    # Lógica de negocio (NewsService, AuthService)
+│   └── models/      # Data Classes
+├── native-core/     # Código Rust (game_bridge_core)
+├── dev_plugins/     # Plugins locales modificados (video_player, webview)
+├── assets/
+│   ├── images/      # Logos y fondos
+│   └── web/         # Archivos HTML locales (Skin Viewer)
+└── windows/         # Código nativo del host de Windows
+```
 
 ## 🛠️ Desarrollo
 
-### Requisitos Previos
+### Pre-requisitos
 
-- Flutter SDK 3.3x o superior
-- Toolchain de Rust
-- Visual Studio con "Desarrollo de escritorio con C++" (para compilación en Windows)
+1.  **Flutter SDK** (Channel Stable).
+2.  **Rust Toolchain** (Cargo).
+3.  **Visual Studio** (C++ Desktop Development workload) para compilar en Windows.
 
-### Compilación del Core Nativo
+### Comandos Comunes
 
-Antes de ejecutar la app de Flutter, compila el código de Rust:
+- `flutter pub get`: Instalar dependencias Dart.
+- `flutter run -d windows`: Iniciar en modo Debug.
+- `flutter build windows`: Compilar versión de producción (`.exe`).
 
-```bash
-cd native
-cargo build --release
-```
+## 🗺️ Roadmap Técnico (Resumen)
 
-### Ejecución de la Aplicación
+- **Fase 1 (Actual)**: Infraestructura UI. Noticias, Login (Supabase), Skin Viewer.
+- **Fase 2**: Game Bridge. Rust se encarga de descargar e iniciar Java.
+- **Fase 3**: Sync. Actualizaciones diferenciales de modpacks (Hash-based).
 
-```bash
-flutter run -d windows
-```
+## 💡 Notas de Legado
+
+- **Lua Patches**: _Deprecado_. Reemplazado por el sistema de **Actualizaciones Diferenciales Nativas** de Rust.
+- **Rive**: Se utilizará para animaciones de carga complejas.
+- **Webview**: Se utiliza exclusivamente para renderizar el Skin Viewer 3D localmente.
 
 ---
 
-Construyendo la próxima generación de infraestructura para Minecraft. Impulsado por Rust y Flutter.
+_Documentación generada el 11 de Enero de 2026._

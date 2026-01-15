@@ -3,8 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  app_links
   rive_native
-  screen_retriever
+  screen_retriever_windows
   sqlite3_flutter_libs
   url_launcher_windows
   video_player_win
