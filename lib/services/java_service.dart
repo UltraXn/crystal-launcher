@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import '../utils/logger.dart';
 import 'package:drift/drift.dart';
 import 'package:path/path.dart' as p;
 import 'database_service.dart';
@@ -26,7 +26,7 @@ class JavaService {
         return settings.javaPath;
       }
     } catch (e) {
-      debugPrint("Database not ready or error reading settings: $e");
+      logger.e("Database not ready or error reading settings", error: e);
     }
 
     // 2. Check JAVA_HOME
@@ -60,7 +60,7 @@ class JavaService {
             }
           }
         } catch (e) {
-          debugPrint("Error scanning $root: $e");
+          logger.e("Error scanning $root", error: e);
         }
       }
     }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/session_service.dart';
 import '../theme/app_theme.dart';
-import 'register_page.dart';
+// import 'register_page.dart'; // Removed
 
-enum LoginMode { guest, account, microsoft }
+enum LoginMode { guest, microsoft }
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,46 +13,16 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   final _nicknameController = TextEditingController();
 
-  bool _isLoading = false;
-  LoginMode _selectedMode = LoginMode.account; // Default to Account
+  LoginMode _selectedMode = LoginMode.guest;
+  // final _emailController = TextEditingController(); // Removed
+  // final _passwordController = TextEditingController(); // Removed
+  // bool _isLoading = false; // Removed
+
   String? _errorMessage;
 
-  Future<void> _handleAccountLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-
-      if (email.isEmpty || password.isEmpty) {
-        throw 'Por favor ingresa correo y contraseña.';
-      }
-
-      await SessionService().loginCrystal(email, password);
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   void _handleGuestLogin() async {
-    // Made async
     final nick = _nicknameController.text.trim();
     if (nick.isEmpty || nick.length < 3) {
       setState(
@@ -61,17 +31,14 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-
     try {
       await SessionService().loginGuest(nick);
-      // Navigation handled by AuthWrapper via listener
     } catch (e) {
-      setState(() => _errorMessage = "Error iniciando sesión: $e");
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _errorMessage = "Error iniciando sesión: $e");
     }
   }
+
+  // _handleCrystalLogin removed
 
   void _handleMicrosoftLogin() async {
     setState(() {
@@ -88,12 +55,17 @@ class _LoginPageState extends State<LoginPage> {
           // Background generic
           Positioned.fill(
             child: Container(
+              color: AppTheme.background, // Solid background
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
               decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.center,
-                  radius: 1.2,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [
-                    AppTheme.backgroundAlt.withOpacity(0.4),
+                    AppTheme.backgroundAlt.withValues(alpha: 0.2),
                     AppTheme.background,
                   ],
                 ),
@@ -112,9 +84,14 @@ class _LoginPageState extends State<LoginPage> {
                 border: Border.all(color: Colors.white10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    offset: const Offset(0, 4),
+                    blurRadius: 10,
                   ),
                 ],
               ),
@@ -146,13 +123,12 @@ class _LoginPageState extends State<LoginPage> {
                     height: 48,
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         _buildTabButton("Invitado", LoginMode.guest),
-                        _buildTabButton("Cuenta", LoginMode.account),
                         _buildTabButton("Premium", LoginMode.microsoft),
                       ],
                     ),
@@ -182,6 +158,40 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ],
                 ],
+              ),
+            ),
+          ),
+
+          // Direct Connection Footer
+          Positioned(
+            bottom: 32,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.dns, size: 14, color: Colors.white54),
+                    const SizedBox(width: 8),
+                    Text(
+                      "IP Directa: mc.crystaltidesSMP.net",
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -220,10 +230,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Color _getModeColor(LoginMode mode) {
     switch (mode) {
+      // case LoginMode.crystal: // Removed
+
       case LoginMode.guest:
-        return Colors.orangeAccent.withOpacity(0.8);
-      case LoginMode.account:
-        return AppTheme.primary;
+        return Colors.orangeAccent.withValues(alpha: 0.8);
       case LoginMode.microsoft:
         return const Color(0xFF00A4EF);
     }
@@ -233,12 +243,12 @@ class _LoginPageState extends State<LoginPage> {
     switch (_selectedMode) {
       case LoginMode.guest:
         return _buildGuestContent();
-      case LoginMode.account:
-        return _buildAccountContent();
       case LoginMode.microsoft:
         return _buildMicrosoftContent();
     }
   }
+
+  // _buildCrystalContent removed
 
   Widget _buildGuestContent() {
     return Column(
@@ -258,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
             labelStyle: const TextStyle(color: Colors.white54),
             prefixIcon: const Icon(Icons.person_outline, color: Colors.white54),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -282,98 +292,6 @@ class _LoginPageState extends State<LoginPage> {
           child: const Text(
             "JUGAR AHORA",
             style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccountContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextField(
-          controller: _emailController,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            labelText: 'Correo Electrónico',
-            labelStyle: const TextStyle(color: Colors.white54),
-            prefixIcon: const Icon(Icons.email_outlined, color: Colors.white54),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.accent),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _passwordController,
-          obscureText: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            labelText: 'Contraseña',
-            labelStyle: const TextStyle(color: Colors.white54),
-            prefixIcon: const Icon(Icons.lock_outline, color: Colors.white54),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: AppTheme.accent),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _handleAccountLogin,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text(
-                  "ENTRAR",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
-                ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const RegisterPage()),
-              );
-            },
-            child: Text(
-              "Crear Cuenta CrystalTides",
-              style: TextStyle(
-                color: AppTheme.text.withOpacity(0.6),
-                fontSize: 13,
-              ),
-            ),
           ),
         ),
       ],

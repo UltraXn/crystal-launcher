@@ -1,6 +1,4 @@
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import '../utils/logger.dart';
 
 class MicrosoftAuthService {
   /* 
@@ -8,11 +6,9 @@ class MicrosoftAuthService {
     These should ideally be in .env, but the clientId for Minecraft is generally public or registered in Azure.
     For a launcher, we usually use the standard Minecraft launcher client ID or our own Azure App.
   */
-  static const String _clientId =
-      "YOUR_AZURE_CLIENT_ID"; // Replace with real ID later
-  static const String _redirectUri =
-      "https://login.live.com/oauth20_desktop.srf";
-  static const String _scope = "XboxLive.signin offline_access";
+  /* static const String _clientId = "YOUR_AZURE_CLIENT_ID"; */
+  /* static const String _redirectUri = "https://login.live.com/oauth20_desktop.srf"; */
+  /* static const String _scope = "XboxLive.signin offline_access"; */
 
   // Stages of Minecraft Auth
   // 1. MSA (Microsoft Account) Code -> Token
@@ -24,8 +20,8 @@ class MicrosoftAuthService {
     // 1. Open Browser/WebView for OAuth
     // 2. Capture Code
     // 3. Perform Token Exchanges
-    debugPrint("🌊 Starting Microsoft Auth Flow...");
+    logger.i("🌊 Starting Microsoft Auth Flow...");
     await Future.delayed(const Duration(seconds: 2)); // Mock delay
-    debugPrint("⚠️ Microsoft Auth not fully implemented yet.");
+    logger.w("⚠️ Microsoft Auth not fully implemented yet.");
   }
 }

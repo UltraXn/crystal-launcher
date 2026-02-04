@@ -1,0 +1,87 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter assemble --no-version-check --output=build -dTargetPlatform=windows-x64 -dTrackWidgetCreation=true -dBuildMode=release -dTargetFile=lib\main.dart -dTreeShakeIcons="true" -dDartObfuscation=false --DartDefines=RkxVVFRFUl9WRVJTSU9OPTMuMzguOQ==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049NjczMjNkZTI4NQ==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049NTg3YzE4Zjg3Mw==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMC44 release_bundle_windows-x64_assets
+
+## exception
+
+PathAccessException: PathAccessException: Cannot delete file, path = 'F:\Portafolio\crystaltides\apps\launcher\build\flutter_assets\assets\images\server_icon.png' (OS Error: Acceso denegado, errno = 5)
+
+```
+#0      _File.throwIfError (dart:io/file_impl.dart:783:7)
+#1      _File._deleteSync (dart:io/file_impl.dart:368:5)
+#2      FileSystemEntity.deleteSync (dart:io/file_system_entity.dart:425:7)
+#3      ForwardingFileSystemEntity.deleteSync (package:file/src/forwarding/forwarding_file_system_entity.dart:70:16)
+#4      ForwardingFileSystemEntity.deleteSync (package:file/src/forwarding/forwarding_file_system_entity.dart:70:16)
+#5      ErrorHandlingFileSystem.deleteIfExists (package:flutter_tools/src/base/error_handling_io.dart:90:14)
+#6      FlutterBuildSystem.trackSharedBuildDirectory (package:flutter_tools/src/build_system/build_system.dart:799:33)
+#7      FlutterBuildSystem.build (package:flutter_tools/src/build_system/build_system.dart:682:5)
+<asynchronous suspension>
+#8      AssembleCommand.runCommand (package:flutter_tools/src/commands/assemble.dart:361:32)
+<asynchronous suspension>
+#9      FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1559:27)
+<asynchronous suspension>
+#10     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#11     CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+<asynchronous suspension>
+#12     FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:487:9)
+<asynchronous suspension>
+#13     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#14     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:422:5)
+<asynchronous suspension>
+#15     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+<asynchronous suspension>
+#16     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#17     main (package:flutter_tools/executable.dart:103:3)
+<asynchronous suspension>
+```
+
+## flutter doctor
+
+```
+[!] Flutter (Channel stable, 3.38.9, on Microsoft Windows [Versi¢n 10.0.19045.6691], locale es-CL) [1.058ms]
+    • Flutter version 3.38.9 on channel stable at F:\tools\flutter
+    ! The flutter binary is not on your path. Consider adding F:\tools\flutter\bin to your path.
+    ! Warning: `dart` on your path resolves to C:\Users\nacho\AppData\Local\Microsoft\WinGet\Packages\Google.DartSDK_Microsoft.Winget.Source_8wekyb3d8bbwe\dart-sdk\bin\dart.exe, which is not inside your current Flutter SDK checkout at F:\tools\flutter. Consider adding F:\tools\flutter\bin to the front of your path.
+    • Upstream repository https://github.com/flutter/flutter.git
+    • Framework revision 67323de285 (7 days ago), 2026-01-28 13:43:12 -0800
+    • Engine revision 587c18f873
+    • Dart version 3.10.8
+    • DevTools version 2.51.1
+    • Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop, enable-android, enable-ios, cli-animations, enable-native-assets, omit-legacy-version-file, enable-lldb-debugging
+    • If those were intentional, you can disregard the above warnings; however it is recommended to use "git" directly to perform update checks and upgrades.
+
+[✓] Windows Version (10 Pro 64 bits, 22H2, 2009) [4,9s]
+
+[✗] Android toolchain - develop for Android devices [270ms]
+    • Android SDK at C:\Program Files
+    • Emulator version unknown
+    ✗ cmdline-tools component is missing.
+      Try installing or updating Android Studio.
+      Alternatively, download the tools from https://developer.android.com/studio#command-line-tools-only and make sure to set the ANDROID_HOME environment variable.
+      See https://developer.android.com/studio/command-line for more details.
+
+[✓] Chrome - develop for the web [207ms]
+    • Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[✓] Visual Studio - develop Windows apps (Visual Studio Enterprise 2026 18.1.1) [205ms]
+    • Visual Studio at C:\Program Files\Microsoft Visual Studio\18\Enterprise
+    • Visual Studio Enterprise 2026 version 18.1.11312.151
+    • Windows 10 SDK version 10.0.26100.0
+
+[✓] Connected device (4 available) [604ms]
+    • LM Q710 FG (mobile) • LMQ710MB7LD6GIKBHM • android-arm    • Android 8.1.0 (API 27)
+    • Windows (desktop)   • windows            • windows-x64    • Microsoft Windows [Versi¢n 10.0.19045.6691]
+    • Chrome (web)        • chrome             • web-javascript • Google Chrome 144.0.7559.110
+    • Edge (web)          • edge               • web-javascript • Microsoft Edge 144.0.3719.104
+
+[✓] Network resources [328ms]
+    • All expected network resources are available.
+
+! Doctor found issues in 2 categories.
+```

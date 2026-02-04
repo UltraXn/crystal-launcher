@@ -1,0 +1,151 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:window_manager/window_manager.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:path_provider/path_provider.dart';
+import 'services/supabase_service.dart';
+import 'services/database_service.dart';
+import 'services/session_service.dart';
+import 'theme/app_theme.dart';
+import 'widgets/auth_wrapper.dart';
+import 'utils/logger.dart';
+
+final initializationError = ValueNotifier<String?>(null);
+
+void main() async {
+  // Hardcoded log for early diagnostics
+  final earlyLog = File(r'C:\Users\nacho\Documents\launcher_debug_early.txt');
+  try {
+    await earlyLog.writeAsString(">>> APP STARTING\n", mode: FileMode.append);
+  } catch (_) {}
+
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await earlyLog.writeAsString(
+      ">>> WidgetsFlutterBinding initialized\n",
+      mode: FileMode.append,
+    );
+  } catch (_) {}
+
+  // 1. Window Manager
+  await windowManager.ensureInitialized();
+  try {
+    await earlyLog.writeAsString(
+      ">>> windowManager initialized\n",
+      mode: FileMode.append,
+    );
+  } catch (_) {}
+
+  WindowOptions windowOptions = const WindowOptions(
+    size: Size(1280, 720),
+    center: true,
+    backgroundColor: Colors.transparent,
+    skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.hidden,
+    title: "CrystalTides Launcher",
+  );
+  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+    try {
+      await earlyLog.writeAsString(
+        ">>> windowManager ready to show\n",
+        mode: FileMode.append,
+      );
+    } catch (_) {}
+  });
+
+  // 2. Load Env
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    logger.w("Warning: .env not found or error loading it: $e");
+  }
+  try {
+    await earlyLog.writeAsString(">>> dotenv loaded\n", mode: FileMode.append);
+  } catch (_) {}
+
+  // 3. Init Services
+  final logFile = earlyLog; // Re-use the same file
+  if (await logFile.exists()) await logFile.delete();
+
+  Future<void> logToFile(String msg) async {
+    print(msg);
+    await logFile.writeAsString("$msg\n", mode: FileMode.append);
+  }
+
+  try {
+    await logToFile(">>> Starting Supabase initialization...");
+    await SupabaseService().initialize();
+    await logToFile(">>> Starting Database initialization...");
+    await DatabaseService().initialize();
+    await logToFile(">>> Starting Session initialization...");
+    await SessionService().initialize();
+    await logToFile(">>> All services initialized. Calling runApp...");
+  } catch (e, stack) {
+    await logToFile(">>> CRITICAL ERROR: $e");
+    logger.e("CRITICAL ERROR during initialization: $e", stackTrace: stack);
+    initializationError.value = e.toString();
+  }
+
+  runApp(const CrystalLauncherApp());
+}
+
+class CrystalLauncherApp extends StatelessWidget {
+  const CrystalLauncherApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: initializationError,
+      builder: (context, error, child) {
+        if (error != null) {
+          return MaterialApp(
+            home: Scaffold(
+              backgroundColor: const Color(0xFF121212),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 64,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "Error de Inicialización",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        error,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        return MaterialApp(
+          title: 'CrystalTides Launcher',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.darkTheme,
+          home: const AuthWrapper(),
+        );
+      },
+    );
+  }
+}

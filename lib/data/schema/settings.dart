@@ -17,4 +17,16 @@ class Settings extends Table {
   // Launcher Config
   BoolColumn get closeLauncher => boolean().withDefault(const Constant(true))();
   TextColumn get language => text().withDefault(const Constant('es'))();
+
+  // Minecraft Version & Connection
+  TextColumn get mcVersion =>
+      text().withDefault(const Constant('1.21.1')).nullable()();
+  TextColumn get neoForgeVersion => text()
+      .withDefault(const Constant('21.1.219'))
+      .nullable()(); // Default for 1.21.1
+  BoolColumn get autoConnect =>
+      boolean().withDefault(const Constant(true)).nullable()();
+
+  // Profile Selection
+  IntColumn get selectedProfileId => integer().nullable()();
 }

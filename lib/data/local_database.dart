@@ -4,15 +4,36 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'schema/settings.dart';
+import 'schema/profiles.dart';
+import 'schema/keybindings.dart';
 
 part 'local_database.g.dart';
 
-@DriftDatabase(tables: [Settings])
+@DriftDatabase(tables: [Settings, Keybindings, Profiles])
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        // Add new columns to settings
+        await m.addColumn(settings, settings.mcVersion);
+        await m.addColumn(settings, settings.neoForgeVersion);
+        await m.addColumn(settings, settings.autoConnect);
+        // Create new table
+        await m.createTable(keybindings);
+      }
+      if (from < 3) {
+        await m.createTable(profiles);
+        await m.addColumn(settings, settings.selectedProfileId);
+      }
+    },
+  );
 
   // Single default settings getter/creator
   Future<Setting> getSettings() async {

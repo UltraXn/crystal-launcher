@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:launcher/widgets/play_button_hero.dart';
 import 'package:launcher/theme/app_theme.dart';
-import 'package:launcher/widgets/skin_viewer_widget.dart';
-import '../services/news_service.dart';
-import '../models/news_post.dart';
-import '../widgets/news_card.dart';
-import '../services/session_service.dart'; // Import SessionService
+import '../widgets/window_controls.dart';
+import '../services/session_service.dart';
+import '../widgets/profile_selector.dart';
+import '../widgets/skin_viewer_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,14 +14,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final NewsService _newsService = NewsService();
-  late Future<List<NewsPost>> _newsFuture;
   UserSession? _session;
 
   @override
   void initState() {
     super.initState();
-    _newsFuture = _newsService.getNews();
     _session = SessionService().currentSession; // Get current session
   }
 
@@ -30,22 +26,17 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background Image (Placeholder)
+        // Background
+        Positioned.fill(child: Container(color: AppTheme.background)),
+        // Background Image (Overlay)
         Positioned.fill(
-          child: Image.asset(
-            "assets/images/backgrounds/launcher_bg.webp",
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, ___) => Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topRight,
-                  radius: 1.5,
-                  colors: [
-                    AppTheme.backgroundAlt.withOpacity(0.3),
-                    AppTheme.background,
-                  ],
-                ),
-              ),
+          child: Opacity(
+            opacity: 0.5,
+            child: Image.asset(
+              "assets/images/backgrounds/launcher_bg.webp",
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  const SizedBox.shrink(),
             ),
           ),
         ),
@@ -58,10 +49,9 @@ class _HomePageState extends State<HomePage> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppTheme.background.withOpacity(0.8),
+                  AppTheme.background.withValues(alpha: 0.8),
                   AppTheme.background,
                 ],
-                stops: const [0.0, 0.7, 1.0],
               ),
             ),
           ),
@@ -77,14 +67,15 @@ class _HomePageState extends State<HomePage> {
               Row(
                 children: [
                   // Avatar / User Info
-                  Container(
+                  // Avatar removed as per request
+                  /* Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white10,
                       border: Border.all(
-                        color: AppTheme.accent.withOpacity(0.5),
+                        color: AppTheme.accent.withValues(alpha: 0.5),
                       ),
                       image: _session?.skinUrl != null
                           ? DecorationImage(
@@ -96,7 +87,7 @@ class _HomePageState extends State<HomePage> {
                         ? const Icon(Icons.person, color: Colors.white70)
                         : null,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 12), */
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -112,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         _getAuthTypeLabel(_session?.type ?? AuthType.guest),
                         style: TextStyle(
-                          color: AppTheme.text.withOpacity(0.6),
+                          color: AppTheme.text.withValues(alpha: 0.6),
                           fontSize: 12,
                         ),
                       ),
@@ -166,48 +157,38 @@ class _HomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const PlayButtonHero(),
-                        const SizedBox(height: 48),
-
-                        // News Section Title
-                        Text(
-                          "ÚLTIMAS NOTICIAS",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
+                        const ProfileSelector(),
                         const SizedBox(height: 16),
-
-                        // News Horizontal List
-                        SizedBox(
-                          height: 240,
-                          child: FutureBuilder<List<NewsPost>>(
-                            future: _newsFuture,
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-
-                              final news = snapshot.data ?? [];
-                              if (news.isEmpty) {
-                                return const Center(
-                                  child: Text("No hay noticias disponibles"),
-                                );
-                              }
-
-                              return ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: news.length,
-                                itemBuilder: (context, index) {
-                                  return NewsCard(news: news[index]);
-                                },
-                              );
-                            },
+                        const PlayButtonHero(),
+                        const SizedBox(height: 84), // Adjusted spacing
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white10),
+                          ),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "ESTADO DEL SERVIDOR",
+                                style: TextStyle(
+                                  color: AppTheme.accent,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                "El servidor está actualmente en línea y listo para recibir jugadores. ¡Únete a la aventura hoy!",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -226,7 +207,7 @@ class _HomePageState extends State<HomePage> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white12),
                       ),
-                      // We can pass the skin URL here later if SkinViewerWidget is updated
+                      // DIAGNOSIS: Commenting out WebView-based widget to isolate white screen
                       child: const SkinViewerWidget(),
                     ),
                   ),
@@ -235,6 +216,8 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+        // Window Controls (Always on top)
+        const Positioned(top: 0, left: 0, right: 0, child: WindowControls()),
       ],
     );
   }

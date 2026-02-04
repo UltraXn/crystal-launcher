@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
+import '../utils/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/news_post.dart';
@@ -18,11 +18,11 @@ class NewsService {
         // For now assuming list based on backend checks
         return data.map((json) => NewsPost.fromJson(json)).take(limit).toList();
       } else {
-        debugPrint('Failed to load news: ${response.statusCode}');
+        logger.e('Failed to load news: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      debugPrint('Error fetching news: $e');
+      logger.e('Error fetching news', error: e);
       // Return dummy data for development if API fails
       return _getDummyData();
     }

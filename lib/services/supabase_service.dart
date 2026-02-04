@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../utils/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -16,7 +16,7 @@ class SupabaseService {
     final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
 
     if (supabaseUrl == null || supabaseKey == null) {
-      debugPrint('⛔ Supabase Env variables missing!');
+      logger.e('⛔ Supabase Env variables missing!');
       return;
     }
 
@@ -24,11 +24,11 @@ class SupabaseService {
       await Supabase.initialize(
         url: supabaseUrl,
         anonKey: supabaseKey,
-        debug: kDebugMode,
+        debug: false,
       );
-      debugPrint('✅ Supabase Initialized');
+      logger.i('✅ Supabase Initialized');
     } catch (e) {
-      debugPrint('⛔ Supabase Init Error: $e');
+      logger.e('⛔ Supabase Init Error', error: e);
     }
   }
 

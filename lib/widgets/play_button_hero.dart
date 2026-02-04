@@ -1,28 +1,40 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../services/session_service.dart';
 import '../services/process_runner.dart';
+import '../services/mod_service.dart';
 import 'package:path_provider/path_provider.dart';
+import '../utils/logger.dart';
 
-class PlayButtonHero extends StatelessWidget {
+import '../services/database_service.dart';
+import 'dart:async';
+import '../services/game_installer_service.dart';
+import '../services/java_service.dart';
+
+class PlayButtonHero extends StatefulWidget {
   const PlayButtonHero({super.key});
+
+  @override
+  State<PlayButtonHero> createState() => _PlayButtonHeroState();
+}
+
+class _PlayButtonHeroState extends State<PlayButtonHero> {
+  final _progressStream = StreamController<String>.broadcast();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 80,
+      width: 220, // Fixed smaller width
+      height: 50, // Much smaller height (was 80)
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.primary, AppTheme.backgroundAlt],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.primary,
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -30,7 +42,7 @@ class PlayButtonHero extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            debugPrint("Launching Game...");
+            logger.i("Launching Game...");
             final session = SessionService().currentSession;
             if (session == null) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -40,64 +52,231 @@ class PlayButtonHero extends StatelessWidget {
             }
 
             try {
-              // Get standard game directory (e.g. AppData/Roaming/.crystaltides)
-              final docs = await getApplicationDocumentsDirectory();
-              // For now, let's assume it's in a folder named 'client' inside docs
-              // In production, this might be %APPDATA%/.crystaltides
-              final gameDir = "${docs.path}\\client";
+              // Default to .crystaltides in User Home (Like Lunar Client)
+              String gameDir;
+              String? home =
+                  Platform.environment['USERPROFILE'] ??
+                  Platform.environment['HOME'];
+
+              if (home != null) {
+                gameDir = "$home\\.crystaltides";
+              } else if (Platform.isWindows &&
+                  Platform.environment.containsKey('APPDATA')) {
+                gameDir = "${Platform.environment['APPDATA']}\\.crystaltides";
+              } else {
+                final docs = await getApplicationDocumentsDirectory();
+                gameDir = "${docs.path}\\.crystaltides";
+              }
+
+              final modsDir = Directory("$gameDir\\mods");
+
+              // 0. Check & Install Game dependencies
+              final settings = await DatabaseService().getSettings();
+              final mcVersion = settings.mcVersion ?? '1.21.1';
+              String neoVersion = settings.neoForgeVersion ?? '21.1.219';
+
+              // AUTO-FIX: If legacy invalid version is found, force update
+              if (neoVersion == '2.218' || neoVersion == '20.4.80-beta') {
+                neoVersion = '21.1.219';
+                // Optionally save this back to DB if you want permanent fix,
+                // but for now runtime fix is enough to unblock.
+                logger.i(
+                  "Auto-correcting invalid NeoForge version to $neoVersion",
+                );
+              }
+
+              // Check if we need to install Vanilla or NeoForge
+              final versionDir = Directory("$gameDir\\versions\\$mcVersion");
+              // Simplistic check for NeoForge folder
+              final neoDirPattern = Directory("$gameDir\\versions");
+              bool neoInstalled = false;
+              if (await neoDirPattern.exists()) {
+                final list = await neoDirPattern.list().toList();
+                // Check if any folder contains 'neoforge' and version string
+                neoInstalled = list.any((e) => e.path.contains("neoforge"));
+              }
+
+              if (!await versionDir.exists() || !neoInstalled) {
+                // Open Progress Dialog
+                if (!context.mounted) return;
+
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) {
+                    return AlertDialog(
+                      title: const Text("Instalando Minecraft & NeoForge"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          StreamBuilder<String>(
+                            stream: _progressStream.stream,
+                            initialData: "Iniciando...",
+                            builder: (context, snapshot) {
+                              return Text(snapshot.data ?? "Cargando...");
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  // Install Vanilla
+                  await GameInstallerService().installVersion(
+                    versionId: mcVersion,
+                    gameDirectory: gameDir,
+                    onProgress: (status, prog) => _progressStream.add(status),
+                  );
+
+                  // Install NeoForge
+                  // We need Java Path
+                  String? javaPath = settings.javaPath;
+                  if (javaPath == null || javaPath.isEmpty) {
+                    // Try to find via JavaService
+                    javaPath = await JavaService().findJavaPath();
+                    if (javaPath == null) {
+                      // Fallback to 'java' command if available in PATH
+                      try {
+                        await Process.run('java', ['-version']);
+                        javaPath = 'java';
+                      } catch (_) {
+                        throw Exception(
+                          "Java no está configurado ni instalado. Por favor instala Java 17+.",
+                        );
+                      }
+                    }
+                  }
+
+                  await GameInstallerService().installNeoForge(
+                    mcVersion: mcVersion,
+                    neoVersion: neoVersion,
+                    gameDirectory: gameDir,
+                    javaPath: javaPath,
+                    onProgress: (status, prog) => _progressStream.add(status),
+                  );
+
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Error Instalación: $e")),
+                    );
+                  }
+                  return;
+                }
+              }
+
+              // 1. Check Modpack
+              bool needsUpdate = false;
+              if (!await modsDir.exists() ||
+                  (await modsDir.list().length) == 0) {
+                needsUpdate = true;
+              } else {
+                needsUpdate = await ModService().isUpdateAvailable(gameDir);
+              }
+
+              if (needsUpdate) {
+                logger.w(
+                  "⚠️ Update disponible o mods no encontrados. Iniciando descarga...",
+                );
+
+                // Show Download Dialog
+                if (!context.mounted) return;
+
+                // Do not await showDialog, or it blocks until closed!
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) {
+                    return AlertDialog(
+                      title: const Text("Sincronizando Mods de CrystalTides"),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text("Verificando archivos mediante HASH..."),
+                          Text("Solo se descargarán los archivos nuevos o actualizados."),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  await ModService().syncOfficialMods(
+                    gameDir,
+                  );
+                  // Success - Close dialog
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                  }
+                } catch (e) {
+                  // Error - Close dialog
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Error sincronizando mods: $e")),
+                    );
+                  }
+                  return; // Abort launch
+                }
+              }
+
+              // 2. Launch
+              // final settings = await DatabaseService().getSettings(); // Used from above
 
               await ProcessRunner().launchGame(
                 username: session.username,
                 uuid: session.uuid ?? "00000000-0000-0000-0000-000000000000",
                 accessToken: session.accessToken ?? "0",
                 gameDirectory: gameDir,
-                version: "1.20.1",
+                version: settings.mcVersion,
+                server: (settings.autoConnect ?? true)
+                    ? "mc.crystaltidesSMP.net"
+                    : null,
               );
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("¡Lanzando Minecraft!")),
-              );
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("¡Lanzando Minecraft!")),
+                );
+              }
             } catch (e) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text("Error al lanzar: $e")));
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("Error al lanzar: $e")));
+              }
             }
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
                   Icons.play_arrow_rounded,
-                  size: 48,
+                  size: 24,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 16),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "JUGAR",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                        color: Colors.white,
-                        height: 1,
-                      ),
-                    ),
-                    Text(
-                      "CrystalTides 1.20.1",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.8),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                const Text(
+                  "JUGAR",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
