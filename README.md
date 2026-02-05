@@ -53,7 +53,7 @@ apps/launcher/
 
 ## 💡 Notas de Legado
 
-- **Lua Patches**: _Deprecado_. Reemplazado por el sistema de **Actualizaciones Diferenciales Nativas** de Rust.
+
 - **Rive**: Se utilizará para animaciones de carga complejas.
 - **Webview**: Se utiliza exclusivamente para renderizar el Skin Viewer 3D localmente.
 
