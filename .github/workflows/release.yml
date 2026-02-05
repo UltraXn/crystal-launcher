@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*' # Se activa al crear una etiqueta como v1.0.1
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
