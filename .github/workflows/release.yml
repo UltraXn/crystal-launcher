@@ -18,7 +18,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.24.0' # Actualizado para soportar Dart 3.5.0+ (requerido por build_runner)
+          flutter-version: '3.27.1' # Actualizado para soportar Dart 3.6.0+ (requerido por drift_dev)
 
       - name: Install dependencies (Launcher)
         run: |
