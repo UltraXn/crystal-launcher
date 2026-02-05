@@ -538,7 +538,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             Switch(
               value: _fullscreen,
-              activeThumbColor: AppTheme.accent,
+              activeColor: AppTheme.accent,
               onChanged: (val) => setState(() => _fullscreen = val),
             ),
           ],
