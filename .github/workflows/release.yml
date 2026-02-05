@@ -54,9 +54,17 @@ jobs:
           flutter pub get
           flutter build windows --release
 
+      - name: Package Installer (Zip)
+        shell: pwsh
+        run: |
+          $installerBuild = "installer/build/windows/x64/runner/Release"
+          Compress-Archive -Path "$installerBuild\*" -DestinationPath "installer/build/CrystalTides_Installer_Portable.zip" -Force
+
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: installer/build/windows/x64/runner/Release/crystal_installer.exe
+          files: |
+             installer/build/windows/x64/runner/Release/crystal_installer.exe
+             installer/build/CrystalTides_Installer_Portable.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
