@@ -27,20 +27,20 @@ class _ModTileState extends State<ModTile> {
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: _isHovered 
-              ? Colors.white.withOpacity(0.08)
-              : Colors.white.withOpacity(0.03),
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.white.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isHovered 
-                ? AppTheme.accent.withOpacity(0.3)
+                ? AppTheme.accent.withValues(alpha: 0.3)
                 : (widget.mod.isEnabled
-                      ? AppTheme.accent.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.05)),
+                    ? AppTheme.accent.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.05)),
             width: 1,
           ),
           boxShadow: _isHovered ? [
             BoxShadow(
-                    color: AppTheme.accent.withOpacity(0.05),
+                    color: AppTheme.accent.withValues(alpha: 0.05),
               blurRadius: 15,
               offset: const Offset(0, 5),
             )
@@ -58,9 +58,10 @@ class _ModTileState extends State<ModTile> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                    border:
+                        Border.all(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -89,7 +90,7 @@ class _ModTileState extends State<ModTile> {
                               style: TextStyle(
                                 color: widget.mod.isEnabled
                                     ? Colors.white
-                                    : Colors.white.withOpacity(0.4),
+                                    : Colors.white.withValues(alpha: 0.4),
                                 fontWeight: widget.mod.isEnabled
                                     ? FontWeight.bold
                                     : FontWeight.normal,
@@ -106,10 +107,10 @@ class _ModTileState extends State<ModTile> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.15),
+                                color: Colors.orange.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: Colors.orange.withOpacity(0.3),
+                                  color: Colors.orange.withValues(alpha: 0.3),
                                   width: 0.5,
                                 ),
                               ),
@@ -133,8 +134,8 @@ class _ModTileState extends State<ModTile> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           color: widget.mod.isEnabled
-                              ? Colors.white.withOpacity(0.5)
-                              : Colors.white.withOpacity(0.2),
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.2),
                           fontSize: 12,
                         ),
                       ),
@@ -150,17 +151,18 @@ class _ModTileState extends State<ModTile> {
                                 vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.accent.withOpacity(0.08),
+                                color: AppTheme.accent.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: AppTheme.accent.withOpacity(0.15),
+                                  color:
+                                      AppTheme.accent.withValues(alpha: 0.15),
                                   width: 0.5,
                                 ),
                               ),
                               child: Text(
                                 cat.toUpperCase(),
                                 style: TextStyle(
-                                  color: AppTheme.accent.withOpacity(0.8),
+                                  color: AppTheme.accent.withValues(alpha: 0.8),
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.4,
@@ -176,7 +178,7 @@ class _ModTileState extends State<ModTile> {
                 const SizedBox(width: 12),
                 Switch(
                   value: widget.mod.isEnabled,
-                  activeTrackColor: AppTheme.accent.withOpacity(0.3),
+                  activeTrackColor: AppTheme.accent.withValues(alpha: 0.3),
                   activeColor: AppTheme.accent,
                   onChanged: (val) => widget.onToggle(widget.mod),
                 ),
@@ -192,8 +194,8 @@ class _ModTileState extends State<ModTile> {
     return Icon(
       widget.mod.isEnabled ? Icons.extension : Icons.extension_off,
       color: widget.mod.isEnabled
-          ? AppTheme.accent.withOpacity(0.6)
-          : Colors.white.withOpacity(0.1),
+          ? AppTheme.accent.withValues(alpha: 0.6)
+          : Colors.white.withValues(alpha: 0.1),
       size: 24,
     );
   }

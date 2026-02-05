@@ -69,13 +69,14 @@ class _HomePageState extends State<HomePage> {
                   // Avatar / User Info
                   // Avatar removed as per request
                   /* Container(
+                  Container(
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white10,
                       border: Border.all(
-                        color: AppTheme.accent.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.3),
                       ),
                       image: _session?.skinUrl != null
                           ? DecorationImage(

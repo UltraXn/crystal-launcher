@@ -308,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
+          color: AppTheme.background.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.green.withOpacity(0.3)),
         ),

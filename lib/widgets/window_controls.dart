@@ -71,7 +71,7 @@ class _WindowButtonState extends State<_WindowButton> {
           height: 30, // Botones un poco mas pequeños que la barra
           decoration: BoxDecoration(
             color: _isHovering
-                ? (widget.hoverColor ?? Colors.white.withOpacity(0.1))
+                ? (widget.hoverColor ?? Colors.white.withValues(alpha: 0.1))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(4),
           ),

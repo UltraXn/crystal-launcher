@@ -20,9 +20,16 @@ jobs:
           channel: 'stable'
           flutter-version: '3.27.1' # Actualizado para soportar Dart 3.6.0+ (requerido por drift_dev)
 
+      - name: Create dummy .env
+        run: New-Item -ItemType File -Path .env -Force
+
       - name: Install dependencies (Launcher)
         run: |
           flutter pub get
+
+      - name: Run build_runner (Launcher)
+        run: |
+          flutter pub run build_runner build --delete-conflicting-outputs
 
       - name: Build Launcher (Windows)
         run: |

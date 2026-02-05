@@ -84,12 +84,12 @@ class _LoginPageState extends State<LoginPage> {
                 border: Border.all(color: Colors.white10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: AppTheme.background.withValues(alpha: 0.9),
                     offset: const Offset(0, 4),
                     blurRadius: 10,
                   ),
@@ -185,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       "IP Directa: mc.crystaltidesSMP.net",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 12,
                         letterSpacing: 0.5,
                       ),

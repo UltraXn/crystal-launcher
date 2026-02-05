@@ -5,7 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   file_selector_windows
-  rive_native
+  rive_common
   screen_retriever_windows
   sqlite3_flutter_libs
   url_launcher_windows

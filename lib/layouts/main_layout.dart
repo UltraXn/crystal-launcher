@@ -73,7 +73,8 @@ class MainLayout extends StatelessWidget {
                               color: Colors.orange.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.orange.withOpacity(0.5),
+                                color:
+                                    AppTheme.background.withValues(alpha: 0.95),
                               ),
                             ),
                             child: const Icon(
