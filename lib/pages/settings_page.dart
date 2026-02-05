@@ -880,7 +880,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           trailing: Switch(
             value: _autoConnect,
-            activeThumbColor: AppTheme.accent,
+            activeColor: AppTheme.accent,
             onChanged: (val) => setState(() => _autoConnect = val),
           ),
         ),
