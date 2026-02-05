@@ -9,6 +9,7 @@ jobs:
   build:
     runs-on: windows-latest
 
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,37 +18,35 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.10.4' # Ajusta a la versión que usas
+          flutter-version: '3.19.0' # Actualizado a una versión más reciente de Flutter
 
       - name: Install dependencies (Launcher)
         run: |
-          cd apps/launcher
           flutter pub get
 
       - name: Build Launcher (Windows)
         run: |
-          cd apps/launcher
           flutter build windows --release
 
       - name: Create Payload ZIP
         shell: pwsh
         run: |
-          $buildPath = "apps/launcher/build/windows/x64/runner/Release"
-          $zipPath = "apps/launcher/installer/assets/payload/payload.zip"
-          if (!(Test-Path "apps/launcher/installer/assets/payload")) {
-            New-Item -ItemType Directory -Path "apps/launcher/installer/assets/payload" -Force
+          $buildPath = "build/windows/x64/runner/Release"
+          $zipPath = "installer/assets/payload/payload.zip"
+          if (!(Test-Path "installer/assets/payload")) {
+            New-Item -ItemType Directory -Path "installer/assets/payload" -Force
           }
           Compress-Archive -Path "$buildPath\*" -DestinationPath $zipPath -Force
 
       - name: Build Installer (Windows)
         run: |
-          cd apps/launcher/installer
+          cd installer
           flutter pub get
           flutter build windows --release
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: apps/launcher/installer/build/windows/x64/runner/Release/crystal_installer.exe
+          files: installer/build/windows/x64/runner/Release/crystal_installer.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
