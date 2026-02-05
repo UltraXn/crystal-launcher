@@ -1,5 +1,10 @@
 # Crystal Tides Launcher - Hoja de Ruta Técnica y TODOs
 
+## 🗺️ Fases del Proyecto
+- **Fase 1 (Actual)**: Infraestructura UI. Noticias, Login (Supabase), Skin Viewer.
+- **Fase 2**: Game Bridge. Rust se encarga de descargar e iniciar Java.
+- **Fase 3**: Sync. Actualizaciones diferenciales de modpacks (Hash-based).
+
 ## 🦀 Migración a Rust (Rendimiento y Estabilidad)
 El objetivo es mover la lógica computacional pesada y las interacciones de bajo nivel con el sistema a Rust, manteniendo Flutter/Dart estrictamente para la UI/UX.
 
