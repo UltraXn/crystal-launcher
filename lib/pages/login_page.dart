@@ -65,7 +65,7 @@ class _LoginPageState extends State<LoginPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppTheme.backgroundAlt.withValues(alpha: 0.2),
+                    AppTheme.backgroundAlt.withOpacity(0.2),
                     AppTheme.background,
                   ],
                 ),
@@ -84,12 +84,12 @@ class _LoginPageState extends State<LoginPage> {
                 border: Border.all(color: Colors.white10),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: Colors.black.withOpacity(0.1),
                     offset: const Offset(0, 4),
                     blurRadius: 10,
                   ),
@@ -123,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 48,
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: Colors.white.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -185,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       "IP Directa: mc.crystaltidesSMP.net",
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: Colors.white.withOpacity(0.5),
                         fontSize: 12,
                         letterSpacing: 0.5,
                       ),
@@ -233,7 +233,7 @@ class _LoginPageState extends State<LoginPage> {
       // case LoginMode.crystal: // Removed
 
       case LoginMode.guest:
-        return Colors.orangeAccent.withValues(alpha: 0.8);
+        return Colors.orangeAccent.withOpacity(0.8);
       case LoginMode.microsoft:
         return const Color(0xFF00A4EF);
     }
@@ -268,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
             labelStyle: const TextStyle(color: Colors.white54),
             prefixIcon: const Icon(Icons.person_outline, color: Colors.white54),
             filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.05),
+            fillColor: Colors.white.withOpacity(0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

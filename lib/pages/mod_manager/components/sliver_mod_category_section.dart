@@ -43,7 +43,9 @@ class _SliverModCategorySectionState extends State<SliverModCategorySection> {
             child: InkWell(
               onTap: () => setState(() => _isExpanded = !_isExpanded),
               borderRadius: BorderRadius.circular(12),
-              overlayColor: WidgetStateProperty.all(Colors.white.withValues(alpha: 0.05)),
+              overlayColor: WidgetStateProperty.all(
+                Colors.white.withOpacity(0.05),
+              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
@@ -51,7 +53,7 @@ class _SliverModCategorySectionState extends State<SliverModCategorySection> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppTheme.accent.withValues(alpha: 0.1),
+                        color: AppTheme.accent.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(widget.icon, color: AppTheme.accent, size: 20),
@@ -73,7 +75,7 @@ class _SliverModCategorySectionState extends State<SliverModCategorySection> {
                           Text(
                             "${widget.items.length} mods instalados",
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.3),
+                              color: Colors.white.withOpacity(0.3),
                               fontSize: 11,
                             ),
                           ),
@@ -85,7 +87,7 @@ class _SliverModCategorySectionState extends State<SliverModCategorySection> {
                       turns: _isExpanded ? 0 : -0.25,
                       child: Icon(
                         Icons.expand_more,
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withOpacity(0.2),
                         size: 20,
                       ),
                     ),

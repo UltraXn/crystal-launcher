@@ -70,10 +70,10 @@ class MainLayout extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.2),
+                              color: Colors.orange.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.orange.withValues(alpha: 0.5),
+                                color: Colors.orange.withOpacity(0.5),
                               ),
                             ),
                             child: const Icon(
@@ -197,14 +197,14 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isActive
         ? Theme.of(context).colorScheme.tertiary
-        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
+        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
 
     return Container(
       width: 48,
       height: 48,
       decoration: isActive
           ? BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: Colors.white.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             )
           : null,

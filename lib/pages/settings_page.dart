@@ -281,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
               hintText: "Ruta de javaw.exe (Automático)",
               hintStyle: const TextStyle(color: Colors.white30),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: Colors.white.withOpacity(0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -308,9 +308,9 @@ class _SettingsPageState extends State<SettingsPage> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.green.withValues(alpha: 0.1),
+          color: Colors.green.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+          border: Border.all(color: Colors.green.withOpacity(0.3)),
         ),
         child: Row(
           children: [
@@ -379,7 +379,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -505,7 +505,7 @@ class _SettingsPageState extends State<SettingsPage> {
               labelText: "Ancho",
               labelStyle: const TextStyle(color: Colors.white54),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: Colors.white.withOpacity(0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -522,7 +522,7 @@ class _SettingsPageState extends State<SettingsPage> {
               labelText: "Alto",
               labelStyle: const TextStyle(color: Colors.white54),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: Colors.white.withOpacity(0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -551,9 +551,9 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
+        color: Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.red.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,7 +577,7 @@ class _SettingsPageState extends State<SettingsPage> {
               style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
             onTap: _generateModpackZip,
-            tileColor: Colors.white.withValues(alpha: 0.05),
+            tileColor: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -594,7 +594,7 @@ class _SettingsPageState extends State<SettingsPage> {
               style: TextStyle(color: Colors.white54, fontSize: 12),
             ),
             onTap: () => launchUrl(Uri.parse("https://drive.google.com")),
-            tileColor: Colors.white.withValues(alpha: 0.05),
+            tileColor: Colors.white.withOpacity(0.05),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -701,7 +701,7 @@ class _SettingsPageState extends State<SettingsPage> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -805,7 +805,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -843,7 +843,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -917,7 +917,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white10),
                       ),

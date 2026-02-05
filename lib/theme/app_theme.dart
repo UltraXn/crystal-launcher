@@ -9,14 +9,14 @@ class AppTheme {
 
   static final Color surfaceLow = const Color(
     0xFF1E1E1E,
-  ).withValues(alpha: 0.1);
+  ).withOpacity(0.1);
   static final Color surfaceUltraLow = const Color(
     0xFFFFFFFF,
-  ).withValues(alpha: 0.05);
-  static final Color borderLow = const Color(0xFFFFFFFF).withValues(alpha: 0.1);
-  static final Color accentLow = accent.withValues(alpha: 0.2);
-  static final Color accentMid = accent.withValues(alpha: 0.5);
-  static final Color accentUltraLow = accent.withValues(alpha: 0.1);
+  ).withOpacity(0.05);
+  static final Color borderLow = const Color(0xFFFFFFFF).withOpacity(0.1);
+  static final Color accentLow = accent.withOpacity(0.2);
+  static final Color accentMid = accent.withOpacity(0.5);
+  static final Color accentUltraLow = accent.withOpacity(0.1);
 
   static ThemeData get darkTheme {
     return ThemeData(

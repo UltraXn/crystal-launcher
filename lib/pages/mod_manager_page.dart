@@ -243,7 +243,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.accent.withValues(alpha: 0.05),
+                color: AppTheme.accent.withOpacity(0.05),
               ),
             ),
           ),
@@ -300,13 +300,19 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.5,
                   shadows: [
-                    Shadow(color: AppTheme.accent.withValues(alpha: 0.3), blurRadius: 10)
+                    Shadow(
+                      color: AppTheme.accent.withOpacity(0.3),
+                      blurRadius: 10,
+                    )
                   ]
                 ),
               ),
               Text(
                 "Personaliza tu experiencia de juego",
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 13),
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
@@ -323,7 +329,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
 
   Widget _buildActionButton(IconData icon, String? label, VoidCallback onTap) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.05),
+      color: Colors.white.withOpacity(0.05),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -351,9 +357,9 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
+              color: Colors.white.withOpacity(0.03),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
             ),
             child: TextField(
               controller: _searchController,
@@ -364,8 +370,12 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: "Escribe el nombre de un mod...",
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                prefixIcon: Icon(Icons.search, color: Colors.white.withValues(alpha: 0.2), size: 20),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: Colors.white.withOpacity(0.2),
+                  size: 20,
+                ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 15),
               ),
@@ -378,10 +388,10 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
             dividerColor: Colors.transparent,
             indicator: BoxDecoration(
               borderRadius: BorderRadius.circular(50),
-              color: AppTheme.accent.withValues(alpha: 0.1),
+              color: AppTheme.accent.withOpacity(0.1),
             ),
             labelColor: AppTheme.accent,
-            unselectedLabelColor: Colors.white.withValues(alpha: 0.3),
+            unselectedLabelColor: Colors.white.withOpacity(0.3),
             tabs: const [
               Tab(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text("OFICIAL"))),
               Tab(child: Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text("MIS MODS"))),
@@ -472,7 +482,11 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.auto_awesome, size: 64, color: AppTheme.accent.withValues(alpha: 0.2)),
+            Icon(
+              Icons.auto_awesome,
+              size: 64,
+              color: AppTheme.accent.withOpacity(0.2),
+            ),
             const SizedBox(height: 16),
             const Text("No hay mods oficiales instalados", style: TextStyle(color: Colors.white54)),
             const SizedBox(height: 24),
@@ -554,7 +568,11 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.layers_clear, size: 64, color: AppTheme.accent.withValues(alpha: 0.2)),
+            Icon(
+              Icons.layers_clear,
+              size: 64,
+              color: AppTheme.accent.withOpacity(0.2),
+            ),
             const SizedBox(height: 16),
             Text(message, style: const TextStyle(color: Colors.white38, fontSize: 16)),
           ],
@@ -639,7 +657,7 @@ class _ExploreModsTabState extends State<_ExploreModsTab> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.03),
+                  color: Colors.white.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TextField(
@@ -648,8 +666,12 @@ class _ExploreModsTabState extends State<_ExploreModsTab> {
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: "Buscar en Modrinth...",
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                    prefixIcon: Icon(Icons.public, color: AppTheme.accent.withValues(alpha: 0.5), size: 18),
+                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                    prefixIcon: Icon(
+                      Icons.public,
+                      color: AppTheme.accent.withOpacity(0.5),
+                      size: 18,
+                    ),
                     border: InputBorder.none,
                   ),
                 ),
@@ -677,9 +699,9 @@ class _ExploreModsTabState extends State<_ExploreModsTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppTheme.accent.withValues(alpha: 0.1),
+        color: AppTheme.accent.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.accent.withValues(alpha: 0.2)),
+        border: Border.all(color: AppTheme.accent.withOpacity(0.2)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -716,7 +738,7 @@ class _ExploreModsTabState extends State<_ExploreModsTab> {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
         selectedColor: AppTheme.accent,
-        backgroundColor: Colors.white.withValues(alpha: 0.05),
+        backgroundColor: Colors.white.withOpacity(0.05),
         showCheckmark: false,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide.none),
       ),
@@ -732,9 +754,9 @@ class _ExploreModsTabState extends State<_ExploreModsTab> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
+        color: Colors.white.withOpacity(0.03),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -799,7 +821,11 @@ class _ExploreModsTabState extends State<_ExploreModsTab> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.search_off, size: 48, color: Colors.white.withValues(alpha: 0.1)),
+          Icon(
+            Icons.search_off,
+            size: 48,
+            color: Colors.white.withOpacity(0.1),
+          ),
           const SizedBox(height: 12),
           const Text("Busca mods geniales para añadir", style: TextStyle(color: Colors.white24, fontSize: 14)),
         ],

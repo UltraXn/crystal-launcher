@@ -49,7 +49,7 @@ class _HomePageState extends State<HomePage> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppTheme.background.withValues(alpha: 0.8),
+                  AppTheme.background.withOpacity(0.8),
                   AppTheme.background,
                 ],
               ),
@@ -75,7 +75,7 @@ class _HomePageState extends State<HomePage> {
                       shape: BoxShape.circle,
                       color: Colors.white10,
                       border: Border.all(
-                        color: AppTheme.accent.withValues(alpha: 0.5),
+                        color: AppTheme.accent.withOpacity(0.5),
                       ),
                       image: _session?.skinUrl != null
                           ? DecorationImage(
@@ -103,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         _getAuthTypeLabel(_session?.type ?? AuthType.guest),
                         style: TextStyle(
-                          color: AppTheme.text.withValues(alpha: 0.6),
+                          color: AppTheme.text.withOpacity(0.6),
                           fontSize: 12,
                         ),
                       ),
