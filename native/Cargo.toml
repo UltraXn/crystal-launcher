@@ -10,11 +10,16 @@ crate-type = ["cdylib", "rlib"]
 name = "CrystalLite"
 path = "src/bin/lite.rs"
 
+[[bin]]
+name = "bootstrapper"
+path = "src/bin/bootstrapper.rs"
+
 [dependencies]
 
 slint = "1.9"
 tokio = { version = "1.42", features = ["full"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
+zip = "0.6"  # Added for zip extraction
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

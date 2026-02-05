@@ -54,17 +54,27 @@ jobs:
           flutter pub get
           flutter build windows --release
 
-      - name: Package Installer (Zip)
+      - name: Prepare Rust Payload
         shell: pwsh
         run: |
           $installerBuild = "installer/build/windows/x64/runner/Release"
-          Compress-Archive -Path "$installerBuild\*" -DestinationPath "installer/build/CrystalTides_Installer_Portable.zip" -Force
+          $payloadPath = "native/installer_payload.zip"
+          Compress-Archive -Path "$installerBuild\*" -DestinationPath $payloadPath -Force
+
+      - name: Build Rust Bootstrapper
+        run: |
+          cd native
+          cargo build --release --bin bootstrapper
+
+      - name: Rename Output
+        shell: pwsh
+        run: |
+          Move-Item -Path "native/target/release/bootstrapper.exe" -Destination "CrystalTides_Setup.exe" -Force
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-             installer/build/windows/x64/runner/Release/crystal_installer.exe
-             installer/build/CrystalTides_Installer_Portable.zip
+             CrystalTides_Setup.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
