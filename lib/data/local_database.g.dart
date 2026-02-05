@@ -11,273 +11,192 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _minRamMeta = const VerificationMeta('minRam');
   @override
   late final GeneratedColumn<int> minRam = GeneratedColumn<int>(
-    'min_ram',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(1024),
-  );
+      'min_ram', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1024));
   static const VerificationMeta _maxRamMeta = const VerificationMeta('maxRam');
   @override
   late final GeneratedColumn<int> maxRam = GeneratedColumn<int>(
-    'max_ram',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(4096),
-  );
-  static const VerificationMeta _javaPathMeta = const VerificationMeta(
-    'javaPath',
-  );
+      'max_ram', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(4096));
+  static const VerificationMeta _javaPathMeta =
+      const VerificationMeta('javaPath');
   @override
   late final GeneratedColumn<String> javaPath = GeneratedColumn<String>(
-    'java_path',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
+      'java_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _widthMeta = const VerificationMeta('width');
   @override
   late final GeneratedColumn<int> width = GeneratedColumn<int>(
-    'width',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(1280),
-  );
+      'width', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(1280));
   static const VerificationMeta _heightMeta = const VerificationMeta('height');
   @override
   late final GeneratedColumn<int> height = GeneratedColumn<int>(
-    'height',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(720),
-  );
-  static const VerificationMeta _fullscreenMeta = const VerificationMeta(
-    'fullscreen',
-  );
+      'height', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(720));
+  static const VerificationMeta _fullscreenMeta =
+      const VerificationMeta('fullscreen');
   @override
   late final GeneratedColumn<bool> fullscreen = GeneratedColumn<bool>(
-    'fullscreen',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("fullscreen" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _closeLauncherMeta = const VerificationMeta(
-    'closeLauncher',
-  );
+      'fullscreen', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("fullscreen" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _closeLauncherMeta =
+      const VerificationMeta('closeLauncher');
   @override
   late final GeneratedColumn<bool> closeLauncher = GeneratedColumn<bool>(
-    'close_launcher',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("close_launcher" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _languageMeta = const VerificationMeta(
-    'language',
-  );
+      'close_launcher', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("close_launcher" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _languageMeta =
+      const VerificationMeta('language');
   @override
   late final GeneratedColumn<String> language = GeneratedColumn<String>(
-    'language',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('es'),
-  );
-  static const VerificationMeta _mcVersionMeta = const VerificationMeta(
-    'mcVersion',
-  );
+      'language', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('es'));
+  static const VerificationMeta _mcVersionMeta =
+      const VerificationMeta('mcVersion');
   @override
   late final GeneratedColumn<String> mcVersion = GeneratedColumn<String>(
-    'mc_version',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('1.21.1'),
-  );
-  static const VerificationMeta _neoForgeVersionMeta = const VerificationMeta(
-    'neoForgeVersion',
-  );
+      'mc_version', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('1.21.1'));
+  static const VerificationMeta _neoForgeVersionMeta =
+      const VerificationMeta('neoForgeVersion');
   @override
   late final GeneratedColumn<String> neoForgeVersion = GeneratedColumn<String>(
-    'neo_forge_version',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('2.218'),
-  );
-  static const VerificationMeta _autoConnectMeta = const VerificationMeta(
-    'autoConnect',
-  );
+      'neo_forge_version', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('21.1.219'));
+  static const VerificationMeta _autoConnectMeta =
+      const VerificationMeta('autoConnect');
   @override
   late final GeneratedColumn<bool> autoConnect = GeneratedColumn<bool>(
-    'auto_connect',
-    aliasedName,
-    true,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("auto_connect" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _selectedProfileIdMeta = const VerificationMeta(
-    'selectedProfileId',
-  );
+      'auto_connect', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("auto_connect" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _selectedProfileIdMeta =
+      const VerificationMeta('selectedProfileId');
   @override
   late final GeneratedColumn<int> selectedProfileId = GeneratedColumn<int>(
-    'selected_profile_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
+      'selected_profile_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
-    id,
-    minRam,
-    maxRam,
-    javaPath,
-    width,
-    height,
-    fullscreen,
-    closeLauncher,
-    language,
-    mcVersion,
-    neoForgeVersion,
-    autoConnect,
-    selectedProfileId,
-  ];
+        id,
+        minRam,
+        maxRam,
+        javaPath,
+        width,
+        height,
+        fullscreen,
+        closeLauncher,
+        language,
+        mcVersion,
+        neoForgeVersion,
+        autoConnect,
+        selectedProfileId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'settings';
   @override
-  VerificationContext validateIntegrity(
-    Insertable<Setting> instance, {
-    bool isInserting = false,
-  }) {
+  VerificationContext validateIntegrity(Insertable<Setting> instance,
+      {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('min_ram')) {
-      context.handle(
-        _minRamMeta,
-        minRam.isAcceptableOrUnknown(data['min_ram']!, _minRamMeta),
-      );
+      context.handle(_minRamMeta,
+          minRam.isAcceptableOrUnknown(data['min_ram']!, _minRamMeta));
     }
     if (data.containsKey('max_ram')) {
-      context.handle(
-        _maxRamMeta,
-        maxRam.isAcceptableOrUnknown(data['max_ram']!, _maxRamMeta),
-      );
+      context.handle(_maxRamMeta,
+          maxRam.isAcceptableOrUnknown(data['max_ram']!, _maxRamMeta));
     }
     if (data.containsKey('java_path')) {
-      context.handle(
-        _javaPathMeta,
-        javaPath.isAcceptableOrUnknown(data['java_path']!, _javaPathMeta),
-      );
+      context.handle(_javaPathMeta,
+          javaPath.isAcceptableOrUnknown(data['java_path']!, _javaPathMeta));
     }
     if (data.containsKey('width')) {
       context.handle(
-        _widthMeta,
-        width.isAcceptableOrUnknown(data['width']!, _widthMeta),
-      );
+          _widthMeta, width.isAcceptableOrUnknown(data['width']!, _widthMeta));
     }
     if (data.containsKey('height')) {
-      context.handle(
-        _heightMeta,
-        height.isAcceptableOrUnknown(data['height']!, _heightMeta),
-      );
+      context.handle(_heightMeta,
+          height.isAcceptableOrUnknown(data['height']!, _heightMeta));
     }
     if (data.containsKey('fullscreen')) {
       context.handle(
-        _fullscreenMeta,
-        fullscreen.isAcceptableOrUnknown(data['fullscreen']!, _fullscreenMeta),
-      );
+          _fullscreenMeta,
+          fullscreen.isAcceptableOrUnknown(
+              data['fullscreen']!, _fullscreenMeta));
     }
     if (data.containsKey('close_launcher')) {
       context.handle(
-        _closeLauncherMeta,
-        closeLauncher.isAcceptableOrUnknown(
-          data['close_launcher']!,
           _closeLauncherMeta,
-        ),
-      );
+          closeLauncher.isAcceptableOrUnknown(
+              data['close_launcher']!, _closeLauncherMeta));
     }
     if (data.containsKey('language')) {
-      context.handle(
-        _languageMeta,
-        language.isAcceptableOrUnknown(data['language']!, _languageMeta),
-      );
+      context.handle(_languageMeta,
+          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
     }
     if (data.containsKey('mc_version')) {
-      context.handle(
-        _mcVersionMeta,
-        mcVersion.isAcceptableOrUnknown(data['mc_version']!, _mcVersionMeta),
-      );
+      context.handle(_mcVersionMeta,
+          mcVersion.isAcceptableOrUnknown(data['mc_version']!, _mcVersionMeta));
     }
     if (data.containsKey('neo_forge_version')) {
       context.handle(
-        _neoForgeVersionMeta,
-        neoForgeVersion.isAcceptableOrUnknown(
-          data['neo_forge_version']!,
           _neoForgeVersionMeta,
-        ),
-      );
+          neoForgeVersion.isAcceptableOrUnknown(
+              data['neo_forge_version']!, _neoForgeVersionMeta));
     }
     if (data.containsKey('auto_connect')) {
       context.handle(
-        _autoConnectMeta,
-        autoConnect.isAcceptableOrUnknown(
-          data['auto_connect']!,
           _autoConnectMeta,
-        ),
-      );
+          autoConnect.isAcceptableOrUnknown(
+              data['auto_connect']!, _autoConnectMeta));
     }
     if (data.containsKey('selected_profile_id')) {
       context.handle(
-        _selectedProfileIdMeta,
-        selectedProfileId.isAcceptableOrUnknown(
-          data['selected_profile_id']!,
           _selectedProfileIdMeta,
-        ),
-      );
+          selectedProfileId.isAcceptableOrUnknown(
+              data['selected_profile_id']!, _selectedProfileIdMeta));
     }
     return context;
   }
@@ -288,58 +207,32 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   Setting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Setting(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      minRam: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}min_ram'],
-      )!,
-      maxRam: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}max_ram'],
-      )!,
-      javaPath: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}java_path'],
-      ),
-      width: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}width'],
-      )!,
-      height: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}height'],
-      )!,
-      fullscreen: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}fullscreen'],
-      )!,
-      closeLauncher: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}close_launcher'],
-      )!,
-      language: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}language'],
-      )!,
-      mcVersion: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}mc_version'],
-      ),
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      minRam: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}min_ram'])!,
+      maxRam: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}max_ram'])!,
+      javaPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}java_path']),
+      width: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}width'])!,
+      height: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}height'])!,
+      fullscreen: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}fullscreen'])!,
+      closeLauncher: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}close_launcher'])!,
+      language: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
+      mcVersion: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}mc_version']),
       neoForgeVersion: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}neo_forge_version'],
-      ),
-      autoConnect: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}auto_connect'],
-      ),
+          DriftSqlType.string, data['${effectivePrefix}neo_forge_version']),
+      autoConnect: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}auto_connect']),
       selectedProfileId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}selected_profile_id'],
-      ),
+          DriftSqlType.int, data['${effectivePrefix}selected_profile_id']),
     );
   }
 
@@ -363,21 +256,20 @@ class Setting extends DataClass implements Insertable<Setting> {
   final String? neoForgeVersion;
   final bool? autoConnect;
   final int? selectedProfileId;
-  const Setting({
-    required this.id,
-    required this.minRam,
-    required this.maxRam,
-    this.javaPath,
-    required this.width,
-    required this.height,
-    required this.fullscreen,
-    required this.closeLauncher,
-    required this.language,
-    this.mcVersion,
-    this.neoForgeVersion,
-    this.autoConnect,
-    this.selectedProfileId,
-  });
+  const Setting(
+      {required this.id,
+      required this.minRam,
+      required this.maxRam,
+      this.javaPath,
+      required this.width,
+      required this.height,
+      required this.fullscreen,
+      required this.closeLauncher,
+      required this.language,
+      this.mcVersion,
+      this.neoForgeVersion,
+      this.autoConnect,
+      this.selectedProfileId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -435,10 +327,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     );
   }
 
-  factory Setting.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
+  factory Setting.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Setting(
       id: serializer.fromJson<int>(json['id']),
@@ -476,39 +366,39 @@ class Setting extends DataClass implements Insertable<Setting> {
     };
   }
 
-  Setting copyWith({
-    int? id,
-    int? minRam,
-    int? maxRam,
-    Value<String?> javaPath = const Value.absent(),
-    int? width,
-    int? height,
-    bool? fullscreen,
-    bool? closeLauncher,
-    String? language,
-    Value<String?> mcVersion = const Value.absent(),
-    Value<String?> neoForgeVersion = const Value.absent(),
-    Value<bool?> autoConnect = const Value.absent(),
-    Value<int?> selectedProfileId = const Value.absent(),
-  }) => Setting(
-    id: id ?? this.id,
-    minRam: minRam ?? this.minRam,
-    maxRam: maxRam ?? this.maxRam,
-    javaPath: javaPath.present ? javaPath.value : this.javaPath,
-    width: width ?? this.width,
-    height: height ?? this.height,
-    fullscreen: fullscreen ?? this.fullscreen,
-    closeLauncher: closeLauncher ?? this.closeLauncher,
-    language: language ?? this.language,
-    mcVersion: mcVersion.present ? mcVersion.value : this.mcVersion,
-    neoForgeVersion: neoForgeVersion.present
-        ? neoForgeVersion.value
-        : this.neoForgeVersion,
-    autoConnect: autoConnect.present ? autoConnect.value : this.autoConnect,
-    selectedProfileId: selectedProfileId.present
-        ? selectedProfileId.value
-        : this.selectedProfileId,
-  );
+  Setting copyWith(
+          {int? id,
+          int? minRam,
+          int? maxRam,
+          Value<String?> javaPath = const Value.absent(),
+          int? width,
+          int? height,
+          bool? fullscreen,
+          bool? closeLauncher,
+          String? language,
+          Value<String?> mcVersion = const Value.absent(),
+          Value<String?> neoForgeVersion = const Value.absent(),
+          Value<bool?> autoConnect = const Value.absent(),
+          Value<int?> selectedProfileId = const Value.absent()}) =>
+      Setting(
+        id: id ?? this.id,
+        minRam: minRam ?? this.minRam,
+        maxRam: maxRam ?? this.maxRam,
+        javaPath: javaPath.present ? javaPath.value : this.javaPath,
+        width: width ?? this.width,
+        height: height ?? this.height,
+        fullscreen: fullscreen ?? this.fullscreen,
+        closeLauncher: closeLauncher ?? this.closeLauncher,
+        language: language ?? this.language,
+        mcVersion: mcVersion.present ? mcVersion.value : this.mcVersion,
+        neoForgeVersion: neoForgeVersion.present
+            ? neoForgeVersion.value
+            : this.neoForgeVersion,
+        autoConnect: autoConnect.present ? autoConnect.value : this.autoConnect,
+        selectedProfileId: selectedProfileId.present
+            ? selectedProfileId.value
+            : this.selectedProfileId,
+      );
   Setting copyWithCompanion(SettingsCompanion data) {
     return Setting(
       id: data.id.present ? data.id.value : this.id,
@@ -517,9 +407,8 @@ class Setting extends DataClass implements Insertable<Setting> {
       javaPath: data.javaPath.present ? data.javaPath.value : this.javaPath,
       width: data.width.present ? data.width.value : this.width,
       height: data.height.present ? data.height.value : this.height,
-      fullscreen: data.fullscreen.present
-          ? data.fullscreen.value
-          : this.fullscreen,
+      fullscreen:
+          data.fullscreen.present ? data.fullscreen.value : this.fullscreen,
       closeLauncher: data.closeLauncher.present
           ? data.closeLauncher.value
           : this.closeLauncher,
@@ -528,9 +417,8 @@ class Setting extends DataClass implements Insertable<Setting> {
       neoForgeVersion: data.neoForgeVersion.present
           ? data.neoForgeVersion.value
           : this.neoForgeVersion,
-      autoConnect: data.autoConnect.present
-          ? data.autoConnect.value
-          : this.autoConnect,
+      autoConnect:
+          data.autoConnect.present ? data.autoConnect.value : this.autoConnect,
       selectedProfileId: data.selectedProfileId.present
           ? data.selectedProfileId.value
           : this.selectedProfileId,
@@ -559,20 +447,19 @@ class Setting extends DataClass implements Insertable<Setting> {
 
   @override
   int get hashCode => Object.hash(
-    id,
-    minRam,
-    maxRam,
-    javaPath,
-    width,
-    height,
-    fullscreen,
-    closeLauncher,
-    language,
-    mcVersion,
-    neoForgeVersion,
-    autoConnect,
-    selectedProfileId,
-  );
+      id,
+      minRam,
+      maxRam,
+      javaPath,
+      width,
+      height,
+      fullscreen,
+      closeLauncher,
+      language,
+      mcVersion,
+      neoForgeVersion,
+      autoConnect,
+      selectedProfileId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -668,21 +555,20 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     });
   }
 
-  SettingsCompanion copyWith({
-    Value<int>? id,
-    Value<int>? minRam,
-    Value<int>? maxRam,
-    Value<String?>? javaPath,
-    Value<int>? width,
-    Value<int>? height,
-    Value<bool>? fullscreen,
-    Value<bool>? closeLauncher,
-    Value<String>? language,
-    Value<String?>? mcVersion,
-    Value<String?>? neoForgeVersion,
-    Value<bool?>? autoConnect,
-    Value<int?>? selectedProfileId,
-  }) {
+  SettingsCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? minRam,
+      Value<int>? maxRam,
+      Value<String?>? javaPath,
+      Value<int>? width,
+      Value<int>? height,
+      Value<bool>? fullscreen,
+      Value<bool>? closeLauncher,
+      Value<String>? language,
+      Value<String?>? mcVersion,
+      Value<String?>? neoForgeVersion,
+      Value<bool?>? autoConnect,
+      Value<int?>? selectedProfileId}) {
     return SettingsCompanion(
       id: id ?? this.id,
       minRam: minRam ?? this.minRam,
@@ -775,52 +661,35 @@ class $KeybindingsTable extends Keybindings
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _actionMeta = const VerificationMeta('action');
   @override
   late final GeneratedColumn<String> action = GeneratedColumn<String>(
-    'action',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
-  );
-  static const VerificationMeta _keyStringMeta = const VerificationMeta(
-    'keyString',
-  );
+      'action', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _keyStringMeta =
+      const VerificationMeta('keyString');
   @override
   late final GeneratedColumn<String> keyString = GeneratedColumn<String>(
-    'key_string',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _isEnabledMeta = const VerificationMeta(
-    'isEnabled',
-  );
+      'key_string', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _isEnabledMeta =
+      const VerificationMeta('isEnabled');
   @override
   late final GeneratedColumn<bool> isEnabled = GeneratedColumn<bool>(
-    'is_enabled',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_enabled" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
+      'is_enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_enabled" IN (0, 1))'),
+      defaultValue: const Constant(true));
   @override
   List<GeneratedColumn> get $columns => [id, action, keyString, isEnabled];
   @override
@@ -829,36 +698,28 @@ class $KeybindingsTable extends Keybindings
   String get actualTableName => $name;
   static const String $name = 'keybindings';
   @override
-  VerificationContext validateIntegrity(
-    Insertable<Keybinding> instance, {
-    bool isInserting = false,
-  }) {
+  VerificationContext validateIntegrity(Insertable<Keybinding> instance,
+      {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
     if (data.containsKey('action')) {
-      context.handle(
-        _actionMeta,
-        action.isAcceptableOrUnknown(data['action']!, _actionMeta),
-      );
+      context.handle(_actionMeta,
+          action.isAcceptableOrUnknown(data['action']!, _actionMeta));
     } else if (isInserting) {
       context.missing(_actionMeta);
     }
     if (data.containsKey('key_string')) {
-      context.handle(
-        _keyStringMeta,
-        keyString.isAcceptableOrUnknown(data['key_string']!, _keyStringMeta),
-      );
+      context.handle(_keyStringMeta,
+          keyString.isAcceptableOrUnknown(data['key_string']!, _keyStringMeta));
     } else if (isInserting) {
       context.missing(_keyStringMeta);
     }
     if (data.containsKey('is_enabled')) {
-      context.handle(
-        _isEnabledMeta,
-        isEnabled.isAcceptableOrUnknown(data['is_enabled']!, _isEnabledMeta),
-      );
+      context.handle(_isEnabledMeta,
+          isEnabled.isAcceptableOrUnknown(data['is_enabled']!, _isEnabledMeta));
     }
     return context;
   }
@@ -869,22 +730,14 @@ class $KeybindingsTable extends Keybindings
   Keybinding map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Keybinding(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      action: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}action'],
-      )!,
-      keyString: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}key_string'],
-      )!,
-      isEnabled: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_enabled'],
-      )!,
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      action: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}action'])!,
+      keyString: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}key_string'])!,
+      isEnabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_enabled'])!,
     );
   }
 
@@ -899,12 +752,11 @@ class Keybinding extends DataClass implements Insertable<Keybinding> {
   final String action;
   final String keyString;
   final bool isEnabled;
-  const Keybinding({
-    required this.id,
-    required this.action,
-    required this.keyString,
-    required this.isEnabled,
-  });
+  const Keybinding(
+      {required this.id,
+      required this.action,
+      required this.keyString,
+      required this.isEnabled});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -924,10 +776,8 @@ class Keybinding extends DataClass implements Insertable<Keybinding> {
     );
   }
 
-  factory Keybinding.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
+  factory Keybinding.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Keybinding(
       id: serializer.fromJson<int>(json['id']),
@@ -947,17 +797,14 @@ class Keybinding extends DataClass implements Insertable<Keybinding> {
     };
   }
 
-  Keybinding copyWith({
-    int? id,
-    String? action,
-    String? keyString,
-    bool? isEnabled,
-  }) => Keybinding(
-    id: id ?? this.id,
-    action: action ?? this.action,
-    keyString: keyString ?? this.keyString,
-    isEnabled: isEnabled ?? this.isEnabled,
-  );
+  Keybinding copyWith(
+          {int? id, String? action, String? keyString, bool? isEnabled}) =>
+      Keybinding(
+        id: id ?? this.id,
+        action: action ?? this.action,
+        keyString: keyString ?? this.keyString,
+        isEnabled: isEnabled ?? this.isEnabled,
+      );
   Keybinding copyWithCompanion(KeybindingsCompanion data) {
     return Keybinding(
       id: data.id.present ? data.id.value : this.id,
@@ -1006,8 +853,8 @@ class KeybindingsCompanion extends UpdateCompanion<Keybinding> {
     required String action,
     required String keyString,
     this.isEnabled = const Value.absent(),
-  }) : action = Value(action),
-       keyString = Value(keyString);
+  })  : action = Value(action),
+        keyString = Value(keyString);
   static Insertable<Keybinding> custom({
     Expression<int>? id,
     Expression<String>? action,
@@ -1022,12 +869,11 @@ class KeybindingsCompanion extends UpdateCompanion<Keybinding> {
     });
   }
 
-  KeybindingsCompanion copyWith({
-    Value<int>? id,
-    Value<String>? action,
-    Value<String>? keyString,
-    Value<bool>? isEnabled,
-  }) {
+  KeybindingsCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? action,
+      Value<String>? keyString,
+      Value<bool>? isEnabled}) {
     return KeybindingsCompanion(
       id: id ?? this.id,
       action: action ?? this.action,
@@ -1074,150 +920,98 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 50,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _mcVersionMeta = const VerificationMeta(
-    'mcVersion',
-  );
+      'name', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _mcVersionMeta =
+      const VerificationMeta('mcVersion');
   @override
   late final GeneratedColumn<String> mcVersion = GeneratedColumn<String>(
-    'mc_version',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('1.21.1'),
-  );
-  static const VerificationMeta _neoForgeVersionMeta = const VerificationMeta(
-    'neoForgeVersion',
-  );
+      'mc_version', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('1.21.1'));
+  static const VerificationMeta _neoForgeVersionMeta =
+      const VerificationMeta('neoForgeVersion');
   @override
   late final GeneratedColumn<String> neoForgeVersion = GeneratedColumn<String>(
-    'neo_forge_version',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _gameDirMeta = const VerificationMeta(
-    'gameDir',
-  );
+      'neo_forge_version', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _gameDirMeta =
+      const VerificationMeta('gameDir');
   @override
   late final GeneratedColumn<String> gameDir = GeneratedColumn<String>(
-    'game_dir',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
+      'game_dir', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _minRamMeta = const VerificationMeta('minRam');
   @override
   late final GeneratedColumn<int> minRam = GeneratedColumn<int>(
-    'min_ram',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
+      'min_ram', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _maxRamMeta = const VerificationMeta('maxRam');
   @override
   late final GeneratedColumn<int> maxRam = GeneratedColumn<int>(
-    'max_ram',
-    aliasedName,
-    true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _javaArgsMeta = const VerificationMeta(
-    'javaArgs',
-  );
+      'max_ram', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _javaArgsMeta =
+      const VerificationMeta('javaArgs');
   @override
   late final GeneratedColumn<String> javaArgs = GeneratedColumn<String>(
-    'java_args',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _javaPathMeta = const VerificationMeta(
-    'javaPath',
-  );
+      'java_args', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _javaPathMeta =
+      const VerificationMeta('javaPath');
   @override
   late final GeneratedColumn<String> javaPath = GeneratedColumn<String>(
-    'java_path',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _createdMeta = const VerificationMeta(
-    'created',
-  );
+      'java_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdMeta =
+      const VerificationMeta('created');
   @override
   late final GeneratedColumn<DateTime> created = GeneratedColumn<DateTime>(
-    'created',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  static const VerificationMeta _lastUsedMeta = const VerificationMeta(
-    'lastUsed',
-  );
+      'created', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _lastUsedMeta =
+      const VerificationMeta('lastUsed');
   @override
   late final GeneratedColumn<DateTime> lastUsed = GeneratedColumn<DateTime>(
-    'last_used',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
+      'last_used', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
-    id,
-    name,
-    mcVersion,
-    neoForgeVersion,
-    gameDir,
-    minRam,
-    maxRam,
-    javaArgs,
-    javaPath,
-    created,
-    lastUsed,
-  ];
+        id,
+        name,
+        mcVersion,
+        neoForgeVersion,
+        gameDir,
+        minRam,
+        maxRam,
+        javaArgs,
+        javaPath,
+        created,
+        lastUsed
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
   static const String $name = 'profiles';
   @override
-  VerificationContext validateIntegrity(
-    Insertable<Profile> instance, {
-    bool isInserting = false,
-  }) {
+  VerificationContext validateIntegrity(Insertable<Profile> instance,
+      {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
@@ -1225,68 +1019,47 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
     }
     if (data.containsKey('name')) {
       context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
     if (data.containsKey('mc_version')) {
-      context.handle(
-        _mcVersionMeta,
-        mcVersion.isAcceptableOrUnknown(data['mc_version']!, _mcVersionMeta),
-      );
+      context.handle(_mcVersionMeta,
+          mcVersion.isAcceptableOrUnknown(data['mc_version']!, _mcVersionMeta));
     }
     if (data.containsKey('neo_forge_version')) {
       context.handle(
-        _neoForgeVersionMeta,
-        neoForgeVersion.isAcceptableOrUnknown(
-          data['neo_forge_version']!,
           _neoForgeVersionMeta,
-        ),
-      );
+          neoForgeVersion.isAcceptableOrUnknown(
+              data['neo_forge_version']!, _neoForgeVersionMeta));
     }
     if (data.containsKey('game_dir')) {
-      context.handle(
-        _gameDirMeta,
-        gameDir.isAcceptableOrUnknown(data['game_dir']!, _gameDirMeta),
-      );
+      context.handle(_gameDirMeta,
+          gameDir.isAcceptableOrUnknown(data['game_dir']!, _gameDirMeta));
     }
     if (data.containsKey('min_ram')) {
-      context.handle(
-        _minRamMeta,
-        minRam.isAcceptableOrUnknown(data['min_ram']!, _minRamMeta),
-      );
+      context.handle(_minRamMeta,
+          minRam.isAcceptableOrUnknown(data['min_ram']!, _minRamMeta));
     }
     if (data.containsKey('max_ram')) {
-      context.handle(
-        _maxRamMeta,
-        maxRam.isAcceptableOrUnknown(data['max_ram']!, _maxRamMeta),
-      );
+      context.handle(_maxRamMeta,
+          maxRam.isAcceptableOrUnknown(data['max_ram']!, _maxRamMeta));
     }
     if (data.containsKey('java_args')) {
-      context.handle(
-        _javaArgsMeta,
-        javaArgs.isAcceptableOrUnknown(data['java_args']!, _javaArgsMeta),
-      );
+      context.handle(_javaArgsMeta,
+          javaArgs.isAcceptableOrUnknown(data['java_args']!, _javaArgsMeta));
     }
     if (data.containsKey('java_path')) {
-      context.handle(
-        _javaPathMeta,
-        javaPath.isAcceptableOrUnknown(data['java_path']!, _javaPathMeta),
-      );
+      context.handle(_javaPathMeta,
+          javaPath.isAcceptableOrUnknown(data['java_path']!, _javaPathMeta));
     }
     if (data.containsKey('created')) {
-      context.handle(
-        _createdMeta,
-        created.isAcceptableOrUnknown(data['created']!, _createdMeta),
-      );
+      context.handle(_createdMeta,
+          created.isAcceptableOrUnknown(data['created']!, _createdMeta));
     }
     if (data.containsKey('last_used')) {
-      context.handle(
-        _lastUsedMeta,
-        lastUsed.isAcceptableOrUnknown(data['last_used']!, _lastUsedMeta),
-      );
+      context.handle(_lastUsedMeta,
+          lastUsed.isAcceptableOrUnknown(data['last_used']!, _lastUsedMeta));
     }
     return context;
   }
@@ -1297,50 +1070,28 @@ class $ProfilesTable extends Profiles with TableInfo<$ProfilesTable, Profile> {
   Profile map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Profile(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      mcVersion: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}mc_version'],
-      )!,
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      mcVersion: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}mc_version'])!,
       neoForgeVersion: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}neo_forge_version'],
-      ),
-      gameDir: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}game_dir'],
-      ),
-      minRam: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}min_ram'],
-      ),
-      maxRam: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}max_ram'],
-      ),
-      javaArgs: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}java_args'],
-      ),
-      javaPath: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}java_path'],
-      ),
-      created: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created'],
-      )!,
-      lastUsed: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_used'],
-      ),
+          DriftSqlType.string, data['${effectivePrefix}neo_forge_version']),
+      gameDir: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}game_dir']),
+      minRam: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}min_ram']),
+      maxRam: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}max_ram']),
+      javaArgs: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}java_args']),
+      javaPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}java_path']),
+      created: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created'])!,
+      lastUsed: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_used']),
     );
   }
 
@@ -1362,19 +1113,18 @@ class Profile extends DataClass implements Insertable<Profile> {
   final String? javaPath;
   final DateTime created;
   final DateTime? lastUsed;
-  const Profile({
-    required this.id,
-    required this.name,
-    required this.mcVersion,
-    this.neoForgeVersion,
-    this.gameDir,
-    this.minRam,
-    this.maxRam,
-    this.javaArgs,
-    this.javaPath,
-    required this.created,
-    this.lastUsed,
-  });
+  const Profile(
+      {required this.id,
+      required this.name,
+      required this.mcVersion,
+      this.neoForgeVersion,
+      this.gameDir,
+      this.minRam,
+      this.maxRam,
+      this.javaArgs,
+      this.javaPath,
+      required this.created,
+      this.lastUsed});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1417,12 +1167,10 @@ class Profile extends DataClass implements Insertable<Profile> {
       gameDir: gameDir == null && nullToAbsent
           ? const Value.absent()
           : Value(gameDir),
-      minRam: minRam == null && nullToAbsent
-          ? const Value.absent()
-          : Value(minRam),
-      maxRam: maxRam == null && nullToAbsent
-          ? const Value.absent()
-          : Value(maxRam),
+      minRam:
+          minRam == null && nullToAbsent ? const Value.absent() : Value(minRam),
+      maxRam:
+          maxRam == null && nullToAbsent ? const Value.absent() : Value(maxRam),
       javaArgs: javaArgs == null && nullToAbsent
           ? const Value.absent()
           : Value(javaArgs),
@@ -1436,10 +1184,8 @@ class Profile extends DataClass implements Insertable<Profile> {
     );
   }
 
-  factory Profile.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
+  factory Profile.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Profile(
       id: serializer.fromJson<int>(json['id']),
@@ -1473,33 +1219,33 @@ class Profile extends DataClass implements Insertable<Profile> {
     };
   }
 
-  Profile copyWith({
-    int? id,
-    String? name,
-    String? mcVersion,
-    Value<String?> neoForgeVersion = const Value.absent(),
-    Value<String?> gameDir = const Value.absent(),
-    Value<int?> minRam = const Value.absent(),
-    Value<int?> maxRam = const Value.absent(),
-    Value<String?> javaArgs = const Value.absent(),
-    Value<String?> javaPath = const Value.absent(),
-    DateTime? created,
-    Value<DateTime?> lastUsed = const Value.absent(),
-  }) => Profile(
-    id: id ?? this.id,
-    name: name ?? this.name,
-    mcVersion: mcVersion ?? this.mcVersion,
-    neoForgeVersion: neoForgeVersion.present
-        ? neoForgeVersion.value
-        : this.neoForgeVersion,
-    gameDir: gameDir.present ? gameDir.value : this.gameDir,
-    minRam: minRam.present ? minRam.value : this.minRam,
-    maxRam: maxRam.present ? maxRam.value : this.maxRam,
-    javaArgs: javaArgs.present ? javaArgs.value : this.javaArgs,
-    javaPath: javaPath.present ? javaPath.value : this.javaPath,
-    created: created ?? this.created,
-    lastUsed: lastUsed.present ? lastUsed.value : this.lastUsed,
-  );
+  Profile copyWith(
+          {int? id,
+          String? name,
+          String? mcVersion,
+          Value<String?> neoForgeVersion = const Value.absent(),
+          Value<String?> gameDir = const Value.absent(),
+          Value<int?> minRam = const Value.absent(),
+          Value<int?> maxRam = const Value.absent(),
+          Value<String?> javaArgs = const Value.absent(),
+          Value<String?> javaPath = const Value.absent(),
+          DateTime? created,
+          Value<DateTime?> lastUsed = const Value.absent()}) =>
+      Profile(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        mcVersion: mcVersion ?? this.mcVersion,
+        neoForgeVersion: neoForgeVersion.present
+            ? neoForgeVersion.value
+            : this.neoForgeVersion,
+        gameDir: gameDir.present ? gameDir.value : this.gameDir,
+        minRam: minRam.present ? minRam.value : this.minRam,
+        maxRam: maxRam.present ? maxRam.value : this.maxRam,
+        javaArgs: javaArgs.present ? javaArgs.value : this.javaArgs,
+        javaPath: javaPath.present ? javaPath.value : this.javaPath,
+        created: created ?? this.created,
+        lastUsed: lastUsed.present ? lastUsed.value : this.lastUsed,
+      );
   Profile copyWithCompanion(ProfilesCompanion data) {
     return Profile(
       id: data.id.present ? data.id.value : this.id,
@@ -1537,19 +1283,8 @@ class Profile extends DataClass implements Insertable<Profile> {
   }
 
   @override
-  int get hashCode => Object.hash(
-    id,
-    name,
-    mcVersion,
-    neoForgeVersion,
-    gameDir,
-    minRam,
-    maxRam,
-    javaArgs,
-    javaPath,
-    created,
-    lastUsed,
-  );
+  int get hashCode => Object.hash(id, name, mcVersion, neoForgeVersion, gameDir,
+      minRam, maxRam, javaArgs, javaPath, created, lastUsed);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1633,19 +1368,18 @@ class ProfilesCompanion extends UpdateCompanion<Profile> {
     });
   }
 
-  ProfilesCompanion copyWith({
-    Value<int>? id,
-    Value<String>? name,
-    Value<String>? mcVersion,
-    Value<String?>? neoForgeVersion,
-    Value<String?>? gameDir,
-    Value<int?>? minRam,
-    Value<int?>? maxRam,
-    Value<String?>? javaArgs,
-    Value<String?>? javaPath,
-    Value<DateTime>? created,
-    Value<DateTime?>? lastUsed,
-  }) {
+  ProfilesCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? name,
+      Value<String>? mcVersion,
+      Value<String?>? neoForgeVersion,
+      Value<String?>? gameDir,
+      Value<int?>? minRam,
+      Value<int?>? maxRam,
+      Value<String?>? javaArgs,
+      Value<String?>? javaPath,
+      Value<DateTime>? created,
+      Value<DateTime?>? lastUsed}) {
     return ProfilesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -1729,45 +1463,40 @@ abstract class _$LocalDatabase extends GeneratedDatabase {
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [
-    settings,
-    keybindings,
-    profiles,
-  ];
+  List<DatabaseSchemaEntity> get allSchemaEntities =>
+      [settings, keybindings, profiles];
 }
 
-typedef $$SettingsTableCreateCompanionBuilder =
-    SettingsCompanion Function({
-      Value<int> id,
-      Value<int> minRam,
-      Value<int> maxRam,
-      Value<String?> javaPath,
-      Value<int> width,
-      Value<int> height,
-      Value<bool> fullscreen,
-      Value<bool> closeLauncher,
-      Value<String> language,
-      Value<String?> mcVersion,
-      Value<String?> neoForgeVersion,
-      Value<bool?> autoConnect,
-      Value<int?> selectedProfileId,
-    });
-typedef $$SettingsTableUpdateCompanionBuilder =
-    SettingsCompanion Function({
-      Value<int> id,
-      Value<int> minRam,
-      Value<int> maxRam,
-      Value<String?> javaPath,
-      Value<int> width,
-      Value<int> height,
-      Value<bool> fullscreen,
-      Value<bool> closeLauncher,
-      Value<String> language,
-      Value<String?> mcVersion,
-      Value<String?> neoForgeVersion,
-      Value<bool?> autoConnect,
-      Value<int?> selectedProfileId,
-    });
+typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
+  Value<int> id,
+  Value<int> minRam,
+  Value<int> maxRam,
+  Value<String?> javaPath,
+  Value<int> width,
+  Value<int> height,
+  Value<bool> fullscreen,
+  Value<bool> closeLauncher,
+  Value<String> language,
+  Value<String?> mcVersion,
+  Value<String?> neoForgeVersion,
+  Value<bool?> autoConnect,
+  Value<int?> selectedProfileId,
+});
+typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
+  Value<int> id,
+  Value<int> minRam,
+  Value<int> maxRam,
+  Value<String?> javaPath,
+  Value<int> width,
+  Value<int> height,
+  Value<bool> fullscreen,
+  Value<bool> closeLauncher,
+  Value<String> language,
+  Value<String?> mcVersion,
+  Value<String?> neoForgeVersion,
+  Value<bool?> autoConnect,
+  Value<int?> selectedProfileId,
+});
 
 class $$SettingsTableFilterComposer
     extends Composer<_$LocalDatabase, $SettingsTable> {
@@ -1779,69 +1508,45 @@ class $$SettingsTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get minRam => $composableBuilder(
-    column: $table.minRam,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.minRam, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get maxRam => $composableBuilder(
-    column: $table.maxRam,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.maxRam, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get javaPath => $composableBuilder(
-    column: $table.javaPath,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.javaPath, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get width => $composableBuilder(
-    column: $table.width,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.width, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get height => $composableBuilder(
-    column: $table.height,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.height, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get fullscreen => $composableBuilder(
-    column: $table.fullscreen,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.fullscreen, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get closeLauncher => $composableBuilder(
-    column: $table.closeLauncher,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.closeLauncher, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get language => $composableBuilder(
-    column: $table.language,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.language, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get mcVersion => $composableBuilder(
-    column: $table.mcVersion,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.mcVersion, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get neoForgeVersion => $composableBuilder(
-    column: $table.neoForgeVersion,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.neoForgeVersion,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get autoConnect => $composableBuilder(
-    column: $table.autoConnect,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.autoConnect, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get selectedProfileId => $composableBuilder(
-    column: $table.selectedProfileId,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.selectedProfileId,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$SettingsTableOrderingComposer
@@ -1854,69 +1559,46 @@ class $$SettingsTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get minRam => $composableBuilder(
-    column: $table.minRam,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.minRam, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get maxRam => $composableBuilder(
-    column: $table.maxRam,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.maxRam, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get javaPath => $composableBuilder(
-    column: $table.javaPath,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.javaPath, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get width => $composableBuilder(
-    column: $table.width,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.width, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get height => $composableBuilder(
-    column: $table.height,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.height, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get fullscreen => $composableBuilder(
-    column: $table.fullscreen,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.fullscreen, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get closeLauncher => $composableBuilder(
-    column: $table.closeLauncher,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.closeLauncher,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get language => $composableBuilder(
-    column: $table.language,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.language, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get mcVersion => $composableBuilder(
-    column: $table.mcVersion,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.mcVersion, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get neoForgeVersion => $composableBuilder(
-    column: $table.neoForgeVersion,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.neoForgeVersion,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get autoConnect => $composableBuilder(
-    column: $table.autoConnect,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.autoConnect, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get selectedProfileId => $composableBuilder(
-    column: $table.selectedProfileId,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.selectedProfileId,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$SettingsTableAnnotationComposer
@@ -1947,14 +1629,10 @@ class $$SettingsTableAnnotationComposer
       $composableBuilder(column: $table.height, builder: (column) => column);
 
   GeneratedColumn<bool> get fullscreen => $composableBuilder(
-    column: $table.fullscreen,
-    builder: (column) => column,
-  );
+      column: $table.fullscreen, builder: (column) => column);
 
   GeneratedColumn<bool> get closeLauncher => $composableBuilder(
-    column: $table.closeLauncher,
-    builder: (column) => column,
-  );
+      column: $table.closeLauncher, builder: (column) => column);
 
   GeneratedColumn<String> get language =>
       $composableBuilder(column: $table.language, builder: (column) => column);
@@ -1963,39 +1641,29 @@ class $$SettingsTableAnnotationComposer
       $composableBuilder(column: $table.mcVersion, builder: (column) => column);
 
   GeneratedColumn<String> get neoForgeVersion => $composableBuilder(
-    column: $table.neoForgeVersion,
-    builder: (column) => column,
-  );
+      column: $table.neoForgeVersion, builder: (column) => column);
 
   GeneratedColumn<bool> get autoConnect => $composableBuilder(
-    column: $table.autoConnect,
-    builder: (column) => column,
-  );
+      column: $table.autoConnect, builder: (column) => column);
 
   GeneratedColumn<int> get selectedProfileId => $composableBuilder(
-    column: $table.selectedProfileId,
-    builder: (column) => column,
-  );
+      column: $table.selectedProfileId, builder: (column) => column);
 }
 
-class $$SettingsTableTableManager
-    extends
-        RootTableManager<
-          _$LocalDatabase,
-          $SettingsTable,
-          Setting,
-          $$SettingsTableFilterComposer,
-          $$SettingsTableOrderingComposer,
-          $$SettingsTableAnnotationComposer,
-          $$SettingsTableCreateCompanionBuilder,
-          $$SettingsTableUpdateCompanionBuilder,
-          (Setting, BaseReferences<_$LocalDatabase, $SettingsTable, Setting>),
-          Setting,
-          PrefetchHooks Function()
-        > {
+class $$SettingsTableTableManager extends RootTableManager<
+    _$LocalDatabase,
+    $SettingsTable,
+    Setting,
+    $$SettingsTableFilterComposer,
+    $$SettingsTableOrderingComposer,
+    $$SettingsTableAnnotationComposer,
+    $$SettingsTableCreateCompanionBuilder,
+    $$SettingsTableUpdateCompanionBuilder,
+    (Setting, BaseReferences<_$LocalDatabase, $SettingsTable, Setting>),
+    Setting,
+    PrefetchHooks Function()> {
   $$SettingsTableTableManager(_$LocalDatabase db, $SettingsTable table)
-    : super(
-        TableManagerState(
+      : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -2004,102 +1672,99 @@ class $$SettingsTableTableManager
               $$SettingsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$SettingsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<int> minRam = const Value.absent(),
-                Value<int> maxRam = const Value.absent(),
-                Value<String?> javaPath = const Value.absent(),
-                Value<int> width = const Value.absent(),
-                Value<int> height = const Value.absent(),
-                Value<bool> fullscreen = const Value.absent(),
-                Value<bool> closeLauncher = const Value.absent(),
-                Value<String> language = const Value.absent(),
-                Value<String?> mcVersion = const Value.absent(),
-                Value<String?> neoForgeVersion = const Value.absent(),
-                Value<bool?> autoConnect = const Value.absent(),
-                Value<int?> selectedProfileId = const Value.absent(),
-              }) => SettingsCompanion(
-                id: id,
-                minRam: minRam,
-                maxRam: maxRam,
-                javaPath: javaPath,
-                width: width,
-                height: height,
-                fullscreen: fullscreen,
-                closeLauncher: closeLauncher,
-                language: language,
-                mcVersion: mcVersion,
-                neoForgeVersion: neoForgeVersion,
-                autoConnect: autoConnect,
-                selectedProfileId: selectedProfileId,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<int> minRam = const Value.absent(),
-                Value<int> maxRam = const Value.absent(),
-                Value<String?> javaPath = const Value.absent(),
-                Value<int> width = const Value.absent(),
-                Value<int> height = const Value.absent(),
-                Value<bool> fullscreen = const Value.absent(),
-                Value<bool> closeLauncher = const Value.absent(),
-                Value<String> language = const Value.absent(),
-                Value<String?> mcVersion = const Value.absent(),
-                Value<String?> neoForgeVersion = const Value.absent(),
-                Value<bool?> autoConnect = const Value.absent(),
-                Value<int?> selectedProfileId = const Value.absent(),
-              }) => SettingsCompanion.insert(
-                id: id,
-                minRam: minRam,
-                maxRam: maxRam,
-                javaPath: javaPath,
-                width: width,
-                height: height,
-                fullscreen: fullscreen,
-                closeLauncher: closeLauncher,
-                language: language,
-                mcVersion: mcVersion,
-                neoForgeVersion: neoForgeVersion,
-                autoConnect: autoConnect,
-                selectedProfileId: selectedProfileId,
-              ),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> minRam = const Value.absent(),
+            Value<int> maxRam = const Value.absent(),
+            Value<String?> javaPath = const Value.absent(),
+            Value<int> width = const Value.absent(),
+            Value<int> height = const Value.absent(),
+            Value<bool> fullscreen = const Value.absent(),
+            Value<bool> closeLauncher = const Value.absent(),
+            Value<String> language = const Value.absent(),
+            Value<String?> mcVersion = const Value.absent(),
+            Value<String?> neoForgeVersion = const Value.absent(),
+            Value<bool?> autoConnect = const Value.absent(),
+            Value<int?> selectedProfileId = const Value.absent(),
+          }) =>
+              SettingsCompanion(
+            id: id,
+            minRam: minRam,
+            maxRam: maxRam,
+            javaPath: javaPath,
+            width: width,
+            height: height,
+            fullscreen: fullscreen,
+            closeLauncher: closeLauncher,
+            language: language,
+            mcVersion: mcVersion,
+            neoForgeVersion: neoForgeVersion,
+            autoConnect: autoConnect,
+            selectedProfileId: selectedProfileId,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> minRam = const Value.absent(),
+            Value<int> maxRam = const Value.absent(),
+            Value<String?> javaPath = const Value.absent(),
+            Value<int> width = const Value.absent(),
+            Value<int> height = const Value.absent(),
+            Value<bool> fullscreen = const Value.absent(),
+            Value<bool> closeLauncher = const Value.absent(),
+            Value<String> language = const Value.absent(),
+            Value<String?> mcVersion = const Value.absent(),
+            Value<String?> neoForgeVersion = const Value.absent(),
+            Value<bool?> autoConnect = const Value.absent(),
+            Value<int?> selectedProfileId = const Value.absent(),
+          }) =>
+              SettingsCompanion.insert(
+            id: id,
+            minRam: minRam,
+            maxRam: maxRam,
+            javaPath: javaPath,
+            width: width,
+            height: height,
+            fullscreen: fullscreen,
+            closeLauncher: closeLauncher,
+            language: language,
+            mcVersion: mcVersion,
+            neoForgeVersion: neoForgeVersion,
+            autoConnect: autoConnect,
+            selectedProfileId: selectedProfileId,
+          ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ),
-      );
+        ));
 }
 
-typedef $$SettingsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$LocalDatabase,
-      $SettingsTable,
-      Setting,
-      $$SettingsTableFilterComposer,
-      $$SettingsTableOrderingComposer,
-      $$SettingsTableAnnotationComposer,
-      $$SettingsTableCreateCompanionBuilder,
-      $$SettingsTableUpdateCompanionBuilder,
-      (Setting, BaseReferences<_$LocalDatabase, $SettingsTable, Setting>),
-      Setting,
-      PrefetchHooks Function()
-    >;
-typedef $$KeybindingsTableCreateCompanionBuilder =
-    KeybindingsCompanion Function({
-      Value<int> id,
-      required String action,
-      required String keyString,
-      Value<bool> isEnabled,
-    });
-typedef $$KeybindingsTableUpdateCompanionBuilder =
-    KeybindingsCompanion Function({
-      Value<int> id,
-      Value<String> action,
-      Value<String> keyString,
-      Value<bool> isEnabled,
-    });
+typedef $$SettingsTableProcessedTableManager = ProcessedTableManager<
+    _$LocalDatabase,
+    $SettingsTable,
+    Setting,
+    $$SettingsTableFilterComposer,
+    $$SettingsTableOrderingComposer,
+    $$SettingsTableAnnotationComposer,
+    $$SettingsTableCreateCompanionBuilder,
+    $$SettingsTableUpdateCompanionBuilder,
+    (Setting, BaseReferences<_$LocalDatabase, $SettingsTable, Setting>),
+    Setting,
+    PrefetchHooks Function()>;
+typedef $$KeybindingsTableCreateCompanionBuilder = KeybindingsCompanion
+    Function({
+  Value<int> id,
+  required String action,
+  required String keyString,
+  Value<bool> isEnabled,
+});
+typedef $$KeybindingsTableUpdateCompanionBuilder = KeybindingsCompanion
+    Function({
+  Value<int> id,
+  Value<String> action,
+  Value<String> keyString,
+  Value<bool> isEnabled,
+});
 
 class $$KeybindingsTableFilterComposer
     extends Composer<_$LocalDatabase, $KeybindingsTable> {
@@ -2111,24 +1776,16 @@ class $$KeybindingsTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get action => $composableBuilder(
-    column: $table.action,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.action, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get keyString => $composableBuilder(
-    column: $table.keyString,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.keyString, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get isEnabled => $composableBuilder(
-    column: $table.isEnabled,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.isEnabled, builder: (column) => ColumnFilters(column));
 }
 
 class $$KeybindingsTableOrderingComposer
@@ -2141,24 +1798,16 @@ class $$KeybindingsTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get action => $composableBuilder(
-    column: $table.action,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.action, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get keyString => $composableBuilder(
-    column: $table.keyString,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.keyString, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get isEnabled => $composableBuilder(
-    column: $table.isEnabled,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.isEnabled, builder: (column) => ColumnOrderings(column));
 }
 
 class $$KeybindingsTableAnnotationComposer
@@ -2183,27 +1832,23 @@ class $$KeybindingsTableAnnotationComposer
       $composableBuilder(column: $table.isEnabled, builder: (column) => column);
 }
 
-class $$KeybindingsTableTableManager
-    extends
-        RootTableManager<
-          _$LocalDatabase,
-          $KeybindingsTable,
-          Keybinding,
-          $$KeybindingsTableFilterComposer,
-          $$KeybindingsTableOrderingComposer,
-          $$KeybindingsTableAnnotationComposer,
-          $$KeybindingsTableCreateCompanionBuilder,
-          $$KeybindingsTableUpdateCompanionBuilder,
-          (
-            Keybinding,
-            BaseReferences<_$LocalDatabase, $KeybindingsTable, Keybinding>,
-          ),
-          Keybinding,
-          PrefetchHooks Function()
-        > {
+class $$KeybindingsTableTableManager extends RootTableManager<
+    _$LocalDatabase,
+    $KeybindingsTable,
+    Keybinding,
+    $$KeybindingsTableFilterComposer,
+    $$KeybindingsTableOrderingComposer,
+    $$KeybindingsTableAnnotationComposer,
+    $$KeybindingsTableCreateCompanionBuilder,
+    $$KeybindingsTableUpdateCompanionBuilder,
+    (
+      Keybinding,
+      BaseReferences<_$LocalDatabase, $KeybindingsTable, Keybinding>
+    ),
+    Keybinding,
+    PrefetchHooks Function()> {
   $$KeybindingsTableTableManager(_$LocalDatabase db, $KeybindingsTable table)
-    : super(
-        TableManagerState(
+      : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -2212,83 +1857,78 @@ class $$KeybindingsTableTableManager
               $$KeybindingsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$KeybindingsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> action = const Value.absent(),
-                Value<String> keyString = const Value.absent(),
-                Value<bool> isEnabled = const Value.absent(),
-              }) => KeybindingsCompanion(
-                id: id,
-                action: action,
-                keyString: keyString,
-                isEnabled: isEnabled,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String action,
-                required String keyString,
-                Value<bool> isEnabled = const Value.absent(),
-              }) => KeybindingsCompanion.insert(
-                id: id,
-                action: action,
-                keyString: keyString,
-                isEnabled: isEnabled,
-              ),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> action = const Value.absent(),
+            Value<String> keyString = const Value.absent(),
+            Value<bool> isEnabled = const Value.absent(),
+          }) =>
+              KeybindingsCompanion(
+            id: id,
+            action: action,
+            keyString: keyString,
+            isEnabled: isEnabled,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String action,
+            required String keyString,
+            Value<bool> isEnabled = const Value.absent(),
+          }) =>
+              KeybindingsCompanion.insert(
+            id: id,
+            action: action,
+            keyString: keyString,
+            isEnabled: isEnabled,
+          ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ),
-      );
+        ));
 }
 
-typedef $$KeybindingsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$LocalDatabase,
-      $KeybindingsTable,
+typedef $$KeybindingsTableProcessedTableManager = ProcessedTableManager<
+    _$LocalDatabase,
+    $KeybindingsTable,
+    Keybinding,
+    $$KeybindingsTableFilterComposer,
+    $$KeybindingsTableOrderingComposer,
+    $$KeybindingsTableAnnotationComposer,
+    $$KeybindingsTableCreateCompanionBuilder,
+    $$KeybindingsTableUpdateCompanionBuilder,
+    (
       Keybinding,
-      $$KeybindingsTableFilterComposer,
-      $$KeybindingsTableOrderingComposer,
-      $$KeybindingsTableAnnotationComposer,
-      $$KeybindingsTableCreateCompanionBuilder,
-      $$KeybindingsTableUpdateCompanionBuilder,
-      (
-        Keybinding,
-        BaseReferences<_$LocalDatabase, $KeybindingsTable, Keybinding>,
-      ),
-      Keybinding,
-      PrefetchHooks Function()
-    >;
-typedef $$ProfilesTableCreateCompanionBuilder =
-    ProfilesCompanion Function({
-      Value<int> id,
-      required String name,
-      Value<String> mcVersion,
-      Value<String?> neoForgeVersion,
-      Value<String?> gameDir,
-      Value<int?> minRam,
-      Value<int?> maxRam,
-      Value<String?> javaArgs,
-      Value<String?> javaPath,
-      Value<DateTime> created,
-      Value<DateTime?> lastUsed,
-    });
-typedef $$ProfilesTableUpdateCompanionBuilder =
-    ProfilesCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<String> mcVersion,
-      Value<String?> neoForgeVersion,
-      Value<String?> gameDir,
-      Value<int?> minRam,
-      Value<int?> maxRam,
-      Value<String?> javaArgs,
-      Value<String?> javaPath,
-      Value<DateTime> created,
-      Value<DateTime?> lastUsed,
-    });
+      BaseReferences<_$LocalDatabase, $KeybindingsTable, Keybinding>
+    ),
+    Keybinding,
+    PrefetchHooks Function()>;
+typedef $$ProfilesTableCreateCompanionBuilder = ProfilesCompanion Function({
+  Value<int> id,
+  required String name,
+  Value<String> mcVersion,
+  Value<String?> neoForgeVersion,
+  Value<String?> gameDir,
+  Value<int?> minRam,
+  Value<int?> maxRam,
+  Value<String?> javaArgs,
+  Value<String?> javaPath,
+  Value<DateTime> created,
+  Value<DateTime?> lastUsed,
+});
+typedef $$ProfilesTableUpdateCompanionBuilder = ProfilesCompanion Function({
+  Value<int> id,
+  Value<String> name,
+  Value<String> mcVersion,
+  Value<String?> neoForgeVersion,
+  Value<String?> gameDir,
+  Value<int?> minRam,
+  Value<int?> maxRam,
+  Value<String?> javaArgs,
+  Value<String?> javaPath,
+  Value<DateTime> created,
+  Value<DateTime?> lastUsed,
+});
 
 class $$ProfilesTableFilterComposer
     extends Composer<_$LocalDatabase, $ProfilesTable> {
@@ -2300,59 +1940,38 @@ class $$ProfilesTableFilterComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.id, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.name, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get mcVersion => $composableBuilder(
-    column: $table.mcVersion,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.mcVersion, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get neoForgeVersion => $composableBuilder(
-    column: $table.neoForgeVersion,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.neoForgeVersion,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get gameDir => $composableBuilder(
-    column: $table.gameDir,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.gameDir, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get minRam => $composableBuilder(
-    column: $table.minRam,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.minRam, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get maxRam => $composableBuilder(
-    column: $table.maxRam,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.maxRam, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get javaArgs => $composableBuilder(
-    column: $table.javaArgs,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.javaArgs, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get javaPath => $composableBuilder(
-    column: $table.javaPath,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.javaPath, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get created => $composableBuilder(
-    column: $table.created,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.created, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get lastUsed => $composableBuilder(
-    column: $table.lastUsed,
-    builder: (column) => ColumnFilters(column),
-  );
+      column: $table.lastUsed, builder: (column) => ColumnFilters(column));
 }
 
 class $$ProfilesTableOrderingComposer
@@ -2365,59 +1984,38 @@ class $$ProfilesTableOrderingComposer
     super.$removeJoinBuilderFromRootComposer,
   });
   ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.id, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.name, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get mcVersion => $composableBuilder(
-    column: $table.mcVersion,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.mcVersion, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get neoForgeVersion => $composableBuilder(
-    column: $table.neoForgeVersion,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.neoForgeVersion,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get gameDir => $composableBuilder(
-    column: $table.gameDir,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.gameDir, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get minRam => $composableBuilder(
-    column: $table.minRam,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.minRam, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<int> get maxRam => $composableBuilder(
-    column: $table.maxRam,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.maxRam, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get javaArgs => $composableBuilder(
-    column: $table.javaArgs,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.javaArgs, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get javaPath => $composableBuilder(
-    column: $table.javaPath,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.javaPath, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get created => $composableBuilder(
-    column: $table.created,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.created, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get lastUsed => $composableBuilder(
-    column: $table.lastUsed,
-    builder: (column) => ColumnOrderings(column),
-  );
+      column: $table.lastUsed, builder: (column) => ColumnOrderings(column));
 }
 
 class $$ProfilesTableAnnotationComposer
@@ -2439,9 +2037,7 @@ class $$ProfilesTableAnnotationComposer
       $composableBuilder(column: $table.mcVersion, builder: (column) => column);
 
   GeneratedColumn<String> get neoForgeVersion => $composableBuilder(
-    column: $table.neoForgeVersion,
-    builder: (column) => column,
-  );
+      column: $table.neoForgeVersion, builder: (column) => column);
 
   GeneratedColumn<String> get gameDir =>
       $composableBuilder(column: $table.gameDir, builder: (column) => column);
@@ -2465,24 +2061,20 @@ class $$ProfilesTableAnnotationComposer
       $composableBuilder(column: $table.lastUsed, builder: (column) => column);
 }
 
-class $$ProfilesTableTableManager
-    extends
-        RootTableManager<
-          _$LocalDatabase,
-          $ProfilesTable,
-          Profile,
-          $$ProfilesTableFilterComposer,
-          $$ProfilesTableOrderingComposer,
-          $$ProfilesTableAnnotationComposer,
-          $$ProfilesTableCreateCompanionBuilder,
-          $$ProfilesTableUpdateCompanionBuilder,
-          (Profile, BaseReferences<_$LocalDatabase, $ProfilesTable, Profile>),
-          Profile,
-          PrefetchHooks Function()
-        > {
+class $$ProfilesTableTableManager extends RootTableManager<
+    _$LocalDatabase,
+    $ProfilesTable,
+    Profile,
+    $$ProfilesTableFilterComposer,
+    $$ProfilesTableOrderingComposer,
+    $$ProfilesTableAnnotationComposer,
+    $$ProfilesTableCreateCompanionBuilder,
+    $$ProfilesTableUpdateCompanionBuilder,
+    (Profile, BaseReferences<_$LocalDatabase, $ProfilesTable, Profile>),
+    Profile,
+    PrefetchHooks Function()> {
   $$ProfilesTableTableManager(_$LocalDatabase db, $ProfilesTable table)
-    : super(
-        TableManagerState(
+      : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
@@ -2491,80 +2083,77 @@ class $$ProfilesTableTableManager
               $$ProfilesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
               $$ProfilesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String> mcVersion = const Value.absent(),
-                Value<String?> neoForgeVersion = const Value.absent(),
-                Value<String?> gameDir = const Value.absent(),
-                Value<int?> minRam = const Value.absent(),
-                Value<int?> maxRam = const Value.absent(),
-                Value<String?> javaArgs = const Value.absent(),
-                Value<String?> javaPath = const Value.absent(),
-                Value<DateTime> created = const Value.absent(),
-                Value<DateTime?> lastUsed = const Value.absent(),
-              }) => ProfilesCompanion(
-                id: id,
-                name: name,
-                mcVersion: mcVersion,
-                neoForgeVersion: neoForgeVersion,
-                gameDir: gameDir,
-                minRam: minRam,
-                maxRam: maxRam,
-                javaArgs: javaArgs,
-                javaPath: javaPath,
-                created: created,
-                lastUsed: lastUsed,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String name,
-                Value<String> mcVersion = const Value.absent(),
-                Value<String?> neoForgeVersion = const Value.absent(),
-                Value<String?> gameDir = const Value.absent(),
-                Value<int?> minRam = const Value.absent(),
-                Value<int?> maxRam = const Value.absent(),
-                Value<String?> javaArgs = const Value.absent(),
-                Value<String?> javaPath = const Value.absent(),
-                Value<DateTime> created = const Value.absent(),
-                Value<DateTime?> lastUsed = const Value.absent(),
-              }) => ProfilesCompanion.insert(
-                id: id,
-                name: name,
-                mcVersion: mcVersion,
-                neoForgeVersion: neoForgeVersion,
-                gameDir: gameDir,
-                minRam: minRam,
-                maxRam: maxRam,
-                javaArgs: javaArgs,
-                javaPath: javaPath,
-                created: created,
-                lastUsed: lastUsed,
-              ),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> mcVersion = const Value.absent(),
+            Value<String?> neoForgeVersion = const Value.absent(),
+            Value<String?> gameDir = const Value.absent(),
+            Value<int?> minRam = const Value.absent(),
+            Value<int?> maxRam = const Value.absent(),
+            Value<String?> javaArgs = const Value.absent(),
+            Value<String?> javaPath = const Value.absent(),
+            Value<DateTime> created = const Value.absent(),
+            Value<DateTime?> lastUsed = const Value.absent(),
+          }) =>
+              ProfilesCompanion(
+            id: id,
+            name: name,
+            mcVersion: mcVersion,
+            neoForgeVersion: neoForgeVersion,
+            gameDir: gameDir,
+            minRam: minRam,
+            maxRam: maxRam,
+            javaArgs: javaArgs,
+            javaPath: javaPath,
+            created: created,
+            lastUsed: lastUsed,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+            Value<String> mcVersion = const Value.absent(),
+            Value<String?> neoForgeVersion = const Value.absent(),
+            Value<String?> gameDir = const Value.absent(),
+            Value<int?> minRam = const Value.absent(),
+            Value<int?> maxRam = const Value.absent(),
+            Value<String?> javaArgs = const Value.absent(),
+            Value<String?> javaPath = const Value.absent(),
+            Value<DateTime> created = const Value.absent(),
+            Value<DateTime?> lastUsed = const Value.absent(),
+          }) =>
+              ProfilesCompanion.insert(
+            id: id,
+            name: name,
+            mcVersion: mcVersion,
+            neoForgeVersion: neoForgeVersion,
+            gameDir: gameDir,
+            minRam: minRam,
+            maxRam: maxRam,
+            javaArgs: javaArgs,
+            javaPath: javaPath,
+            created: created,
+            lastUsed: lastUsed,
+          ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: null,
-        ),
-      );
+        ));
 }
 
-typedef $$ProfilesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$LocalDatabase,
-      $ProfilesTable,
-      Profile,
-      $$ProfilesTableFilterComposer,
-      $$ProfilesTableOrderingComposer,
-      $$ProfilesTableAnnotationComposer,
-      $$ProfilesTableCreateCompanionBuilder,
-      $$ProfilesTableUpdateCompanionBuilder,
-      (Profile, BaseReferences<_$LocalDatabase, $ProfilesTable, Profile>),
-      Profile,
-      PrefetchHooks Function()
-    >;
+typedef $$ProfilesTableProcessedTableManager = ProcessedTableManager<
+    _$LocalDatabase,
+    $ProfilesTable,
+    Profile,
+    $$ProfilesTableFilterComposer,
+    $$ProfilesTableOrderingComposer,
+    $$ProfilesTableAnnotationComposer,
+    $$ProfilesTableCreateCompanionBuilder,
+    $$ProfilesTableUpdateCompanionBuilder,
+    (Profile, BaseReferences<_$LocalDatabase, $ProfilesTable, Profile>),
+    Profile,
+    PrefetchHooks Function()>;
 
 class $LocalDatabaseManager {
   final _$LocalDatabase _db;
