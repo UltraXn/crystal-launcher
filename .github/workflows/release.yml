@@ -1,80 +1,92 @@
-name: Build and Release
+name: Release Installer
 
 on:
   push:
     tags:
-      - 'v*' # Se activa al crear una etiqueta como v1.0.1
-
-permissions:
-  contents: write
+      - 'v*'
 
 jobs:
-  build:
+  build-and-release:
     runs-on: windows-latest
-
+    permissions:
+      contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.27.1' # Actualizado para soportar Dart 3.6.0+ (requerido por drift_dev)
+          flutter-version: '3.27.1'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
 
       - name: Create dummy .env
         run: New-Item -ItemType File -Path .env -Force
 
-      - name: Install dependencies (Launcher)
+      # --- PHASE 1: BUILD GAME CLIENT ---
+      - name: Build Game Client (Flutter)
         run: |
           flutter pub get
-
-      - name: Run build_runner (Launcher)
-        run: |
-          flutter pub run build_runner build --delete-conflicting-outputs
-
-      - name: Build Launcher (Windows)
-        run: |
           flutter build windows --release
 
-      - name: Create Payload ZIP
-        shell: pwsh
+      - name: Rename Game Exe
         run: |
-          $buildPath = "build/windows/x64/runner/Release"
-          $zipPath = "installer/assets/payload/payload.zip"
-          if (!(Test-Path "installer/assets/payload")) {
-            New-Item -ItemType Directory -Path "installer/assets/payload" -Force
+          if (Test-Path "build/windows/x64/runner/Release/launcher.exe") {
+            Rename-Item "build/windows/x64/runner/Release/launcher.exe" "build/windows/x64/runner/Release/crystal_launcher.exe" -Force
           }
-          Compress-Archive -Path "$buildPath\*" -DestinationPath $zipPath -Force
 
-      - name: Build Installer (Windows)
+      - name: Create Game Payload Zip
         run: |
-          cd installer
+          $payloadDir = "installer/assets/payload"
+          if (!(Test-Path $payloadDir)) {
+            New-Item -ItemType Directory -Force -Path $payloadDir
+          }
+          Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "$payloadDir/game_payload.zip" -Force
+
+      # --- PHASE 2: BUILD INSTALLER UI ---
+      - name: Build Installer UI (Flutter)
+        working-directory: installer
+        run: |
           flutter pub get
           flutter build windows --release
 
-      - name: Prepare Rust Payload
-        shell: pwsh
-        run: |
-          $installerBuild = "installer/build/windows/x64/runner/Release"
-          $payloadPath = "native/installer_payload.zip"
-          Compress-Archive -Path "$installerBuild\*" -DestinationPath $payloadPath -Force
+      # --- PHASE 2.5: BUILD RUST DLL ---
+      - name: Build Rust Native DLL
+        working-directory: native
+        run: cargo build --release --lib
 
-      - name: Build Rust Bootstrapper
+      - name: Copy DLL to Installer Distribution
         run: |
-          cd native
-          cargo build --release --bin bootstrapper
+          Copy-Item "native/target/release/CrystalNative.dll" "installer/build/windows/x64/runner/Release/installer_native.dll" -Force
 
-      - name: Rename Output
-        shell: pwsh
+      # --- PHASE 3: BUILD BOOTSTRAPPER ---
+      - name: Create Installer Payload Zip
         run: |
-          Move-Item -Path "native/target/release/bootstrapper.exe" -Destination "CrystalTides_Setup.exe" -Force
+          Compress-Archive -Path "installer/build/windows/x64/runner/Release/*" -DestinationPath "bootstrapper/installer_payload.zip" -Force
 
-      - name: Release
+      - name: Copy Bootstrapper Icon
+        run: |
+          Copy-Item "native/app_icon.ico" "bootstrapper/app_icon.ico" -Force
+
+      - name: Build Bootstrapper (Rust)
+        working-directory: bootstrapper
+        run: cargo build --release
+
+      - name: Prepare Release Artifact
+        run: |
+          Copy-Item "bootstrapper/target/release/crystal_bootstrapper.exe" "CTSMP_Installer.exe" -Force
+
+      # --- PHASE 4: RELEASE ---
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-             CrystalTides_Setup.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: CTSMP_Installer.exe
+          draft: false
+          prerelease: false
