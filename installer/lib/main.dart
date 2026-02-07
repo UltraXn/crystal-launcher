@@ -22,6 +22,7 @@ void main() async {
     await windowManager.setResizable(false);
     await windowManager.setHasShadow(false);
     await windowManager.setBackgroundColor(Colors.transparent);
+    await windowManager.setIcon('assets/images/app_icon.png');
     await windowManager.show();
     await windowManager.focus();
   });
