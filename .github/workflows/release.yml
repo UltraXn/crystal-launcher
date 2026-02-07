@@ -39,7 +39,7 @@ jobs:
       - name: Rename Game Exe
         run: |
           if (Test-Path "build/windows/x64/runner/Release/launcher.exe") {
-            Rename-Item "build/windows/x64/runner/Release/launcher.exe" "build/windows/x64/runner/Release/crystal_launcher.exe" -Force
+            Move-Item "build/windows/x64/runner/Release/launcher.exe" "build/windows/x64/runner/Release/crystal_launcher.exe" -Force
           }
 
       - name: Create Game Payload Zip
