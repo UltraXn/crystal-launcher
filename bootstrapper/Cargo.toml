@@ -1,0 +1,11 @@
+[package]
+name = "crystal_bootstrapper"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+zip = "0.6"
+thiserror = "1.0"
+
+[build-dependencies]
+winres = "0.1"
