@@ -1,8 +1,8 @@
 fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").unwrap_or_default() == "windows" {
         let mut res = winres::WindowsResource::new();
-        // Force icon for the binary
-        res.set_icon(&format!("{}/app_icon.ico", std::env::var("CARGO_MANIFEST_DIR").unwrap()));
+        let icon_path = std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("app_icon.ico");
+        res.set_icon(icon_path.to_str().unwrap());
         
         // Request Administrator Code (UAC)
         res.set_manifest(r#"
