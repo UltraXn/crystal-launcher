@@ -6,7 +6,7 @@ use sha1::{Sha1, Digest};
 // Global State (Thread-Safe would require lazy_static or OnceLock, simplifying for PoC)
 // For a real production DLL, we'd pass a context pointer back to the host.
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn init_core() -> i32 {
     // 1. Initialize SQLite
     match Connection::open_in_memory() {
@@ -21,7 +21,7 @@ pub extern "C" fn init_core() -> i32 {
     }
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn calculate_sha1(path_ptr: *const c_char) -> *mut c_char {
     let c_str = unsafe {
         if path_ptr.is_null() { return std::ptr::null_mut(); }
@@ -45,7 +45,7 @@ pub extern "C" fn calculate_sha1(path_ptr: *const c_char) -> *mut c_char {
 
 
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn extract_archive(archive_path: *const c_char, output_path: *const c_char) -> i32 {
     let archive_str = unsafe {
         if archive_path.is_null() { return -1; }
@@ -111,7 +111,7 @@ pub extern "C" fn extract_archive(archive_path: *const c_char, output_path: *con
     1 // Success
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn free_string(s: *mut c_char) {
     if s.is_null() { return; }
     unsafe {
