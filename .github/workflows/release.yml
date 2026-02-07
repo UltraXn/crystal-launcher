@@ -33,6 +33,7 @@ jobs:
       # --- PHASE 1: BUILD GAME CLIENT ---
       - name: Build Game Client (Flutter)
         run: |
+          flutter clean
           flutter pub get
           flutter build windows --release
 
@@ -54,6 +55,7 @@ jobs:
       - name: Build Installer UI (Flutter)
         working-directory: installer
         run: |
+          flutter clean
           flutter pub get
           flutter build windows --release
 

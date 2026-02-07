@@ -1,6 +1,6 @@
 [package]
 name = "CrystalNative"
-version = "0.1.0"
+version = "1.1.8"
 edition = "2024"
 
 [lib]
@@ -18,7 +18,7 @@ path = "src/bin/lite.rs"
 slint = "1.9"
 tokio = { version = "1.42", features = ["full"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
-zip = "0.6"  # Added for zip extraction
+zip = "0.6.6"  # Added for zip extraction
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
