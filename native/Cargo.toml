@@ -10,9 +10,8 @@ crate-type = ["cdylib", "rlib"]
 name = "CrystalLite"
 path = "src/bin/lite.rs"
 
-[[bin]]
-name = "bootstrapper"
-path = "src/bin/bootstrapper.rs"
+
+
 
 [dependencies]
 

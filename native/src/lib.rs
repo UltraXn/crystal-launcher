@@ -1,3 +1,4 @@
+// Force Rebuild v1.0.8-fix
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use rusqlite::Connection;
