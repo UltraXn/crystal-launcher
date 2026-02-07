@@ -87,6 +87,27 @@ jobs:
         run: |
           Copy-Item "bootstrapper/target/release/crystal_bootstrapper.exe" "CTSMP_Installer.exe" -Force
 
+      - name: Sign Installer (Self-Signed)
+        shell: powershell
+        run: |
+          # Create Self-Signed Certificate
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=CrystalTidesSMP Project" -CertStoreLocation Cert:\CurrentUser\My
+          $certPath = "cert.pfx"
+          $certPassword = ConvertTo-SecureString -String "CrystalPass123" -Force -AsPlainText
+          Export-PfxCertificate -Cert $cert -FilePath $certPath -Password $certPassword
+
+          # Locate Signtool (usually in Windows SDK)
+          $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          
+          if ($signtool) {
+            Write-Host "Found Signtool at: $($signtool.FullName)"
+            & $signtool.FullName sign /f $certPath /p "CrystalPass123" /fd SHA256 /t http://timestamp.digicert.com /q "CTSMP_Installer.exe"
+            Write-Host "Signing completed."
+          } else {
+            Write-Error "Signtool not found."
+            exit 1
+          }
+
       # --- PHASE 4: RELEASE ---
       - name: Create Release
         uses: softprops/action-gh-release@v1
