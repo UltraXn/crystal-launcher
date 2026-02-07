@@ -26,6 +26,7 @@ void main() async {
     title: "CrystalTides Client",
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.setIcon('assets/images/app_icon.png');
     await windowManager.show();
     await windowManager.focus();
   });

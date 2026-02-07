@@ -43,7 +43,7 @@ dependencies:
   flutter_animate: ^4.5.2
   google_fonts: ^6.2.1
   provider: ^6.1.5+1
-  rive: ^0.13.0
+
   path_provider: ^2.1.5
   http: ^1.6.0
   dio: ^5.9.0
@@ -132,6 +132,6 @@ flutter_launcher_icons:
     background_color: "#hex_code"
     theme_color: "#hex_code"
   windows:
-    generate: true
+    generate: false
     image_path: "assets/images/app_icon.png"
     icon_size: 48
