@@ -11,14 +11,12 @@ class SupabaseService {
 
   SupabaseClient get client => Supabase.instance.client;
 
-  Future<void> initialize() async {
-    final supabaseUrl = dotenv.env['SUPABASE_URL'];
-    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
+  bool _isInitialized = false;
+  bool get isInitialized => _isInitialized;
 
-    if (supabaseUrl == null || supabaseKey == null) {
-      logger.e('⛔ Supabase Env variables missing!');
-      return;
-    }
+  Future<void> initialize() async {
+    final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? 'https://gyoqnqvqhuxlcbrvtfia.supabase.co';
+    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3FucXZxaHV4bGNicnZ0ZmlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyOTk0MTEsImV4cCI6MjA4MDg3NTQxMX0.eLU_-IrRfixx7dpR9jeiEoOT1u-exQMhIsxSXVINbRA';
 
     try {
       await Supabase.initialize(
@@ -26,6 +24,7 @@ class SupabaseService {
         anonKey: supabaseKey,
         debug: false,
       );
+      _isInitialized = true;
       logger.i('✅ Supabase Initialized');
     } catch (e) {
       logger.e('⛔ Supabase Init Error', error: e);

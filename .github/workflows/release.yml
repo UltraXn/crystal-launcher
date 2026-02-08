@@ -27,9 +27,6 @@ jobs:
           toolchain: stable
           targets: x86_64-pc-windows-msvc
 
-      - name: Create dummy .env
-        run: New-Item -ItemType File -Path .env -Force
-
       # --- PHASE 1: BUILD GAME CLIENT ---
       - name: Build Game Client (Flutter)
         run: |

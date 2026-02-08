@@ -47,7 +47,11 @@ void main() async {
     UpdateService().checkUpdates();
   } catch (e, stack) {
     logger.e("CRITICAL ERROR during initialization: $e", stackTrace: stack);
-    initializationError.value = e.toString();
+    String errorMessage = e.toString();
+    if (errorMessage.contains("NotInitializedError")) {
+      errorMessage = "Error: Servicios internos no inicializados correctamente. Verifica tu conexión o contacta a soporte.";
+    }
+    initializationError.value = errorMessage;
   }
 
   runApp(const CrystalLauncherApp());
