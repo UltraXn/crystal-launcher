@@ -542,7 +542,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             Switch(
               value: _fullscreen,
-              activeThumbColor: AppTheme.accent,
+              thumbColor: WidgetStateProperty.all(AppTheme.accent),
               onChanged: (val) => setState(() => _fullscreen = val),
             ),
           ],
@@ -959,7 +959,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           trailing: Switch(
             value: _autoConnect,
-            activeThumbColor: AppTheme.accent,
+            thumbColor: WidgetStateProperty.all(AppTheme.accent),
             onChanged: (val) => setState(() => _autoConnect = val),
           ),
         ),

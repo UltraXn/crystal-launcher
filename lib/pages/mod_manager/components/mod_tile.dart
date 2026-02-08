@@ -179,7 +179,7 @@ class _ModTileState extends State<ModTile> {
                 Switch(
                   value: widget.mod.isEnabled,
                   activeTrackColor: AppTheme.accent.withValues(alpha: 0.3),
-                  activeThumbColor: AppTheme.accent,
+                  thumbColor: WidgetStateProperty.all(AppTheme.accent),
                   onChanged: (val) => widget.onToggle(widget.mod),
                 ),
               ],
