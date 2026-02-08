@@ -163,7 +163,7 @@ class InstallationService {
     final exePath = p.join(installPath, exeName);
     
     if (File(exePath).existsSync()) {
-      await Process.start(exePath, [], runInShell: true);
+      await Process.start(exePath, [], runInShell: true, workingDirectory: installPath);
     } else {
       debugPrint("Launcher not found at $exePath");
       try {
@@ -173,7 +173,7 @@ class InstallationService {
         if (exes.isNotEmpty) {
           // Sort by name length or something to avoid uninstaller?
           // crystal_launcher.exe is preferred.
-          await Process.start(exes.first.path, [], runInShell: true);
+          await Process.start(exes.first.path, [], runInShell: true, workingDirectory: installPath);
         }
       } catch (e) {
         debugPrint("Failed to launch: $e");
