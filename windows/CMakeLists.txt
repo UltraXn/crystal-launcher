@@ -55,7 +55,6 @@ add_subdirectory("runner")
 
 # Generated plugin build rules, which manage building the plugins and adding
 # them to the application.
-set(DART_EXECUTABLE "f:/tools/flutter/bin/cache/dart-sdk/bin/dart.exe" CACHE FILEPATH "Dart executable" FORCE)
 include(flutter/generated_plugins.cmake)
 
 

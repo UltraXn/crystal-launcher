@@ -209,8 +209,10 @@ class _InstallerHomeState extends State<InstallerHome> {
 
     try {
       final service = InstallationService();
-      await service.install(
-        onProgress: (progress) {
+      // Pass the selected path!
+      final result = await service.startInstall(
+        _installPath,
+        (progress) {
           setState(() {
             _progress = progress;
             if (progress < 0.3) {
@@ -223,12 +225,88 @@ class _InstallerHomeState extends State<InstallerHome> {
           });
         },
       );
-      setState(() => _currentStep = InstallerStep.finish);
+      
+      if (result == 1) {
+        setState(() => _currentStep = InstallerStep.finish);
+      } else {
+        // Handle failure
+        setState(() {
+          _currentStep = InstallerStep.selectPath;
+          _statusKey = 'status_pre'; // Reset
+        });
+
+        String errorMsg = "Installation Failed (Code: $result)";
+        switch (result) {
+          case -1:
+            errorMsg = "Path Error: Null pointers.";
+            break;
+          case -2:
+            errorMsg = "App Error: Invalid String.";
+            break;
+          case -3:
+            errorMsg = "IO Error: Archive not found.";
+            break;
+          case -4:
+            errorMsg = "Data Error: Corrupted Archive.";
+            break;
+          case -51:
+            errorMsg = "Dart Error: Cannot create dir $_installPath";
+            break;
+          case -52:
+            errorMsg = "Rust Error: Cannot create subdirectory in target.";
+            break;
+          case -55:
+            errorMsg = "Rust Error: Cannot write file (Check Antivirus).";
+            break;
+          case -56:
+            errorMsg = "Rust Error: Disk full or IO failure.";
+            break;
+          case -10:
+            errorMsg = "System Error: DLL Load Failed.";
+            break;
+          case -11:
+            errorMsg = "Critical: Payload payload.zip found.";
+            break;
+          case -9:
+            errorMsg = "OS Unsupported.";
+            break;
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                errorMsg,
+                style: GoogleFonts.outfit(color: Colors.white),
+              ),
+              backgroundColor: Colors.redAccent,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     } catch (e) {
+      debugPrint("Install Error: $e");
       setState(() {
         _currentStep = InstallerStep.selectPath;
         _statusKey = 'status_pre';
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Exception: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickPath() async {
+    final service = InstallationService();
+    final path = await service.pickInstallationPath();
+    if (path != null) {
+      setState(() => _installPath = path);
     }
   }
 
@@ -467,7 +545,7 @@ class _InstallerHomeState extends State<InstallerHome> {
           const SizedBox(height: 8),
           Text(
             t('dest_sub'),
-            style: TextStyle(color: Colors.white30, fontSize: 13),
+            style: const TextStyle(color: Colors.white30, fontSize: 13),
           ),
           const SizedBox(height: 30),
           Container(
@@ -478,26 +556,30 @@ class _InstallerHomeState extends State<InstallerHome> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.folder_outlined,
-                  size: 18,
-                  color: Color(0xFF3498DB),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
-                  child: Text(
-                    _installPath,
-                    style: const TextStyle(
-                      color: Colors.white54,
-                      fontSize: 13,
-                      fontFamily: 'monospace',
-                    ),
-                    overflow: TextOverflow.ellipsis,
+            child: InkWell(
+              onTap: _pickPath,
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.folder_outlined,
+                    size: 18,
+                    color: Color(0xFF3498DB),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Text(
+                      _installPath,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                        fontFamily: 'monospace',
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 60),
@@ -715,7 +797,7 @@ class _InstallerHomeState extends State<InstallerHome> {
       labelKey = "btn_start";
       color = const Color(0xFF27AE60);
       onPressed = () async {
-        await InstallationService().launchApp();
+        await InstallationService().launchApp(_installPath);
         await Future.delayed(const Duration(milliseconds: 200));
         await windowManager.close();
         exit(0);

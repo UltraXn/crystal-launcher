@@ -75,6 +75,30 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
               final mcVersion = settings.mcVersion ?? '1.21.1';
               String neoVersion = settings.neoForgeVersion ?? '21.1.219';
 
+              // 0.5 Ensure Java is Configured (Critical for both Install and Launch)
+              String? effectiveJavaPath = settings.javaPath;
+              if (effectiveJavaPath == null || effectiveJavaPath.isEmpty) {
+                logger.i(
+                    "Java path missing in settings. Attempting auto-discovery...");
+                final discovered = await JavaService().findJavaPath();
+                if (discovered != null) {
+                  logger.i("Java found at: $discovered. Saving to settings.");
+                  await JavaService().saveJavaPath(discovered);
+                  effectiveJavaPath = discovered;
+                } else {
+                  // Fallback attempt for 'java' in PATH
+                  try {
+                    await Process.run('java', ['-version']);
+                    logger
+                        .i("'java' command found in PATH. Saving as default.");
+                    await JavaService().saveJavaPath('java');
+                    effectiveJavaPath = 'java';
+                  } catch (_) {
+                    logger.w("No Java found.");
+                  }
+                }
+              }
+
               // AUTO-FIX: If legacy invalid version is found, force update
               if (neoVersion == '2.218' || neoVersion == '20.4.80-beta') {
                 neoVersion = '21.1.219';
@@ -132,30 +156,17 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
                     onProgress: (status, prog) => _progressStream.add(status),
                   );
 
-                  // Install NeoForge
-                  // We need Java Path
-                  String? javaPath = settings.javaPath;
-                  if (javaPath == null || javaPath.isEmpty) {
-                    // Try to find via JavaService
-                    javaPath = await JavaService().findJavaPath();
-                    if (javaPath == null) {
-                      // Fallback to 'java' command if available in PATH
-                      try {
-                        await Process.run('java', ['-version']);
-                        javaPath = 'java';
-                      } catch (_) {
-                        throw Exception(
-                          "Java no está configurado ni instalado. Por favor instala Java 17+.",
-                        );
-                      }
-                    }
+                  // Validate Java before Install
+                  if (effectiveJavaPath == null) {
+                    throw Exception(
+                        "Java no está configurado ni instalado. Por favor instala Java 17+.");
                   }
 
                   await GameInstallerService().installNeoForge(
                     mcVersion: mcVersion,
                     neoVersion: neoVersion,
                     gameDirectory: gameDir,
-                    javaPath: javaPath,
+                    javaPath: effectiveJavaPath,
                     onProgress: (status, prog) => _progressStream.add(status),
                   );
 
@@ -195,11 +206,11 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
                   context: context,
                   barrierDismissible: false,
                   builder: (ctx) {
-                    return AlertDialog(
-                      title: const Text("Sincronizando Mods de CrystalTides"),
+                    return const AlertDialog(
+                      title: Text("Sincronizando Mods de CrystalTides"),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           CircularProgressIndicator(),
                           SizedBox(height: 16),
                           Text("Verificando archivos mediante HASH..."),
@@ -258,18 +269,18 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
             }
           },
           borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.play_arrow_rounded,
                   size: 24,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 8),
-                const Text(
+                SizedBox(width: 8),
+                Text(
                   "JUGAR",
                   style: TextStyle(
                     fontSize: 16,

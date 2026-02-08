@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/session_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/window_title_bar.dart';
 // import 'register_page.dart'; // Removed
 
 enum LoginMode { guest, microsoft }
@@ -65,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppTheme.backgroundAlt.withOpacity(0.2),
+                    AppTheme.backgroundAlt.withValues(alpha: 0.2),
                     AppTheme.background,
                   ],
                 ),
@@ -123,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 48,
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -162,38 +163,14 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // Direct Connection Footer
-          Positioned(
-            bottom: 32,
+
+
+          // Custom Window Title Bar
+          const Positioned(
+            top: 0,
             left: 0,
             right: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black26,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.dns, size: 14, color: Colors.white54),
-                    const SizedBox(width: 8),
-                    Text(
-                      "IP Directa: mc.crystaltidesSMP.net",
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 12,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            child: WindowTitleBar(),
           ),
         ],
       ),
@@ -233,7 +210,7 @@ class _LoginPageState extends State<LoginPage> {
       // case LoginMode.crystal: // Removed
 
       case LoginMode.guest:
-        return Colors.orangeAccent.withOpacity(0.8);
+        return Colors.orangeAccent.withValues(alpha: 0.8);
       case LoginMode.microsoft:
         return const Color(0xFF00A4EF);
     }
@@ -268,7 +245,7 @@ class _LoginPageState extends State<LoginPage> {
             labelStyle: const TextStyle(color: Colors.white54),
             prefixIcon: const Icon(Icons.person_outline, color: Colors.white54),
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,

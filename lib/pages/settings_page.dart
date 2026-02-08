@@ -10,7 +10,9 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart' as pi;
+import 'package:desktop_drop/desktop_drop.dart';
 import '../services/update_service.dart';
+import '../services/admin_service.dart';
 import '../widgets/update_dialog.dart';
 import '../utils/logger.dart';
 
@@ -46,6 +48,8 @@ class _SettingsPageState extends State<SettingsPage> {
   // Admin / Modpack
   final TextEditingController _modpackUrlController = TextEditingController();
   bool get _isAdmin => SessionService().currentSession?.isAdmin ?? false;
+  bool _isAdminDragging = false;
+  String _adminUploadStatus = "";
 
   // Version & Connection
   String _mcVersion = '1.21.1';
@@ -281,7 +285,7 @@ class _SettingsPageState extends State<SettingsPage> {
               hintText: "Ruta de javaw.exe (Automático)",
               hintStyle: const TextStyle(color: Colors.white30),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.05),
+              fillColor: Colors.white.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -310,7 +314,7 @@ class _SettingsPageState extends State<SettingsPage> {
         decoration: BoxDecoration(
           color: AppTheme.background.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green.withOpacity(0.3)),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -379,7 +383,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -505,7 +509,7 @@ class _SettingsPageState extends State<SettingsPage> {
               labelText: "Ancho",
               labelStyle: const TextStyle(color: Colors.white54),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.05),
+              fillColor: Colors.white.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -522,7 +526,7 @@ class _SettingsPageState extends State<SettingsPage> {
               labelText: "Alto",
               labelStyle: const TextStyle(color: Colors.white54),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.05),
+              fillColor: Colors.white.withValues(alpha: 0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -538,7 +542,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             Switch(
               value: _fullscreen,
-              activeColor: AppTheme.accent,
+              activeThumbColor: AppTheme.accent,
               onChanged: (val) => setState(() => _fullscreen = val),
             ),
           ],
@@ -548,89 +552,164 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildAdminSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return DropTarget(
+      onDragDone: (detail) async {
+        if (detail.files.isEmpty) return;
+
+        for (final xFile in detail.files) {
+          if (xFile.path.endsWith('.jar')) {
+            final file = File(xFile.path);
+            try {
+              await AdminService().processAdminModImport(
+                file,
+                onStatusUpdate: (status) {
+                  if (mounted) setState(() => _adminUploadStatus = status);
+                },
+              );
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Error al subir el mod")),
+              );
+            }
+          }
+        }
+      },
+      onDragEntered: (detail) => setState(() => _isAdminDragging = true),
+      onDragExited: (detail) => setState(() => _isAdminDragging = false),
+      child: Stack(
         children: [
-          const Text(
-            "GESTIÓN DEL MODPACK",
-            style: TextStyle(
-              color: Colors.redAccent,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ListTile(
-            leading: const Icon(Icons.inventory_2, color: Colors.orange),
-            title: const Text(
-              "1. Generar ZIP local",
-              style: TextStyle(color: Colors.white),
-            ),
-            subtitle: const Text(
-              "Comprime 'mods' en 'Desktop/modpack.zip'",
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-            onTap: _generateModpackZip,
-            tileColor: Colors.white.withOpacity(0.05),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ListTile(
-            leading: const Icon(Icons.cloud_upload, color: Colors.blue),
-            title: const Text(
-              "2. Subir a Drive",
-              style: TextStyle(color: Colors.white),
-            ),
-            subtitle: const Text(
-              "Abre drive.google.com para subir el ZIP.",
-              style: TextStyle(color: Colors.white54, fontSize: 12),
-            ),
-            onTap: () => launchUrl(Uri.parse("https://drive.google.com")),
-            tileColor: Colors.white.withOpacity(0.05),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            "3. Actualizar Enlace Directo:",
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _modpackUrlController,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            decoration: InputDecoration(
-              hintText:
-                  "Ej: https://drive.google.com/uc?export=download&id=...",
-              hintStyle: const TextStyle(color: Colors.white30),
-              filled: true,
-              fillColor: Colors.black26,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _isAdminDragging
+                    ? Colors.redAccent
+                    : Colors.red.withValues(alpha: 0.3),
+                width: _isAdminDragging ? 2 : 1,
               ),
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.save_as, color: Colors.greenAccent),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Funcionalidad de guardar URL pendiente de tabla 'app_config'",
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "GESTIÓN DEL MODPACK",
+                      style: TextStyle(
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  );
-                },
-              ),
+                    if (_adminUploadStatus.isNotEmpty)
+                      Text(
+                        _adminUploadStatus,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  leading: const Icon(Icons.inventory_2, color: Colors.orange),
+                  title: const Text(
+                    "1. Generar ZIP local",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: const Text(
+                    "Comprime 'mods' en 'Desktop/modpack.zip'",
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  onTap: _generateModpackZip,
+                  tileColor: Colors.white.withValues(alpha: 0.05),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: const Icon(Icons.cloud_upload, color: Colors.blue),
+                  title: const Text(
+                    "2. Subir a Drive",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  subtitle: const Text(
+                    "Abre drive.google.com para subir el ZIP.",
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  onTap: () => launchUrl(Uri.parse("https://drive.google.com")),
+                  tileColor: Colors.white.withValues(alpha: 0.05),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "3. Actualizar Enlace Directo:",
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _modpackUrlController,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText:
+                        "Ej: https://drive.google.com/uc?export=download&id=...",
+                    hintStyle: const TextStyle(color: Colors.white30),
+                    filled: true,
+                    fillColor: Colors.black26,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    suffixIcon: IconButton(
+                      icon:
+                          const Icon(Icons.save_as, color: Colors.greenAccent),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Funcionalidad de guardar URL pendiente de tabla 'app_config'",
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+          if (_isAdminDragging)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.file_upload, color: Colors.white, size: 48),
+                      SizedBox(height: 8),
+                      Text(
+                        "SOLTAR PARA SUBIR A GITHUB",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -641,7 +720,7 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       // 1. Locate Mods
       // En Dev hardcodeamos para asegurar que apunta a TU carpeta real de Minecraft
-      final modsPath = r"c:\Users\nacho\AppData\Roaming\.minecraft\mods";
+      const modsPath = r"c:\Users\nacho\AppData\Roaming\.minecraft\mods";
       final modsDir = Directory(modsPath);
 
       if (!await modsDir.exists()) {
@@ -667,7 +746,7 @@ class _SettingsPageState extends State<SettingsPage> {
       encoder.close();
 
       // 3. Move to Desktop (for easy access)
-      final desktopPath = r"c:\Users\nacho\Desktop\modpack.zip";
+      const desktopPath = r"c:\Users\nacho\Desktop\modpack.zip";
       final targetFile = File(desktopPath);
       if (await targetFile.exists()) {
         await targetFile.delete();
@@ -701,7 +780,7 @@ class _SettingsPageState extends State<SettingsPage> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
+            color: Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -768,7 +847,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     showDialog(
                       context: context,
                       barrierDismissible: false,
-                      builder: (context) => UpdateDialogWidget(),
+                      builder: (context) => const UpdateDialogWidget(),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -805,7 +884,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -843,7 +922,7 @@ class _SettingsPageState extends State<SettingsPage> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -880,7 +959,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           trailing: Switch(
             value: _autoConnect,
-            activeColor: AppTheme.accent,
+            activeThumbColor: AppTheme.accent,
             onChanged: (val) => setState(() => _autoConnect = val),
           ),
         ),
@@ -917,13 +996,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white10),
                       ),
                       child: Text(
                         key.keyString,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: AppTheme.accent,
                           fontWeight: FontWeight.bold,
                         ),

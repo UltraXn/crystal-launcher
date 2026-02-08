@@ -33,9 +33,24 @@ pub extern "C" fn calculate_sha1(path_ptr: *const c_char) -> *mut c_char {
         Err(_) => return CString::new("INVALID_UTF8").unwrap().into_raw(),
     };
 
-    // Simulate hashing (Real file IO would happen here)
+    // Real file hashing
+    let mut file = match std::fs::File::open(path_str) {
+        Ok(f) => f,
+        Err(_) => return CString::new("FILE_NOT_FOUND").unwrap().into_raw(),
+    };
+
     let mut hasher = Sha1::new();
-    hasher.update(path_str.as_bytes()); // Hashing the filename as a dummy test
+    let mut buffer = [0; 8192]; // 8KB buffer
+
+    loop {
+        let count = match std::io::Read::read(&mut file, &mut buffer) {
+            Ok(c) => c,
+            Err(_) => return CString::new("READ_ERROR").unwrap().into_raw(),
+        };
+        if count == 0 { break; }
+        hasher.update(&buffer[..count]);
+    }
+
     let result = hasher.finalize();
     let hex_hash = hex::encode(result);
 
@@ -109,6 +124,125 @@ pub extern "C" fn extract_archive(archive_path: *const c_char, output_path: *con
     }
 
     1 // Success
+}
+
+
+use std::io::Write; // Needed for file writing
+
+#[unsafe(no_mangle)]
+pub extern "C" fn install_neoforge(
+    neo_version_ptr: *const c_char,
+    game_dir_ptr: *const c_char,
+    java_path_ptr: *const c_char
+) -> i32 {
+    // 1. Convert C Strings to Rust Strings
+    let neo_version = unsafe {
+        if neo_version_ptr.is_null() { return -1; }
+        match CStr::from_ptr(neo_version_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let game_dir = unsafe {
+        if game_dir_ptr.is_null() { return -1; }
+        match CStr::from_ptr(game_dir_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let java_path = unsafe {
+        if java_path_ptr.is_null() { return -1; }
+        match CStr::from_ptr(java_path_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    // 2. Construct Download URL and Paths
+    let file_name = format!("neoforge-{}-installer.jar", neo_version);
+    let url = format!(
+        "https://maven.neoforged.net/releases/net/neoforged/neoforge/{}/{}",
+        neo_version, file_name
+    );
+    let installer_path = std::path::Path::new(game_dir).join(&file_name);
+
+    println!("[Rust] Downloading NeoForge from: {}", url);
+
+    // 3. Download File (Blocking)
+    let response = match reqwest::blocking::get(&url) {
+        Ok(res) => res,
+        Err(e) => {
+            println!("[Rust] Download Request Failed: {}", e);
+            return -10;
+        }
+    };
+
+    if !response.status().is_success() {
+        println!("[Rust] Download Failed Status: {}", response.status());
+        return -11;
+    }
+
+    let content = match response.bytes() {
+        Ok(b) => b,
+        Err(e) => {
+             println!("[Rust] Failed to read bytes: {}", e);
+             return -12;
+        }
+    };
+
+    let mut file = match std::fs::File::create(&installer_path) {
+        Ok(f) => f,
+        Err(e) => {
+            println!("[Rust] Failed to create installer file: {}", e);
+            return -13;
+        }
+    };
+
+    if let Err(e) = file.write_all(&content) {
+        println!("[Rust] Failed to write to file: {}", e);
+        return -14;
+    }
+    
+    // Flush to ensure it's written before Java tries to read it
+    let _ = file.flush();
+    drop(file); // Close file handle
+
+    println!("[Rust] Download Complete. Running Installer...");
+
+    // 4. Run Java Installer
+    // java -jar installer.jar --installClient gameDir
+    let output = std::process::Command::new(java_path)
+        .arg("-jar")
+        .arg(&installer_path)
+        .arg("--installClient")
+        .arg(game_dir)
+        .current_dir(game_dir)
+        .output();
+
+    let exit_code = match output {
+        Ok(out) => {
+            if !out.status.success() {
+                println!("[Rust] Installer Failed: {}", String::from_utf8_lossy(&out.stderr));
+                -20
+            } else {
+                println!("[Rust] Installer Success: {}", String::from_utf8_lossy(&out.stdout));
+                1 // Success
+            }
+        },
+        Err(e) => {
+            println!("[Rust] Failed to launch Java: {}", e);
+            -21
+        }
+    };
+
+    // 5. Cleanup
+    if installer_path.exists() {
+        let _ = std::fs::remove_file(installer_path);
+    }
+
+    exit_code
 }
 
 #[unsafe(no_mangle)]

@@ -29,3 +29,10 @@ Thumbs.db
 
 # Environment
 .env
+
+# Build outputs and logs
+*.zip
+*.log
+launcher_payload/
+installer_payload/
+bootstrapper/target/

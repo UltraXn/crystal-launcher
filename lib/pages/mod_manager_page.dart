@@ -7,6 +7,7 @@ import '../../services/mod_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:desktop_drop/desktop_drop.dart';
 
 // Components
 import 'mod_manager/components/sliver_mod_category_section.dart';
@@ -25,6 +26,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
   String? _gameDir;
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
+  bool _isDragging = false;
 
   // Optimized groups
   List<ModItem> _officialServer = [];
@@ -165,7 +167,8 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
 
   Future<void> _importMods() async {
     try {
-      final typeGroup = XTypeGroup(label: 'Minecraft Mods', extensions: ['jar']);
+      const typeGroup =
+          XTypeGroup(label: 'Minecraft Mods', extensions: ['jar']);
       final files = await openFiles(acceptedTypeGroups: [typeGroup]);
       if (files.isEmpty) return;
 
@@ -218,6 +221,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
   }
 
   void _showImportSummary(int count, int invalid) {
+    if (!mounted) return;
     String msg = "";
     if (count > 0) msg = "$count mods importados.";
     if (invalid > 0) msg += " $invalid archivos inválidos.";
@@ -232,46 +236,130 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: Stack(
-        children: [
-          // Background Gradient Glow
-          Positioned(
-            top: -100,
-            right: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppTheme.accent.withOpacity(0.05),
+      body: DropTarget(
+        onDragDone: (detail) async {
+          final files = detail.files;
+          if (files.isEmpty) return;
+
+          int count = 0;
+          int invalid = 0;
+
+          setState(() => _isLoading = true);
+
+          try {
+            for (final file in files) {
+              if (file.name.toLowerCase().endsWith('.jar')) {
+                if (await ModService().isValidMod(File(file.path))) {
+                  final newPath = p.join(_gameDir!, 'mods', file.name);
+                  await File(file.path).copy(newPath);
+                  count++;
+                } else {
+                  invalid++;
+                }
+              } else {
+                invalid++;
+              }
+            }
+            if (!context.mounted) return;
+            _showImportSummary(count, invalid);
+            if (count > 0) await _loadMods(forceRefresh: true);
+          } catch (e) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text("Error al arrastrar archivos: $e"),
+                  backgroundColor: Colors.red),
+            );
+          } finally {
+            if (mounted) setState(() => _isLoading = false);
+          }
+        },
+        onDragEntered: (detail) {
+          setState(() {
+            _isDragging = true;
+          });
+        },
+        onDragExited: (detail) {
+          setState(() {
+            _isDragging = false;
+          });
+        },
+        child: Stack(
+          children: [
+            // Background Gradient Glow
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppTheme.accent.withValues(alpha: 0.05),
+                ),
               ),
             ),
-          ),
-          
-          SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(),
-                _buildSearchAndTabs(),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildOfficialTab(),
-                            _buildImportedTab(),
-                            _ExploreModsTab(
-                              gameDir: _gameDir ?? "",
-                              onInstalled: () => _loadMods(forceRefresh: true),
-                            ),
-                          ],
-                        ),
-                ),
-              ],
+
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  _buildSearchAndTabs(),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildOfficialTab(),
+                              _buildImportedTab(),
+                              _ExploreModsTab(
+                                gameDir: _gameDir ?? "",
+                                onInstalled: () =>
+                                    _loadMods(forceRefresh: true),
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+
+            if (_isDragging)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.system_update_alt,
+                        size: 80,
+                        color: AppTheme.accent,
+                      ),
+                      SizedBox(height: 24),
+                      Text(
+                        "Suelta para importar mods",
+                        style: TextStyle(
+                          color: AppTheme.accent,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Solo archivos .jar permitidos",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -24,9 +24,9 @@ class MainLayout extends StatelessWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 24),
-                  _SidebarItem(icon: Icons.home_rounded, isActive: true),
+                  const _SidebarItem(icon: Icons.home_rounded, isActive: true),
                   const SizedBox(height: 16),
-                  _SidebarItem(icon: Icons.newspaper_rounded),
+                  const _SidebarItem(icon: Icons.newspaper_rounded),
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () {
@@ -70,7 +70,7 @@ class MainLayout extends StatelessWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.2),
+                              color: Colors.orange.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color:
@@ -198,14 +198,14 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isActive
         ? Theme.of(context).colorScheme.tertiary
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.5);
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Container(
       width: 48,
       height: 48,
       decoration: isActive
           ? BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             )
           : null,

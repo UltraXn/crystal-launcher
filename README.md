@@ -47,6 +47,7 @@ apps/launcher/
 
 ## 🗺️ Roadmap Técnico (Resumen)
 
+- **Instalador Nativo (Rust)**: Un único ejecutable `.exe` ligero y rápido que despliega la aplicación sin dependencias externas visibles.
 - **Fase 1 (Actual)**: Infraestructura UI. Noticias, Login (Supabase), Skin Viewer.
 - **Fase 2**: Game Bridge. Rust se encarga de descargar e iniciar Java.
 - **Fase 3**: Sync. Actualizaciones diferenciales de modpacks (Hash-based).

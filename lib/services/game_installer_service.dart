@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:crypto/crypto.dart';
 // import 'package:archive/archive.dart';
 import '../utils/logger.dart';
+import 'native_api.dart';
 
 // Progress callback type
 typedef ProgressCallback = void Function(String status, double progress);
@@ -82,44 +84,44 @@ class GameInstallerService {
       logger.i("Starting NeoForge installation: $mcVersion - $neoVersion");
       onProgress?.call("Preparando instalador NeoForge...", 0.0);
 
-      // 1. Download Installer JAR
-      // URL Format: https://maven.neoforged.net/releases/net/neoforged/neoforge/20.4.80-beta/neoforge-20.4.80-beta-installer.jar
-      // Note: NeoForge versions often just match the MC version roughly or have their own valid semantic version
+      // Initialize native API
+      final nativeApi = NativeApi();
+      nativeApi.init();
 
-      final fileName = "neoforge-$neoVersion-installer.jar";
-      final url = "$neoforgeMavenUrl/$neoVersion/$fileName";
-      final installerPath = p.join(gameDirectory, fileName);
+      onProgress?.call("Descargando e instalando NeoForge (Rust)...", 0.2);
 
-      onProgress?.call("Descargando instalador NeoForge...", 0.2);
-      await _downloadFile(url, installerPath);
+      // Ensure launcher_profiles.json exists (NeoForge requirement)
+      final profilesFile =
+          File(p.join(gameDirectory, 'launcher_profiles.json'));
+      if (!await profilesFile.exists()) {
+        await profilesFile
+            .writeAsString('{"profiles": {}, "settings": {}, "version": 3}');
+      }
 
-      // 2. Run Installer
-      onProgress?.call("Ejecutando instalador (esto puede tardar)...", 0.4);
+      // Call Rust native function in a background isolate to avoid freezing UI
+      final result = await Isolate.run(() async {
+        // Re-initialize API in the new isolate if strict, but usually FFI pointers are shareable
+        // if we use the same dylib. However, simpler to just pass primitives and let
+        // a static helper or fresh init handle it.
+        // For simplicity with our current singleton:
+        final api = NativeApi();
+        api.init(); // Ensure init in this isolate
+        return api.installNeoForge(
+          neoVersion: neoVersion,
+          gameDir: gameDirectory,
+          javaPath: javaPath,
+        );
+      });
 
-      // Ensure specific library directory structure if needed, but installer handles most
-      final result = await Process.run(javaPath, [
-        '-jar',
-        installerPath,
-        '--installClient',
-        gameDirectory,
-      ], workingDirectory: gameDirectory);
-
-      if (result.exitCode != 0) {
-        logger.e("NeoForge Installer Failed: ${result.stderr}");
-        logger.e("Installer Output: ${result.stdout}");
+      if (result != 1) {
+        logger.e("NeoForge Installer Failed with code: $result");
         throw Exception(
-          "El instalador de NeoForge falló con código ${result.exitCode}",
+          "El instalador de NeoForge falló con código $result",
         );
       }
 
-      // Cleanup
-      final file = File(installerPath);
-      if (await file.exists()) {
-        await file.delete();
-      }
-
       onProgress?.call("NeoForge Instalado Correctamente.", 1.0);
-      logger.i("NeoForge installed successfully.");
+      logger.i("NeoForge installed successfully via Rust.");
     } catch (e, stack) {
       logger.e("Error installing NeoForge", error: e, stackTrace: stack);
       rethrow;
@@ -350,22 +352,26 @@ class GameInstallerService {
       }
     }
 
+    // 3. Arguments
+    List<String> gameArgs = [];
+    List<String> jvmArgs = [];
+
     // Add Client Jar (Vanilla) - Check if it inherits from another version
     // NeoForge usually inherits from Vanilla.
     if (data['inheritsFrom'] != null) {
       final parentId = data['inheritsFrom'];
       final parentInfo = await getLaunchInfo(parentId, gameDir);
       classpath.addAll(parentInfo.classpath);
-      // We might need to merge args, but usually the child version handles it.
-      // For simple inheritance, usually we just want the parent's libraries + client.jar
+      
+      // Merge Game arguments (e.g. --version, --assetsDir from Vanilla)
+      gameArgs.addAll(parentInfo.gameArgs);
+
+      // Note: We usually DO NOT merge JVM args because the modloader (child)
+      // often specifies its own Main Class and JVM configuration (BootstrapLauncher).
     } else {
       // Vanilla jar
       classpath.add(p.join(gameDir, 'versions', versionId, '$versionId.jar'));
     }
-
-    // 3. Arguments
-    List<String> gameArgs = [];
-    List<String> jvmArgs = [];
 
     if (data['arguments'] != null) {
       if (data['arguments']['game'] != null) {

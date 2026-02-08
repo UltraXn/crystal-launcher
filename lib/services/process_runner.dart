@@ -67,18 +67,36 @@ class ProcessRunner {
     String versionId = effectiveVersion;
     if (effectiveNeoForge.isNotEmpty) {
       // Standard NeoForge naming format
-      // e.g. 1.20.1-neoforge-20.4.80
-      // Try multiple potential directory names if unsure
-      final potentialNeoId = "$effectiveVersion-neoforge-$effectiveNeoForge";
-      if (await Directory(
-        p.join(effectiveGameDir, 'versions', potentialNeoId),
-      ).exists()) {
+      // Updated: Rust Installer creates "neoforge-21.1.219", NOT "1.21.1-neoforge..."
+      final potentialNeoId = "neoforge-$effectiveNeoForge";
+      final legacyNeoId = "$effectiveVersion-neoforge-$effectiveNeoForge";
+
+      final versionsDir = Directory(p.join(effectiveGameDir, 'versions'));
+
+      if (await Directory(p.join(versionsDir.path, potentialNeoId)).exists()) {
         versionId = potentialNeoId;
+      } else if (await Directory(p.join(versionsDir.path, legacyNeoId))
+          .exists()) {
+        versionId = legacyNeoId;
       } else {
-        // Fallback/Warning: Might not be installed yet?
-        logger.w(
-          "NeoForge directory $potentialNeoId not found. Launching Vanilla?",
-        );
+        // Fallback: Scan for any folder containing "neoforge"
+        try {
+          if (await versionsDir.exists()) {
+            final list = await versionsDir.list().toList();
+            final found = list.firstWhere(
+              (e) => e is Directory && e.path.contains("neoforge"),
+              orElse: () => Directory("NOT_FOUND"),
+            );
+            if (found.path != "NOT_FOUND") {
+              versionId = p.basename(found.path);
+              logger.i("Auto-detected NeoForge folder: $versionId");
+            } else {
+              logger.w("NeoForge directory not found. Launching Vanilla?");
+            }
+          }
+        } catch (e) {
+          logger.e("Error scanning versions directory", error: e);
+        }
       }
     }
 
@@ -120,11 +138,68 @@ class ProcessRunner {
     );
     args.add('-Djava.library.path=$nativesPath');
 
-    args.addAll(launchInfo.jvmArgs);
+    // Process JVM Args (Replace placeholders)
+    for (var arg in launchInfo.jvmArgs) {
+      arg = arg.replaceAll('\${version_name}', versionId);
+      arg = arg.replaceAll(
+          '\${library_directory}', p.join(effectiveGameDir, 'libraries'));
+      // Force semicolon for Windows classpath separator to avoid any Platform.pathSeparator ambiguity
+      arg = arg.replaceAll('\${classpath_separator}', ';');
+      arg = arg.replaceAll('\${game_directory}', effectiveGameDir);
+
+      // Targeted fix: Normalize slashes ONLY for the large classpath/module-path argument
+      // to avoid breaking --add-exports (which need forward slashes) or other flags.
+      // We identify it because it contains the library directory replacement or multiple semicolons.
+      if (arg.contains(p.join(effectiveGameDir, 'libraries')) &&
+          arg.contains(';')) {
+        arg = arg.replaceAll('/', p.separator);
+      }
+
+      args.add(arg);
+      if (arg.contains('bootstraplauncher')) {
+        logger.d("[JVM-ARG-DEBUG] Bootstraplauncher arg: $arg");
+      }
+    }
 
     // Classpath
     args.add('-cp');
-    args.add(launchInfo.classpath.join(Platform.pathSeparator));
+    // Force semicolon separator for Windows and normalize slashes just in case
+    // Also deduplicate entries to avoid UnionFileSystem confusion
+    // AND filter out specific jars that might cause module conflicts if double-included
+    var finalClasspath = launchInfo.classpath.toSet().where((path) {
+      // NeoForge 1.21+ behaves weirdly if the client jar is in the classpath AND
+      // loaded via ModuleLayer. It seems Bootstraplauncher handles the client jar itself
+      // via --fml.mcVersion arguments, so adding it to -cp might cause "Modules minecraft and ... export package ..."
+      // error.
+
+      // We need to filter out the "Vanilla" jar (e.g. 1.21.1.jar) because NeoForge loads it differently.
+      // The previous check might have missed it if versionId was neoforge-....
+      // We check for "client.jar" or a jar that looks like a version jar (but not a library).
+      // A simple heuristic: if it ends with .jar and is NOT in the libraries folder.
+
+      bool isLibrary = path.contains(p.join(effectiveGameDir, 'libraries'));
+      bool isVersionJar = !isLibrary && path.endsWith('.jar');
+
+      if (isVersionJar) {
+        // Check if this is the "minecraft" jar.
+        logger.d("[CP-FILTER] Excluding potential duplicate client jar: $path");
+        return false;
+      }
+      return true;
+    }).toList();
+
+    if (finalClasspath.isEmpty) {
+      // Safety net: If we filtered everything (unlikely), put it back or things will definitely break.
+      // But for NeoForge, the libraries are usually enough to start Bootstrap.
+      logger.w("Classpath is empty after filtering! Restoring original.");
+      finalClasspath = launchInfo.classpath;
+    }
+
+    var cp = finalClasspath.join(';');
+    if (Platform.isWindows) {
+      cp = cp.replaceAll('/', '\\');
+    }
+    args.add(cp);
 
     // Main Class
     args.add(launchInfo.mainClass);
@@ -147,6 +222,12 @@ class ProcessRunner {
       arg = arg.replaceAll('\${auth_access_token}', accessToken);
       arg = arg.replaceAll('\${user_type}', 'msa');
       arg = arg.replaceAll('\${version_type}', 'release');
+      
+      // Fix missing placeholders
+      arg = arg.replaceAll('\${clientid}', uuid); // Use UUID as Client ID
+      arg = arg.replaceAll(
+          '\${auth_xuid}', uuid); // Use UUID as fallback for XUID
+      
       args.add(arg);
     }
 
@@ -177,12 +258,22 @@ class ProcessRunner {
     logger.d("Args: $safeArgs");
 
     // 4. Start Process
+    // 4. Start Process
+    // DEBUG MODE: Use normal mode to capture output
     final process = await Process.start(
       javaPath,
       args,
       workingDirectory: effectiveGameDir,
-      mode: ProcessStartMode.detached,
+      mode: ProcessStartMode.normal, // Was detached
     );
+
+    // Pipe output to logger
+    process.stdout.transform(const SystemEncoding().decoder).listen((data) {
+      logger.i("[MC-STDOUT] $data");
+    });
+    process.stderr.transform(const SystemEncoding().decoder).listen((data) {
+      logger.e("[MC-STDERR] $data");
+    });
 
     logger.i("Process started with PID: ${process.pid}");
   }
