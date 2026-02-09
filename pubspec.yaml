@@ -95,7 +95,6 @@ flutter:
     - assets/images/ranks/
     - assets/web/skin_viewer/
     - assets/web/skin_viewer/skinview3d.bundle.js
-    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

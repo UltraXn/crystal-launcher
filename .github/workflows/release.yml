@@ -27,6 +27,18 @@ jobs:
           toolchain: stable
           targets: x86_64-pc-windows-msvc
 
+      # --- PHASE 0: BUILD RUST NATIVE DLL ---
+      - name: Build Rust Native DLL
+        working-directory: native
+        run: cargo build --release --lib
+
+      - name: Copy DLL to Source (for Flutter Build)
+        run: |
+          if (!(Test-Path "windows/runner/native")) {
+            New-Item -ItemType Directory -Force -Path "windows/runner/native"
+          }
+          Copy-Item "native/target/release/CrystalNative.dll" "windows/runner/native/CrystalNative.dll" -Force
+
       # --- PHASE 1: BUILD GAME CLIENT ---
       - name: Build Game Client (Flutter)
         run: |
@@ -55,11 +67,6 @@ jobs:
           flutter clean
           flutter pub get
           flutter build windows --release
-
-      # --- PHASE 2.5: BUILD RUST DLL ---
-      - name: Build Rust Native DLL
-        working-directory: native
-        run: cargo build --release --lib
 
       - name: Copy DLL to Installer Distribution
         run: |
