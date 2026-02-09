@@ -49,9 +49,9 @@ class NativeApi {
   void init() {
     if (_initialized) return;
 
-    var libraryPath = 'native.dll';
+    var libraryPath = 'CrystalNative.dll';
     if (Platform.isWindows) {
-      libraryPath = 'installer_native.dll'; 
+      libraryPath = 'CrystalNative.dll'; 
     } else if (Platform.isLinux) {
       libraryPath = 'libnative.so';
     } else if (Platform.isMacOS) {
@@ -62,9 +62,9 @@ class NativeApi {
       _lib = DynamicLibrary.open(libraryPath);
     } catch (e) {
       try {
-        _lib = DynamicLibrary.open('native/target/release/installer_native.dll');
+        _lib = DynamicLibrary.open('native/target/release/CrystalNative.dll');
       } catch (e2) {
-        throw Exception("Could not load native library: $e\n$e2");
+        throw Exception("Could not load native library 'CrystalNative.dll': $e\n$e2");
       }
     }
 

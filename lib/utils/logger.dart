@@ -10,6 +10,7 @@ final logger = Logger(
     lineLength: 80,
     colors: true,
     printEmojis: true,
+    printTime: true,
   ),
   output: _CrystalLogOutput(),
 );

@@ -42,7 +42,7 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            logger.i("Launching Game...");
+            logger.i("🎮 Play Button Clicked. Launching Game...");
             final session = SessionService().currentSession;
             if (session == null) {
               ScaffoldMessenger.of(context).showSnackBar(
