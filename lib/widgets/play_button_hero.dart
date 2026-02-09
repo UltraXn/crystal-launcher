@@ -201,20 +201,34 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
                 // Show Download Dialog
                 if (!context.mounted) return;
 
-                // Do not await showDialog, or it blocks until closed!
                 showDialog(
                   context: context,
                   barrierDismissible: false,
                   builder: (ctx) {
-                    return const AlertDialog(
-                      title: Text("Sincronizando Mods de CrystalTides"),
+                    return AlertDialog(
+                      title: const Text("Sincronizando Modpack"),
                       content: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text("Verificando archivos mediante HASH..."),
-                          Text("Solo se descargarán los archivos nuevos o actualizados."),
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          StreamBuilder<String>(
+                            stream: _progressStream.stream,
+                            initialData: "Verificando archivos...",
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? "Sincronizando...",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontSize: 13),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            "Solo se descargarán los archivos actualizados.",
+                            style: TextStyle(fontSize: 11, color: Colors.white54),
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     );
@@ -224,6 +238,13 @@ class _PlayButtonHeroState extends State<PlayButtonHero> {
                 try {
                   await ModService().syncOfficialMods(
                     gameDir,
+                    onProgress: (name, progress) {
+                      if (progress > 0 && progress < 1) {
+                        _progressStream.add("Descargando: $name (${(progress * 100).toInt()}%)");
+                      } else {
+                        _progressStream.add("Verificando: $name");
+                      }
+                    },
                   );
                   // Success - Close dialog
                   if (context.mounted) {

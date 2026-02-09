@@ -6,6 +6,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart'; // For compute
 import 'package:path/path.dart' as p;
 
+import 'log_service.dart';
+import 'package:logger/logger.dart';
+
 typedef ExtractArchiveFunc = Int32 Function(
     Pointer<Utf8> archivePath, Pointer<Utf8> outputPath);
 typedef ExtractArchive = int Function(
@@ -45,21 +48,22 @@ int _extractInIsolate(ExtractionRequest request) {
 
     return result;
   } catch (e) {
-    debugPrint("Isolate Error: $e");
+    // We can't easily use LogService here if it's singleton in another isolate, 
+    // but we can print and catch it in the caller.
+    debugPrint("Isolate Extraction Error: $e");
     return -10; // Exception in isolate (DLL load fail?)
   }
 }
 
 class InstallationService {
   
-  // We no longer load the DLL in the constructor for the main isolate.
-  // We load it in the background isolate.
-
   Future<String> getInstallationPath() async {
     if (Platform.isWindows) {
       final userProfile = Platform.environment['USERPROFILE'];
       if (userProfile != null) {
-        return p.join(userProfile, '.crystaltides');
+        final path = p.join(userProfile, '.crystaltides');
+        logService.log("📂 Default installation path: $path", category: "STORAGE");
+        return path;
       }
     }
     return "C:\\CrystalTidesSMP"; // Fallback
@@ -69,6 +73,9 @@ class InstallationService {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
       dialogTitle: 'Seleccione la carpeta de instalación',
     );
+    if (selectedDirectory != null) {
+      logService.log("📂 User selected path: $selectedDirectory", category: "STORAGE");
+    }
     return selectedDirectory;
   }
 
@@ -77,6 +84,8 @@ class InstallationService {
   // < 0: Error Code
   Future<int> startInstall(
       String targetPath, Function(double) onProgress) async {
+    
+    logService.log("🛠️ Starting installation process to $targetPath", category: "SYSTEM");
     
     // 1. Locate the payload and DLL.
     String? zipPath;
@@ -89,19 +98,19 @@ class InstallationService {
       p.join(Directory.current.path, 'installer_payload.zip'), // Dev/Local
       p.join(exeDir, 'data', 'flutter_assets', 'assets', 'payload',
           'game_payload.zip'), // Release
-      // Also check standard asset path just in case
       p.join(exeDir, 'assets', 'payload', 'game_payload.zip'),
     ];
 
     for (var path in zipCandidates) {
       if (File(path).existsSync()) {
         zipPath = path;
+        logService.log("📦 Payload found at: $path", category: "STORAGE");
         break;
       }
     }
 
     if (zipPath == null) {
-      debugPrint("CRITICAL: Payload ZIP not found in candidates: $zipCandidates");
+      logService.log("❌ CRITICAL: Payload ZIP not found in candidates: $zipCandidates", level: Level.error, category: "STORAGE");
       return -11; // Payload not found
     }
 
@@ -113,14 +122,12 @@ class InstallationService {
     ];
 
     for (var path in dllCandidates) {
-      // For 'installer_native.dll' (no path), we can't check existsSync easily unless we know cwd.
-      // But we can check absolute paths.
       if (path.contains(Platform.pathSeparator) && File(path).existsSync()) {
         dllPath = path;
+        logService.log("⚙️ DLL found at: $path", category: "SYSTEM");
         break;
       }
     }
-    // Fallback to strict name if not found via absolute path
     dllPath ??= 'installer_native.dll';
 
     // UI Updates
@@ -128,14 +135,15 @@ class InstallationService {
     await Future.delayed(const Duration(milliseconds: 300));
     onProgress(0.2); // Syncing...
 
-    // We can verify permissions here or create dir
+    // Create dir
     try {
       final dir = Directory(targetPath);
       if (!dir.existsSync()) {
+        logService.log("📁 Creating target directory...", category: "STORAGE");
         dir.createSync(recursive: true);
       }
     } catch (e) {
-      debugPrint("Failed to create target dir: $e");
+      logService.log("❌ Failed to create target dir: $e", level: Level.error, category: "STORAGE");
       return -51; // Dart Create error
     }
 
@@ -148,36 +156,84 @@ class InstallationService {
       dllPath: dllPath,
     );
 
-    // This runs in a separate isolate and won't freeze UI
+    logService.log("🔩 Extracting payload in isolate...", category: "SYSTEM");
     final result = await compute(_extractInIsolate, request);
 
     if (result == 1) {
+      logService.log("✨ Extraction successful", category: "SYSTEM");
+      onProgress(0.9);
+      
+      // Registry uninstaller in Windows
+      if (Platform.isWindows) {
+        try {
+          await _registerUninstaller(targetPath);
+        } catch (e) {
+          logService.log("⚠️ Could not register uninstaller in registry: $e", level: Level.warning, category: "SYSTEM");
+        }
+      }
+      
       onProgress(1.0);
+    } else {
+      logService.log("❌ Extraction failed with code: $result", level: Level.error, category: "SYSTEM");
     }
     
     return result;
+  }
+
+  Future<void> _registerUninstaller(String installPath) async {
+    logService.log("📝 Registering uninstaller in Windows Registry...", category: "SYSTEM");
+    
+    // Using powershell for registry management to avoid complex win32 boilerplate in Flutter for now
+    // This is safer and easier to debug
+    final exePath = p.join(installPath, "crystal_launcher.exe");
+    const appVersion = "1.2.1"; // This should ideally come from package_info or a constant
+    
+    final psCommand = """
+    \$registryPath = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\CrystalLauncher"
+    if (!(Test-Path \$registryPath)) { New-Item -Path \$registryPath -Force }
+    New-ItemProperty -Path \$registryPath -Name "DisplayName" -Value "Crystal Launcher" -PropertyType String -Force
+    New-ItemProperty -Path \$registryPath -Name "DisplayIcon" -Value "$exePath" -PropertyType String -Force
+    New-ItemProperty -Path \$registryPath -Name "UninstallString" -Value "\\"\$exePath\\" --uninstall" -PropertyType String -Force
+    New-ItemProperty -Path \$registryPath -Name "Publisher" -Value "CrystalTides" -PropertyType String -Force
+    New-ItemProperty -Path \$registryPath -Name "DisplayVersion" -Value "$appVersion" -PropertyType String -Force
+    """;
+
+    final result = await Process.run('powershell', ['-Command', psCommand]);
+    
+    if (result.exitCode == 0) {
+      logService.log("✅ Uninstaller registered successfully", category: "SYSTEM");
+    } else {
+      logService.log("❌ Failed to register uninstaller: ${result.stderr}", level: Level.error, category: "SYSTEM");
+      throw Exception(result.stderr);
+    }
   }
 
   Future<void> launchApp(String installPath) async {
     const exeName = "crystal_launcher.exe";
     final exePath = p.join(installPath, exeName);
     
+    logService.log("🚀 Launching application from $installPath", category: "GAME");
+    
     if (File(exePath).existsSync()) {
+      logService.log("✅ Main executable found: $exePath", category: "GAME");
       await Process.start(exePath, [], runInShell: true, workingDirectory: installPath);
     } else {
-      debugPrint("Launcher not found at $exePath");
+      logService.log("⚠️ Launcher not found at $exePath. Searching for alternatives...", level: Level.warning, category: "GAME");
       try {
         final dir = Directory(installPath);
         final exes = dir.listSync().whereType<File>().where(
             (f) => f.path.endsWith('.exe') && !f.path.contains("uninstall"));
         if (exes.isNotEmpty) {
-          // Sort by name length or something to avoid uninstaller?
-          // crystal_launcher.exe is preferred.
-          await Process.start(exes.first.path, [], runInShell: true, workingDirectory: installPath);
+          final chosen = exes.first.path;
+          logService.log("🔔 Launching alternative executable: $chosen", category: "GAME");
+          await Process.start(chosen, [], runInShell: true, workingDirectory: installPath);
+        } else {
+          logService.log("❌ No executables found in $installPath", level: Level.error, category: "GAME");
         }
       } catch (e) {
-        debugPrint("Failed to launch: $e");
+        logService.log("❌ Failed to launch alternative: $e", level: Level.error, category: "GAME");
       }
     }
   }
+
 }

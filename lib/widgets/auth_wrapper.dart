@@ -12,9 +12,12 @@ class AuthWrapper extends StatefulWidget {
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
+  bool _wasLoggedIn = false;
+
   @override
   void initState() {
     super.initState();
+    _wasLoggedIn = SessionService().isLoggedIn;
     SessionService().addListener(_onSessionChanged);
   }
 
@@ -25,7 +28,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
   }
 
   void _onSessionChanged() {
-    setState(() {}); // Rebuild on session change
+    final nowLoggedIn = SessionService().isLoggedIn;
+    if (nowLoggedIn != _wasLoggedIn) {
+      if (mounted) {
+        setState(() {
+          _wasLoggedIn = nowLoggedIn;
+        });
+      }
+    }
   }
 
   @override

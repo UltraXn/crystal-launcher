@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import '../utils/logger.dart';
+import 'log_service.dart';
 
 class UpdateService extends ChangeNotifier {
   static final UpdateService _instance = UpdateService._internal();
@@ -28,6 +28,7 @@ class UpdateService extends ChangeNotifier {
       final packageInfo = await PackageInfo.fromPlatform();
       final currentVersion = packageInfo.version;
 
+      logService.log("🔍 Checking for updates... (Current: $currentVersion)", category: "NETWORK");
       final response = await http.get(Uri.parse(_versionUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -36,14 +37,14 @@ class UpdateService extends ChangeNotifier {
 
         if (_isNewerVersion(currentVersion, _latestVersion)) {
           _isUpdateAvailable = true;
-          logger.i(
-            "Nueva actualización disponible: $_latestVersion (Actual: $currentVersion)",
-          );
+          logService.log("✨ New update available: $_latestVersion", category: "NETWORK");
           notifyListeners();
+        } else {
+          logService.log("✅ Launcher is up to date", category: "NETWORK");
         }
       }
     } catch (e) {
-      logger.e("Error al buscar actualizaciones: $e");
+      logService.log("❌ Error checking for updates", level: Level.error, error: e, category: "NETWORK");
     }
   }
 
@@ -58,7 +59,7 @@ class UpdateService extends ChangeNotifier {
         if (latestParts[i] < currentPart) return false;
       }
     } catch (e) {
-      logger.e("Error comparando versiones: $e");
+      logService.log("⚠️ Error comparing versions: $e", level: Level.warning);
     }
     return false;
   }
@@ -67,11 +68,12 @@ class UpdateService extends ChangeNotifier {
     if (!_isUpdateAvailable || _updateUrl.isEmpty) return;
 
     try {
+      logService.log("📥 Downloading update from $_updateUrl", category: "NETWORK");
       final client = http.Client();
       final request = http.Request('GET', Uri.parse(_updateUrl));
       final response = await client.send(request);
 
-      if (response.statusCode != 200) throw Exception("Error al descargar");
+      if (response.statusCode != 200) throw Exception("Error al descargar: ${response.statusCode}");
 
       final totalBytes = response.contentLength ?? 0;
       var receivedBytes = 0;
@@ -91,9 +93,9 @@ class UpdateService extends ChangeNotifier {
 
       await sink.close();
       _downloadedPath = filePath;
-      logger.i("Actualización descargada en: $filePath");
+      logService.log("✅ Update downloaded to: $filePath", category: "NETWORK");
     } catch (e) {
-      logger.e("Error descargando actualización: $e");
+      logService.log("❌ Error downloading update", level: Level.error, error: e, category: "NETWORK");
       rethrow;
     }
   }
@@ -102,14 +104,14 @@ class UpdateService extends ChangeNotifier {
     if (_downloadedPath == null) return;
 
     try {
+      logService.log("🔄 Applying update: $_downloadedPath", category: "SYSTEM");
       // Ejecutamos nuestro instalador personalizado de Flutter.
-      // No usamos flags silenciosos ya que queremos que el usuario vea la interfaz premium.
       await Process.start(_downloadedPath!, [], mode: ProcessStartMode.detached);
       
-      // Cerramos el launcher actual para permitir que el instalador sobrescriba los archivos
+      logService.log("👋 Closing launcher for update", category: "SYSTEM");
       exit(0);
     } catch (e) {
-      logger.e("Error al lanzar el instalador: $e");
+      logService.log("❌ Error launching installer", level: Level.error, error: e, category: "SYSTEM");
       rethrow;
     }
   }

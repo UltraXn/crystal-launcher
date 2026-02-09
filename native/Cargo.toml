@@ -19,7 +19,7 @@ slint = "1.9"
 tokio = { version = "1.42", features = ["full"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 zip = "0.6.6"  # Added for zip extraction
-reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls"] }
+reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls", "stream"] }
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -27,6 +27,12 @@ sha1 = "0.10"
 hex = "0.4"
 anyhow = "1.0"
 thiserror = "2.0"
+
+# AWS S3 SDK for R2 operations
+aws-sdk-s3 = "1.70"
+aws-config = "1.5"
+aws-credential-types = "1.2"
+futures = "0.3"
 
 [build-dependencies]
 winres = "0.1"

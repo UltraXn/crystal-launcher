@@ -1,6 +1,6 @@
-import '../utils/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'log_service.dart';
 
 class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
@@ -15,8 +15,20 @@ class SupabaseService {
   bool get isInitialized => _isInitialized;
 
   Future<void> initialize() async {
-    final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? 'https://gyoqnqvqhuxlcbrvtfia.supabase.co';
-    final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5b3FucXZxaHV4bGNicnZ0ZmlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUyOTk0MTEsImV4cCI6MjA4MDg3NTQxMX0.eLU_-IrRfixx7dpR9jeiEoOT1u-exQMhIsxSXVINbRA';
+    String? supabaseUrl;
+    String? supabaseKey;
+    
+    try {
+      supabaseUrl = dotenv.maybeGet('SUPABASE_URL');
+      supabaseKey = dotenv.maybeGet('SUPABASE_ANON_KEY');
+    } catch (_) {
+      logService.log('⚠️ DotEnv not initialized or accessible', level: Level.warning, category: 'NETWORK');
+    }
+
+    if (supabaseUrl == null || supabaseKey == null) {
+      logService.log('⛔ Supabase Env Error: Missing URL or Key', level: Level.error, category: 'NETWORK');
+      return;
+    }
 
     try {
       await Supabase.initialize(
@@ -25,9 +37,9 @@ class SupabaseService {
         debug: false,
       );
       _isInitialized = true;
-      logger.i('✅ Supabase Initialized');
+      logService.log('✅ Supabase Initialized', category: 'NETWORK');
     } catch (e) {
-      logger.e('⛔ Supabase Init Error', error: e);
+      logService.log('⛔ Supabase Init Error', error: e, level: Level.error, category: 'NETWORK');
     }
   }
 

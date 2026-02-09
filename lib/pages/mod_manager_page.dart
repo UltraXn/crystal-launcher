@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 import '../../services/mod_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logger.dart';
+import '../../services/admin_service.dart';
+import '../../services/session_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 
@@ -93,15 +95,25 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
   }
 
   Future<void> _identifyModsInBackground() async {
-    for (int i = 0; i < _mods.length; i++) {
+    const int batchSize = 5;
+    for (int i = 0; i < _mods.length; i += batchSize) {
       if (!mounted) return;
-      final identified = await ModService().identifyModMetadata(_mods[i]);
-      if (mounted && identified != _mods[i]) {
-        setState(() {
-          _mods[i] = identified;
-          _groupMods();
-        });
-      }
+      
+      final end = (i + batchSize < _mods.length) ? i + batchSize : _mods.length;
+      final batch = _mods.sublist(i, end);
+      
+      final results = await Future.wait(
+        batch.map((mod) => ModService().identifyModMetadata(mod))
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        for (int j = 0; j < results.length; j++) {
+           _mods[i + j] = results[j];
+        }
+        _groupMods();
+      });
     }
   }
 
@@ -241,20 +253,34 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
           final files = detail.files;
           if (files.isEmpty) return;
 
-          int count = 0;
-          int invalid = 0;
-
           setState(() => _isLoading = true);
 
           try {
-            for (final file in files) {
-              if (file.name.toLowerCase().endsWith('.jar')) {
-                if (await ModService().isValidMod(File(file.path))) {
-                  final newPath = p.join(_gameDir!, 'mods', file.name);
-                  await File(file.path).copy(newPath);
+            final isAdmin = SessionService().currentSession?.isAdmin ?? false;
+            int count = 0;
+            int invalid = 0;
+
+            for (final xFile in files) {
+              final file = File(xFile.path);
+              if (xFile.name.toLowerCase().endsWith('.jar')) {
+                if (isAdmin) {
+                  // Si es Admin, subimos al Repositorio Oficial (GitHub + Supabase)
+                  await AdminService().processAdminModImport(
+                    file,
+                    onStatusUpdate: (status) {
+                      logger.i("Admin Import: $status");
+                    },
+                  );
                   count++;
                 } else {
-                  invalid++;
+                  // Si es usuario normal, solo importa localmente
+                  if (await ModService().isValidMod(file)) {
+                    final newPath = p.join(_gameDir!, 'mods', xFile.name);
+                    await file.copy(newPath);
+                    count++;
+                  } else {
+                    invalid++;
+                  }
                 }
               } else {
                 invalid++;
@@ -267,7 +293,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
             if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                  content: Text("Error al arrastrar archivos: $e"),
+                  content: Text("Error al importar archivos: $e"),
                   backgroundColor: Colors.red),
             );
           } finally {
@@ -581,8 +607,8 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _restoreOfficialPack,
-              icon: const Icon(Icons.download, size: 18),
-              label: const Text("Descargar Pack Base"),
+              icon: const Icon(Icons.sync, size: 18),
+              label: const Text("Sincronizar Mods Oficiales"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.accent,
                 foregroundColor: Colors.black,

@@ -1,28 +1,30 @@
 import 'dart:io';
 import 'dart:convert';
-
 import 'package:path/path.dart' as p;
 import 'package:http/http.dart' as http;
 import 'package:archive/archive.dart';
-import 'package:crypto/crypto.dart';
+import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../utils/logger.dart';
+import 'log_service.dart';
 import '../utils/hash_utils.dart';
-import 'package:dio/dio.dart' as dio_pkg;
 
 import 'supabase_service.dart';
+
+import 'native_r2_service.dart';
 
 class ModService {
   static final ModService _instance = ModService._internal();
   factory ModService() => _instance;
   ModService._internal();
 
+  final NativeR2Service _nativeR2 = NativeR2Service();
+
   /// Sincroniza los mods oficiales usando la base de datos de Supabase y hashes SHA-1
   Future<void> syncOfficialMods(String gameDir, {Function(String, double)? onProgress}) async {
     final modsDir = Directory(p.join(gameDir, 'mods'));
     if (!await modsDir.exists()) await modsDir.create(recursive: true);
 
-    logger.i("📥 Iniciando sincronización por HASH desde Supabase...");
+    logService.log("📥 Iniciando sincronización paralela desde Supabase...", category: "STORAGE");
 
     try {
       // 1. Obtener la lista de mods oficiales desde Supabase
@@ -31,211 +33,77 @@ class ModService {
           .select('name, download_url, sha1');
       
       final List<dynamic> remoteMods = response as List<dynamic>;
-      final List<String> currentOfficialFiles = [];
-
-      final dio = dio_pkg.Dio();
+      final List<Map<String, dynamic>> modsToDownload = [];
 
       for (final mod in remoteMods) {
         final String name = mod['name'];
-        final String url = mod['download_url'];
         final String remoteSha1 = mod['sha1'].toLowerCase();
         
         final file = File(p.join(modsDir.path, name));
-        currentOfficialFiles.add(name);
 
         bool needDownload = true;
-
         if (await file.exists()) {
           final localSha1 = await HashUtils.getFileHash(file);
           if (localSha1.toLowerCase() == remoteSha1) {
-            logger.d("✅ Mod up-to-date: $name");
             needDownload = false;
-          } else {
-            logger.w("🔄 Mod mismatch (Hash): $name. Re-downloading...");
           }
-        } else {
-          logger.i("🆕 Mod missing: $name. Downloading...");
         }
 
         if (needDownload) {
-          if (onProgress != null) onProgress(name, 0);
-          
-          await dio.download(
-            url, 
-            file.path,
-            onReceiveProgress: (received, total) {
-              if (onProgress != null && total > 0) {
-                onProgress(name, received / total);
-              }
-            },
-          );
-          
-          // Verificar hash post-descarga
-          final newHash = await HashUtils.getFileHash(file);
-          if (newHash.toLowerCase() != remoteSha1) {
-            logger.e("❌ Error: Hash mismatch tras descargar $name. Esperado: $remoteSha1, Recibido: $newHash");
-          } else {
-            logger.i("✔ OK: $name");
-          }
+          modsToDownload.add({
+            'name': name,
+            'url': mod['download_url'],
+            'sha1': remoteSha1,
+          });
         }
       }
 
+      if (modsToDownload.isEmpty) {
+        logService.log("✅ Todos los mods están actualizados.", category: "STORAGE");
+        return;
+      }
+
+      logService.log("🚀 Descargando ${modsToDownload.length} mods en paralelo...", category: "STORAGE");
+      
+      await _nativeR2.downloadModsBatch(
+        modsToDownload,
+        modsDir.path,
+        onProgress: (current, total, message) {
+          if (onProgress != null) {
+            onProgress(message, current / total);
+          }
+        },
+      );
+
       // 2. Guardar manifiesto de mods oficiales para limpieza futura si se desea
+      final List<String> currentOfficialFiles = remoteMods.map((m) => m['name'] as String).toList();
       final manifestFile = File(p.join(gameDir, '.official_mods'));
       await manifestFile.writeAsString(currentOfficialFiles.join('\n'));
 
-      logger.i("✨ Sincronización completada. ${remoteMods.length} mods verificados.");
+      // 3. Guardar Fingerprint para isUpdateAvailable
+      final latestRemote = remoteMods.isNotEmpty ? remoteMods[0]['created_at'] : "none";
+      final remoteCount = remoteMods.length;
+      final fingerprintFile = File(p.join(gameDir, '.modpack_fingerprint'));
+      await fingerprintFile.writeAsString("$remoteCount|$latestRemote");
+
+      logService.log("✨ Sincronización completada. ${remoteMods.length} mods verificados.", category: "STORAGE");
     } catch (e) {
-      logger.e("❌ Error en syncOfficialMods: $e");
+      logService.log("❌ Error en sincronización: $e", level: Level.error, category: "STORAGE");
       rethrow;
     }
   }
 
-  /// URL del Modpack (Deprecated - Usar syncOfficialMods)
-  String modpackUrl =
-      'https://drive.google.com/uc?export=download&id=1iPT1JRAW4R6XQTA5TrnB_dNim9LlHrf-';
-
-  /// URL del Manifiesto de Versión
+  /// URL del Manifiesto de Versión (Cloudflare R2)
   String versionManifestUrl =
-      'https://raw.githubusercontent.com/UltraXn/CrystalTides-Assets/main/launcher/version.json';
+      'https://pub-3a18f6cd71c44a49b8f2f2e48e14a744.r2.dev/launcher/version.json';
 
   /// Cache de metadatos de mods por hash
   final Map<String, Map<String, dynamic>> _metadataCache = {};
 
-  Future<void> downloadAndInstallModpack(
-    String url,
-    String gameDir, {
-    bool clearOld = true,
-    Function(double)? onProgress,
-  }) async {
-    final modsDir = Directory(p.join(gameDir, 'mods'));
-    logger.i("🛠️ Iniciando Modpack (Bypass Nivel 4)");
+  /// Tracker para evitar identificaciones duplicadas en paralelo por el mismo HASH
+  final Map<String, Future<ModItem>> _idInProgress = {};
 
-    final dio = dio_pkg.Dio(dio_pkg.BaseOptions(
-      followRedirects: true,
-      maxRedirects: 15,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(minutes: 15),
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Referer': 'https://drive.google.com/',
-      },
-    ));
-
-    String downloadUrl = url;
-    String? cookie;
-
-    try {
-      // 1. Intentar obtener el token y cookies de la página de aviso
-      logger.d("🔍 Analizando seguridad de Google Drive...");
-      final checkResponse = await dio.get(url);
-      
-      // Capturar cookies de sesión (importante para archivos protegidos)
-      final cookies = checkResponse.headers['set-cookie'];
-      if (cookies != null && cookies.isNotEmpty) {
-        cookie = cookies.map((c) => c.split(';')[0]).join('; ');
-        logger.d("🍪 Cookies de sesión capturadas.");
-      }
-
-      if (checkResponse.data is String) {
-        final String html = checkResponse.data;
-        
-        // Extraer ID del archivo de la URL original
-        final idMatch = RegExp(r'id=([a-zA-Z0-9_-]+)').firstMatch(url);
-        final fileId = idMatch?.group(1) ?? "1iPT1JRAW4R6XQTA5TrnB_dNim9LlHrf-";
-
-        // Intentar buscar token 'confirm' por todos los medios
-        String? token;
-        final tokenMatches = [
-          RegExp(r'confirm=([a-zA-Z0-9_]+)').firstMatch(html),
-          RegExp(r'id="uc-download-link"[^>]*href="[^"]*confirm=([a-zA-Z0-9_]+)').firstMatch(html),
-          RegExp(r'name="confirm" value="([a-zA-Z0-9_]+)"').firstMatch(html),
-        ];
-
-        for (var m in tokenMatches) {
-          if (m != null) {
-            token = m.group(1);
-            break;
-          }
-        }
-
-        if (token != null) {
-          // Usar el dominio de contenido persistente para evitar bloqueos
-          downloadUrl = "https://drive.usercontent.google.com/download?id=$fileId&confirm=$token&export=download";
-          logger.i("🔓 Bypass Directo activado. Token: $token");
-        } else {
-          // Si no hay token, quizá el link ya es directo o es un error de cuota
-          if (html.contains("Google Drive - Quota exceeded") || html.contains("cuota de descarga")) {
-            throw Exception("Cuota de descarga excedida en Google Drive. Inténtalo más tarde o usa un espejo.");
-          }
-          logger.w("⚠️ No se detectó token de confirmación. Intentando descarga directa...");
-        }
-      }
-
-      // 2. Preparar carpeta
-      if (await modsDir.exists() && clearOld) {
-        await modsDir.delete(recursive: true);
-      }
-      await modsDir.create(recursive: true);
-
-      // 3. Descarga real con cookies y headers reforzados
-      logger.i("🚀 Descargando Modpack...");
-      final response = await dio.get<List<int>>(
-        downloadUrl,
-        options: dio_pkg.Options(
-          responseType: dio_pkg.ResponseType.bytes,
-          headers: cookie != null ? {'Cookie': cookie} : null,
-        ),
-        onReceiveProgress: (received, total) {
-          if (onProgress != null) onProgress(total > 0 ? received / total : -1);
-        },
-      );
-
-      final bytes = response.data!;
-
-      // VALIDACIÓN DE ZIP
-      if (bytes.length < 4 || bytes[0] != 0x50 || bytes[1] != 0x4B) {
-        // Analizar qué recibimos
-        final body = utf8.decode(bytes.take(500).toList(), allowMalformed: true);
-        if (body.contains("<title>")) {
-          final titleMatch = RegExp(r'<title>(.*?)</title>').firstMatch(body);
-          final title = titleMatch?.group(1) ?? "Página desconocida";
-          throw Exception("Google denegó la descarga: $title");
-        }
-        throw Exception("El archivo recibido no es un ZIP válido (Firma PK no encontrada).");
-      }
-
-      logger.i("📦 ¡Descarga exitosa! (${(bytes.length / 1024 / 1024).toStringAsFixed(1)} MB). Instalando...");
-
-      // 4. Descomprimir
-      final archive = ZipDecoder().decodeBytes(bytes);
-      final List<String> officialFiles = [];
-
-      for (final file in archive) {
-        if (file.isFile) {
-          final filename = file.name;
-          if (filename.contains('__MACOSX') || filename.contains('.DS_Store')) continue;
-          final baseName = p.basename(filename);
-          officialFiles.add(baseName);
-          final targetFile = File(p.join(modsDir.path, baseName));
-          await targetFile.create(recursive: true);
-          await targetFile.writeAsBytes(file.content as List<int>);
-        }
-      }
-
-      final manifestFile = File(p.join(gameDir, '.official_mods'));
-      await manifestFile.writeAsString(officialFiles.join('\n'));
-      
-      logger.i("✅ Todo listo. ${officialFiles.length} mods instalados.");
-
-    } catch (e) {
-      logger.e("❌ Error: $e");
-      rethrow;
-    }
-  }
-
+  String? _currentGameDir;
   List<ModItem>? _cachedMods;
   Future<List<ModItem>>? _scanFuture;
 
@@ -244,6 +112,13 @@ class ModService {
     String gameDir, {
     bool forceRefresh = false,
   }) async {
+    _currentGameDir = gameDir;
+    
+    // Cargar caché si es la primera vez
+    if (_metadataCache.isEmpty) {
+      await _loadMetadataCache(gameDir);
+    }
+
     if (_cachedMods != null && !forceRefresh) {
       return _cachedMods!;
     }
@@ -283,8 +158,9 @@ class ModService {
     if (items.isEmpty) {
       final mcDir = _getMinecraftModsDir();
       if (mcDir != null && await mcDir.exists()) {
-        logger.i(
+        logService.log(
           "🔍 Fallback: No mods in ${primaryDir.path}. Scanning ${mcDir.path}",
+          category: "STORAGE"
         );
         // When scanning .minecraft, everything is marked as imported
         items.addAll(await _scanDirectory(mcDir, {}));
@@ -329,29 +205,93 @@ class ModService {
     return items;
   }
 
-  /// Calcula el SHA-1 de un archivo para identificación
+  /// Calcula el SHA-1 de un archivo para identificación de forma eficiente (Streaming)
   Future<String> _calculateFileHash(String filePath) async {
-    final file = File(filePath);
-    final bytes = await file.readAsBytes();
-    return sha1.convert(bytes).toString();
+    try {
+      final file = File(filePath);
+      final stream = file.openRead();
+      final hash = await crypto.sha1.bind(stream).first;
+      return hash.toString();
+    } catch (e) {
+      logService.log("❌ Error calculando hash para $filePath: $e", level: Level.error, category: "STORAGE");
+      return "";
+    }
   }
 
   /// Consulta Modrinth para obtener metadatos enriquecidos
   Future<ModItem> identifyModMetadata(ModItem item) async {
+    final hash = await _calculateFileHash(item.path);
+    if (hash.isEmpty) return item;
+
+    // Si ya está en la caché normal de metadatos, retornamos de inmediato
+    if (_metadataCache.containsKey(hash)) {
+      final data = _metadataCache[hash]!;
+      return item.copyWith(
+        name: data['title'] ?? item.name,
+        description: data['description'],
+        iconUrl: data['icon_url'],
+        categories: List<String>.from(data['categories'] ?? []),
+      );
+    }
+
+    // Si hay una identificación en curso para este HASH, esperamos a ESA futura
+    if (_idInProgress.containsKey(hash)) {
+      final Future<ModItem> pending = _idInProgress[hash]!;
+      final result = await pending;
+      // Retornamos una copia basándonos en el item original pero con el metadata identificado
+      return item.copyWith(
+        name: result.name,
+        description: result.description,
+        iconUrl: result.iconUrl,
+        categories: result.categories,
+        category: result.category,
+      );
+    }
+
+    // Iniciamos nueva identificación y la guardamos en el tracker
+    final Future<ModItem> idFuture = _performIdentification(item, hash);
+    _idInProgress[hash] = idFuture;
+
     try {
-      final hash = await _calculateFileHash(item.path);
-
-      if (_metadataCache.containsKey(hash)) {
-        final data = _metadataCache[hash]!;
-        return item.copyWith(
-          name: data['title'] ?? item.name,
-          description: data['description'],
-          iconUrl: data['icon_url'],
-          categories: List<String>.from(data['categories'] ?? []),
-        );
+      final result = await idFuture;
+      // Guardar caché persistente tras éxito si no estaba ya
+      if (_currentGameDir != null) {
+        await _saveMetadataCache(_currentGameDir!);
       }
+      return result;
+    } finally {
+      _idInProgress.remove(hash);
+    }
+  }
 
-      logger.d("🔍 Identificando mod en Modrinth: ${item.name} ($hash)");
+  Future<void> _loadMetadataCache(String gameDir) async {
+    try {
+      final cacheFile = File(p.join(gameDir, 'mod_metadata.json'));
+      if (await cacheFile.exists()) {
+        final content = await cacheFile.readAsString();
+        final Map<String, dynamic> data = json.decode(content);
+        data.forEach((key, value) {
+          _metadataCache[key] = Map<String, dynamic>.from(value);
+        });
+        logService.log("💾 Metadata cache cargada: ${_metadataCache.length} items", category: "STORAGE");
+      }
+    } catch (e) {
+      logService.log("⚠️ No se pudo cargar la caché de metadatos: $e", level: Level.warning, category: "STORAGE");
+    }
+  }
+
+  Future<void> _saveMetadataCache(String gameDir) async {
+    try {
+      final cacheFile = File(p.join(gameDir, 'mod_metadata.json'));
+      await cacheFile.writeAsString(json.encode(_metadataCache));
+    } catch (e) {
+      logService.log("⚠️ No se pudo guardar la caché de metadatos: $e", level: Level.warning, category: "STORAGE");
+    }
+  }
+
+  Future<ModItem> _performIdentification(ModItem item, String hash) async {
+    try {
+      logService.log("🔍 Identificando mod en Modrinth: ${item.name} ($hash)", category: "NETWORK");
       
       // 1. Obtener versión por hash
       final versionResponse = await http.get(
@@ -406,7 +346,7 @@ class ModService {
       // 3. Fallback: CurseForge
       return await _identifyWithCurseForge(item);
     } catch (e) {
-      logger.w("No se pudo identificar metadatos para ${item.name}: $e");
+      logService.log("No se pudo identificar metadatos para ${item.name}: $e", level: Level.warning, category: "NETWORK");
     }
     return item;
   }
@@ -414,7 +354,7 @@ class ModService {
   Future<ModItem> _identifyWithCurseForge(ModItem item) async {
     final apiKey = dotenv.env['CURSEFORGE_API_KEY'];
     if (apiKey == null || apiKey.isEmpty) {
-      logger.w("CurseForge API Key no configurada.");
+      logService.log("CurseForge API Key no configurada.", level: Level.warning, category: "SYSTEM");
       return item;
     }
 
@@ -422,7 +362,7 @@ class ModService {
       final fileBytes = await File(item.path).readAsBytes();
       final fingerprint = HashUtils.calculateCurseForgeFingerprint(fileBytes);
 
-      logger.d("🔍 Identificando en CurseForge: ${item.name} ($fingerprint)");
+      logService.log("🔍 Identificando en CurseForge: ${item.name} ($fingerprint)", category: "NETWORK");
       
       final response = await http.post(
         Uri.parse('https://api.curseforge.com/v1/fingerprints'),
@@ -492,7 +432,7 @@ class ModService {
         }
       }
     } catch (e) {
-      logger.w("Fallo identificación en CurseForge para ${item.name}: $e");
+      logService.log("Fallo identificación en CurseForge para ${item.name}: $e", level: Level.warning, category: "NETWORK");
     }
     return item;
   }
@@ -524,7 +464,7 @@ class ModService {
         return List<Map<String, dynamic>>.from(data['hits']);
       }
     } catch (e) {
-      logger.e("Error buscando mods en Modrinth: $e");
+      logService.log("Error buscando mods en Modrinth: $e", level: Level.error, category: "NETWORK");
     }
     return [];
   }
@@ -558,7 +498,7 @@ class ModService {
         final fileName = file['filename'];
         final savePath = p.join(gameDir, 'mods', fileName);
 
-        logger.i("📥 Descargando mod: $fileName desde $downloadUrl");
+        logService.log("📥 Descargando mod: $fileName desde $downloadUrl", category: "NETWORK");
         
         final modResponse = await http.get(Uri.parse(downloadUrl));
         if (modResponse.statusCode == 200) {
@@ -574,7 +514,7 @@ class ModService {
         }
       }
     } catch (e) {
-      logger.e("Error instalando mod remoto ($projectId): $e");
+      logService.log("Error instalando mod remoto ($projectId): $e", level: Level.error, category: "NETWORK");
     }
     return false;
   }
@@ -626,27 +566,33 @@ class ModService {
       }
     }
 
-    logger.i(
-      "Mod ${mod.name} ${mod.isEnabled ? 'deshabilitado' : 'habilitado'}.",
-    );
+    logService.log("Mod ${mod.name} ${mod.isEnabled ? 'deshabilitado' : 'habilitado'}.", category: "STORAGE");
   }
 
-  /// Checks if a modpack update is available.
+  /// Checks if a modpack update is available using a fingerprint (count + max timestamp) from Supabase.
   Future<bool> isUpdateAvailable(String gameDir) async {
     try {
-      final response = await http.get(Uri.parse(versionManifestUrl));
-      if (response.statusCode != 200) return false;
+      // Fetch latest modification from Supabase (efficient)
+      final response = await SupabaseService().client
+          .from('official_mods')
+          .select('created_at')
+          .order('created_at', ascending: false);
+      
+      final List<dynamic> data = response as List<dynamic>;
+      if (data.isEmpty) return false;
 
-      final manifest = json.decode(response.body);
-      final remoteVersion = manifest['modpack_version']?.toString() ?? "1.0.0";
+      final latestRemote = data[0]['created_at'].toString();
+      final remoteCount = data.length;
 
-      final localVersionFile = File(p.join(gameDir, '.modpack_version'));
-      if (!await localVersionFile.exists()) return true;
+      final localFingerprintFile = File(p.join(gameDir, '.modpack_fingerprint'));
+      if (!await localFingerprintFile.exists()) return true;
 
-      final localVersion = await localVersionFile.readAsString();
-      return remoteVersion != localVersion.trim();
+      final localFingerprint = await localFingerprintFile.readAsString();
+      final expected = "$remoteCount|$latestRemote";
+      
+      return localFingerprint.trim() != expected;
     } catch (e) {
-      logger.e("Error checking for updates", error: e);
+      logService.log("Error checking for updates via Supabase", level: Level.error, category: "STORAGE", error: e);
       return false;
     }
   }
@@ -658,7 +604,7 @@ class ModService {
       final archive = ZipDecoder().decodeBytes(bytes);
       return _hasModMetadata(archive, file.path);
     } catch (e) {
-      logger.e("Failed to validate mod file: ${file.path}", error: e);
+      logService.log("Failed to validate mod file: ${file.path}", level: Level.error, category: "STORAGE", error: e);
       return false;
     }
   }
@@ -666,11 +612,11 @@ class ModService {
   bool _hasModMetadata(Archive archive, String filePath) {
     for (final zipFile in archive) {
       if (_isMetadataPath(zipFile.name.toLowerCase())) {
-        logger.d("Found mod metadata: ${zipFile.name} in $filePath");
+        logService.log("Found mod metadata: ${zipFile.name} in $filePath", category: "STORAGE");
         return true;
       }
     }
-    logger.w("No mod metadata found in $filePath.");
+    logService.log("No mod metadata found in $filePath.", level: Level.warning, category: "STORAGE");
     return false;
   }
 

@@ -1,18 +1,13 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import '../services/database_service.dart';
 import '../data/local_database.dart';
 import '../theme/app_theme.dart';
-import 'package:archive/archive_io.dart';
 import '../services/session_service.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:package_info_plus/package_info_plus.dart' as pi;
-import 'package:desktop_drop/desktop_drop.dart';
 import '../services/update_service.dart';
-import '../services/admin_service.dart';
+import '../services/log_service.dart';
 import '../widgets/update_dialog.dart';
 import '../utils/logger.dart';
 
@@ -45,28 +40,6 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _linkPasswordController = TextEditingController();
   bool _isLinking = false;
 
-  // Admin / Modpack
-  final TextEditingController _modpackUrlController = TextEditingController();
-  bool get _isAdmin => SessionService().currentSession?.isAdmin ?? false;
-  bool _isAdminDragging = false;
-  String _adminUploadStatus = "";
-
-  // Version & Connection
-  String _mcVersion = '1.21.1';
-  String _neoForgeVersion = '2.218';
-  bool _autoConnect = true;
-
-  final Map<String, List<String>> _versionMap = {
-    "1.21.1": ["2.218"],
-    "1.20.1": ["47.1.0", "47.1.3", "47.1.43"],
-    "1.19.4": ["45.1.0", "45.1.32"],
-    "1.18.2": ["40.2.0", "40.2.10"],
-    "1.16.5": ["36.2.34", "36.2.39"], // Fallback for Forge if older
-  };
-
-  // Keybindings
-  List<Keybinding> _keybindings = [];
-
   bool _isLoading = true;
 
   @override
@@ -82,16 +55,9 @@ class _SettingsPageState extends State<SettingsPage> {
         _minRam = settings.minRam.toDouble();
         _maxRam = settings.maxRam.toDouble();
         _javaPathController.text = settings.javaPath ?? "";
-        _widthController.text = settings.width.toString();
         _heightController.text = settings.height.toString();
         _fullscreen = settings.fullscreen;
-        _mcVersion = settings.mcVersion ?? '1.20.1';
-        _neoForgeVersion = settings.neoForgeVersion ?? '47.1.0';
-        _autoConnect = settings.autoConnect ?? true;
       });
-
-      final keys = await DatabaseService().getAllKeybindings();
-      setState(() => _keybindings = keys);
     } catch (e) {
       logger.e("Error loading settings", error: e);
     } finally {
@@ -112,9 +78,6 @@ class _SettingsPageState extends State<SettingsPage> {
         width: drift.Value(int.tryParse(_widthController.text) ?? 1280),
         height: drift.Value(int.tryParse(_heightController.text) ?? 720),
         fullscreen: drift.Value(_fullscreen),
-        mcVersion: drift.Value(_mcVersion),
-        neoForgeVersion: drift.Value(_neoForgeVersion),
-        autoConnect: drift.Value(_autoConnect),
       );
 
       await DatabaseService().updateSettings(companion);
@@ -166,38 +129,29 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 16),
                 _buildResolutionInputs(),
 
-                const SizedBox(height: 32),
                 _buildSectionHeader("Cuenta CrystalTides", Icons.link),
                 const SizedBox(height: 16),
                 _buildAccountLinkingSection(),
 
                 const SizedBox(height: 32),
-                _buildSectionHeader(
-                  "Versión y Conexión",
-                  Icons.settings_input_component,
-                ),
-                const SizedBox(height: 16),
-                _buildVersionAndConnection(),
-
-                const SizedBox(height: 32),
-                _buildSectionHeader("Atajos de Teclado", Icons.keyboard),
-                const SizedBox(height: 16),
-                _buildKeybindingsSection(),
-
-                if (_isAdmin) ...[
-                  const SizedBox(height: 32),
-                  _buildSectionHeader(
-                    "Zona Admin (Modpack)",
-                    Icons.admin_panel_settings,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildAdminSection(),
-                ],
-
-                const SizedBox(height: 32),
                 _buildSectionHeader("Sistema", Icons.system_update_rounded),
                 const SizedBox(height: 16),
                 _buildUpdateSection(),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(Icons.description_outlined, color: Colors.white70),
+                  title: const Text("Ver Registros (Logs)", style: TextStyle(color: Colors.white)),
+                  subtitle: const Text(
+                    "Abre la carpeta de registros locales para depuración.",
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.open_in_new, size: 18, color: Colors.white30),
+                  onTap: () => LogService().openLogs(),
+                  tileColor: Colors.white.withValues(alpha: 0.05),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
 
                 const SizedBox(height: 48),
 
@@ -551,226 +505,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildAdminSection() {
-    return DropTarget(
-      onDragDone: (detail) async {
-        if (detail.files.isEmpty) return;
 
-        for (final xFile in detail.files) {
-          if (xFile.path.endsWith('.jar')) {
-            final file = File(xFile.path);
-            try {
-              await AdminService().processAdminModImport(
-                file,
-                onStatusUpdate: (status) {
-                  if (mounted) setState(() => _adminUploadStatus = status);
-                },
-              );
-            } catch (e) {
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Error al subir el mod")),
-              );
-            }
-          }
-        }
-      },
-      onDragEntered: (detail) => setState(() => _isAdminDragging = true),
-      onDragExited: (detail) => setState(() => _isAdminDragging = false),
-      child: Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: _isAdminDragging
-                    ? Colors.redAccent
-                    : Colors.red.withValues(alpha: 0.3),
-                width: _isAdminDragging ? 2 : 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "GESTIÓN DEL MODPACK",
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (_adminUploadStatus.isNotEmpty)
-                      Text(
-                        _adminUploadStatus,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  leading: const Icon(Icons.inventory_2, color: Colors.orange),
-                  title: const Text(
-                    "1. Generar ZIP local",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: const Text(
-                    "Comprime 'mods' en 'Desktop/modpack.zip'",
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                  onTap: _generateModpackZip,
-                  tileColor: Colors.white.withValues(alpha: 0.05),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ListTile(
-                  leading: const Icon(Icons.cloud_upload, color: Colors.blue),
-                  title: const Text(
-                    "2. Subir a Drive",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: const Text(
-                    "Abre drive.google.com para subir el ZIP.",
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
-                  onTap: () => launchUrl(Uri.parse("https://drive.google.com")),
-                  tileColor: Colors.white.withValues(alpha: 0.05),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "3. Actualizar Enlace Directo:",
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _modpackUrlController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText:
-                        "Ej: https://drive.google.com/uc?export=download&id=...",
-                    hintStyle: const TextStyle(color: Colors.white30),
-                    filled: true,
-                    fillColor: Colors.black26,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    suffixIcon: IconButton(
-                      icon:
-                          const Icon(Icons.save_as, color: Colors.greenAccent),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Funcionalidad de guardar URL pendiente de tabla 'app_config'",
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_isAdminDragging)
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.file_upload, color: Colors.white, size: 48),
-                      SizedBox(height: 8),
-                      Text(
-                        "SOLTAR PARA SUBIR A GITHUB",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _generateModpackZip() async {
-    setState(() => _isLoading = true);
-    try {
-      // 1. Locate Mods
-      // En Dev hardcodeamos para asegurar que apunta a TU carpeta real de Minecraft
-      const modsPath = r"c:\Users\nacho\AppData\Roaming\.minecraft\mods";
-      final modsDir = Directory(modsPath);
-
-      if (!await modsDir.exists()) {
-        throw Exception("No encuentro la carpeta mods en: $modsPath");
-      }
-
-      // 2. Create Zip
-      final encoder = ZipFileEncoder();
-      final tempDir = await getTemporaryDirectory();
-      final zipPath = p.join(tempDir.path, 'modpack.zip');
-
-      encoder.create(zipPath);
-
-      // Add all jars
-      final files = modsDir.listSync().whereType<File>().where(
-        (f) => f.path.endsWith('.jar'),
-      );
-      int count = 0;
-      for (var file in files) {
-        encoder.addFile(file);
-        count++;
-      }
-      encoder.close();
-
-      // 3. Move to Desktop (for easy access)
-      const desktopPath = r"c:\Users\nacho\Desktop\modpack.zip";
-      final targetFile = File(desktopPath);
-      if (await targetFile.exists()) {
-        await targetFile.delete();
-      }
-      File(zipPath).copySync(desktopPath);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("✅ Modpack creado con $count mods en Escritorio!"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ Error: $e"), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
 
   Widget _buildUpdateSection() {
     return ListenableBuilder(
@@ -864,180 +599,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildVersionAndConnection() {
-    final availableNeoForge = _versionMap[_mcVersion] ?? [];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              "Versión de Minecraft:",
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _mcVersion,
-                    dropdownColor: const Color(0xFF2A2A2A),
-                    style: const TextStyle(color: Colors.white),
-                    items: _versionMap.keys
-                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          _mcVersion = val;
-                          // Auto-sync NeoForge to the first (default) version of the new MC version
-                          _neoForgeVersion = _versionMap[val]?.first ?? "";
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            const Text(
-              "Loader (NeoForge/Forge):",
-              style: TextStyle(color: Colors.white70),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: availableNeoForge.contains(_neoForgeVersion)
-                        ? _neoForgeVersion
-                        : (availableNeoForge.isNotEmpty
-                              ? availableNeoForge.first
-                              : null),
-                    dropdownColor: const Color(0xFF2A2A2A),
-                    style: const TextStyle(color: Colors.white),
-                    items: availableNeoForge
-                        .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setState(() => _neoForgeVersion = val);
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: const Text(
-            "Conexión Directa al Servidor",
-            style: TextStyle(color: Colors.white),
-          ),
-          subtitle: const Text(
-            "Se conectará automáticamente a mc.crystaltidesSMP.net",
-            style: TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-          trailing: Switch(
-            value: _autoConnect,
-            thumbColor: WidgetStateProperty.all(AppTheme.accent),
-            onChanged: (val) => setState(() => _autoConnect = val),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildKeybindingsSection() {
-    if (_keybindings.isEmpty) {
-      return const Text(
-        "Cargando atajos...",
-        style: TextStyle(color: Colors.white24),
-      );
-    }
-
-    return Column(
-      children: _keybindings
-          .map((key) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _getKeybindingLabel(key.action),
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => _recordKeybinding(key),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white10),
-                      ),
-                      child: Text(
-                        key.keyString,
-                        style: const TextStyle(
-                          color: AppTheme.accent,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          })
-          .toList()
-          .cast<Widget>(),
-    );
-  }
-
-  String _getKeybindingLabel(String action) {
-    switch (action) {
-      case 'launch_game':
-        return 'Lanzar Juego (F5)';
-      case 'open_mods':
-        return 'Abrir Mods (Ctrl+M)';
-      case 'open_settings':
-        return 'Configuración (Ctrl+S)';
-      default:
-        return action;
-    }
-  }
-
-  Future<void> _recordKeybinding(Keybinding key) async {
-    // Basic implementation: Show a dialog and wait for key?
-    // For now, let's just show a snackbar saying it's coming soon or hardcode a toggle
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Grabación de teclas interactiva en desarrollo"),
-      ),
     );
   }
 }

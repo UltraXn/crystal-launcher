@@ -1,8 +1,13 @@
-// Force Rebuild v1.0.8-fix
+// Force Rebuild v1.0.9-r2sync
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use rusqlite::Connection;
 use sha1::{Sha1, Digest};
+
+// R2 Sync Module (Parallel Upload/Download)
+mod r2_sync;
+pub use r2_sync::*;
+
 // Global State (Thread-Safe would require lazy_static or OnceLock, simplifying for PoC)
 // For a real production DLL, we'd pass a context pointer back to the host.
 
@@ -243,6 +248,134 @@ pub extern "C" fn install_neoforge(
     }
 
     exit_code
+}
+
+#[derive(serde::Deserialize)]
+struct GithubAsset {
+    id: u64,
+    name: String,
+}
+
+#[derive(serde::Deserialize)]
+struct GithubRelease {
+    id: u64,
+    assets: Vec<GithubAsset>,
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn upload_to_github(
+    repo_ptr: *const c_char,
+    tag_ptr: *const c_char,
+    file_path_ptr: *const c_char,
+    token_ptr: *const c_char
+) -> i32 {
+    let repo = unsafe {
+        if repo_ptr.is_null() { return -1; }
+        match CStr::from_ptr(repo_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let tag = unsafe {
+        if tag_ptr.is_null() { return -1; }
+        match CStr::from_ptr(tag_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let file_path = unsafe {
+        if file_path_ptr.is_null() { return -1; }
+        match CStr::from_ptr(file_path_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let token = unsafe {
+        if token_ptr.is_null() { return -1; }
+        match CStr::from_ptr(token_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let client = match reqwest::blocking::Client::builder()
+        .user_agent("CrystalTides-Launcher/1.0.0")
+        .build() {
+            Ok(c) => c,
+            Err(_) => return -10,
+        };
+
+    // 1. Get Release ID and Assets from Tag
+    let release_url = format!("https://api.github.com/repos/{}/releases/tags/{}", repo, tag);
+    let release_resp = client.get(&release_url)
+        .header("Authorization", format!("token {}", token))
+        .header("Accept", "application/vnd.github.v3+json")
+        .send();
+
+    let release: GithubRelease = match release_resp {
+        Ok(resp) if resp.status().is_success() => {
+            match resp.json() {
+                Ok(data) => data,
+                Err(e) => {
+                    println!("[Rust] JSON Parse Error: {}", e);
+                    return -11;
+                },
+            }
+        },
+        Ok(resp) => {
+            println!("[Rust] Release Fetch Error: {}", resp.status());
+            return -12;
+        },
+        Err(_) => return -13,
+    };
+
+    let file_name = std::path::Path::new(file_path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown.jar");
+
+    // 2. Clobber logic: Delete if exists
+    if let Some(asset) = release.assets.iter().find(|a| a.name == file_name) {
+        println!("[Rust] Asset '{}' already exists (ID: {}). Deleting for clobber...", file_name, asset.id);
+        let delete_url = format!("https://api.github.com/repos/{}/releases/assets/{}", repo, asset.id);
+        let delete_resp = client.delete(&delete_url)
+            .header("Authorization", format!("token {}", token))
+            .header("Accept", "application/vnd.github.v3+json")
+            .send();
+            
+        if let Ok(resp) = delete_resp {
+            if !resp.status().is_success() && resp.status().as_u16() != 404 {
+                 println!("[Rust] Warning: Failed to delete existing asset: {}", resp.status());
+            }
+        }
+    }
+
+    // 3. Upload Asset
+    let upload_base = format!("https://uploads.github.com/repos/{}/releases/{}/assets", repo, release.id);
+    let upload_url = format!("{}?name={}", upload_base, file_name);
+
+    let file_data = match std::fs::read(file_path) {
+        Ok(data) => data,
+        Err(_) => return -20,
+    };
+
+    let upload_resp = client.post(&upload_url)
+        .header("Authorization", format!("token {}", token))
+        .header("Content-Type", "application/octet-stream")
+        .body(file_data)
+        .send();
+
+    match upload_resp {
+        Ok(resp) if resp.status().is_success() => 1, // Success
+        Ok(resp) => {
+            println!("[Rust] Upload Error: {}", resp.status());
+            -14
+        },
+        Err(_) => -15,
+    }
 }
 
 #[unsafe(no_mangle)]

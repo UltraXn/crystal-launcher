@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import '../utils/logger.dart';
+import 'log_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'supabase_service.dart';
 
@@ -13,11 +13,13 @@ class UserSession {
   final String? skinUrl;
   final AuthType type;
   final String? accessToken;
+  final String? refreshToken;
   final String? uuid; // Added for Minecraft launch
   final String? role; // Direct role (if primary auth provides it)
   final String? linkedCrystalRole;
   final String? linkedCrystalEmail;
   final String? linkedCrystalAvatar;
+  final String? adminToken; // Elevated token from 2FA
 
   UserSession({
     required this.id,
@@ -25,11 +27,13 @@ class UserSession {
     required this.type,
     this.skinUrl,
     this.accessToken,
+    this.refreshToken,
     this.uuid,
     this.role,
     this.linkedCrystalRole,
     this.linkedCrystalEmail,
     this.linkedCrystalAvatar,
+    this.adminToken,
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,11 +42,13 @@ class UserSession {
     'skinUrl': skinUrl,
     'type': type.toString(),
     'accessToken': accessToken,
+    'refreshToken': refreshToken,
     'uuid': uuid,
     'role': role,
     'linkedCrystalRole': linkedCrystalRole,
     'linkedCrystalEmail': linkedCrystalEmail,
     'linkedCrystalAvatar': linkedCrystalAvatar,
+    'adminToken': adminToken,
   };
 
   factory UserSession.fromJson(Map<String, dynamic> json) {
@@ -55,17 +61,21 @@ class UserSession {
         orElse: () => AuthType.none,
       ),
       accessToken: json['accessToken'],
+      refreshToken: json['refreshToken'],
       uuid: json['uuid'],
       role: json['role'],
       linkedCrystalRole: json['linkedCrystalRole'],
       linkedCrystalEmail: json['linkedCrystalEmail'],
       linkedCrystalAvatar: json['linkedCrystalAvatar'],
+      adminToken: json['adminToken'],
     );
   }
 
   String? get effectiveRole => role ?? linkedCrystalRole;
 
   bool get isAdmin {
+    if (adminToken != null) return true; // Explicit elevation
+    
     final r = effectiveRole;
     if (r == null) return false;
     final adminRoles = [
@@ -106,7 +116,44 @@ class SessionService extends ChangeNotifier {
     if (_currentSession?.type == AuthType.crystal) {
       final supabaseUser = SupabaseService().currentUser;
       if (supabaseUser == null) {
-        // Session expired or invalid
+        logService.log("Session Check: Supabase user is null but valid session on disk found.", category: "AUTH");
+        // Try to recover session using refreshToken if available
+        if (_currentSession?.refreshToken != null) {
+          logService.log("Session Check: Attempting recovery with refresh token...", category: "AUTH");
+          try {
+            final response = await SupabaseService().client.auth.setSession(_currentSession!.refreshToken!);
+            logService.log("Session Check: Recovery successful!", category: "AUTH");
+            
+            // CRITICAL: Update _currentSession with the new refreshed session data
+            // The previous _currentSession has the OLD accessToken (expired)
+            final user = response.user;
+            if (user != null && response.session != null) {
+               final role = user.appMetadata['role'] ?? user.userMetadata?['role'];
+               // We keep the ID and basic info, but update auth tokens and role
+               _currentSession = UserSession(
+                  id: _currentSession!.id,
+                  username: _currentSession!.username, // Keep username
+                  type: _currentSession!.type, 
+                  accessToken: response.session!.accessToken, // NEW Token
+                  refreshToken: response.session!.refreshToken, // NEW Refresh Token
+                  uuid: _currentSession!.uuid,
+                  skinUrl: _currentSession!.skinUrl,
+                  role: role?.toString(), // Refresh role
+                  linkedCrystalRole: _currentSession!.linkedCrystalRole,
+                  linkedCrystalEmail: _currentSession!.linkedCrystalEmail,
+                  linkedCrystalAvatar: _currentSession!.linkedCrystalAvatar,
+               );
+               await _saveSessionToDisk();
+               notifyListeners();
+            }
+            return; // Session restored, no need to logout
+          } catch (e) {
+            logService.log("Session Check: Recovery failed: $e", level: Level.warning, category: "AUTH");
+          }
+        }
+        
+        // Session expired or invalid and recovery failed
+        logService.log("Session Check: Logging out due to invalid session.", category: "AUTH");
         await logout();
       }
     }
@@ -142,6 +189,7 @@ class SessionService extends ChangeNotifier {
           username: username,
           type: AuthType.crystal,
           accessToken: response.session?.accessToken,
+          refreshToken: response.session?.refreshToken,
           skinUrl:
               avatarUrl, // Use avatar as skinUrl for primary crystal session
           uuid: user.id,
@@ -175,6 +223,7 @@ class SessionService extends ChangeNotifier {
           username: current.username,
           type: current.type,
           accessToken: current.accessToken,
+          refreshToken: current.refreshToken,
           uuid: current.uuid,
           skinUrl: current.skinUrl,
           role: current.role,
@@ -187,9 +236,32 @@ class SessionService extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      logger.e("Error vinculando cuenta Crystal", error: e);
+      logService.log("Error vinculando cuenta Crystal", error: e, level: Level.error, category: "AUTH");
       rethrow;
     }
+  }
+
+  Future<void> elevateSession(String adminToken, {String? role}) async {
+    final current = _currentSession;
+    if (current == null) return;
+
+    _currentSession = UserSession(
+      id: current.id,
+      username: current.username,
+      type: current.type,
+      accessToken: current.accessToken,
+      refreshToken: current.refreshToken,
+      uuid: current.uuid,
+      skinUrl: current.skinUrl,
+      role: role ?? current.role, // Update role if provided
+      linkedCrystalRole: current.linkedCrystalRole,
+      linkedCrystalEmail: current.linkedCrystalEmail,
+      linkedCrystalAvatar: current.linkedCrystalAvatar,
+      adminToken: adminToken,
+    );
+
+    await _saveSessionToDisk();
+    notifyListeners();
   }
 
   Future<void> logout() async {
@@ -214,7 +286,7 @@ class SessionService extends ChangeNotifier {
         await file.writeAsString(jsonEncode(_currentSession!.toJson()));
       }
     } catch (e) {
-      logger.e("Error saving session", error: e);
+      logService.log("Error saving session", error: e, level: Level.error, category: "STORAGE");
     }
   }
 
@@ -228,7 +300,7 @@ class SessionService extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      logger.e("Error loading session", error: e);
+      logService.log("Error loading session", error: e, level: Level.error, category: "STORAGE");
     }
   }
 
@@ -253,7 +325,7 @@ class SessionService extends ChangeNotifier {
         // It's much cleaner than doing base64 decoding in Dart for a simple UI element
         return 'https://mc-heads.net/skin/${session.uuid}';
       } catch (e) {
-        logger.e("Error resolving Mojang skin", error: e);
+        logService.log("Error resolving Mojang skin", error: e, level: Level.error, category: "NETWORK");
       }
     }
 

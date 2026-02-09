@@ -1,4 +1,4 @@
-import '../utils/logger.dart';
+import 'log_service.dart';
 
 class MicrosoftAuthService {
   /* 
@@ -20,8 +20,8 @@ class MicrosoftAuthService {
     // 1. Open Browser/WebView for OAuth
     // 2. Capture Code
     // 3. Perform Token Exchanges
-    logger.i("🌊 Starting Microsoft Auth Flow...");
+    logService.log("🌊 Starting Microsoft Auth Flow...", category: "AUTH");
     await Future.delayed(const Duration(seconds: 2)); // Mock delay
-    logger.w("⚠️ Microsoft Auth not fully implemented yet.");
+    logService.log("⚠️ Microsoft Auth not fully implemented yet.", level: Level.warning, category: "AUTH");
   }
 }

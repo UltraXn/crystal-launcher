@@ -1,5 +1,5 @@
 import 'dart:io';
-import '../utils/logger.dart';
+import 'log_service.dart';
 import 'package:path/path.dart' as p;
 import 'database_service.dart';
 import '../data/local_database.dart';
@@ -89,13 +89,13 @@ class ProcessRunner {
             );
             if (found.path != "NOT_FOUND") {
               versionId = p.basename(found.path);
-              logger.i("Auto-detected NeoForge folder: $versionId");
+              logService.log("Auto-detected NeoForge folder: $versionId", category: "SYSTEM");
             } else {
-              logger.w("NeoForge directory not found. Launching Vanilla?");
+              logService.log("NeoForge directory not found. Launching Vanilla?", level: Level.warning, category: "SYSTEM");
             }
           }
         } catch (e) {
-          logger.e("Error scanning versions directory", error: e);
+          logService.log("Error scanning versions directory", error: e, level: Level.error, category: "SYSTEM");
         }
       }
     }
@@ -157,7 +157,7 @@ class ProcessRunner {
 
       args.add(arg);
       if (arg.contains('bootstraplauncher')) {
-        logger.d("[JVM-ARG-DEBUG] Bootstraplauncher arg: $arg");
+        logService.log("[JVM-ARG-DEBUG] Bootstraplauncher arg: $arg", category: "GAME");
       }
     }
 
@@ -182,7 +182,7 @@ class ProcessRunner {
 
       if (isVersionJar) {
         // Check if this is the "minecraft" jar.
-        logger.d("[CP-FILTER] Excluding potential duplicate client jar: $path");
+        logService.log("[CP-FILTER] Excluding potential duplicate client jar: $path", category: "GAME");
         return false;
       }
       return true;
@@ -191,7 +191,7 @@ class ProcessRunner {
     if (finalClasspath.isEmpty) {
       // Safety net: If we filtered everything (unlikely), put it back or things will definitely break.
       // But for NeoForge, the libraries are usually enough to start Bootstrap.
-      logger.w("Classpath is empty after filtering! Restoring original.");
+      logService.log("Classpath is empty after filtering! Restoring original.", level: Level.warning, category: "GAME");
       finalClasspath = launchInfo.classpath;
     }
 
@@ -250,12 +250,12 @@ class ProcessRunner {
       }
     }
 
-    logger.i("Launching Minecraft ($versionId) with: $javaPath");
+    logService.log("Launching Minecraft ($versionId) with: $javaPath", category: "GAME");
     // Securely log args (hide access token)
     final safeArgs = args
         .map((a) => a == accessToken ? 'ACCESS_TOKEN_HIDDEN' : a)
         .join(' ');
-    logger.d("Args: $safeArgs");
+    logService.log("Args: $safeArgs", level: Level.debug, category: "GAME");
 
     // 4. Start Process
     // 4. Start Process
@@ -269,13 +269,12 @@ class ProcessRunner {
 
     // Pipe output to logger
     process.stdout.transform(const SystemEncoding().decoder).listen((data) {
-      logger.i("[MC-STDOUT] $data");
+      logService.log("[MC-STDOUT] $data", category: "GAME");
     });
     process.stderr.transform(const SystemEncoding().decoder).listen((data) {
-      logger.e("[MC-STDERR] $data");
+      logService.log("[MC-STDERR] $data", level: Level.error, category: "GAME");
     });
-
-    logger.i("Process started with PID: ${process.pid}");
+    logService.log("Process started with PID: ${process.pid}", category: "GAME");
   }
 
   // Helper moved to GameInstallerService

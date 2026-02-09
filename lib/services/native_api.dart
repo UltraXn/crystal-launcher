@@ -20,6 +20,20 @@ typedef InstallNeoForge = int Function(
 typedef CalculateSha1Func = Pointer<Utf8> Function(Pointer<Utf8> path);
 typedef CalculateSha1 = Pointer<Utf8> Function(Pointer<Utf8> path);
 
+typedef UploadToGitHubFunc = Int32 Function(
+  Pointer<Utf8> repo,
+  Pointer<Utf8> tag,
+  Pointer<Utf8> filePath,
+  Pointer<Utf8> token,
+);
+
+typedef UploadToGitHub = int Function(
+  Pointer<Utf8> repo,
+  Pointer<Utf8> tag,
+  Pointer<Utf8> filePath,
+  Pointer<Utf8> token,
+);
+
 class NativeApi {
   static final NativeApi _instance = NativeApi._internal();
   factory NativeApi() => _instance;
@@ -28,8 +42,7 @@ class NativeApi {
   late DynamicLibrary _lib;
   late InstallNeoForge _installNeoForge;
   late CalculateSha1 _calculateSha1;
-
-
+  late UploadToGitHub _uploadToGitHub;
 
   bool _initialized = false;
 
@@ -38,9 +51,6 @@ class NativeApi {
 
     var libraryPath = 'native.dll';
     if (Platform.isWindows) {
-      // In production/release, it might be next to the executable
-      // In debug, we point to the build output for convenience if needed, 
-      // but usually we rely on it being copied to the build folder.
       libraryPath = 'installer_native.dll'; 
     } else if (Platform.isLinux) {
       libraryPath = 'libnative.so';
@@ -51,7 +61,6 @@ class NativeApi {
     try {
       _lib = DynamicLibrary.open(libraryPath);
     } catch (e) {
-      // Fallback for development/debug if not copied yet
       try {
         _lib = DynamicLibrary.open('native/target/release/installer_native.dll');
       } catch (e2) {
@@ -63,15 +72,42 @@ class NativeApi {
         .lookup<NativeFunction<InstallNeoForgeFunc>>('install_neoforge')
         .asFunction();
 
+    _calculateSha1 = _lib
+        .lookup<NativeFunction<CalculateSha1Func>>('calculate_sha1')
+        .asFunction();
+
     try {
-      _calculateSha1 = _lib
-          .lookup<NativeFunction<CalculateSha1Func>>('calculate_sha1')
+      _uploadToGitHub = _lib
+          .lookup<NativeFunction<UploadToGitHubFunc>>('upload_to_github')
           .asFunction();
     } catch (e) {
-      stderr.writeln("Warning: calculate_sha1 not found in DLL. Old version?");
+      stderr.writeln("Warning: upload_to_github not found in DLL.");
     }
 
     _initialized = true;
+  }
+
+  Future<int> uploadToGitHub({
+    required String repo,
+    required String tag,
+    required String filePath,
+    required String token,
+  }) async {
+    if (!_initialized) init();
+
+    final repoPtr = repo.toNativeUtf8();
+    final tagPtr = tag.toNativeUtf8();
+    final filePathPtr = filePath.toNativeUtf8();
+    final tokenPtr = token.toNativeUtf8();
+
+    try {
+      return _uploadToGitHub(repoPtr, tagPtr, filePathPtr, tokenPtr);
+    } finally {
+      calloc.free(repoPtr);
+      calloc.free(tagPtr);
+      calloc.free(filePathPtr);
+      calloc.free(tokenPtr);
+    }
   }
 
   Future<String?> calculateFileHash(String filePath) async {

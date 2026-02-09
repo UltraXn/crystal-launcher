@@ -1,79 +1,111 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'native_api.dart';
+import '../utils/hash_utils.dart';
 import 'supabase_service.dart';
-import '../utils/logger.dart';
+import 'log_service.dart';
+import 'native_r2_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AdminService {
-  static final AdminService _instance = AdminService._internal();
-  factory AdminService() => _instance;
-  AdminService._internal();
+  final LogService logService = LogService();
+  final NativeR2Service _nativeR2 = NativeR2Service();
+  
+  final String bucketName = "ctlauncher";
+  final String publicUrlBase = "https://mods.crystaltidessmp.net";
+  final String r2Endpoint = "a532114ca6919da0a11158f44975727b.r2.cloudflarestorage.com";
 
-  final String _repo = "UltraXn/CrystalTides-Assets";
-  final String _tag = "mods-v1";
+  AdminService();
 
-  /// Orquestra el proceso completo: Hash -> Upload -> Registro DB
-  Future<void> processAdminModImport(File file, {Function(String)? onStatusUpdate}) async {
-    final fileName = p.basename(file.path);
-    
-    try {
-      // 1. Calcular Hash SHA1
-      onStatusUpdate?.call("Calculando hash...");
-      final hash = await NativeApi().calculateFileHash(file.path);
-      if (hash == null) throw Exception("Error al calcular el hash del archivo.");
-      logger.i("Hash calculado para $fileName: $hash");
+  /// Escanea una carpeta local en busca de mods y genera sus metadatos
+  Future<List<Map<String, dynamic>>> scanLocalMods(String directoryPath) async {
+    final dir = Directory(directoryPath);
+    if (!await dir.exists()) return [];
 
-      // 2. Subir a GitHub
-      onStatusUpdate?.call("Subiendo a GitHub...");
-      await _uploadToGitHub(file);
-      logger.i("Archivo subido a GitHub: $fileName");
+    final List<Map<String, dynamic>> mods = [];
+    final files = dir.listSync().whereType<File>().where((f) => f.path.endsWith('.jar'));
 
-      // 3. Registrar en Supabase
-      onStatusUpdate?.call("Registrando en base de datos...");
-      final downloadUrl = "https://github.com/$_repo/releases/download/$_tag/$fileName";
-      await _registerInSupabase(fileName, hash, downloadUrl);
-      logger.i("Mod registrado en Supabase: $fileName");
-
-      onStatusUpdate?.call("Importación completada con éxito.");
-    } catch (e) {
-      logger.e("Error en processAdminModImport para $fileName", error: e);
-      rethrow;
-    }
-  }
-
-  Future<void> _uploadToGitHub(File file) async {
-    // Usamos el comando 'gh release upload' con --clobber para sobreescribir si ya existe
-    final result = await Process.run(
-      'gh',
-      ['release', 'upload', _tag, file.path, '--repo', _repo, '--clobber'],
-    );
-
-    if (result.exitCode != 0) {
-      throw Exception("Error de GitHub CLI (${result.exitCode}): ${result.stderr}");
-    }
-  }
-
-  Future<void> _registerInSupabase(String name, String hash, String url) async {
-    // Primero verificamos si ya existe para actualizar o insertar
-    final existing = await SupabaseService().client
-        .from('official_mods')
-        .select()
-        .eq('name', name)
-        .maybeSingle();
-
-    if (existing != null) {
-      await SupabaseService().client.from('official_mods').update({
-        'sha1': hash,
-        'download_url': url,
-        'version': '1.0', // Versión por defecto
-      }).eq('name', name);
-    } else {
-      await SupabaseService().client.from('official_mods').insert({
+    for (var file in files) {
+      final name = p.basename(file.path);
+      final hash = await HashUtils.getFileHash(file);
+      mods.add({
         'name': name,
+        'path': file.path,
         'sha1': hash,
-        'download_url': url,
-        'version': '1.0',
+        'size': await file.length(),
       });
     }
+
+    return mods;
+  }
+
+  /// Sube múltiples mods a Cloudflare R2 en paralelo usando Rust
+  Future<void> uploadModsBatch(
+    List<Map<String, dynamic>> mods,
+    {Function(int, int, String)? onProgress}
+  ) async {
+    final filePaths = mods.map((m) => m['path'] as String).toList();
+    
+    logService.log("🚀 Iniciando subida paralela de ${filePaths.length} mods...", category: "ADMIN");
+    
+    await _nativeR2.uploadModsBatch(
+      filePaths,
+      dotenv.get('R2_ACCESS_KEY'),
+      dotenv.get('R2_SECRET_KEY'),
+      r2Endpoint,
+      bucketName,
+      maxConcurrent: 10,
+      onProgress: onProgress,
+    );
+    
+    logService.log("✅ Todos los mods subidos correctamente.", category: "ADMIN");
+  }
+
+  /// Sube un solo mod (método legacy para compatibilidad)
+  Future<void> uploadMod(String filePath) async {
+    await uploadModsBatch([{'path': filePath}]);
+  }
+
+  /// Actualiza la tabla official_mods en Supabase
+  Future<void> publishMods(List<Map<String, dynamic>> mods) async {
+    logService.log("📝 Actualizando base de datos en Supabase...", category: "ADMIN");
+
+    final client = SupabaseService().client;
+
+    // Primero limpiamos la tabla (o usamos upsert si queremos mantener historial)
+    // Para simplificar, haremos un TRUNCATE-like delete y luego insert
+    await client.from('official_mods').delete().neq('name', '');
+
+    final List<Map<String, dynamic>> rows = mods.map((mod) => {
+      'name': mod['name'],
+      'version': '1.0',
+      'sha1': mod['sha1'],
+      'download_url': '$publicUrlBase/${Uri.encodeComponent(mod['name'])}',
+    }).toList();
+
+    await client.from('official_mods').insert(rows);
+    
+    logService.log("✨ Base de datos actualizada con ${rows.length} mods.", category: "ADMIN");
+  }
+
+  /// Método de compatibilidad para ModManagerPage
+  Future<void> processAdminModImport(File file, {required Function(String) onStatusUpdate}) async {
+    final name = p.basename(file.path);
+    onStatusUpdate("Hasheando $name...");
+    final hash = await HashUtils.getFileHash(file);
+    
+    onStatusUpdate("Subiendo $name a R2...");
+    await uploadMod(file.path);
+    
+    onStatusUpdate("Publicando $name en base de datos...");
+    // Para simplificar el import individual, podríamos hacer un upsert
+    final client = SupabaseService().client;
+    await client.from('official_mods').upsert({
+      'name': name,
+      'version': '1.0',
+      'sha1': hash,
+      'download_url': '$publicUrlBase/${Uri.encodeComponent(name)}',
+    });
+    
+    onStatusUpdate("✅ $name listo.");
   }
 }

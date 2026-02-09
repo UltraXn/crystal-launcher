@@ -4,9 +4,8 @@ import 'dart:isolate';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:crypto/crypto.dart';
-// import 'package:archive/archive.dart';
-import '../utils/logger.dart';
 import 'native_api.dart';
+import 'log_service.dart';
 
 // Progress callback type
 typedef ProgressCallback = void Function(String status, double progress);
@@ -30,7 +29,7 @@ class GameInstallerService {
     ProgressCallback? onProgress,
   }) async {
     try {
-      logger.i("Starting installation for $versionId in $gameDirectory");
+      logService.log("🚀 Starting installation for $versionId in $gameDirectory", category: "GAME");
       onProgress?.call("Iniciando instalación...", 0.0);
 
       final versionDir = p.join(gameDirectory, 'versions', versionId);
@@ -40,6 +39,7 @@ class GameInstallerService {
       onProgress?.call("Obteniendo manifiesto de versión...", 0.05);
       final versionJsonUrl = await _getVersionJsonUrl(versionId);
       if (versionJsonUrl == null) {
+        logService.log("❌ Version $versionId not found in manifest", level: Level.error, category: "NETWORK");
         throw Exception(
           "Versión $versionId no encontrada en el manifiesto oficial.",
         );
@@ -62,13 +62,9 @@ class GameInstallerService {
       await _downloadAssets(versionData, gameDirectory, onProgress);
 
       onProgress?.call("Instalación completada.", 1.0);
-      logger.i("Installation of $versionId completed successfully.");
+      logService.log("✅ Installation of $versionId completed successfully.", category: "GAME");
     } catch (e, stack) {
-      logger.e(
-        "Error installing version $versionId",
-        error: e,
-        stackTrace: stack,
-      );
+      logService.log("❌ Error installing version $versionId", level: Level.error, error: e, stackTrace: stack, category: "GAME");
       rethrow;
     }
   }
@@ -81,7 +77,7 @@ class GameInstallerService {
     ProgressCallback? onProgress,
   }) async {
     try {
-      logger.i("Starting NeoForge installation: $mcVersion - $neoVersion");
+      logService.log("🚀 Starting NeoForge installation: $mcVersion - $neoVersion", category: "GAME");
       onProgress?.call("Preparando instalador NeoForge...", 0.0);
 
       // Initialize native API
@@ -100,10 +96,6 @@ class GameInstallerService {
 
       // Call Rust native function in a background isolate to avoid freezing UI
       final result = await Isolate.run(() async {
-        // Re-initialize API in the new isolate if strict, but usually FFI pointers are shareable
-        // if we use the same dylib. However, simpler to just pass primitives and let
-        // a static helper or fresh init handle it.
-        // For simplicity with our current singleton:
         final api = NativeApi();
         api.init(); // Ensure init in this isolate
         return api.installNeoForge(
@@ -114,16 +106,16 @@ class GameInstallerService {
       });
 
       if (result != 1) {
-        logger.e("NeoForge Installer Failed with code: $result");
+        logService.log("❌ NeoForge Installer Failed with code: $result", level: Level.error, category: "GAME");
         throw Exception(
           "El instalador de NeoForge falló con código $result",
         );
       }
 
       onProgress?.call("NeoForge Instalado Correctamente.", 1.0);
-      logger.i("NeoForge installed successfully via Rust.");
+      logService.log("✅ NeoForge installed successfully via Rust.", category: "GAME");
     } catch (e, stack) {
-      logger.e("Error installing NeoForge", error: e, stackTrace: stack);
+      logService.log("❌ Error installing NeoForge", level: Level.error, error: e, stackTrace: stack, category: "GAME");
       rethrow;
     }
   }

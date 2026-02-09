@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
 import '../data/local_database.dart';
-import '../utils/logger.dart';
+import 'log_service.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();
@@ -17,14 +17,14 @@ class DatabaseService {
   }
 
   Future<void> initialize() async {
-    logger.i("Opening database connection...");
+    logService.log("Opening database connection...", category: "STORAGE");
     _db = LocalDatabase();
     // Warm up connection
-    logger.i("Warming up database connection (querying settings)...");
+    logService.log("Warming up database connection (querying settings)...", category: "STORAGE");
     await _db!.select(_db!.settings).get();
-    logger.i("Database connection warmed up");
+    logService.log("Database connection warmed up", category: "STORAGE");
     await initDefaultKeybindings();
-    logger.i("Default keybindings initialized");
+    logService.log("Default keybindings initialized", category: "STORAGE");
   }
 
   // Settings API

@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'main_shell.dart';
+import 'services/log_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  await logService.initialize();
+  logService.log("🚀 Starting CrystalTides Installer...");
+  
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = const WindowOptions(

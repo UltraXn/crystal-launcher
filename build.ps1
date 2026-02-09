@@ -1,0 +1,136 @@
+param(
+    [switch]$Clean
+)
+
+$ErrorActionPreference = "Stop"
+
+# --- CONFIGURATION ---
+$launcherRoot = "f:\Portafolio\crystaltides\apps\launcher"
+$installerRoot = "$launcherRoot\installer"
+$bootstrapperRoot = "$launcherRoot\bootstrapper"
+$nativeRoot = "$launcherRoot\native"
+
+# Add Flutter to PATH
+$env:Path += ";F:\tools\flutter\bin"
+
+# Temp Directories on C: (To avoid OS Error 433 on F:)
+$tempRoot = "C:\Users\nacho\.crystaltides_build_v2"
+$tempLauncher = "$tempRoot\launcher"
+$tempInstaller = "$tempRoot\installer"
+$tempBootstrapper = "$tempRoot\bootstrapper"
+
+function Write-Step { param([string]$msg) Write-Host "`n[STEP] $msg" -ForegroundColor Cyan }
+
+# --- CLEANUP LOGIC ---
+if ($Clean) {
+    Write-Host ">>> CLEANING PREVIOUS BUILD ARTIFACTS..." -ForegroundColor Yellow
+    if (Test-Path $tempRoot) { Remove-Item $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
+    Remove-Item "$launcherRoot\CTSMP_Installer.exe" -Force -ErrorAction SilentlyContinue
+    Remove-Item "$launcherRoot\installer\assets\payload\*.zip" -Force -ErrorAction SilentlyContinue
+    Remove-Item "$launcherRoot\bootstrapper\*.zip" -Force -ErrorAction SilentlyContinue
+}
+
+# --- PRE-CHECK ---
+Write-Step "Checking environment..."
+flutter --version
+cargo --version
+
+# Ensure temp root exists
+New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+
+# ==============================================================================
+# PHASE 1: BUILD MAIN LAUNCHER (The Game)
+# ==============================================================================
+Write-Step "PHASE 1: Building Game Client (Main Launcher)..."
+
+$gameDistDir = "$tempLauncher\build\windows\x64\runner\Release"
+$payloadAssetDir = "$installerRoot\assets\payload"
+if (!(Test-Path $payloadAssetDir)) { New-Item -ItemType Directory -Force -Path $payloadAssetDir | Out-Null }
+$localPayloadZip = "$payloadAssetDir\game_payload.zip"
+
+# 1.1 Copy Source to C:
+Write-Host "Copying Game Source to C:..."
+New-Item -ItemType Directory -Force -Path $tempLauncher | Out-Null
+robocopy "$launcherRoot" "$tempLauncher" /MIR /XD "build" "ephemeral" ".dart_tool" "pubspec.lock" "installer" "bootstrapper" "native" "scripts" > $null
+if ($LASTEXITCODE -ge 8) { throw "Robocopy failed with code $LASTEXITCODE" }
+
+# 1.2 Build
+Set-Location $tempLauncher
+Write-Host "Running flutter build windows..."
+flutter clean
+flutter pub get
+flutter build windows --release
+if (-not $?) { throw "Game Client Build Failed" }
+
+# 1.3 Zip Payload
+Write-Host "Zipping Game Client..."
+if (Test-Path "$gameDistDir\launcher.exe") {
+    Rename-Item "$gameDistDir\launcher.exe" "$gameDistDir\crystal_launcher.exe" -Force
+}
+Compress-Archive -Path "$gameDistDir\*" -DestinationPath $localPayloadZip -Force
+
+# ==============================================================================
+# PHASE 2: BUILD INSTALLER UI (The Setup App)
+# ==============================================================================
+Write-Step "PHASE 2: Building Installer UI..."
+
+Write-Host "Copying Installer Source to C:..."
+New-Item -ItemType Directory -Force -Path $tempInstaller | Out-Null
+Copy-Item -Recurse "$installerRoot\*" "$tempInstaller" -Force
+if (Test-Path "$tempInstaller\build") { Remove-Item "$tempInstaller\build" -Recurse -Force }
+
+Set-Location $tempInstaller
+Write-Host "Running flutter build windows (Installer)..."
+flutter clean
+flutter pub get
+flutter build windows --release
+if (-not $?) { throw "Installer UI Build Failed" }
+
+$installerDistDir = "$tempInstaller\build\windows\x64\runner\Release"
+
+# ==============================================================================
+# PHASE 2.5: BUILD RUST NATIVE LIBRARY (For Installer FFI)
+# ==============================================================================
+Write-Step "PHASE 2.5: Building Core Rust Library..."
+$tempNative = "$tempRoot\native"
+New-Item -ItemType Directory -Force -Path $tempNative | Out-Null
+Copy-Item -Recurse "$nativeRoot\*" "$tempNative" -Force
+
+Set-Location $tempNative
+$env:CARGO_TARGET_DIR = "$tempRoot\cargo_target_core"
+cargo build --release --lib
+if (-not $?) { throw "Core Lib Build Failed" }
+
+# Copy DLL to Installer Distribution
+Copy-Item "$env:CARGO_TARGET_DIR\release\CrystalNative.dll" "$installerDistDir\installer_native.dll" -Force
+
+# ==============================================================================
+# PHASE 3: BUILD BOOTSTRAPPER (The Final EXE)
+# ==============================================================================
+Write-Step "PHASE 3: Building Bootstrapper..."
+
+New-Item -ItemType Directory -Force -Path $tempBootstrapper | Out-Null
+Copy-Item -Recurse "$bootstrapperRoot\*" "$tempBootstrapper" -Force
+
+Write-Host "Zipping Installer UI into Bootstrapper Payload..."
+$finalPayloadZip = "$tempBootstrapper\installer_payload.zip"
+Compress-Archive -Path "$installerDistDir\*" -DestinationPath $finalPayloadZip -Force
+
+Copy-Item "$nativeRoot\app_icon.ico" "$tempBootstrapper\app_icon.ico" -Force
+
+Set-Location $tempBootstrapper
+$env:CARGO_TARGET_DIR = "$tempRoot\cargo_target_boot"
+cargo build --release
+if (-not $?) { throw "Bootstrapper Build Failed" }
+
+# ==============================================================================
+# PHASE 4: FINALIZE
+# ==============================================================================
+Write-Step "PHASE 4: Delivery..."
+$finalExe = "$env:CARGO_TARGET_DIR\release\crystal_bootstrapper.exe"
+$destExe = "$launcherRoot\CTSMP_Installer.exe"
+
+Copy-Item $finalExe $destExe -Force
+
+Write-Host "`n[SUCCESS] Installer available at: $destExe" -ForegroundColor Green
+Get-Item $destExe | Select-Object Name, Length, LastWriteTime

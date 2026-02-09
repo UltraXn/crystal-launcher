@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../pages/settings_page.dart';
-import '../pages/mod_manager_page.dart';
 import '../services/session_service.dart';
 import '../services/update_service.dart';
 import '../widgets/update_dialog.dart';
 import '../theme/app_theme.dart';
+import '../pages/profile_page.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -30,26 +29,55 @@ class MainLayout extends StatelessWidget {
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ModManagerPage(),
-                        ),
-                      );
+                      final currentRoute = ModalRoute.of(context)?.settings.name;
+                      if (currentRoute == '/mods') return;
+                      Navigator.pushNamed(context, '/mods');
                     },
                     child: const _SidebarItem(icon: Icons.extension_rounded),
                   ),
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsPage(),
-                        ),
-                      );
+                      final currentRoute = ModalRoute.of(context)?.settings.name;
+                      if (currentRoute == '/profiles') return;
+                      Navigator.pushNamed(context, '/profiles');
+                    },
+                    child: const _SidebarItem(icon: Icons.layers_rounded),
+                  ),
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () {
+                      final currentRoute = ModalRoute.of(context)?.settings.name;
+                      if (currentRoute == '/settings') return;
+                      Navigator.pushNamed(context, '/settings');
                     },
                     child: const _SidebarItem(icon: Icons.settings_rounded),
+                  ),
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () {
+                      final currentRoute = ModalRoute.of(context)?.settings.name;
+                      if (currentRoute == '/profile') return;
+                      Navigator.pushNamed(context, '/profile');
+                    },
+                    child: const _SidebarItem(icon: Icons.person_rounded),
+                  ),
+                  const SizedBox(height: 16),
+                  ListenableBuilder(
+                    listenable: SessionService(),
+                    builder: (context, _) {
+                      if (!(SessionService().currentSession?.isAdmin ?? false)) {
+                        return const SizedBox.shrink();
+                      }
+                      return GestureDetector(
+                        onTap: () {
+                          final currentRoute = ModalRoute.of(context)?.settings.name;
+                          if (currentRoute == '/admin') return;
+                          Navigator.pushNamed(context, '/admin');
+                        },
+                        child: const _SidebarItem(icon: Icons.admin_panel_settings_rounded),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   // Update Notification
@@ -124,6 +152,23 @@ class MainLayout extends StatelessWidget {
                     ),
                     itemBuilder: (context) => [
                       const PopupMenuItem(
+                        value: 'profile',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            SizedBox(width: 12),
+                            Text(
+                              "Mi Perfil",
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
                         value: 'logout',
                         child: Row(
                           children: [
@@ -144,6 +189,13 @@ class MainLayout extends StatelessWidget {
                     onSelected: (value) async {
                       if (value == 'logout') {
                         await SessionService().logout();
+                      } else if (value == 'profile') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfilePage(),
+                          ),
+                        );
                       }
                     },
                     child: ListenableBuilder(
