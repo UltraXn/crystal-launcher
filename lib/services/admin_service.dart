@@ -16,13 +16,22 @@ class AdminService {
 
   AdminService();
 
+  /// Lista de archivos que no deben ser incluidos en el modpack oficial (ej. plugins de servidor)
+  static const List<String> ignoredFiles = [
+    'Resourceloader-2.3.jar',
+    'ResourceLoader-2.3.jar',
+  ];
+
   /// Escanea una carpeta local en busca de mods y genera sus metadatos
   Future<List<Map<String, dynamic>>> scanLocalMods(String directoryPath) async {
     final dir = Directory(directoryPath);
     if (!await dir.exists()) return [];
 
     final List<Map<String, dynamic>> mods = [];
-    final files = dir.listSync().whereType<File>().where((f) => f.path.endsWith('.jar'));
+    final files = dir.listSync().whereType<File>().where((f) {
+      final name = p.basename(f.path);
+      return name.endsWith('.jar') && !ignoredFiles.contains(name);
+    });
 
     for (var file in files) {
       final name = p.basename(file.path);

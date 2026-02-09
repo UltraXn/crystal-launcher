@@ -75,12 +75,16 @@ class ModService {
         },
       );
 
-      // 2. Guardar manifiesto de mods oficiales para limpieza futura si se desea
       final List<String> currentOfficialFiles = remoteMods.map((m) => m['name'] as String).toList();
+
+      // 2. Limpiar mods oficiales que ya no están en la lista (Cleanup)
+      await _cleanupOfficialMods(gameDir, currentOfficialFiles);
+
+      // 3. Guardar manifiesto de mods oficiales para limpieza futura
       final manifestFile = File(p.join(gameDir, '.official_mods'));
       await manifestFile.writeAsString(currentOfficialFiles.join('\n'));
 
-      // 3. Guardar Fingerprint para isUpdateAvailable
+      // 4. Guardar Fingerprint para isUpdateAvailable
       final latestRemote = remoteMods.isNotEmpty ? remoteMods[0]['created_at'] : "none";
       final remoteCount = remoteMods.length;
       final fingerprintFile = File(p.join(gameDir, '.modpack_fingerprint'));
@@ -90,6 +94,38 @@ class ModService {
     } catch (e) {
       logService.log("❌ Error en sincronización: $e", level: Level.error, category: "STORAGE");
       rethrow;
+    }
+  }
+
+  /// Borra los archivos que estaban en el manifiesto anterior pero no en el nuevo
+  Future<void> _cleanupOfficialMods(String gameDir, List<String> currentOfficialFiles) async {
+    try {
+      final manifestFile = File(p.join(gameDir, '.official_mods'));
+      if (!await manifestFile.exists()) return;
+
+      final previousContent = await manifestFile.readAsString();
+      final List<String> previousFiles = previousContent.split('\n').where((s) => s.isNotEmpty).toList();
+      
+      final Set<String> currentSet = currentOfficialFiles.toSet();
+      final modsDir = p.join(gameDir, 'mods');
+
+      for (final oldFile in previousFiles) {
+        if (!currentSet.contains(oldFile)) {
+          final fileToDelete = File(p.join(modsDir, oldFile));
+          final disabledFile = File(p.join(modsDir, "$oldFile.disabled"));
+
+          if (await fileToDelete.exists()) {
+            logService.log("🗑️ Eliminando mod oficial obsoleto: $oldFile", category: "STORAGE");
+            await fileToDelete.delete();
+          }
+          if (await disabledFile.exists()) {
+            logService.log("🗑️ Eliminando mod oficial obsoleto (deshabilitado): $oldFile", category: "STORAGE");
+            await disabledFile.delete();
+          }
+        }
+      }
+    } catch (e) {
+      logService.log("⚠️ Error durante la limpieza de mods: $e", level: Level.warning, category: "STORAGE");
     }
   }
 
