@@ -1,0 +1,14 @@
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\thiserror-b74a72dfc8ffe488.d: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\build\thiserror-72bc4df0d772882c\out/private.rs
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libthiserror-b74a72dfc8ffe488.rlib: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\build\thiserror-72bc4df0d772882c\out/private.rs
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libthiserror-b74a72dfc8ffe488.rmeta: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\build\thiserror-72bc4df0d772882c\out/private.rs
+
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\lib.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\aserror.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\display.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\var.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\thiserror-2.0.18\src\private.rs:
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\build\thiserror-72bc4df0d772882c\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\nacho\\Desktop\\Portafolio\\crystaltides\\target\\release\\build\\thiserror-72bc4df0d772882c\\out

@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "index.ts",
+    "app.ts",
+    "config/**/*.ts",
+    "controllers/**/*.ts",
+    "routes/**/*.ts",
+    "services/**/*.ts",
+    "middleware/**/*.ts",
+    "types/**/*.ts",
+    "utils/**/*.ts",
+    "schemas/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

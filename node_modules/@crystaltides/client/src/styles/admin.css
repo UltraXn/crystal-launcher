@@ -1,0 +1,698 @@
+/* =========================================
+   ADMIN PANEL STYLES
+   ========================================= */
+
+/* 
+   NOTE: Most core layout styles have been moved to admin-layout.css.
+   This file should retain specific component styles like Tables, Badges, Polls, etc.
+*/
+
+/* Status Chips/Badges */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Dashboard Grids */
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.admin-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .admin-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Tablas Administrativas */
+.admin-table-container {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid #333;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.admin-table th {
+  background: #252525;
+  color: var(--muted);
+  padding: 1rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #333;
+}
+
+.admin-table td {
+  padding: 1em;
+  border-bottom: 1px solid #333;
+  color: #eee;
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Admin Card */
+.admin-card {
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================================
+   MODALS (Global Admin Modals)
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  background: #1a1a1a;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  border-radius: var(--radius);
+  border: 1px solid #444;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chat Styles en Tickets */
+.msg-bubble {
+  padding: 1rem;
+  border-radius: 12px;
+  max-width: 80%;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.msg-bubble.user {
+  background: #2a2a2a;
+  color: #eee;
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+.msg-bubble.staff {
+  background: var(--accent);
+  color: #000;
+  align-self: flex-end;
+  margin-left: auto;
+  border-bottom-right-radius: 2px;
+}
+
+.msg-header {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Botones de Acción (Admin Actions) */
+.btn-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.btn-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-action.ban { background: #ef4444; }
+.btn-action.resolve { background: #10b981; }
+.btn-action.close { background: #6b7280; }
+.btn-action.delete { background: #991b1b; }
+
+/* Form Elements */
+.admin-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #ccc;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  background-color: #252525;
+  border: 1px solid #555;
+  border-radius: 2px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.admin-input:hover {
+  border-color: #555;
+  background-color: #2a2a2a;
+}
+
+.admin-input:focus {
+  border-color: var(--accent);
+  background-color: #2a2a2a;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+.admin-input::placeholder { color: #666; }
+
+select.admin-input {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 1rem center !important;
+  background-size: 1.2em !important;
+  padding-right: 2.5rem !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+textarea.admin-input { resize: vertical; }
+
+/* Custom Checkboxes */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+input[type="checkbox"]::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #000;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  opacity: 0;
+  position: absolute;
+  top: 45%; 
+  left: 50%;
+  transform-origin: center;
+  translate: -50% -60%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input[type="checkbox"]:checked::after {
+  transform: rotate(45deg) scale(1);
+  opacity: 1;
+}
+
+
+/* Staff Hub Styles */
+.staff-workspace-container {
+  display: flex;
+  gap: 1.5rem;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+.staff-workspace-section {
+  background: rgba(10, 10, 15, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-workspace-section:first-child {
+  flex: 3;
+}
+
+.staff-workspace-section:last-child {
+  flex: 1;
+  min-width: 300px;
+}
+
+.kanban-header {
+  padding: 0 0 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.kanban-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1024px) {
+  .staff-workspace-container {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .staff-workspace-section {
+    width: 100%;
+    min-height: 500px;
+  }
+
+  .staff-workspace-section:last-child {
+    min-width: auto;
+    flex: none;
+  }
+
+  .kanban-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .kanban-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+/* Utilities */
+.hover-lift {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.1);
+}
+
+/* Donors Manager Layout */
+.donor-manager-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-bottom: 4rem;
+  height: auto; 
+}
+
+.donors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .donors-grid {
+    grid-template-columns: 1fr;
+  }
+  .th-mobile-hide {
+    display: none !important;
+  }
+
+  /* Fullscreen Modals on Mobile */
+  .modal-content, .sync-modal-content {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .modal-overlay, .sync-modal-overlay {
+    padding: 0 !important;
+    align-items: flex-start !important;
+    background: #000 !important;
+    overflow-y: auto !important;
+  }
+
+  /* Ensure body handles scroll */
+  .poll-form-body {
+    flex: none !important;
+    max-height: none !important;
+    padding-bottom: 2rem !important;
+  }
+
+  /* Users Manager Mobile Styles */
+  .users-table-responsive {
+    display: block !important;
+    border-spacing: 0 !important;
+  }
+
+  .users-table-responsive thead {
+    display: none !important;
+  }
+
+  .users-table-responsive tbody {
+    display: block !important;
+  }
+
+  .user-table-row {
+    display: block !important;
+    margin-bottom: 1rem !important;
+    border-radius: 16px !important;
+  }
+
+  .user-cell-main {
+    display: block !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-radius: 16px 16px 0 0 !important;
+    padding: 1rem !important;
+  }
+
+  .user-cell-role {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 1rem !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-top: none !important;
+    border-radius: 0 !important;
+  }
+
+  .user-cell-actions {
+    display: block !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    border-top: none !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 1rem !important;
+  }
+
+  .user-cell-actions select {
+    width: 100% !important;
+  }
+
+  /* Audit Log Mobile Styles */
+  .audit-log-filters {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  .audit-log-filters button {
+    flex: 1 1 auto;
+    min-width: 90px;
+    padding: 0.6rem 0.8rem !important;
+  }
+
+  .admin-input-premium {
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+}
+
+/* Global Admin Primary Button */
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.6rem;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(var(--accent-rgb), 0.4);
+    filter: brightness(1.1);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================
+   WIKI MANAGER STYLES
+   ========================================= */
+
+.wiki-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+
+.wiki-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.search-box-wrapper {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 300px;
+  transition: all 0.2s;
+}
+
+.search-box:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.search-icon {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-box input {
+  background: none;
+  border: none;
+  color: #fff;
+  outline: none;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+.search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Wiki Mobile Responsiveness */
+@media (max-width: 768px) {
+  .wiki-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-box-wrapper {
+    width: 100%;
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .wiki-manager .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Confirmed class name from WikiArticleList.tsx */
+  .article-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* =========================================
+   PREMIUM MODAL BUTTONS
+   ========================================= */
+.modal-btn-primary {
+    height: 52px;
+    padding: 0 2.5rem;
+    border-radius: 18px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 1000;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 10px 20px rgba(var(--accent-rgb), 0.2);
+    flex-shrink: 0;
+}
+
+.modal-btn-primary:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px rgba(var(--accent-rgb), 0.4);
+    filter: brightness(1.1);
+}
+
+.modal-btn-primary:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.modal-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.modal-btn-secondary {
+    height: 52px;
+    padding: 0 2rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.modal-btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* --- Mini Premium Buttons (Translation, etc) --- */
+.btn-premium-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-premium-mini:hover:not(:disabled) {
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.btn-premium-mini:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-premium-mini svg {
+    width: 14px;
+    height: 14px;
+}

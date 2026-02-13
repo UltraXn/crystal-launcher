@@ -1,0 +1,11 @@
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\derive_more-2d83a1cc27451309.d: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\add.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\ops.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\as_dyn_error.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\../README.md
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libderive_more-2d83a1cc27451309.rlib: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\add.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\ops.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\as_dyn_error.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\../README.md
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libderive_more-2d83a1cc27451309.rmeta: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\add.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\ops.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\as_dyn_error.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\../README.md
+
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\lib.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\add.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\ops.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\as_dyn_error.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\derive_more-2.1.1\src\../README.md:

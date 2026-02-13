@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "crystaltides-prod",
+  "private_key_id": "b59e797c73a74f85870bb48a71805f8836b43c20",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCyww85kXkHxsTt\nYN782OveUvPpqEZgig9hmsndHeIWVe/5EeKVUFIj7B7Lx21MX+iYHgIu3pvHAxqZ\n7C/v6tJQuJgv3C5cdiG6r7vM+jTycgYxRG5r1gYQmsYmTEZbBO2fxw1EjKJ2BbSJ\n/9E2RuoMIZmeZNMpoOarFFFuIwb6etl1VLwn1HB/vwxsofRh15PxbRq8dYTJtWm+\n/6mjfeavorCnwFdCBBg0TvxOO/wgSxcB34gldKQpDdl4YgEE8Bp05rzrut7uuov1\nceR0v5C/VOvERhSDMCPYKg4dkKqH8ZTrQRhjzopiearW0BsJYjW0kOZ933Hz1tjp\nf9InLgDlAgMBAAECggEAJ38+Pq3EBGIYckuAUXUbXm7NKkAONrficKIq/nJjGSTJ\nRiq7udp6n6nE3ykT3vdk9LFSsajpWeY3azF6oQOtDv1OUOrRCohmaPF5qO9Sogvs\nDtgsHqL2CZas99rMA8HZv/8S0SXSoomdq40MnHW8Mkx9PPhRiMXemYe+ezt9h/uc\naz2yiLslqPqBIjTml9F8I6rmpNo5YfTyB5pGvv4LjqfLDP13RFFP5RzgPntkC2H0\nMLMscxYXxWuXdFwzVPQxEhj+atNANt6TJk5HpFgevSDxJdeD56R3Ruac5TDBa+HG\nmfm13Vvnrzq/JY32ldQL0GhwuVnSFwwzCLN2HwiJcQKBgQDpVuOMSxiUTVX9RyFc\ni8QllEwxo7Ybz1mGmf3k/qDHJILS8TmQkv4nB9RQ0m/gimP5aSg5AUMAfPpxo8L4\nriDoUTn4cA9kqAkTiVnKLo/ckvpJm2ZHsUsn6APkJRmioVGhgLCvC+SjVmOqoyt3\nJGVH8sQs7byP8g4OUk/CHHPqMQKBgQDEH05t2fR5t4KZaqdzg8cQ+rG2HBG+G/T8\nRTVrtm1oOmh3eSlXVI++YfDc1DISh2kGoOQEcAGW86OxTm7V5cAH8naqEIxbZtDV\nQzUsNAHne57E0JgrELGGkoIpWvLxWTtDbHfLxFp7tazmWo/i//W1ayGqurqtjhGK\nQMxUC5Tg9QKBgBqB4WWtnkQyqOMV8odF5WlzeFhnRafRHVV6JuqdtnwI/Mej2as/\n15ltfUQVM9ppPkQ2Gvim2Qq0J+tC9EI13c0mdRRw/n6rzCQpBUc/lN404DP+cFcS\nn/wPkmmXgVsFQnW7Xdb03etkQ/w9fxGQ0+ShgoGsHDCqCci8twzRGKXxAoGBALSo\n6gRDK/MbWlCccJf2Id/ALwfEH4vyEOB5mFYae/nxI946XBy4JpmHeurRBTcQSWzz\ntFdqHezBjl58E5kxxI0NisXp7IEd2u04tbh8R+zGcWB3jlTNUdrXBtO1lelA+1iG\niGvJ+lfO6PBhJ/5BLkPp5d9xlxjcr8edHRumd4QpAoGAd/Pmb3pdon5fsMVd+MeV\nU3ya9yAjPc3Vtjb+jDaca584gc+myzpEtm0w5L1jppT5hzPM2IMKBN6QowD/cIuH\nxucnkEDmZF6tIqDtqjHA72dXaHzPBWtJp+NwwLTLFcM2/1WlZyztu7pI0JMSeCM2\nfYAFz9DBs4yntJRKrKiZgBE=\n-----END PRIVATE KEY-----\n",
+  "client_email": "github-deployer@crystaltides-prod.iam.gserviceaccount.com",
+  "client_id": "117940476769013897400",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/github-deployer%40crystaltides-prod.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

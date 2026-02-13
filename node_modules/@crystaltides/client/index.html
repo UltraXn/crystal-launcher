@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/webp" href="/images/ui/logo.webp" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="CrystalTides SMP: Servidor de Minecraft Java Edition con comunidad, aventuras y diversión. ¡Únete a la mejor experiencia SMP!"
+    />
+    <meta
+      property="og:title"
+      content="CrystalTides SMP - Servidor de Minecraft"
+    />
+    <meta
+      property="og:description"
+      content="Únete a la mejor comunidad de Minecraft SMP. Aventuras, eventos y diversión sin límites."
+    />
+    <meta property="og:image" content="/images/ui/logo.png" />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#0F969C" />
+    <title>CrystalTides SMP</title>
+  </head>
+
+  <body>
+    <div id="root">
+      <style>
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #0b0c10;
+        }
+        .initial-loading-screen {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          width: 100vw;
+          background-color: #0b0c10;
+          color: #89d9d1;
+          font-family:
+            system-ui,
+            -apple-system,
+            sans-serif;
+        }
+        .loading-logo {
+          width: 120px;
+          height: 120px;
+          margin-bottom: 2rem;
+          animation: logo-pulse 2s infinite ease-in-out;
+        }
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(137, 217, 209, 0.2);
+          border-top-color: #89d9d1;
+          border-radius: 50%;
+          animation: spinner-rotate 1s linear infinite;
+        }
+        @keyframes logo-pulse {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 1;
+          }
+        }
+        @keyframes spinner-rotate {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      </style>
+      <div class="initial-loading-screen">
+        <img
+          src="/images/ui/logo.webp"
+          alt="CrystalTides"
+          class="loading-logo"
+          width="120"
+          height="120"
+        />
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

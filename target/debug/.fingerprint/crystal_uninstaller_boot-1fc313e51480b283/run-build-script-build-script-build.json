@@ -1,0 +1,1 @@
+{"rustc":6817557220965521185,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[12996518570217609494,"build_script_build",false,16358732214595764160]],"local":[{"RerunIfChanged":{"output":"debug\\build\\crystal_uninstaller_boot-1fc313e51480b283\\output","paths":["uninstaller_payload.zip","app_icon.ico"]}}],"rustflags":[],"config":0,"compile_kind":0}

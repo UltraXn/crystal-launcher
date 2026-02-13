@@ -1,0 +1,11 @@
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\htmlparser-92e95c45f2c06ff1.d: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\error.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\stream.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\strspan.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\xmlchar.rs
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libhtmlparser-92e95c45f2c06ff1.rlib: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\error.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\stream.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\strspan.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\xmlchar.rs
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libhtmlparser-92e95c45f2c06ff1.rmeta: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\error.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\stream.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\strspan.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\xmlchar.rs
+
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\lib.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\error.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\stream.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\strspan.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\htmlparser-0.2.1\src\xmlchar.rs:

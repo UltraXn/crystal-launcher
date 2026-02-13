@@ -1,0 +1,2 @@
+import{o as t,_ as a,s as e}from"./utils-vendor-DpehPmnF.js";const o=t({title:e().min(5,"Title must be at least 5 characters").max(100,"Title too long"),description:e().min(20,"Please provide more detail (min 20 chars)").max(2e3),priority:a(["low","medium","high"]).optional(),category:a(["general","bug","report","billing","other"]).optional()}),s=t({message:e().min(1,"Message cannot be empty").max(1e3)});export{s as a,o as c};
+//# sourceMappingURL=ticket-CdYdQmzu.js.map

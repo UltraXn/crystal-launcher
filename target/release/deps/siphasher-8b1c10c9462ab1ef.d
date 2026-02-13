@@ -1,0 +1,11 @@
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\siphasher-8b1c10c9462ab1ef.d: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libsiphasher-8b1c10c9462ab1ef.rlib: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md
+
+C:\Users\nacho\Desktop\Portafolio\crystaltides\target\release\deps\libsiphasher-8b1c10c9462ab1ef.rmeta: C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md
+
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\lib.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\common.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\sip128.rs:
+C:\Users\nacho\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\siphasher-1.0.2\src\../README.md:
