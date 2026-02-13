@@ -1,6 +1,9 @@
 import 'dart:ffi';
+import 'dart:io';
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:ffi/ffi.dart';
+import 'package:path/path.dart' as p;
 import '../services/log_service.dart';
 
 // FFI Type Definitions
@@ -39,13 +42,11 @@ typedef DownloadModsParallelDart = int Function(
 );
 
 /// Native R2 Service using Rust FFI for parallel uploads/downloads
+/// FFI calls are offloaded to a background isolate to prevent UI freezes.
 class NativeR2Service {
   static final NativeR2Service _instance = NativeR2Service._internal();
   factory NativeR2Service() => _instance;
 
-  late final DynamicLibrary _lib;
-  late final UploadModsParallelDart _uploadModsParallel;
-  late final DownloadModsParallelDart _downloadModsParallel;
   final _logService = LogService();
 
   // Progress tracking
@@ -56,35 +57,47 @@ class NativeR2Service {
 
 
   NativeR2Service._internal() {
+    _verifyDll();
+  }
+
+  /// Verifies that the native DLL is present on startup
+  void _verifyDll() {
     try {
-      _lib = DynamicLibrary.open('CrystalNative.dll');
-      
-      _uploadModsParallel = _lib.lookupFunction<
-        UploadModsParallelNative,
-        UploadModsParallelDart
-      >('upload_mods_parallel');
-
-      _downloadModsParallel = _lib.lookupFunction<
-        DownloadModsParallelNative,
-        DownloadModsParallelDart
-      >('download_mods_parallel');
-
-      _logService.log('✅ Rust R2 Service initialized', category: 'RUST');
+      final path = _resolveDllPath();
+      final lib = DynamicLibrary.open(path);
+      // Basic check: can we find our functions?
+      lib.lookup('upload_mods_parallel');
+      lib.lookup('download_mods_parallel');
+      _logService.log('✅ CrystalNative.dll verified at: $path', category: 'RUST');
     } catch (e) {
-      _logService.log('❌ Failed to load Rust R2 Service: $e', category: 'RUST');
-      rethrow;
+      _logService.log('❌ Error verifying CrystalNative.dll: $e', level: Level.error, category: 'RUST');
+      // We don't throw here to avoid crashing the whole app, 
+      // but the logs will clearly show the problem.
     }
   }
 
-  /// Upload multiple mods to R2 in parallel
-  /// 
-  /// [filePaths] - List of absolute file paths to upload
-  /// [accessKey] - R2 Access Key ID
-  /// [secretKey] - R2 Secret Access Key
-  /// [endpoint] - R2 endpoint (e.g., "xxx.r2.cloudflarestorage.com")
-  /// [bucket] - Bucket name
-  /// [maxConcurrent] - Maximum concurrent uploads (default: 10)
-  /// [onProgress] - Progress callback (current, total, message)
+  static String _resolveDllPath() {
+    const dllName = 'CrystalNative.dll';
+    final exeDir = p.dirname(Platform.resolvedExecutable);
+    
+    final candidates = [
+      dllName,
+      p.join(exeDir, dllName),
+      p.join(Directory.current.path, dllName),
+      // Fallback for development/build environment
+      p.join(Directory.current.path, 'native', 'target', 'release', dllName),
+    ];
+
+    for (final path in candidates) {
+      if (File(path).existsSync()) {
+        return path;
+      }
+    }
+
+    return dllName; // Fallback to system search
+  }
+
+  /// Upload multiple mods to R2 in parallel (runs in background isolate)
   Future<void> uploadModsBatch(
     List<String> filePaths,
     String accessKey,
@@ -102,65 +115,52 @@ class NativeR2Service {
 
     final filesJson = jsonEncode(filePaths);
     
-    final filesPtr = filesJson.toNativeUtf8();
-    final accessKeyPtr = accessKey.toNativeUtf8();
-    final secretKeyPtr = secretKey.toNativeUtf8();
-    final endpointPtr = endpoint.toNativeUtf8();
-    final bucketPtr = bucket.toNativeUtf8();
-    
-    // Create thread-safe progress callback
-    final callable = NativeCallable<Void Function(Int32)>.listener((int index) {
-      _currentProgress = index + 1;
-      
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (now - _lastProgressUpdate < 50 && _currentProgress < _totalItems) {
-        return;
-      }
-      _lastProgressUpdate = now;
+    // Run FFI in background to keep UI responsive
+    final receivePort = ReceivePort();
 
-      if (_progressCallback != null) {
-        _progressCallback!(
+    await Isolate.spawn(
+      _uploadIsolateEntry,
+      _UploadParams(
+        filesJson: filesJson,
+        accessKey: accessKey,
+        secretKey: secretKey,
+        endpoint: endpoint,
+        bucket: bucket,
+        maxConcurrent: maxConcurrent,
+        sendPort: receivePort.sendPort,
+      ),
+    );
+
+    int? result;
+    await for (final message in receivePort) {
+      if (message is _ProgressMessage) {
+        _currentProgress = message.index + 1;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        if (now - _lastProgressUpdate < 50 && _currentProgress < _totalItems) {
+          continue;
+        }
+        _lastProgressUpdate = now;
+        _progressCallback?.call(
           _currentProgress,
           _totalItems,
           'Uploading mod $_currentProgress/$_totalItems',
         );
+      } else if (message is _ResultMessage) {
+        result = message.code;
+        receivePort.close();
       }
-    });
-
-    final callback = callable.nativeFunction;
-    
-    try {
-      final result = _uploadModsParallel(
-        filesPtr,
-        accessKeyPtr,
-        secretKeyPtr,
-        endpointPtr,
-        bucketPtr,
-        maxConcurrent,
-        callback,
-      );
-      
-      if (result != 0) {
-        throw Exception('Rust upload failed with code: $result');
-      }
-      
-      _logService.log('✅ Parallel upload completed successfully', category: 'RUST');
-    } finally {
-      callable.close();
-      malloc.free(filesPtr);
-      malloc.free(accessKeyPtr);
-      malloc.free(secretKeyPtr);
-      malloc.free(endpointPtr);
-      malloc.free(bucketPtr);
     }
+
+    if (result == null) {
+      throw Exception('Rust upload isolate exited unexpectedly. Check if CrystalNative.dll is missing.');
+    } else if (result != 0) {
+      throw Exception('Rust upload failed with code: $result');
+    }
+    
+    _logService.log('✅ Parallel upload completed successfully', category: 'RUST');
   }
 
-  /// Download multiple mods from R2 in parallel with SHA1 verification
-  /// 
-  /// [mods] - List of mod info maps with 'name', 'url', and 'sha1' keys
-  /// [outputDir] - Directory to save downloaded files
-  /// [maxConcurrent] - Maximum concurrent downloads (default: 10)
-  /// [onProgress] - Progress callback (current, total, message)
+  /// Download multiple mods from R2 in parallel (runs in background isolate)
   Future<void> downloadModsBatch(
     List<Map<String, dynamic>> mods,
     String outputDir,
@@ -177,52 +177,184 @@ class NativeR2Service {
 
     final modsJson = jsonEncode(mods);
     
-    final modsPtr = modsJson.toNativeUtf8();
-    final outputDirPtr = outputDir.toNativeUtf8();
-    
-    // Create thread-safe progress callback
-    final callable = NativeCallable<Void Function(Int32)>.listener((int index) {
-      _currentProgress = index + 1;
-      
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (now - _lastProgressUpdate < 50 && _currentProgress < _totalItems) {
-        return;
-      }
-      _lastProgressUpdate = now;
+    // Run FFI in background to keep UI responsive
+    final receivePort = ReceivePort();
 
-      String modName = "unknown";
-      if (index >= 0 && index < mods.length) {
-        modName = mods[index]['name'] ?? "unknown";
-      }
+    await Isolate.spawn(
+      _downloadIsolateEntry,
+      _DownloadParams(
+        modsJson: modsJson,
+        outputDir: outputDir,
+        maxConcurrent: maxConcurrent,
+        sendPort: receivePort.sendPort,
+      ),
+    );
 
-      if (_progressCallback != null) {
-        _progressCallback!(
+    int? result;
+    await for (final message in receivePort) {
+      if (message is _ProgressMessage) {
+        _currentProgress = message.index + 1;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        if (now - _lastProgressUpdate < 50 && _currentProgress < _totalItems) {
+          continue;
+        }
+        _lastProgressUpdate = now;
+
+        String modName = "unknown";
+        if (message.index >= 0 && message.index < mods.length) {
+          modName = mods[message.index]['name'] ?? "unknown";
+        }
+
+        _progressCallback?.call(
           _currentProgress,
           _totalItems,
           'Downloaded: $modName',
         );
+      } else if (message is _ResultMessage) {
+        result = message.code;
+        receivePort.close();
       }
+    }
+
+    if (result == null) {
+      throw Exception('Rust download isolate exited unexpectedly. Check if CrystalNative.dll is missing.');
+    } else if (result != 0) {
+      throw Exception('Rust download failed with code: $result');
+    }
+    
+    _logService.log('✅ Parallel download completed successfully', category: 'RUST');
+  }
+}
+
+// --- Isolate entry points and message types ---
+
+class _ProgressMessage {
+  final int index;
+  _ProgressMessage(this.index);
+}
+
+class _ResultMessage {
+  final int code;
+  _ResultMessage(this.code);
+}
+
+class _UploadParams {
+  final String filesJson;
+  final String accessKey;
+  final String secretKey;
+  final String endpoint;
+  final String bucket;
+  final int maxConcurrent;
+  final SendPort sendPort;
+
+  _UploadParams({
+    required this.filesJson,
+    required this.accessKey,
+    required this.secretKey,
+    required this.endpoint,
+    required this.bucket,
+    required this.maxConcurrent,
+    required this.sendPort,
+  });
+}
+
+class _DownloadParams {
+  final String modsJson;
+  final String outputDir;
+  final int maxConcurrent;
+  final SendPort sendPort;
+
+  _DownloadParams({
+    required this.modsJson,
+    required this.outputDir,
+    required this.maxConcurrent,
+    required this.sendPort,
+  });
+}
+
+/// Runs the upload FFI call in a background isolate
+void _uploadIsolateEntry(_UploadParams params) {
+  NativeCallable<Void Function(Int32)>? callable;
+  Pointer<Utf8>? filesPtr;
+  Pointer<Utf8>? accessKeyPtr;
+  Pointer<Utf8>? secretKeyPtr;
+  Pointer<Utf8>? endpointPtr;
+  Pointer<Utf8>? bucketPtr;
+
+  try {
+    final path = NativeR2Service._resolveDllPath();
+    final lib = DynamicLibrary.open(path);
+    final uploadFn = lib.lookupFunction<
+      UploadModsParallelNative,
+      UploadModsParallelDart
+    >('upload_mods_parallel');
+
+    filesPtr = params.filesJson.toNativeUtf8();
+    accessKeyPtr = params.accessKey.toNativeUtf8();
+    secretKeyPtr = params.secretKey.toNativeUtf8();
+    endpointPtr = params.endpoint.toNativeUtf8();
+    bucketPtr = params.bucket.toNativeUtf8();
+
+    callable = NativeCallable<Void Function(Int32)>.listener((int index) {
+      params.sendPort.send(_ProgressMessage(index));
     });
 
-    final callback = callable.nativeFunction;
-    
-    try {
-      final result = _downloadModsParallel(
-        modsPtr,
-        outputDirPtr,
-        maxConcurrent,
-        callback,
-      );
-      
-      if (result != 0) {
-        throw Exception('Rust download failed with code: $result');
-      }
-      
-      _logService.log('✅ Parallel download completed successfully', category: 'RUST');
-    } finally {
-      callable.close();
-      malloc.free(modsPtr);
-      malloc.free(outputDirPtr);
-    }
+    final result = uploadFn(
+      filesPtr,
+      accessKeyPtr,
+      secretKeyPtr,
+      endpointPtr,
+      bucketPtr,
+      params.maxConcurrent,
+      callable.nativeFunction,
+    );
+    params.sendPort.send(_ResultMessage(result));
+  } catch (e) {
+    // Send a negative code to indicate FFI/Loading error
+    params.sendPort.send(_ResultMessage(-999));
+  } finally {
+    callable?.close();
+    if (filesPtr != null) malloc.free(filesPtr);
+    if (accessKeyPtr != null) malloc.free(accessKeyPtr);
+    if (secretKeyPtr != null) malloc.free(secretKeyPtr);
+    if (endpointPtr != null) malloc.free(endpointPtr);
+    if (bucketPtr != null) malloc.free(bucketPtr);
+  }
+}
+
+/// Runs the download FFI call in a background isolate
+void _downloadIsolateEntry(_DownloadParams params) {
+  NativeCallable<Void Function(Int32)>? callable;
+  Pointer<Utf8>? modsPtr;
+  Pointer<Utf8>? outputDirPtr;
+
+  try {
+    final path = NativeR2Service._resolveDllPath();
+    final lib = DynamicLibrary.open(path);
+    final downloadFn = lib.lookupFunction<
+      DownloadModsParallelNative,
+      DownloadModsParallelDart
+    >('download_mods_parallel');
+
+    modsPtr = params.modsJson.toNativeUtf8();
+    outputDirPtr = params.outputDir.toNativeUtf8();
+
+    callable = NativeCallable<Void Function(Int32)>.listener((int index) {
+      params.sendPort.send(_ProgressMessage(index));
+    });
+
+    final result = downloadFn(
+      modsPtr,
+      outputDirPtr,
+      params.maxConcurrent,
+      callable.nativeFunction,
+    );
+    params.sendPort.send(_ResultMessage(result));
+  } catch (e) {
+    params.sendPort.send(_ResultMessage(-999));
+  } finally {
+    callable?.close();
+    if (modsPtr != null) malloc.free(modsPtr);
+    if (outputDirPtr != null) malloc.free(outputDirPtr);
   }
 }

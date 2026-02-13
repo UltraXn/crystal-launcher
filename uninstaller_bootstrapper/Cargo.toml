@@ -1,0 +1,10 @@
+[package]
+name = "crystal_uninstaller_boot"
+version = "1.1.9"
+edition = "2024"
+
+[dependencies]
+zip = "0.6"
+
+[build-dependencies]
+winres = "0.1"

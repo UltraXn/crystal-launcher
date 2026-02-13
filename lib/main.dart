@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,6 +8,7 @@ import 'services/database_service.dart';
 import 'services/session_service.dart';
 import 'services/update_service.dart';
 import 'services/log_service.dart';
+import 'services/native_api.dart'; // Added
 import 'theme/app_theme.dart';
 import 'widgets/auth_wrapper.dart';
 import 'pages/profile_page.dart';
@@ -16,6 +16,7 @@ import 'pages/mod_manager_page.dart';
 import 'pages/profile_selection_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/admin_dashboard_page.dart';
+import 'package:flutter/foundation.dart'; // Added for PlatformDispatcher
 
 final initializationError = ValueNotifier<String?>(null);
 
@@ -26,12 +27,33 @@ void main(List<String> args) async {
   await logService.initialize();
   logService.log("🚀 Starting CrystalLauncher...");
 
-  // Check for --uninstall flag
-  if (args.contains('--uninstall')) {
-    logService.log("🗑️ Uninstall flag detected. Starting cleanup...", category: "SYSTEM");
-    await _handleUninstallation();
-    return;
+  // 0.1 Single Instance Guard (Production Hardening)
+  try {
+    if (!NativeApi().checkSingleInstance()) {
+      logService.log("⚠️ Another instance is already running. Exiting...", level: Level.warning);
+      exit(0);
+    }
+    logService.log("🛡️ Single instance guard active");
+  } catch (e) {
+    logService.log("⚠️ Could not verify single instance: $e", level: Level.warning);
   }
+
+  // 0.2 Global Error Sentinel
+  PlatformDispatcher.instance.onError = (error, stack) {
+    logService.log("🚨 UNCAUGHT ASYNC ERROR", level: Level.error, error: error, stackTrace: stack);
+    initializationError.value = "Ocurrió un error inesperado: $error\nConsulta los registros para más detalles.";
+    return true; // Mark as handled
+  };
+
+  FlutterError.onError = (details) {
+    logService.log("🚨 FLUTTER FRAMEWORK ERROR", level: Level.error, error: details.exception, stackTrace: details.stack);
+    
+    // Mostramos el error en la UI para diagnóstico
+    final errorStr = details.exception.toString();
+    if (initializationError.value == null || !initializationError.value!.contains(errorStr)) {
+      initializationError.value = "Error de Renderizado:\n$errorStr\n\nConsulta los registros para más detalles.";
+    }
+  };
 
   // 1. Window Manager
   await windowManager.ensureInitialized();
@@ -146,7 +168,7 @@ class CrystalLauncherApp extends StatelessWidget {
           title: 'CrystalTides Launcher',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.darkTheme,
-          builder: (context, child) => ExcludeSemantics(child: child!),
+          builder: (context, child) => child!,
           home: const AuthWrapper(),
           routes: {
             '/mods': (context) => const ModManagerPage(),
@@ -161,33 +183,3 @@ class CrystalLauncherApp extends StatelessWidget {
   }
 }
 
-Future<void> _handleUninstallation() async {
-  try {
-    // 1. Remove Registry Key
-    logService.log("📝 Removing registry entry...", category: "SYSTEM");
-    const psCommand = 'Remove-Item -Path "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\CrystalLauncher" -Force -ErrorAction SilentlyContinue';
-    await Process.run('powershell', ['-Command', psCommand]);
-    
-    // 2. Schedule directory deletion
-    // Since we are running the executable FROM the directory we want to delete, 
-    // we can't delete it immediately.
-    // We'll create a small batch script that waits and then deletes the folder.
-    final exePath = Platform.resolvedExecutable;
-    final installDir = p.dirname(exePath);
-    final batchContent = """
-@echo off
-timeout /t 2 /nobreak > nul
-rmdir /s /q "$installDir"
-del "%~f0"
-""";
-    final batchPath = p.join(p.dirname(installDir), "uninstall_cleanup.bat");
-    File(batchPath).writeAsStringSync(batchContent);
-    
-    logService.log("✅ Cleanup scheduled. Exiting...", category: "SYSTEM");
-    await Process.start('cmd', ['/c', 'start', '/min', batchPath], runInShell: true);
-    exit(0);
-  } catch (e) {
-    logService.log("❌ Error during uninstallation: $e", level: Level.error, category: "SYSTEM");
-    exit(1);
-  }
-}

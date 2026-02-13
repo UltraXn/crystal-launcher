@@ -1,3 +1,4 @@
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
@@ -163,12 +164,19 @@ class InstallationService {
       logService.log("✨ Extraction successful", category: "SYSTEM");
       onProgress(0.9);
       
+      
       // Registry uninstaller in Windows
       if (Platform.isWindows) {
         try {
           await _registerUninstaller(targetPath);
         } catch (e) {
           logService.log("⚠️ Could not register uninstaller in registry: $e", level: Level.warning, category: "SYSTEM");
+        }
+        
+        try {
+          await _createShortcuts(targetPath);
+        } catch (e) {
+          logService.log("⚠️ Could not create shortcuts: $e", level: Level.warning, category: "SYSTEM");
         }
       }
       
@@ -183,17 +191,18 @@ class InstallationService {
   Future<void> _registerUninstaller(String installPath) async {
     logService.log("📝 Registering uninstaller in Windows Registry...", category: "SYSTEM");
     
-    // Using powershell for registry management to avoid complex win32 boilerplate in Flutter for now
-    // This is safer and easier to debug
+    final packageInfo = await PackageInfo.fromPlatform();
+    final appVersion = packageInfo.version;
+    
     final exePath = p.join(installPath, "crystal_launcher.exe");
-    const appVersion = "1.2.1"; // This should ideally come from package_info or a constant
+    final uninstallExePath = p.join(installPath, "crystal_uninstaller.exe");
     
     final psCommand = """
     \$registryPath = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\CrystalLauncher"
     if (!(Test-Path \$registryPath)) { New-Item -Path \$registryPath -Force }
     New-ItemProperty -Path \$registryPath -Name "DisplayName" -Value "Crystal Launcher" -PropertyType String -Force
     New-ItemProperty -Path \$registryPath -Name "DisplayIcon" -Value "$exePath" -PropertyType String -Force
-    New-ItemProperty -Path \$registryPath -Name "UninstallString" -Value "\\"\$exePath\\" --uninstall" -PropertyType String -Force
+    New-ItemProperty -Path \$registryPath -Name "UninstallString" -Value '"$uninstallExePath"' -PropertyType String -Force
     New-ItemProperty -Path \$registryPath -Name "Publisher" -Value "CrystalTides" -PropertyType String -Force
     New-ItemProperty -Path \$registryPath -Name "DisplayVersion" -Value "$appVersion" -PropertyType String -Force
     """;
@@ -205,6 +214,39 @@ class InstallationService {
     } else {
       logService.log("❌ Failed to register uninstaller: ${result.stderr}", level: Level.error, category: "SYSTEM");
       throw Exception(result.stderr);
+    }
+  }
+
+  Future<void> _createShortcuts(String installPath) async {
+    logService.log("📝 Creating shortcuts...", category: "SYSTEM");
+    final exePath = p.join(installPath, "crystal_launcher.exe");
+    
+    final psCommand = """
+    \$WshShell = New-Object -comObject WScript.Shell
+    
+    # Desktop Shortcut
+    \$DesktopPath = [Environment]::GetFolderPath("Desktop")
+    \$Shortcut = \$WshShell.CreateShortcut("\$DesktopPath\\Crystal Launcher.lnk")
+    \$Shortcut.TargetPath = "$exePath"
+    \$Shortcut.WorkingDirectory = "$installPath"
+    \$Shortcut.Save()
+    
+    # Start Menu Shortcut
+    \$StartMenuPath = [Environment]::GetFolderPath("StartMenu")
+    \$ProgramDir = "\$StartMenuPath\\Programs\\CrystalTides"
+    if (!(Test-Path \$ProgramDir)) { New-Item -ItemType Directory -Path \$ProgramDir -Force }
+    \$ShortcutSM = \$WshShell.CreateShortcut("\$ProgramDir\\Crystal Launcher.lnk")
+    \$ShortcutSM.TargetPath = "$exePath"
+    \$ShortcutSM.WorkingDirectory = "$installPath"
+    \$ShortcutSM.Save()
+    """;
+
+    final result = await Process.run('powershell', ['-Command', psCommand]);
+    
+    if (result.exitCode == 0) {
+      logService.log("✅ Shortcuts created successfully", category: "SYSTEM");
+    } else {
+      logService.log("❌ Failed to create shortcuts: ${result.stderr}", level: Level.error, category: "SYSTEM");
     }
   }
 

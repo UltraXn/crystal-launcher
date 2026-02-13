@@ -21,6 +21,10 @@ class ModService {
 
   /// Sincroniza los mods oficiales usando la base de datos de Supabase y hashes SHA-1
   Future<void> syncOfficialMods(String gameDir, {Function(String, double)? onProgress}) async {
+    if (!SupabaseService().isInitialized) {
+      throw Exception('Error de sincronización: Supabase no está inicializado. Verifica tu archivo .env');
+    }
+
     final modsDir = Directory(p.join(gameDir, 'mods'));
     if (!await modsDir.exists()) await modsDir.create(recursive: true);
 
@@ -607,6 +611,8 @@ class ModService {
 
   /// Checks if a modpack update is available using a fingerprint (count + max timestamp) from Supabase.
   Future<bool> isUpdateAvailable(String gameDir) async {
+    if (!SupabaseService().isInitialized) return false;
+
     try {
       // Fetch latest modification from Supabase (efficient)
       final response = await SupabaseService().client

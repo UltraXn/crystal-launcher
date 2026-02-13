@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:launcher/widgets/play_button_hero.dart';
 import 'package:launcher/theme/app_theme.dart';
-import '../widgets/window_controls.dart';
 import '../services/session_service.dart';
 import '../widgets/profile_selector.dart';
 import '../widgets/skin_viewer_widget.dart';
@@ -217,8 +216,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
-        // Window Controls (Always on top)
-        const Positioned(top: 0, left: 0, right: 0, child: WindowControls()),
+        // Window Controls removed as they are now global in MainLayout
       ],
     );
   }

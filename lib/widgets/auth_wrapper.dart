@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/session_service.dart';
 import '../pages/login_page.dart';
 import '../layouts/main_layout.dart';
-import '../pages/home_page.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -41,7 +40,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   Widget build(BuildContext context) {
     if (SessionService().isLoggedIn) {
-      return const MainLayout(child: HomePage());
+      return const MainLayout();
     }
     return const LoginPage();
   }

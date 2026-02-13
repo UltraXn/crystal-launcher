@@ -5,7 +5,6 @@ import '../services/two_factor_service.dart';
 import '../services/session_service.dart';
 import '../components/two_factor_prompt.dart';
 import '../theme/app_theme.dart';
-import '../widgets/window_controls.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -204,7 +203,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // Background Gradient
@@ -230,10 +229,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -256,10 +255,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
+                    // Close button removed as navigation is now sidebar-based
                   ],
                 ),
                 const SizedBox(height: 32),
@@ -417,8 +413,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             ),
           ),
 
-          // Window Controls
-          const Positioned(top: 0, left: 0, right: 0, child: WindowControls()),
+          // Window Controls removed as they are now global in MainLayout
         ],
       ),
     );

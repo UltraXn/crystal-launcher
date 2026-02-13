@@ -48,7 +48,7 @@ jobs:
           flutter build windows --release
           $gameDist = "build/windows/x64/runner/Release"
           Rename-Item "$gameDist/launcher.exe" "crystal_launcher.exe" -Force
-          Copy-Item "native/target/release/CrystalNative.dll" "$gameDist/CrystalNative.dll" -Force
+          Copy-Item "native/target/release/crystal_native.dll" "$gameDist/crystal_native.dll" -Force
 
       # --- PHASE 2: BUILD UNINSTALLER ---
       - name: Build Uninstaller UI (Flutter)
@@ -56,7 +56,7 @@ jobs:
         run: |
           flutter build windows --release
           $unDist = "build/windows/x64/runner/Release"
-          Copy-Item "../native/target/release/CrystalNative.dll" "$unDist/installer_native.dll" -Force
+          Copy-Item "../native/target/release/crystal_native.dll" "$unDist/installer_native.dll" -Force
           Rename-Item "$unDist/uninstaller.exe" "crystal_uninstaller.exe" -Force
 
       - name: Build Uninstaller Bootstrapper (Rust)
@@ -71,6 +71,7 @@ jobs:
       # --- PHASE 3: BUILD INSTALLER ---
       - name: Build Installer UI (Flutter)
         run: |
+          if (-not (Test-Path "installer/.env")) { New-Item -Path "installer/.env" -ItemType File -Value "DUMMY=true" }
           $payloadDir = "installer/assets/payload"
           New-Item -ItemType Directory -Force -Path $payloadDir
           Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "$payloadDir/game_payload.zip" -Force

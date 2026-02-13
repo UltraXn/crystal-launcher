@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'database_service.dart';
 import '../data/local_database.dart';
 import 'game_installer_service.dart';
+import 'java_service.dart';
 
 class ProcessRunner {
   static final ProcessRunner _instance = ProcessRunner._internal();
@@ -57,8 +58,21 @@ class ProcessRunner {
     final height = settings.height;
     final fullscreen = settings.fullscreen;
 
-    if (javaPath == null || javaPath.isEmpty) {
-      throw Exception("Java Path is not configured");
+    // Auto-Provision Java if missing
+    String finalJavaPath = javaPath ?? "";
+    if (finalJavaPath.isEmpty) {
+      logService.log("Java Path not configured in profile/settings. Invoking Java Runtime Manager...", category: "SYSTEM");
+      try {
+        final requiredJavaVersion = JavaService().getJavaVersionForMinecraft(effectiveVersion);
+        logService.log("Detected required Java version: $requiredJavaVersion for Minecraft $effectiveVersion", category: "SYSTEM");
+        
+        finalJavaPath = await JavaService().ensureJava(requiredJavaVersion, onProgress: (p) {
+          // We could broadcast this, but for now just logging sparingly
+          // logService.log("Java Download: ${(p*100).toInt()}%", category: "SYSTEM");
+        });
+      } catch (e) {
+        throw Exception("Failed to auto-provision Java Runtime: $e");
+      }
     }
 
     // Determine Version ID (Directory name in versions/)
@@ -250,7 +264,7 @@ class ProcessRunner {
       }
     }
 
-    logService.log("Launching Minecraft ($versionId) with: $javaPath", category: "GAME");
+    logService.log("Launching Minecraft ($versionId) with: $finalJavaPath", category: "GAME");
     // Securely log args (hide access token)
     final safeArgs = args
         .map((a) => a == accessToken ? 'ACCESS_TOKEN_HIDDEN' : a)
@@ -261,7 +275,7 @@ class ProcessRunner {
     // 4. Start Process
     // DEBUG MODE: Use normal mode to capture output
     final process = await Process.start(
-      javaPath,
+      finalJavaPath,
       args,
       workingDirectory: effectiveGameDir,
       mode: ProcessStartMode.normal, // Was detached

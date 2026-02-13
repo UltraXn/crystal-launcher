@@ -1,13 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:desktop_drop/desktop_drop.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/session_service.dart';
-import '../services/supabase_service.dart';
 import '../services/admin_service.dart';
-import '../services/two_factor_service.dart';
 import '../theme/app_theme.dart';
-import '../components/two_factor_prompt.dart';
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -16,85 +12,15 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final TwoFactorService _twoFactorService = TwoFactorService();
   bool _isAdminDragging = false;
   String _adminUploadStatus = "";
   bool _isLoading = false;
-  
-  // 2FA State
-  bool _is2FAEnabled = false;
-  bool _isLoading2FA = true;
 
   bool get _isAdmin => SessionService().currentSession?.isAdmin ?? false;
 
   @override
   void initState() {
     super.initState();
-    _check2FAStatus();
-  }
-
-  Future<void> _check2FAStatus() async {
-    final token = SessionService().currentSession?.accessToken;
-    if (token != null) {
-      final enabled = await _twoFactorService.checkStatus(token);
-      if (mounted) {
-        setState(() {
-          _is2FAEnabled = enabled;
-          _isLoading2FA = false;
-        });
-      }
-    } else {
-       if (mounted) setState(() => _isLoading2FA = false);
-    }
-  }
-
-  Future<void> _manualSync() async {
-    String? pendingAdminToken;
-    
-    final verified = await showDialog<bool>(
-      context: context,
-      // CRITICAL: Disable Hero animations for this dialog to prevent crash
-      // The Hero animation conflict occurs because AuthWrapper rebuilds during dialog transition
-      builder: (context) => HeroMode(
-        enabled: false,
-        child: TwoFactorPrompt(
-          onCancel: () => Navigator.pop(context, false),
-          onVerify: (code) async {
-            String? token = SessionService().currentSession?.accessToken;
-            token ??= SupabaseService().client.auth.currentSession?.accessToken;
-
-            if (token == null) return false;
-            final adminToken = await _twoFactorService.verify(token, code);
-
-            if (adminToken != null) {
-              // Store token temporarily - DO NOT elevate session yet
-              // This prevents notifyListeners() during dialog transition
-              pendingAdminToken = adminToken;
-              if (!context.mounted) return true;
-              Navigator.pop(context, true);
-              return true;
-            }
-            return false;
-          },
-        ),
-      ),
-    );
-
-    // CRITICAL: Elevate session AFTER dialog has fully closed
-    // This prevents Hero animation crash caused by rebuilds during route transition
-    if (verified == true && pendingAdminToken != null) {
-      await SessionService().elevateSession(pendingAdminToken!);
-      
-      if (mounted) {
-        setState(() => _is2FAEnabled = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Sincronización manual exitosa. 2FA Activado."),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -105,12 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final role = session?.effectiveRole ?? "Jugador";
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text("Mi Perfil"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.transparent,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -162,97 +83,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 32),
                 ],
 
-                // Otras opciones de perfil
-                _buildSectionHeader("Cuenta", Icons.person_outline),
-                const SizedBox(height: 16),
-                
-                // 2FA Status
-                ListTile(
-                  leading: Icon(
-                    Icons.shield, 
-                    color: _isLoading2FA 
-                        ? Colors.white24 
-                        : (_is2FAEnabled ? Colors.greenAccent : Colors.orangeAccent)
+                const SizedBox(height: 32),
+                const Center(
+                  child: Text(
+                    "Información de perfil y estadísticas próximamente.",
+                    style: TextStyle(color: Colors.white24, fontSize: 12),
                   ),
-                  title: const Text("Autenticación en dos pasos (2FA)", style: TextStyle(color: Colors.white)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _isLoading2FA 
-                            ? "Cargando estado..." 
-                            : (_is2FAEnabled ? "Activado" : "Desactivado"),
-                        style: TextStyle(
-                          color: _isLoading2FA 
-                              ? Colors.white30 
-                              : (_is2FAEnabled ? Colors.greenAccent.withValues(alpha: 0.7) : Colors.orangeAccent.withValues(alpha: 0.7)),
-                          fontSize: 12
-                        ),
-                      ),
-                      if (!_isLoading2FA)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: InkWell(
-                            onTap: () async {
-                              final Uri url = Uri.parse("https://crystaltidessmp.net/account");
-                              if (await canLaunchUrl(url)) {
-                                await launchUrl(url);
-                              }
-                            },
-                            child: const Text(
-                              "Gestionar en Web",
-                              style: TextStyle(
-                                color: AppTheme.accent,
-                                fontSize: 12,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!_is2FAEnabled)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: TextButton(
-                            onPressed: _manualSync,
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.accent,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
-                            ),
-                            child: const Text("Vincular Manualmente", style: TextStyle(fontSize: 12)),
-                          ),
-                        ),
-                      IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white54),
-                        onPressed: _isLoading2FA ? null : _check2FAStatus,
-                        tooltip: "Recargar estado",
-                      ),
-                      if (_is2FAEnabled)
-                        const Icon(Icons.check_circle, color: Colors.greenAccent, size: 16),
-                    ],
-                  ),
-                  tileColor: Colors.white.withValues(alpha: 0.05),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                
-                const SizedBox(height: 8),
-
-                ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.redAccent),
-                  title: const Text("Cerrar Sesión", style: TextStyle(color: Colors.white)),
-                  onTap: () async {
-                    await SessionService().logout();
-                    if (!context.mounted) return;
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
-                  tileColor: Colors.white.withValues(alpha: 0.05),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ],
             ),

@@ -2,7 +2,7 @@ use aws_sdk_s3::{Client, primitives::ByteStream};
 use aws_config::{BehaviorVersion, Region};
 use aws_credential_types::Credentials;
 use tokio::runtime::Runtime;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
@@ -61,7 +61,6 @@ pub extern "C" fn upload_mods_parallel(
 
         // Semaphore for concurrency control
         let semaphore = Arc::new(Semaphore::new(max_concurrent as usize));
-        let total = files.len();
 
         // Spawn parallel upload tasks
         let tasks: Vec<_> = files

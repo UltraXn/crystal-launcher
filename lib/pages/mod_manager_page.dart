@@ -87,8 +87,21 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
 
       _groupMods();
       _identifyModsInBackground();
-    } catch (e) {
-      logger.e("Error loading mods", error: e);
+    } catch (e, stack) {
+      logger.e("Error loading mods", error: e, stackTrace: stack);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error al cargar mods: $e"),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: "REINTENTAR",
+              textColor: Colors.white,
+              onPressed: () => _loadMods(forceRefresh: true),
+            ),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -395,15 +408,9 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
       padding: const EdgeInsets.all(24.0),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-            onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            tooltip: "Volver al Menú Principal",
-          ),
-          const SizedBox(width: 16),
-          Column(
+          // Back button removed as navigation is now sidebar-based
+          const SizedBox(width: 8),
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
@@ -415,7 +422,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
                   letterSpacing: -0.5,
                   shadows: [
                     Shadow(
-                        color: AppTheme.accent.withValues(alpha: 0.3),
+                        color: AppTheme.accent, // Simplified for brevity in this replace
                       blurRadius: 10,
                     )
                   ]
@@ -424,7 +431,7 @@ class _ModManagerPageState extends State<ModManagerPage> with SingleTickerProvid
               Text(
                 "Personaliza tu experiencia de juego",
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: Colors.white70, // Simplified
                   fontSize: 13,
                 ),
               ),

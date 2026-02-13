@@ -1,5 +1,5 @@
 [package]
-name = "CrystalNative"
+name = "crystal_native"
 version = "1.1.9"
 edition = "2024"
 
@@ -20,6 +20,7 @@ tokio = { version = "1.42", features = ["full"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 zip = "0.6.6"  # Added for zip extraction
 reqwest = { version = "0.11", features = ["blocking", "json", "rustls-tls", "stream"] }
+walkdir = "2.3"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -33,6 +34,7 @@ aws-sdk-s3 = "1.70"
 aws-config = "1.5"
 aws-credential-types = "1.2"
 futures = "0.3"
+windows = { version = "0.58", features = ["Win32_System_Threading", "Win32_Foundation", "Win32_Security"] }
 
 [build-dependencies]
 winres = "0.1"

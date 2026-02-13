@@ -131,38 +131,52 @@ class _ProfileSelectionPageState extends State<ProfileSelectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text("Instancias y Perfiles"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: _createNewProfile,
-            icon: const Icon(Icons.add_circle_outline, color: AppTheme.accent),
-            tooltip: "Nueva Instancia",
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
+      backgroundColor: Colors.transparent,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _profiles.isEmpty
-              ? _buildEmptyState()
-              : GridView.builder(
-                  padding: const EdgeInsets.all(24),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                    childAspectRatio: 1.2,
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 32, top: 48, right: 32, bottom: 8),
+                  child: Row(
+                    children: [
+                      const Text(
+                        "Instancias y Perfiles",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: _createNewProfile,
+                        icon: const Icon(Icons.add_circle_outline, color: AppTheme.accent),
+                        tooltip: "Nueva Instancia",
+                      ),
+                    ],
                   ),
-                  itemCount: _profiles.length,
-                  itemBuilder: (context, index) {
-                    final profile = _profiles[index];
-                    return _buildProfileCard(profile);
-                  },
                 ),
+                Expanded(
+                  child: _profiles.isEmpty
+                      ? _buildEmptyState()
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(24),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 20,
+                            mainAxisSpacing: 20,
+                            childAspectRatio: 1.2,
+                          ),
+                          itemCount: _profiles.length,
+                          itemBuilder: (context, index) {
+                            final profile = _profiles[index];
+                            return _buildProfileCard(profile);
+                          },
+                        ),
+                ),
+              ],
+            ),
     );
   }
 

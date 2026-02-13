@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 // Force Rebuild v1.0.9-r2sync
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -7,6 +8,10 @@ use sha1::{Sha1, Digest};
 // R2 Sync Module (Parallel Upload/Download)
 mod r2_sync;
 pub use r2_sync::*;
+
+// Java Manager Module
+mod java_manager;
+pub use java_manager::*;
 
 // Global State (Thread-Safe would require lazy_static or OnceLock, simplifying for PoC)
 // For a real production DLL, we'd pass a context pointer back to the host.
@@ -133,6 +138,54 @@ pub extern "C" fn extract_archive(archive_path: *const c_char, output_path: *con
 
 
 use std::io::Write; // Needed for file writing
+use windows::Win32::System::Threading::{
+    GetCurrentProcess, SetPriorityClass, HIGH_PRIORITY_CLASS, NORMAL_PRIORITY_CLASS,
+};
+use std::os::windows::process::CommandExt;
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+use windows::Win32::Foundation::{HANDLE};
+use windows::Win32::System::Threading::{CreateMutexW};
+use windows::core::PCWSTR;
+
+static mut INSTANCE_MUTEX: Option<HANDLE> = None;
+
+#[unsafe(no_mangle)]
+pub extern "C" fn check_single_instance() -> i32 {
+    let mutex_name: Vec<u16> = "Global\\CrystalLauncher_Instance_Mutex\0".encode_utf16().collect();
+    unsafe {
+        // If CreateMutexW fails or if the mutex already exists, we handle it.
+        match CreateMutexW(None, true, PCWSTR(mutex_name.as_ptr())) {
+            Ok(handle) => {
+                // We own the mutex. If it already existed, the error code would be ERROR_ALREADY_EXISTS.
+                // However, windows-rs Result wrapping often hides this detail unless checked via GetLastError.
+                // For simplicity: if it returned Ok, we continue.
+                INSTANCE_MUTEX = Some(handle);
+                1 
+            }
+            Err(_) => 0
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn set_high_priority() -> i32 {
+    unsafe {
+        match SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS) {
+            Ok(_) => 1,
+            Err(_) => 0,
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn set_normal_priority() -> i32 {
+    unsafe {
+        match SetPriorityClass(GetCurrentProcess(), NORMAL_PRIORITY_CLASS) {
+            Ok(_) => 1,
+            Err(_) => 0,
+        }
+    }
+}
 
 #[unsafe(no_mangle)]
 pub extern "C" fn install_neoforge(
@@ -224,6 +277,7 @@ pub extern "C" fn install_neoforge(
         .arg("--installClient")
         .arg(game_dir)
         .current_dir(game_dir)
+        .creation_flags(CREATE_NO_WINDOW)
         .output();
 
     let exit_code = match output {
@@ -375,6 +429,131 @@ pub extern "C" fn upload_to_github(
             -14
         },
         Err(_) => -15,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn install_java_runtime(
+    version: i32,
+    install_dir_ptr: *const c_char,
+    callback: Option<java_manager::ProgressCallback>
+) -> *mut c_char {
+    let install_dir_str = unsafe {
+        if install_dir_ptr.is_null() { return CString::new("ERROR: Null Pointer").unwrap().into_raw(); }
+        match CStr::from_ptr(install_dir_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return CString::new("ERROR: Invalid UTF-8").unwrap().into_raw(),
+        }
+    };
+
+    let install_path = std::path::Path::new(install_dir_str);
+
+    match java_manager::download_and_install_java(version as u8, install_path, callback) {
+        Ok(path) => {
+            let path_str = path.to_string_lossy().to_string();
+            CString::new(path_str).unwrap().into_raw()
+        },
+        Err(e) => {
+             let err_msg = format!("ERROR: {}", e);
+             CString::new(err_msg).unwrap().into_raw()
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn check_java_status(
+    install_dir_ptr: *const c_char
+) -> *mut c_char {
+    let install_dir_str = unsafe {
+        if install_dir_ptr.is_null() { return std::ptr::null_mut(); }
+        match CStr::from_ptr(install_dir_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return std::ptr::null_mut(),
+        }
+    };
+
+    let install_path = std::path::Path::new(install_dir_str);
+
+    // Reuse the find logic from java_manager
+    match java_manager::find_java_binary(install_path) {
+        Some(path) => {
+             let path_str = path.to_string_lossy().to_string();
+             CString::new(path_str).unwrap().into_raw()
+        },
+        None => std::ptr::null_mut()
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn perform_uninstallation() -> i32 {
+    println!("[Rust Native] Starting uninstallation flow...");
+
+    // 1. Remove Registry Key
+    let reg_result = std::process::Command::new("powershell")
+        .args(&["-Command", "Remove-Item -Path \"HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\CrystalLauncher\" -Force -ErrorAction SilentlyContinue"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output();
+
+    if let Err(e) = reg_result {
+        println!("[Rust Native] Error removing registry: {}", e);
+    }
+
+    // 2. Remove Shortcuts
+    let ps_shortcut_script = r#"
+        $desktop = [Environment]::GetFolderPath("Desktop")
+        $appdata = $env:APPDATA
+        $shortcuts = @(
+            Join-Path $desktop "Crystal Launcher.lnk",
+            Join-Path $appdata "Microsoft\Windows\Start Menu\Programs\CrystalTides\Crystal Launcher.lnk"
+        )
+        foreach ($s in $shortcuts) { if (Test-Path $s) { Remove-Item $s -Force } }
+        $folder = Join-Path $appdata "Microsoft\Windows\Start Menu\Programs\CrystalTides"
+        if (Test-Path $folder) { if ((Get-ChildItem $folder).Count -eq 0) { Remove-Item $folder -Force } }
+    "#;
+
+    let shortcut_result = std::process::Command::new("powershell")
+        .args(&["-Command", ps_shortcut_script])
+        .creation_flags(CREATE_NO_WINDOW)
+        .output();
+
+    if let Err(e) = shortcut_result {
+        println!("[Rust Native] Error removing shortcuts: {}", e);
+    }
+
+    1 // Success
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn schedule_self_deletion(install_dir_ptr: *const c_char) -> i32 {
+    let install_dir = unsafe {
+        if install_dir_ptr.is_null() { return -1; }
+        match CStr::from_ptr(install_dir_ptr).to_str() {
+            Ok(s) => s,
+            Err(_) => return -2,
+        }
+    };
+
+    let batch_content = format!(
+        "@echo off\r\n:wait\r\ntimeout /t 1 /nobreak > nul\r\nif exist \"{0}\" (\r\n    rmdir /s /q \"{0}\"\r\n    if exist \"{0}\" goto wait\r\n)\r\ndel \"%~f0\"",
+        install_dir
+    );
+
+    let temp_dir = std::env::temp_dir();
+    let batch_path = temp_dir.join("crystal_uninstall_cleanup.bat");
+
+    if let Err(e) = std::fs::write(&batch_path, batch_content) {
+        println!("[Rust Native] Error writing cleanup script: {}", e);
+        return -3;
+    }
+
+    let spawn_result = std::process::Command::new("cmd")
+        .args(&["/c", "start", "/min", batch_path.to_str().unwrap_or("")])
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn();
+
+    match spawn_result {
+        Ok(_) => 1,
+        Err(_) => -4,
     }
 }
 
