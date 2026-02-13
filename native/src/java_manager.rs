@@ -17,9 +17,9 @@ struct AdoptiumPackage {
 
 #[derive(serde::Deserialize, Debug)]
 struct AdoptiumRelease {
-    binaries: Vec<AdoptiumBinary>,
+    binary: AdoptiumBinary,
     #[allow(dead_code)]
-    version_data: serde_json::Value,
+    version: serde_json::Value,
 }
 
 pub fn get_os_arch() -> (String, String) {
@@ -68,9 +68,7 @@ pub fn fetch_java_download_url(version: u8) -> Result<String, String> {
         .map_err(|e| format!("JSON Parse Error: {}", e))?;
 
     if let Some(release) = releases.first() {
-        if let Some(binary) = release.binaries.first() {
-            return Ok(binary.package.link.clone());
-        }
+        return Ok(release.binary.package.link.clone());
     }
 
     Err("No binaries found".to_string())

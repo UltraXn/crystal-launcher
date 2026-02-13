@@ -3,31 +3,6 @@
 version = 4
 
 [[package]]
-name = "CrystalNative"
-version = "1.1.9"
-dependencies = [
- "anyhow",
- "aws-config",
- "aws-credential-types",
- "aws-sdk-s3",
- "futures",
- "hex",
- "reqwest",
- "rusqlite",
- "serde",
- "serde_json",
- "sha1",
- "slint",
- "slint-build",
- "thiserror 2.0.18",
- "tokio",
- "walkdir",
- "windows 0.58.0",
- "winres",
- "zip",
-]
-
-[[package]]
 name = "ab_glyph"
 version = "0.2.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1685,6 +1660,31 @@ checksum = "78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a"
 dependencies = [
  "generic-array",
  "typenum",
+]
+
+[[package]]
+name = "crystal_native"
+version = "1.1.9"
+dependencies = [
+ "anyhow",
+ "aws-config",
+ "aws-credential-types",
+ "aws-sdk-s3",
+ "futures",
+ "hex",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "sha1",
+ "slint",
+ "slint-build",
+ "thiserror 2.0.18",
+ "tokio",
+ "walkdir",
+ "windows 0.58.0",
+ "winres",
+ "zip",
 ]
 
 [[package]]

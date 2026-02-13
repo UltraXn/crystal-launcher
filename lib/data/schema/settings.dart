@@ -16,6 +16,8 @@ class Settings extends Table {
 
   // Launcher Config
   BoolColumn get closeLauncher => boolean().withDefault(const Constant(true))();
+  BoolColumn get minimizeToTray =>
+      boolean().withDefault(const Constant(true))();
   TextColumn get language => text().withDefault(const Constant('es'))();
 
   // Minecraft Version & Connection

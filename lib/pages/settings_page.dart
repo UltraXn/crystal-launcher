@@ -44,6 +44,9 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _linkPasswordController = TextEditingController();
   bool _isLinking = false;
 
+  // Launcher Config
+  bool _minimizeToTray = true;
+
   // 2FA State
   final TwoFactorService _twoFactorService = TwoFactorService();
   bool _is2FAEnabled = false;
@@ -60,12 +63,24 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _check2FAStatus() async {
+    // 1. Check local session persistence first
+    if (SessionService().currentSession?.isAdminVerified == true) {
+      if (mounted) {
+        setState(() {
+          _is2FAEnabled = true;
+          _isLoading2FA = false;
+        });
+      }
+      return;
+    }
+
+    // 2. Fallback to API check if not verified locally
     final token = SessionService().currentSession?.accessToken;
     if (token != null) {
       final enabled = await _twoFactorService.checkStatus(token);
       if (mounted) {
         setState(() {
-          _is2FAEnabled = enabled;
+          _is2FAEnabled = enabled; // If API says true (e.g. from backend state), we respect it too
           _isLoading2FA = false;
         });
       }
@@ -156,6 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _javaPathController.text = settings.javaPath ?? "";
           _heightController.text = settings.height.toString();
           _fullscreen = settings.fullscreen;
+          _minimizeToTray = settings.minimizeToTray;
         });
       }
     } catch (e) {
@@ -178,6 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
         width: drift.Value(int.tryParse(_widthController.text) ?? 1280),
         height: drift.Value(int.tryParse(_heightController.text) ?? 720),
         fullscreen: drift.Value(_fullscreen),
+        minimizeToTray: drift.Value(_minimizeToTray),
       );
 
       await DatabaseService().updateSettings(companion);
@@ -238,6 +255,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildSectionHeader("Seguridad (2FA)", Icons.security),
                 const SizedBox(height: 16),
                 _buildTwoFactorSection(),
+
+                const SizedBox(height: 32),
+                _buildSectionHeader("Launcher", Icons.desktop_windows),
+                const SizedBox(height: 16),
+                _buildLauncherConfigSection(),
 
                 const SizedBox(height: 32),
                 _buildSectionHeader("Sistema", Icons.system_update_rounded),
@@ -805,7 +827,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     await launchUrl(url);
                   }
                 },
-                child: Row(
+                child: const Row(
                   children: const [
                     Text(
                       "Gestionar en Web",
@@ -868,6 +890,36 @@ class _SettingsPageState extends State<SettingsPage> {
                 backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
               ),
             ),
+      ),
+    );
+
+  }
+
+  Widget _buildLauncherConfigSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          SwitchListTile(
+            value: _minimizeToTray,
+            onChanged: (val) => setState(() => _minimizeToTray = val),
+            title: const Text("Minimizar a la Bandeja", style: TextStyle(color: Colors.white)),
+            subtitle: const Text(
+              "Al cerrar la ventana, el launcher seguirá ejecutándose en segundo plano.",
+              style: TextStyle(color: Colors.white54, fontSize: 12),
+            ),
+            secondary: Icon(
+              Icons.download_rounded, 
+              color: _minimizeToTray ? AppTheme.accent : Colors.white24,
+            ),
+
+            activeTrackColor: AppTheme.accent.withValues(alpha: 0.5),
+            inactiveTrackColor: Colors.white10,
+          ),
+        ],
       ),
     );
   }

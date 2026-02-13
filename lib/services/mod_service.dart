@@ -34,7 +34,7 @@ class ModService {
       // 1. Obtener la lista de mods oficiales desde Supabase
       final response = await SupabaseService().client
           .from('official_mods')
-          .select('name, download_url, sha1');
+          .select('name, download_url, sha1, created_at');
       
       final List<dynamic> remoteMods = response as List<dynamic>;
       final List<Map<String, dynamic>> modsToDownload = [];

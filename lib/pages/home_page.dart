@@ -200,9 +200,9 @@ class _HomePageState extends State<HomePage> {
                   // Right Panel (Friends/Skin)
                   Expanded(
                     flex: 1,
-                    child: Container(
+                    child: const SizedBox(
                       height: 450,
-                      child: const SkinViewerWidget(),
+                      child: SkinViewerWidget(),
                     ),
                   ),
                 ],

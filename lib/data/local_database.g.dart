@@ -71,6 +71,16 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("close_launcher" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _minimizeToTrayMeta =
+      const VerificationMeta('minimizeToTray');
+  @override
+  late final GeneratedColumn<bool> minimizeToTray = GeneratedColumn<bool>(
+      'minimize_to_tray', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("minimize_to_tray" IN (0, 1))'),
+      defaultValue: const Constant(true));
   static const VerificationMeta _languageMeta =
       const VerificationMeta('language');
   @override
@@ -121,6 +131,7 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         height,
         fullscreen,
         closeLauncher,
+        minimizeToTray,
         language,
         mcVersion,
         neoForgeVersion,
@@ -171,6 +182,12 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
           _closeLauncherMeta,
           closeLauncher.isAcceptableOrUnknown(
               data['close_launcher']!, _closeLauncherMeta));
+    }
+    if (data.containsKey('minimize_to_tray')) {
+      context.handle(
+          _minimizeToTrayMeta,
+          minimizeToTray.isAcceptableOrUnknown(
+              data['minimize_to_tray']!, _minimizeToTrayMeta));
     }
     if (data.containsKey('language')) {
       context.handle(_languageMeta,
@@ -223,6 +240,8 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
           .read(DriftSqlType.bool, data['${effectivePrefix}fullscreen'])!,
       closeLauncher: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}close_launcher'])!,
+      minimizeToTray: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}minimize_to_tray'])!,
       language: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
       mcVersion: attachedDatabase.typeMapping
@@ -251,6 +270,7 @@ class Setting extends DataClass implements Insertable<Setting> {
   final int height;
   final bool fullscreen;
   final bool closeLauncher;
+  final bool minimizeToTray;
   final String language;
   final String? mcVersion;
   final String? neoForgeVersion;
@@ -265,6 +285,7 @@ class Setting extends DataClass implements Insertable<Setting> {
       required this.height,
       required this.fullscreen,
       required this.closeLauncher,
+      required this.minimizeToTray,
       required this.language,
       this.mcVersion,
       this.neoForgeVersion,
@@ -283,6 +304,7 @@ class Setting extends DataClass implements Insertable<Setting> {
     map['height'] = Variable<int>(height);
     map['fullscreen'] = Variable<bool>(fullscreen);
     map['close_launcher'] = Variable<bool>(closeLauncher);
+    map['minimize_to_tray'] = Variable<bool>(minimizeToTray);
     map['language'] = Variable<String>(language);
     if (!nullToAbsent || mcVersion != null) {
       map['mc_version'] = Variable<String>(mcVersion);
@@ -311,6 +333,7 @@ class Setting extends DataClass implements Insertable<Setting> {
       height: Value(height),
       fullscreen: Value(fullscreen),
       closeLauncher: Value(closeLauncher),
+      minimizeToTray: Value(minimizeToTray),
       language: Value(language),
       mcVersion: mcVersion == null && nullToAbsent
           ? const Value.absent()
@@ -339,6 +362,7 @@ class Setting extends DataClass implements Insertable<Setting> {
       height: serializer.fromJson<int>(json['height']),
       fullscreen: serializer.fromJson<bool>(json['fullscreen']),
       closeLauncher: serializer.fromJson<bool>(json['closeLauncher']),
+      minimizeToTray: serializer.fromJson<bool>(json['minimizeToTray']),
       language: serializer.fromJson<String>(json['language']),
       mcVersion: serializer.fromJson<String?>(json['mcVersion']),
       neoForgeVersion: serializer.fromJson<String?>(json['neoForgeVersion']),
@@ -358,6 +382,7 @@ class Setting extends DataClass implements Insertable<Setting> {
       'height': serializer.toJson<int>(height),
       'fullscreen': serializer.toJson<bool>(fullscreen),
       'closeLauncher': serializer.toJson<bool>(closeLauncher),
+      'minimizeToTray': serializer.toJson<bool>(minimizeToTray),
       'language': serializer.toJson<String>(language),
       'mcVersion': serializer.toJson<String?>(mcVersion),
       'neoForgeVersion': serializer.toJson<String?>(neoForgeVersion),
@@ -375,6 +400,7 @@ class Setting extends DataClass implements Insertable<Setting> {
           int? height,
           bool? fullscreen,
           bool? closeLauncher,
+          bool? minimizeToTray,
           String? language,
           Value<String?> mcVersion = const Value.absent(),
           Value<String?> neoForgeVersion = const Value.absent(),
@@ -389,6 +415,7 @@ class Setting extends DataClass implements Insertable<Setting> {
         height: height ?? this.height,
         fullscreen: fullscreen ?? this.fullscreen,
         closeLauncher: closeLauncher ?? this.closeLauncher,
+        minimizeToTray: minimizeToTray ?? this.minimizeToTray,
         language: language ?? this.language,
         mcVersion: mcVersion.present ? mcVersion.value : this.mcVersion,
         neoForgeVersion: neoForgeVersion.present
@@ -412,6 +439,9 @@ class Setting extends DataClass implements Insertable<Setting> {
       closeLauncher: data.closeLauncher.present
           ? data.closeLauncher.value
           : this.closeLauncher,
+      minimizeToTray: data.minimizeToTray.present
+          ? data.minimizeToTray.value
+          : this.minimizeToTray,
       language: data.language.present ? data.language.value : this.language,
       mcVersion: data.mcVersion.present ? data.mcVersion.value : this.mcVersion,
       neoForgeVersion: data.neoForgeVersion.present
@@ -436,6 +466,7 @@ class Setting extends DataClass implements Insertable<Setting> {
           ..write('height: $height, ')
           ..write('fullscreen: $fullscreen, ')
           ..write('closeLauncher: $closeLauncher, ')
+          ..write('minimizeToTray: $minimizeToTray, ')
           ..write('language: $language, ')
           ..write('mcVersion: $mcVersion, ')
           ..write('neoForgeVersion: $neoForgeVersion, ')
@@ -455,6 +486,7 @@ class Setting extends DataClass implements Insertable<Setting> {
       height,
       fullscreen,
       closeLauncher,
+      minimizeToTray,
       language,
       mcVersion,
       neoForgeVersion,
@@ -472,6 +504,7 @@ class Setting extends DataClass implements Insertable<Setting> {
           other.height == this.height &&
           other.fullscreen == this.fullscreen &&
           other.closeLauncher == this.closeLauncher &&
+          other.minimizeToTray == this.minimizeToTray &&
           other.language == this.language &&
           other.mcVersion == this.mcVersion &&
           other.neoForgeVersion == this.neoForgeVersion &&
@@ -488,6 +521,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   final Value<int> height;
   final Value<bool> fullscreen;
   final Value<bool> closeLauncher;
+  final Value<bool> minimizeToTray;
   final Value<String> language;
   final Value<String?> mcVersion;
   final Value<String?> neoForgeVersion;
@@ -502,6 +536,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     this.height = const Value.absent(),
     this.fullscreen = const Value.absent(),
     this.closeLauncher = const Value.absent(),
+    this.minimizeToTray = const Value.absent(),
     this.language = const Value.absent(),
     this.mcVersion = const Value.absent(),
     this.neoForgeVersion = const Value.absent(),
@@ -517,6 +552,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     this.height = const Value.absent(),
     this.fullscreen = const Value.absent(),
     this.closeLauncher = const Value.absent(),
+    this.minimizeToTray = const Value.absent(),
     this.language = const Value.absent(),
     this.mcVersion = const Value.absent(),
     this.neoForgeVersion = const Value.absent(),
@@ -532,6 +568,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     Expression<int>? height,
     Expression<bool>? fullscreen,
     Expression<bool>? closeLauncher,
+    Expression<bool>? minimizeToTray,
     Expression<String>? language,
     Expression<String>? mcVersion,
     Expression<String>? neoForgeVersion,
@@ -547,6 +584,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       if (height != null) 'height': height,
       if (fullscreen != null) 'fullscreen': fullscreen,
       if (closeLauncher != null) 'close_launcher': closeLauncher,
+      if (minimizeToTray != null) 'minimize_to_tray': minimizeToTray,
       if (language != null) 'language': language,
       if (mcVersion != null) 'mc_version': mcVersion,
       if (neoForgeVersion != null) 'neo_forge_version': neoForgeVersion,
@@ -564,6 +602,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       Value<int>? height,
       Value<bool>? fullscreen,
       Value<bool>? closeLauncher,
+      Value<bool>? minimizeToTray,
       Value<String>? language,
       Value<String?>? mcVersion,
       Value<String?>? neoForgeVersion,
@@ -578,6 +617,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       height: height ?? this.height,
       fullscreen: fullscreen ?? this.fullscreen,
       closeLauncher: closeLauncher ?? this.closeLauncher,
+      minimizeToTray: minimizeToTray ?? this.minimizeToTray,
       language: language ?? this.language,
       mcVersion: mcVersion ?? this.mcVersion,
       neoForgeVersion: neoForgeVersion ?? this.neoForgeVersion,
@@ -613,6 +653,9 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     if (closeLauncher.present) {
       map['close_launcher'] = Variable<bool>(closeLauncher.value);
     }
+    if (minimizeToTray.present) {
+      map['minimize_to_tray'] = Variable<bool>(minimizeToTray.value);
+    }
     if (language.present) {
       map['language'] = Variable<String>(language.value);
     }
@@ -642,6 +685,7 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
           ..write('height: $height, ')
           ..write('fullscreen: $fullscreen, ')
           ..write('closeLauncher: $closeLauncher, ')
+          ..write('minimizeToTray: $minimizeToTray, ')
           ..write('language: $language, ')
           ..write('mcVersion: $mcVersion, ')
           ..write('neoForgeVersion: $neoForgeVersion, ')
@@ -1476,6 +1520,7 @@ typedef $$SettingsTableCreateCompanionBuilder = SettingsCompanion Function({
   Value<int> height,
   Value<bool> fullscreen,
   Value<bool> closeLauncher,
+  Value<bool> minimizeToTray,
   Value<String> language,
   Value<String?> mcVersion,
   Value<String?> neoForgeVersion,
@@ -1491,6 +1536,7 @@ typedef $$SettingsTableUpdateCompanionBuilder = SettingsCompanion Function({
   Value<int> height,
   Value<bool> fullscreen,
   Value<bool> closeLauncher,
+  Value<bool> minimizeToTray,
   Value<String> language,
   Value<String?> mcVersion,
   Value<String?> neoForgeVersion,
@@ -1530,6 +1576,10 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<bool> get closeLauncher => $composableBuilder(
       column: $table.closeLauncher, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get minimizeToTray => $composableBuilder(
+      column: $table.minimizeToTray,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get language => $composableBuilder(
       column: $table.language, builder: (column) => ColumnFilters(column));
@@ -1583,6 +1633,10 @@ class $$SettingsTableOrderingComposer
       column: $table.closeLauncher,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get minimizeToTray => $composableBuilder(
+      column: $table.minimizeToTray,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get language => $composableBuilder(
       column: $table.language, builder: (column) => ColumnOrderings(column));
 
@@ -1634,6 +1688,9 @@ class $$SettingsTableAnnotationComposer
   GeneratedColumn<bool> get closeLauncher => $composableBuilder(
       column: $table.closeLauncher, builder: (column) => column);
 
+  GeneratedColumn<bool> get minimizeToTray => $composableBuilder(
+      column: $table.minimizeToTray, builder: (column) => column);
+
   GeneratedColumn<String> get language =>
       $composableBuilder(column: $table.language, builder: (column) => column);
 
@@ -1681,6 +1738,7 @@ class $$SettingsTableTableManager extends RootTableManager<
             Value<int> height = const Value.absent(),
             Value<bool> fullscreen = const Value.absent(),
             Value<bool> closeLauncher = const Value.absent(),
+            Value<bool> minimizeToTray = const Value.absent(),
             Value<String> language = const Value.absent(),
             Value<String?> mcVersion = const Value.absent(),
             Value<String?> neoForgeVersion = const Value.absent(),
@@ -1696,6 +1754,7 @@ class $$SettingsTableTableManager extends RootTableManager<
             height: height,
             fullscreen: fullscreen,
             closeLauncher: closeLauncher,
+            minimizeToTray: minimizeToTray,
             language: language,
             mcVersion: mcVersion,
             neoForgeVersion: neoForgeVersion,
@@ -1711,6 +1770,7 @@ class $$SettingsTableTableManager extends RootTableManager<
             Value<int> height = const Value.absent(),
             Value<bool> fullscreen = const Value.absent(),
             Value<bool> closeLauncher = const Value.absent(),
+            Value<bool> minimizeToTray = const Value.absent(),
             Value<String> language = const Value.absent(),
             Value<String?> mcVersion = const Value.absent(),
             Value<String?> neoForgeVersion = const Value.absent(),
@@ -1726,6 +1786,7 @@ class $$SettingsTableTableManager extends RootTableManager<
             height: height,
             fullscreen: fullscreen,
             closeLauncher: closeLauncher,
+            minimizeToTray: minimizeToTray,
             language: language,
             mcVersion: mcVersion,
             neoForgeVersion: neoForgeVersion,

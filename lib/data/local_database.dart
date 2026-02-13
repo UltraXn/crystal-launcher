@@ -14,7 +14,7 @@ class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -31,6 +31,10 @@ class LocalDatabase extends _$LocalDatabase {
       if (from < 3) {
         await m.createTable(profiles);
         await m.addColumn(settings, settings.selectedProfileId);
+      }
+      if (from < 4) {
+        // Migration to v4: Add minimizeToTray
+        await m.addColumn(settings, settings.minimizeToTray);
       }
     },
   );

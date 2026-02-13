@@ -251,6 +251,7 @@ class NativeApi {
       if (resultPtr == nullptr) return null;
       
       final hash = resultPtr.toDartString();
+      _freeString(resultPtr); // Free the string allocated by Rust
       return hash;
     } catch (e) {
       stderr.writeln("Error calculating hash: $e");

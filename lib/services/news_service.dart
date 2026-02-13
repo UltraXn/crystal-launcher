@@ -6,7 +6,7 @@ import '../models/news_post.dart';
 
 class NewsService {
   static final String _baseUrl =
-      dotenv.env['API_URL'] ?? 'http://localhost:3000/api';
+      dotenv.env['API_URL'] ?? (() { throw Exception("API_URL not configured"); })();
 
   Future<List<NewsPost>> getNews({int limit = 5}) async {
     try {

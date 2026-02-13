@@ -9,7 +9,9 @@ import 'services/session_service.dart';
 import 'services/update_service.dart';
 import 'services/log_service.dart';
 import 'services/native_api.dart'; // Added
+import 'services/tray_service.dart'; // Added
 import 'theme/app_theme.dart';
+import 'widgets/tray_listener_wrapper.dart'; // Added
 import 'widgets/auth_wrapper.dart';
 import 'pages/profile_page.dart';
 import 'pages/mod_manager_page.dart';
@@ -100,6 +102,13 @@ void main(List<String> args) async {
     await SessionService().initialize();
     logService.log("✅ Session service ready");
     
+    // 4. Tray Service (New)
+    try {
+      await TrayService().initialize();
+    } catch (e) {
+      logService.log("⚠️ Tray Service init error: $e", level: Level.warning);
+    }
+
     // No esperamos el check de updates para no bloquear el inicio
     UpdateService().checkUpdates();
     logService.log("🔄 Update check triggered");
@@ -121,74 +130,76 @@ class CrystalLauncherApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<String?>(
-      valueListenable: initializationError,
-      builder: (context, error, child) {
-        if (error != null) {
-          return MaterialApp(
-            home: Scaffold(
-              backgroundColor: const Color(0xFF121212),
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 64,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Error de Inicialización",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+    return TrayListenerWrapper( // Added Wrapper
+      child: ValueListenableBuilder<String?>(
+        valueListenable: initializationError,
+        builder: (context, error, child) {
+          if (error != null) {
+            return MaterialApp(
+              home: Scaffold(
+                backgroundColor: const Color(0xFF121212),
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 64,
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 16,
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Error de Inicialización",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => logService.openLogs(),
-                        icon: const Icon(Icons.description_outlined),
-                        label: const Text("ABRIR REGISTROS (LOGS)"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white10,
-                          foregroundColor: Colors.white,
+                        const SizedBox(height: 8),
+                        Text(
+                          error,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => logService.openLogs(),
+                          icon: const Icon(Icons.description_outlined),
+                          label: const Text("ABRIR REGISTROS (LOGS)"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white10,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
+            );
+          }
+          return MaterialApp(
+            title: 'CrystalTides Launcher',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.darkTheme,
+            builder: (context, child) => child!,
+            home: const AuthWrapper(),
+            routes: {
+              '/mods': (context) => const ModManagerPage(),
+              '/profiles': (context) => const ProfileSelectionPage(),
+              '/settings': (context) => const SettingsPage(),
+              '/profile': (context) => const ProfilePage(),
+              '/admin': (context) => const AdminDashboardPage(),
+            },
           );
-        }
-        return MaterialApp(
-          title: 'CrystalTides Launcher',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.darkTheme,
-          builder: (context, child) => child!,
-          home: const AuthWrapper(),
-          routes: {
-            '/mods': (context) => const ModManagerPage(),
-            '/profiles': (context) => const ProfileSelectionPage(),
-            '/settings': (context) => const SettingsPage(),
-            '/profile': (context) => const ProfilePage(),
-            '/admin': (context) => const AdminDashboardPage(),
-          },
-        );
-      },
+        },
+      ),
     );
   }
 }

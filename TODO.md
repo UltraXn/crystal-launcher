@@ -31,7 +31,7 @@
 - [x] **Hash y Verificación de Archivos** ✅
 - [x] **Extracción de Modpacks (Unzip)** ✅
 - [x] **Gestor de Descargas Paralelo** ✅
-- [ ] **Java Runtime Manager (URGENTE)**: Descargar e instalar automáticamente versiones de Java optimizadas (GraalVM/Adoptium) al primer inicio. Adiós errores de DLL y rendimiento inconsistente.
+- [x] **Java Runtime Manager (URGENTE)**: Descargar e instalar automáticamente versiones de Java optimizadas (GraalVM/Adoptium) al primer inicio. Adiós errores de DLL y rendimiento inconsistente. ✅
 - [ ] **Network Packet Optimizer**: Ajustar TCP/IP de Windows al lanzar el juego para mejorar HitReg y reducir ping.
 - [ ] **P2P LAN Updates**: Detectar otros PCs en la red local y copiar archivos a velocidad Gigabit en lugar de descargar de internet.
 - [ ] **Mod Dependency Audit**: Verificar `mods.toml` antes de lanzar para alertar sobre librerías faltantes.

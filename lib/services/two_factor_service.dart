@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'log_service.dart';
 
 class TwoFactorService {
-  final String _baseUrl = dotenv.env['API_URL'] ?? 'http://localhost:3000';
+  final String _baseUrl = dotenv.env['API_URL'] ?? (() { throw Exception("API_URL not configured in .env"); })();
 
   Future<bool> checkStatus(String token) async {
     try {
@@ -18,7 +18,7 @@ class TwoFactorService {
       );
 
       logService.log("2FA Check Status: ${response.statusCode}");
-      logService.log("2FA Check Body: ${response.body}");
+      // logService.log("2FA Check Body: ${response.body}"); // Sanitized
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -49,8 +49,8 @@ class TwoFactorService {
 
       logService.log("2FA Verify Response Code: ${response.statusCode}");
       debugPrint("2FA DEBUG: Verify Response Code: ${response.statusCode}");
-      logService.log("2FA Verify Response Body: ${response.body}");
-      debugPrint("2FA DEBUG: Verify Response Body: ${response.body}");
+      // logService.log("2FA Verify Response Body: ${response.body}"); // Sanitized
+      // debugPrint("2FA DEBUG: Verify Response Body: ${response.body}"); // Sanitized
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);

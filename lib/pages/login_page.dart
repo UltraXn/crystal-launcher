@@ -42,9 +42,10 @@ class _LoginPageState extends State<LoginPage> {
   // _handleCrystalLogin removed
 
   void _handleMicrosoftLogin() async {
-    setState(() {
-      _errorMessage = "Microsoft Login en construcción...";
-    });
+    // TODO: Implement Microsoft Login
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Próximamente: Microsoft Login")),
+    );
   }
 
   @override

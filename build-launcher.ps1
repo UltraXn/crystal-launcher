@@ -51,7 +51,7 @@ $nativeDll = "$env:CARGO_TARGET_DIR\release\crystal_native.dll"
 Write-Step "Building Game Client (Main Launcher)..."
 
 New-Item -ItemType Directory -Force -Path $tempLauncher | Out-Null
-robocopy "$launcherRoot" "$tempLauncher" /MIR /XD "build" "ephemeral" ".dart_tool" "pubspec.lock" "installer" "bootstrapper" "native" "scripts" "uninstaller" "uninstaller_bootstrapper" > $null
+robocopy "$launcherRoot" "$tempLauncher" /MIR /XD "build" "ephemeral" ".dart_tool" "installer" "bootstrapper" "native" "scripts" "uninstaller" "uninstaller_bootstrapper" "node_modules" "target" > $null
 if ($LASTEXITCODE -ge 8) { throw "Robocopy failed with code $LASTEXITCODE" }
 
 # Place crystal_native.dll where CMake expects it
@@ -61,7 +61,9 @@ Copy-Item $nativeDll "$nativeDllDest\crystal_native.dll" -Force
 Write-Host "  -> crystal_native.dll placed at $nativeDllDest" -ForegroundColor DarkGray
 
 Set-Location $tempLauncher
+Write-Host "Starting flutter pub get..." -ForegroundColor Cyan
 flutter pub get
+Write-Host "Starting flutter build windows..." -ForegroundColor Cyan
 flutter build windows --release
 if (-not $?) { throw "Game Client Build Failed" }
 

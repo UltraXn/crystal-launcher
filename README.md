@@ -20,11 +20,10 @@ apps/launcher/
 ├── lib/
 │   ├── layouts/     # Shells principales (MainLayout)
 │   ├── pages/       # Pantallas (HomePage, SettingsPage)
-│   ├── widgets/     # Componentes reusables (NewsCard, PlayButton)
-│   ├── services/    # Lógica de negocio (NewsService, AuthService)
+│   ├── widgets/     # Componentes reusables 
+│   ├── services/    # Lógica de negocio (ModService, AuthService)
 │   └── models/      # Data Classes
-├── native-core/     # Código Rust (game_bridge_core)
-├── dev_plugins/     # Plugins locales modificados (video_player, webview)
+├── native/          # Código Rust (game_bridge_core)
 ├── assets/
 │   ├── images/      # Logos y fondos
 │   └── web/         # Archivos HTML locales (Skin Viewer)

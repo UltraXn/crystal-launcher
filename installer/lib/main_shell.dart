@@ -820,7 +820,7 @@ class _InstallerHomeState extends State<InstallerHome> {
         ),
         child: Text(
           t(labelKey),
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Outfit',
             fontWeight: FontWeight.w700,
             fontSize: 13,

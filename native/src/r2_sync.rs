@@ -48,10 +48,26 @@ pub extern "C" fn upload_mods_parallel(
             Err(_) => return -1,
         };
 
-        let access_key_str = unsafe { CStr::from_ptr(access_key).to_str().unwrap() };
-        let secret_key_str = unsafe { CStr::from_ptr(secret_key).to_str().unwrap() };
-        let endpoint_str = unsafe { CStr::from_ptr(endpoint).to_str().unwrap() };
-        let bucket_str = unsafe { CStr::from_ptr(bucket).to_str().unwrap() };
+        if access_key.is_null() || secret_key.is_null() || endpoint.is_null() || bucket.is_null() {
+            return -1;
+        }
+
+        let access_key_str = match unsafe { CStr::from_ptr(access_key).to_str() } {
+            Ok(s) => s,
+            Err(_) => return -1,
+        };
+        let secret_key_str = match unsafe { CStr::from_ptr(secret_key).to_str() } {
+            Ok(s) => s,
+            Err(_) => return -1,
+        };
+        let endpoint_str = match unsafe { CStr::from_ptr(endpoint).to_str() } {
+            Ok(s) => s,
+            Err(_) => return -1,
+        };
+        let bucket_str = match unsafe { CStr::from_ptr(bucket).to_str() } {
+            Ok(s) => s,
+            Err(_) => return -1,
+        };
 
         // Build S3 client
         let client = match build_s3_client(endpoint_str, access_key_str, secret_key_str).await {
@@ -126,7 +142,13 @@ pub extern "C" fn download_mods_parallel(
             Err(_) => return -1,
         };
 
-        let output_dir_str = unsafe { CStr::from_ptr(output_dir).to_str().unwrap() };
+        if output_dir.is_null() {
+            return -1;
+        }
+        let output_dir_str = match unsafe { CStr::from_ptr(output_dir).to_str() } {
+            Ok(s) => s,
+            Err(_) => return -1,
+        };
 
         let client = reqwest::Client::new();
         let semaphore = Arc::new(Semaphore::new(max_concurrent as usize));

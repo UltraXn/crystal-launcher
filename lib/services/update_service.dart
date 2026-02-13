@@ -121,7 +121,10 @@ class UpdateService extends ChangeNotifier {
         }
         logService.log("✅ Integrity verified successfully.", category: "NETWORK");
       } else {
-        logService.log("⚠️ No remote hash provided for verification.", level: Level.warning, category: "NETWORK");
+        logService.log("❌ No remote hash provided. Cannot verify update integrity.", level: Level.error, category: "NETWORK");
+        await file.delete();
+        _downloadedPath = null;
+        throw Exception("Error de seguridad: La actualización no tiene firma hash (SHA-256).");
       }
       
       _downloadedPath = filePath;
