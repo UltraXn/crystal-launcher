@@ -32,87 +32,76 @@ jobs:
         working-directory: native
         run: cargo build --release --lib
 
-      - name: Copy DLL to Source (for Flutter Build)
+      - name: Prepare Native DLL for Flutter
         run: |
-          if (!(Test-Path "windows/runner/native")) {
-            New-Item -ItemType Directory -Force -Path "windows/runner/native"
-          }
-          Copy-Item "native/target/release/CrystalNative.dll" "windows/runner/native/CrystalNative.dll" -Force
+          $dllSource = "native/target/release/CrystalNative.dll"
+          # Target for Main Launcher
+          New-Item -ItemType Directory -Force -Path "windows/runner/native"
+          Copy-Item $dllSource "windows/runner/native/CrystalNative.dll" -Force
+          # Target for Installer (CMake expectations)
+          New-Item -ItemType Directory -Force -Path "installer/native/target/release"
+          Copy-Item $dllSource "installer/native/target/release/CrystalNative.dll" -Force
 
-      # --- PHASE 1: BUILD GAME CLIENT ---
-      - name: Build Game Client (Flutter)
+      # --- PHASE 1: BUILD MAIN LAUNCHER ---
+      - name: Build Main Launcher (Flutter)
         run: |
-          flutter clean
-          flutter pub get
           flutter build windows --release
+          $gameDist = "build/windows/x64/runner/Release"
+          Rename-Item "$gameDist/launcher.exe" "crystal_launcher.exe" -Force
+          Copy-Item "native/target/release/CrystalNative.dll" "$gameDist/CrystalNative.dll" -Force
 
-      - name: Rename Game Exe
+      # --- PHASE 2: BUILD UNINSTALLER ---
+      - name: Build Uninstaller UI (Flutter)
+        working-directory: uninstaller
         run: |
-          if (Test-Path "build/windows/x64/runner/Release/launcher.exe") {
-            Move-Item "build/windows/x64/runner/Release/launcher.exe" "build/windows/x64/runner/Release/crystal_launcher.exe" -Force
-          }
+          flutter build windows --release
+          $unDist = "build/windows/x64/runner/Release"
+          Copy-Item "../native/target/release/CrystalNative.dll" "$unDist/installer_native.dll" -Force
+          Rename-Item "$unDist/uninstaller.exe" "crystal_uninstaller.exe" -Force
 
-      - name: Create Game Payload Zip
+      - name: Build Uninstaller Bootstrapper (Rust)
+        run: |
+          Compress-Archive -Path "uninstaller/build/windows/x64/runner/Release/*" -DestinationPath "uninstaller_bootstrapper/uninstaller_payload.zip" -Force
+          cd uninstaller_bootstrapper
+          cargo build --release
+          cd ..
+          # Include uninstaller bootstrapper in main launcher dist
+          Copy-Item "uninstaller_bootstrapper/target/release/crystal_uninstaller_boot.exe" "build/windows/x64/runner/Release/crystal_uninstaller.exe" -Force
+
+      # --- PHASE 3: BUILD INSTALLER ---
+      - name: Build Installer UI (Flutter)
         run: |
           $payloadDir = "installer/assets/payload"
-          if (!(Test-Path $payloadDir)) {
-            New-Item -ItemType Directory -Force -Path $payloadDir
-          }
+          New-Item -ItemType Directory -Force -Path $payloadDir
           Compress-Archive -Path "build/windows/x64/runner/Release/*" -DestinationPath "$payloadDir/game_payload.zip" -Force
-
-      # --- PHASE 2: BUILD INSTALLER UI ---
-      - name: Build Installer UI (Flutter)
-        working-directory: installer
-        run: |
-          flutter clean
-          flutter pub get
+          cd installer
           flutter build windows --release
+          $instDist = "build/windows/x64/runner/Release"
+          Copy-Item "../native/target/release/CrystalNative.dll" "$instDist/installer_native.dll" -Force
 
-      - name: Copy DLL to Installer Distribution
-        run: |
-          Copy-Item "native/target/release/CrystalNative.dll" "installer/build/windows/x64/runner/Release/installer_native.dll" -Force
-
-      # --- PHASE 3: BUILD BOOTSTRAPPER ---
-      - name: Create Installer Payload Zip
+      - name: Build Final Bootstrapper (Rust)
         run: |
           Compress-Archive -Path "installer/build/windows/x64/runner/Release/*" -DestinationPath "bootstrapper/installer_payload.zip" -Force
-
-      - name: Copy Bootstrapper Icon
-        run: |
           Copy-Item "native/app_icon.ico" "bootstrapper/app_icon.ico" -Force
-
-      - name: Build Bootstrapper (Rust)
-        working-directory: bootstrapper
-        run: |
-          ls -Force
+          cd bootstrapper
           cargo build --release
-
-      - name: Prepare Release Artifact
-        run: |
+          cd ..
           Copy-Item "bootstrapper/target/release/crystal_bootstrapper.exe" "CTSMP_Installer.exe" -Force
 
+      # --- PHASE 4: SIGNING (Optional but good) ---
       - name: Sign Installer (Self-Signed)
         shell: powershell
         run: |
-          # Create Self-Signed Certificate
           $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=CrystalTidesSMP Project" -CertStoreLocation Cert:\CurrentUser\My
           $certPath = "cert.pfx"
           $certPassword = ConvertTo-SecureString -String "CrystalPass123" -Force -AsPlainText
           Export-PfxCertificate -Cert $cert -FilePath $certPath -Password $certPassword
-
-          # Locate Signtool (usually in Windows SDK)
           $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Recurse -Filter "signtool.exe" | Sort-Object FullName -Descending | Select-Object -First 1
-          
           if ($signtool) {
-            Write-Host "Found Signtool at: $($signtool.FullName)"
             & $signtool.FullName sign /f $certPath /p "CrystalPass123" /fd SHA256 /t http://timestamp.digicert.com /q "CTSMP_Installer.exe"
-            Write-Host "Signing completed."
-          } else {
-            Write-Error "Signtool not found."
-            exit 1
           }
 
-      # --- PHASE 4: RELEASE ---
+      # --- PHASE 5: RELEASE ---
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
