@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'log_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'supabase_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // Added
 
 enum AuthType { guest, crystal, microsoft, none }
 
@@ -20,6 +21,7 @@ class UserSession {
   final String? linkedCrystalEmail;
   final String? linkedCrystalAvatar;
   final String? adminToken; // Elevated token from 2FA
+  final bool isAdminVerified; // Added for persistence
 
   UserSession({
     required this.id,
@@ -34,6 +36,7 @@ class UserSession {
     this.linkedCrystalEmail,
     this.linkedCrystalAvatar,
     this.adminToken,
+    this.isAdminVerified = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -49,6 +52,7 @@ class UserSession {
     'linkedCrystalEmail': linkedCrystalEmail,
     'linkedCrystalAvatar': linkedCrystalAvatar,
     'adminToken': adminToken,
+    'isAdminVerified': isAdminVerified,
   };
 
   factory UserSession.fromJson(Map<String, dynamic> json) {
@@ -68,6 +72,7 @@ class UserSession {
       linkedCrystalEmail: json['linkedCrystalEmail'],
       linkedCrystalAvatar: json['linkedCrystalAvatar'],
       adminToken: json['adminToken'],
+      isAdminVerified: json['isAdminVerified'] ?? false,
     );
   }
 
@@ -102,6 +107,10 @@ class SessionService extends ChangeNotifier {
   static final SessionService _instance = SessionService._internal();
   factory SessionService() => _instance;
   SessionService._internal();
+
+  final _secureStorage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(),
+  );
 
   UserSession? _currentSession;
   UserSession? get currentSession => _currentSession;
@@ -241,6 +250,64 @@ class SessionService extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshLinkedData() async {
+    final current = _currentSession;
+    if (current == null) return;
+
+    // Only if it's a crystal session or has linked crystal data
+    if (current.type == AuthType.crystal || current.linkedCrystalEmail != null) {
+      try {
+        final user = SupabaseService().currentUser;
+        if (user == null) return;
+
+        // Fetch profile from table instead of metadata as metadata might be stale
+        final profile = await SupabaseService().client
+            .from('profiles')
+            .select()
+            .eq('id', user.id)
+            .single();
+
+        final role = profile['role'];
+        final avatarUrl = profile['avatar_url'];
+
+        if (current.type == AuthType.crystal) {
+          _currentSession = UserSession(
+            id: current.id,
+            username: current.username,
+            type: current.type,
+            accessToken: current.accessToken,
+            refreshToken: current.refreshToken,
+            uuid: current.uuid,
+            skinUrl: avatarUrl ?? current.skinUrl, // Update skinUrl for crystal primary
+            role: role?.toString() ?? current.role,
+            linkedCrystalRole: current.linkedCrystalRole,
+            linkedCrystalEmail: current.linkedCrystalEmail,
+            linkedCrystalAvatar: current.linkedCrystalAvatar,
+          );
+        } else {
+          _currentSession = UserSession(
+            id: current.id,
+            username: current.username,
+            type: current.type,
+            accessToken: current.accessToken,
+            refreshToken: current.refreshToken,
+            uuid: current.uuid,
+            skinUrl: current.skinUrl,
+            role: current.role,
+            linkedCrystalRole: role?.toString() ?? current.linkedCrystalRole,
+            linkedCrystalEmail: current.linkedCrystalEmail,
+            linkedCrystalAvatar: avatarUrl ?? current.linkedCrystalAvatar,
+          );
+        }
+
+        await _saveSessionToDisk();
+        notifyListeners();
+      } catch (e) {
+        logService.log("Error refreshing linked data", error: e, level: Level.error, category: "AUTH");
+      }
+    }
+  }
+
   Future<void> elevateSession(String adminToken, {String? role}) async {
     final current = _currentSession;
     if (current == null) return;
@@ -258,6 +325,7 @@ class SessionService extends ChangeNotifier {
       linkedCrystalEmail: current.linkedCrystalEmail,
       linkedCrystalAvatar: current.linkedCrystalAvatar,
       adminToken: adminToken,
+      isAdminVerified: true,
     );
 
     await _saveSessionToDisk();
@@ -275,15 +343,35 @@ class SessionService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Disk I/O using path_provider directly (No SharedPrefs plugin needed)
+  // Disk I/O using path_provider and flutter_secure_storage
   Future<void> _saveSessionToDisk() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final file = File('${dir.path}/launcher_session.json');
+      
       if (_currentSession == null) {
         if (await file.exists()) await file.delete();
+        await _secureStorage.deleteAll();
       } else {
-        await file.writeAsString(jsonEncode(_currentSession!.toJson()));
+        // 1. Save sensitive tokens to Secure Storage
+        if (_currentSession!.accessToken != null) {
+          await _secureStorage.write(key: 'access_token', value: _currentSession!.accessToken);
+        }
+        if (_currentSession!.refreshToken != null) {
+          await _secureStorage.write(key: 'refresh_token', value: _currentSession!.refreshToken);
+        }
+        if (_currentSession!.adminToken != null) {
+          await _secureStorage.write(key: 'admin_token', value: _currentSession!.adminToken);
+        }
+
+        // 2. Save non-sensitive metadata to plain JSON
+        final sessionData = _currentSession!.toJson();
+        // Remove sensitive fields from the JSON before writing to disk
+        sessionData.remove('accessToken');
+        sessionData.remove('refreshToken');
+        sessionData.remove('adminToken');
+        
+        await file.writeAsString(jsonEncode(sessionData));
       }
     } catch (e) {
       logService.log("Error saving session", error: e, level: Level.error, category: "STORAGE");
@@ -296,7 +384,32 @@ class SessionService extends ChangeNotifier {
       final file = File('${dir.path}/launcher_session.json');
       if (await file.exists()) {
         final content = await file.readAsString();
-        _currentSession = UserSession.fromJson(jsonDecode(content));
+        final json = jsonDecode(content) as Map<String, dynamic>;
+        
+        // 1. Load sensitive tokens from Secure Storage
+        final accessToken = await _secureStorage.read(key: 'access_token');
+        final refreshToken = await _secureStorage.read(key: 'refresh_token');
+        final adminToken = await _secureStorage.read(key: 'admin_token');
+
+        // 2. Reconstruct UserSession
+        _currentSession = UserSession(
+          id: json['id'],
+          username: json['username'],
+          type: AuthType.values.firstWhere(
+            (e) => e.toString() == json['type'],
+            orElse: () => AuthType.none,
+          ),
+          skinUrl: json['skinUrl'],
+          uuid: json['uuid'],
+          role: json['role'],
+          linkedCrystalRole: json['linkedCrystalRole'],
+          linkedCrystalEmail: json['linkedCrystalEmail'],
+          linkedCrystalAvatar: json['linkedCrystalAvatar'],
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          adminToken: adminToken,
+        );
+        
         notifyListeners();
       }
     } catch (e) {

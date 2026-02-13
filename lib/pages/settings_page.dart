@@ -8,8 +8,12 @@ import '../services/session_service.dart';
 import 'package:package_info_plus/package_info_plus.dart' as pi;
 import '../services/update_service.dart';
 import '../services/log_service.dart';
+import '../services/two_factor_service.dart';
+import '../components/two_factor_prompt.dart';
+import '../services/supabase_service.dart';
+import '../services/profile_service.dart';
 import '../widgets/update_dialog.dart';
-import '../utils/logger.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -40,12 +44,106 @@ class _SettingsPageState extends State<SettingsPage> {
   final TextEditingController _linkPasswordController = TextEditingController();
   bool _isLinking = false;
 
+  // 2FA State
+  final TwoFactorService _twoFactorService = TwoFactorService();
+  bool _is2FAEnabled = false;
+  bool _isLoading2FA = true;
+  bool _isUpdatingAvatar = false;
+
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _check2FAStatus();
+  }
+
+  Future<void> _check2FAStatus() async {
+    final token = SessionService().currentSession?.accessToken;
+    if (token != null) {
+      final enabled = await _twoFactorService.checkStatus(token);
+      if (mounted) {
+        setState(() {
+          _is2FAEnabled = enabled;
+          _isLoading2FA = false;
+        });
+      }
+    } else {
+      if (mounted) setState(() => _isLoading2FA = false);
+    }
+  }
+
+  Future<void> _manualSync() async {
+    String? pendingAdminToken;
+
+    final verified = await showDialog<bool>(
+      context: context,
+      builder: (context) => HeroMode(
+        enabled: false,
+        child: TwoFactorPrompt(
+          onCancel: () => Navigator.pop(context, false),
+          onVerify: (code) async {
+            String? token = SessionService().currentSession?.accessToken;
+            token ??= SupabaseService().client.auth.currentSession?.accessToken;
+
+            if (token == null) return false;
+            final adminToken = await _twoFactorService.verify(token, code);
+
+            if (adminToken != null) {
+              pendingAdminToken = adminToken;
+              if (!context.mounted) return true;
+              Navigator.pop(context, true);
+              return true;
+            }
+            return false;
+          },
+        ),
+      ),
+    );
+
+    if (verified == true && pendingAdminToken != null) {
+      await SessionService().elevateSession(pendingAdminToken!);
+
+      if (mounted) {
+        setState(() => _is2FAEnabled = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Sincronización manual exitosa. 2FA Activado."),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _updateProfilePicture() async {
+    setState(() => _isUpdatingAvatar = true);
+    try {
+      final newUrl = await ProfileService().pickAndUploadAvatar();
+      if (newUrl != null && mounted) {
+        await SessionService().refreshLinkedData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("✅ Foto de perfil actualizada con éxito."),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("❌ Error al actualizar avatar: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUpdatingAvatar = false);
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -59,7 +157,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _fullscreen = settings.fullscreen;
       });
     } catch (e) {
-      logger.e("Error loading settings", error: e);
+      logService.log("Error loading settings", error: e, level: Level.error);
     } finally {
       if (mounted) {
         setState(() {
@@ -102,12 +200,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        title: const Text("Configuración"),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.transparent, // Use container background if needed
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -132,6 +225,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildSectionHeader("Cuenta CrystalTides", Icons.link),
                 const SizedBox(height: 16),
                 _buildAccountLinkingSection(),
+
+                const SizedBox(height: 16),
+                if (SessionService().currentSession != null && 
+                    (SessionService().currentSession!.type == AuthType.crystal || 
+                     SessionService().currentSession!.linkedCrystalEmail != null))
+                  _buildProfileManagementSection(),
+
+                const SizedBox(height: 32),
+                _buildSectionHeader("Seguridad (2FA)", Icons.security),
+                const SizedBox(height: 16),
+                _buildTwoFactorSection(),
 
                 const SizedBox(height: 32),
                 _buildSectionHeader("Sistema", Icons.system_update_rounded),
@@ -415,8 +519,49 @@ class _SettingsPageState extends State<SettingsPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("❌ Error: $e"), backgroundColor: Colors.red),
+        String errorMessage = e.toString();
+        if (errorMessage.contains("invalid_credentials")) {
+          errorMessage = "Credenciales inválidas. Verifica tu correo y contraseña.";
+        } else if (errorMessage.contains("Email not confirmed")) {
+          errorMessage = "Correo no confirmado. Por favor, revisa tu bandeja de entrada.";
+        }
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppTheme.background,
+            title: const Text("Error de Vinculación", style: TextStyle(color: Colors.redAccent)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(errorMessage, style: const TextStyle(color: Colors.white)),
+                const SizedBox(height: 16),
+                const Text(
+                  "Si crees que esto es un error, intenta cerrar sesión e iniciarla nuevamente.",
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("ENTENDIDO"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                   final nav = Navigator.of(context);
+                   nav.pop();
+                   await SessionService().logout();
+                   if (mounted) {
+                     nav.pushReplacementNamed('/login');
+                   }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red.withValues(alpha: 0.2)),
+                child: const Text("CERRAR SESIÓN", style: TextStyle(color: Colors.redAccent)),
+              ),
+            ],
+          ),
         );
       }
     } finally {
@@ -599,6 +744,129 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         );
       },
+    );
+  }
+  Widget _buildTwoFactorSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          ListTile(
+            leading: Icon(
+              Icons.shield,
+              color: _isLoading2FA
+                  ? Colors.white24
+                  : (_is2FAEnabled ? Colors.greenAccent : Colors.orangeAccent),
+            ),
+            title: const Text("Autenticación en dos pasos", style: TextStyle(color: Colors.white)),
+            subtitle: Text(
+              _isLoading2FA
+                  ? "Cargando estado..."
+                  : (_is2FAEnabled ? "Activado" : "Desactivado"),
+              style: TextStyle(
+                  color: _isLoading2FA
+                      ? Colors.white30
+                      : (_is2FAEnabled
+                          ? Colors.greenAccent.withValues(alpha: 0.7)
+                          : Colors.orangeAccent.withValues(alpha: 0.7)),
+                  fontSize: 12),
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!_is2FAEnabled && !_isLoading2FA)
+                  TextButton(
+                    onPressed: _manualSync,
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppTheme.accent,
+                      backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
+                    ),
+                    child: const Text("Vincular", style: TextStyle(fontSize: 12)),
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white54, size: 20),
+                  onPressed: _isLoading2FA ? null : _check2FAStatus,
+                ),
+              ],
+            ),
+          ),
+          if (!_isLoading2FA)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12, left: 16, right: 16),
+              child: InkWell(
+                onTap: () async {
+                  final Uri url = Uri.parse("https://crystaltidessmp.net/account");
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url);
+                  }
+                },
+                child: Row(
+                  children: const [
+                    Text(
+                      "Gestionar en Web",
+                      style: TextStyle(
+                        color: AppTheme.accent,
+                        fontSize: 12,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(Icons.open_in_new, size: 10, color: AppTheme.accent),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileManagementSection() {
+    final avatarUrl = SessionService().currentSession?.linkedCrystalAvatar ?? 
+                      SessionService().currentSession?.skinUrl;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: avatarUrl != null 
+            ? Image.network(
+                avatarUrl,
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.white70),
+              )
+            : const Icon(Icons.person, color: Colors.white70),
+        ),
+        title: const Text("Foto de Perfil", style: TextStyle(color: Colors.white)),
+        subtitle: const Text(
+          "Personaliza tu perfil en la web y el launcher.",
+          style: TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        trailing: _isUpdatingAvatar
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : TextButton.icon(
+              onPressed: _updateProfilePicture,
+              icon: const Icon(Icons.edit, size: 16),
+              label: const Text("CAMBIAR", style: TextStyle(fontSize: 12)),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.accent,
+                backgroundColor: AppTheme.accent.withValues(alpha: 0.1),
+              ),
+            ),
+      ),
     );
   }
 }
