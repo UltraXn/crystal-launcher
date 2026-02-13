@@ -27,6 +27,8 @@
   - [ ] **Web Server**: Endpoint para ingesta de logs y creación automática de tickets.
   - [ ] **Análisis**: Parsing automático de excepciones comunes (OOM, Mod Conflicts).
   - [ ] **Analytics**: Implementación de DuckDB para análisis estadístico de fallos.
+- [ ] **Actualización de PFP (Launcher)**:
+  - [ ] Implementar cambio de foto de perfil (PFP) directamente desde el launcher sincronizado con Supabase.
 
 ---
 

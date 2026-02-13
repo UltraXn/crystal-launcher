@@ -9,6 +9,11 @@
 
 - [ ] Verificar consistencia de `task.md` vs `docs/roadmap/TODO.md`
 - [ ] **Restauración de Tests Unitarios**: Reemplazar `smoke.test.ts` con tests reales migrados de las versiones anteriores.
+- [x] Persistent Navigation Refactor
+  - [x] Convert `MainLayout` to a Shell/Navigator structure
+  - [x] Update `AuthWrapper` to return the ShellLayout
+  - [x] Adjust `HomePage`, `SettingsPage`, and `ProfileSelectionPage` for nested layout
+  - [x] Verify sidebar persistence and state management
 
 ## ✅ Completado
 
