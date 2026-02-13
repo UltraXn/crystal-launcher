@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+// import 'package:flutter_animate/flutter_animate.dart'; // Removed
 import '../widgets/window_controls.dart';
 import '../services/session_service.dart';
 import '../services/update_service.dart';
@@ -210,16 +210,18 @@ class _MainLayoutState extends State<MainLayout> {
                   ),
                 ),
                 Expanded(
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: [
-                      _buildPage(0, const HomePage()),
-                      _buildPage(1, const ModManagerPage()),
-                      _buildPage(2, const ProfileSelectionPage()),
-                      _buildPage(3, const SettingsPage()),
-                      _buildPage(4, const ProfilePage()),
-                      _buildPage(5, const AdminDashboardPage()),
-                    ],
+                  child: Builder(
+                    builder: (context) {
+                      switch (_selectedIndex) {
+                        case 0: return const HomePage();
+                        case 1: return const ModManagerPage();
+                        case 2: return const ProfileSelectionPage();
+                        case 3: return const SettingsPage();
+                        case 4: return const ProfilePage();
+                        case 5: return const AdminDashboardPage();
+                        default: return const HomePage();
+                      }
+                    },
                   ),
                 ),
               ],
@@ -245,11 +247,6 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  Widget _buildPage(int index, Widget page) {
-    return page
-        .animate(target: _selectedIndex == index ? 1 : 0)
-        .fadeIn(duration: 250.ms, curve: Curves.easeOut);
-  }
 }
 
 class _SidebarButton extends StatelessWidget {
@@ -298,10 +295,7 @@ class _SidebarItem extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             )
           : null,
-      child: Icon(icon, color: color)
-          .animate(target: isActive ? 1 : 0)
-          .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 150.ms, curve: Curves.easeOutBack)
-          .tint(color: color, duration: 150.ms),
+      child: Icon(icon, color: color), // Removed animate() to fix crash
     );
   }
 }

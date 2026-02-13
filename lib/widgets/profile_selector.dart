@@ -26,10 +26,12 @@ class _ProfileSelectorState extends State<ProfileSelector> {
     final profiles = await DatabaseService().getProfiles();
     final settings = await DatabaseService().getSettings();
 
-    setState(() {
-      _profiles = profiles;
-      _selectedId = settings.selectedProfileId;
-    });
+    if (mounted) {
+      setState(() {
+        _profiles = profiles;
+        _selectedId = settings.selectedProfileId;
+      });
+    }
 
     if (_profiles.isNotEmpty && _selectedId == null) {
       // Auto-select first if none selected

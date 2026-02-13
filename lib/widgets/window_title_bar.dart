@@ -88,7 +88,7 @@ class _WindowButtonState extends State<_WindowButton> {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: widget.onTap,
-      onHover: (value) => setState(() => _isHovered = value),
+      onHover: (value) => WidgetsBinding.instance.addPostFrameCallback((_) { if(mounted) setState(() => _isHovered = value); }),
       child: Container(
         width: 48,
         height: 32,

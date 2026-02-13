@@ -29,11 +29,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void _onSessionChanged() {
     final nowLoggedIn = SessionService().isLoggedIn;
     if (nowLoggedIn != _wasLoggedIn) {
-      if (mounted) {
-        setState(() {
-          _wasLoggedIn = nowLoggedIn;
-        });
-      }
+      // Schedule update to avoid "setState during build" errors
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _wasLoggedIn = nowLoggedIn;
+          });
+        }
+      });
     }
   }
 

@@ -62,8 +62,8 @@ class _WindowButtonState extends State<_WindowButton> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovering = true),
-      onExit: (_) => setState(() => _isHovering = false),
+      onEnter: (_) => WidgetsBinding.instance.addPostFrameCallback((_) { if(mounted) setState(() => _isHovering = true); }),
+      onExit: (_) => WidgetsBinding.instance.addPostFrameCallback((_) { if(mounted) setState(() => _isHovering = false); }),
       child: GestureDetector(
         onTap: widget.onPressed,
         child: Container(

@@ -149,13 +149,15 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     try {
       final settings = await DatabaseService().getSettings();
-      setState(() {
-        _minRam = settings.minRam.toDouble();
-        _maxRam = settings.maxRam.toDouble();
-        _javaPathController.text = settings.javaPath ?? "";
-        _heightController.text = settings.height.toString();
-        _fullscreen = settings.fullscreen;
-      });
+      if (mounted) {
+        setState(() {
+          _minRam = settings.minRam.toDouble();
+          _maxRam = settings.maxRam.toDouble();
+          _javaPathController.text = settings.javaPath ?? "";
+          _heightController.text = settings.height.toString();
+          _fullscreen = settings.fullscreen;
+        });
+      }
     } catch (e) {
       logService.log("Error loading settings", error: e, level: Level.error);
     } finally {

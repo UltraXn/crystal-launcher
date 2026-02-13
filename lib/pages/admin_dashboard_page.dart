@@ -28,6 +28,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   // 2FA State
   bool _isLoadingAuth = true;
   bool _isVerified = false;
+  bool _accessDenied = false;
 
   @override
   void initState() {
@@ -40,7 +41,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     
     if (session == null) {
       // Should not happen as route is protected, but safe fallback
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) setState(() => _accessDenied = true);
       return;
     }
 
@@ -59,7 +60,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     // No adminToken - check if we need to prompt for 2FA
     if (session.accessToken == null) {
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) setState(() => _accessDenied = true);
       return;
     }
 
@@ -68,7 +69,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
     if (!isEnabled) {
       // If 2FA is not enabled, we treat it as verified (or warn them)
-      // For higher security, we might force them to enable it, but for now allow access.
       if (mounted) {
         setState(() {
           _isVerified = true;
@@ -101,8 +101,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               // Verification Success
               if (mounted) {
                 setState(() => _isVerified = true);
-                if (!context.mounted) return false;
-                Navigator.of(context).pop(); // Close dialog
+                if (context.mounted) Navigator.of(context).pop(); // Close dialog
               }
               return true;
             }
@@ -110,7 +109,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
           },
           onCancel: () {
             Navigator.of(context).pop(); // Close dialog
-            Navigator.of(context).pop(); // Go back from Admin Page
+            // Instead of popping page, show access denied or return to home?
+            // Since we are in a tab view, we can't "pop", we should probably redirect
+            // via a callback or just show "Access Denied" state.
+             if (mounted) setState(() => _accessDenied = true);
           },
         ),
       ),
@@ -191,6 +193,24 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       return const Scaffold(
         backgroundColor: AppTheme.background,
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_accessDenied) {
+      return const Scaffold(
+        backgroundColor: AppTheme.background,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.lock_outline, size: 48, color: Colors.white54),
+              SizedBox(height: 16),
+              Text("Acceso Denegado", style: TextStyle(color: Colors.white, fontSize: 18)),
+              SizedBox(height: 8),
+              Text("Selecciona otra opción en el menú.", style: TextStyle(color: Colors.white54)),
+            ],
+          ),
+        ),
       );
     }
 

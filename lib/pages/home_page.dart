@@ -202,12 +202,6 @@ class _HomePageState extends State<HomePage> {
                     flex: 1,
                     child: Container(
                       height: 450,
-                      decoration: BoxDecoration(
-                        color: Colors.black26,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white12),
-                      ),
-                      // DIAGNOSIS: Commenting out WebView-based widget to isolate white screen
                       child: const SkinViewerWidget(),
                     ),
                   ),

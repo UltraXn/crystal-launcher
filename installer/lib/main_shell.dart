@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:window_manager/window_manager.dart';
 import 'services/installation_service.dart';
 
@@ -13,7 +13,7 @@ class CrystalTidesSMPInstaller extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        textTheme: GoogleFonts.outfitTextTheme(ThemeData.dark().textTheme),
+        // textTheme: TextStyleTextTheme(ThemeData.dark().textTheme),
       ),
       home: const InstallerHome(),
     );
@@ -277,7 +277,7 @@ class _InstallerHomeState extends State<InstallerHome> {
             SnackBar(
               content: Text(
                 errorMsg,
-                style: GoogleFonts.outfit(color: Colors.white),
+                style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.redAccent,
               behavior: SnackBarBehavior.floating,
@@ -365,7 +365,7 @@ class _InstallerHomeState extends State<InstallerHome> {
         children: [
           Text(
             title,
-            style: GoogleFonts.outfit(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -376,7 +376,7 @@ class _InstallerHomeState extends State<InstallerHome> {
             child: SingleChildScrollView(
               child: Text(
                 content,
-                style: GoogleFonts.outfit(
+                style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
                   height: 1.6,
@@ -428,7 +428,7 @@ class _InstallerHomeState extends State<InstallerHome> {
             const SizedBox(width: 12),
             Text(
               t('header'),
-              style: GoogleFonts.outfit(
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1,
@@ -485,7 +485,7 @@ class _InstallerHomeState extends State<InstallerHome> {
       children: [
         Text(
           t('welcome'),
-          style: GoogleFonts.outfit(
+          style: const TextStyle(
             fontSize: 20,
             color: Colors.white30,
             fontWeight: FontWeight.w300,
@@ -498,19 +498,19 @@ class _InstallerHomeState extends State<InstallerHome> {
           child: Image.asset('assets/images/logo.png', width: 130, height: 130),
         ),
         const SizedBox(height: 30),
-        Text(
+        const Text(
           "CrystalTidesSMP Launcher",
           textAlign: TextAlign.center,
-          style: GoogleFonts.outfit(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: 2,
           ),
         ),
-        Text(
+        const Text(
           "INSTALLER",
-          style: GoogleFonts.outfit(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w300,
             color: Colors.white30,
@@ -536,7 +536,7 @@ class _InstallerHomeState extends State<InstallerHome> {
         children: [
           Text(
             t('destination'),
-            style: GoogleFonts.outfit(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w500,
               color: Colors.white,
@@ -606,7 +606,7 @@ class _InstallerHomeState extends State<InstallerHome> {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.outfit(color: Colors.white24, fontSize: 12),
+              style: const TextStyle(color: Colors.white24, fontSize: 12),
               children: [
                 TextSpan(text: t('terms_pre')),
                 WidgetSpan(
@@ -649,7 +649,7 @@ class _InstallerHomeState extends State<InstallerHome> {
       children: [
         Text(
           t('configuring'),
-          style: GoogleFonts.outfit(
+          style: const TextStyle(
             fontSize: 22,
             color: Colors.white,
             fontWeight: FontWeight.w400,
@@ -673,7 +673,7 @@ class _InstallerHomeState extends State<InstallerHome> {
             children: [
               Text(
                 t(_statusKey).toUpperCase(),
-                style: GoogleFonts.outfit(
+                style: const TextStyle(
                   color: Colors.white24,
                   fontSize: 10,
                   letterSpacing: 2,
@@ -683,8 +683,8 @@ class _InstallerHomeState extends State<InstallerHome> {
               const SizedBox(height: 15),
               Text(
                 "${(_progress * 100).toInt()}%",
-                style: GoogleFonts.outfit(
-                  color: const Color(0xFF3498DB),
+                style: const TextStyle(
+                  color: Color(0xFF3498DB),
                   fontSize: 24,
                   fontWeight: FontWeight.w200,
                 ),
@@ -714,7 +714,7 @@ class _InstallerHomeState extends State<InstallerHome> {
         const SizedBox(height: 40),
         Text(
           t('ready'),
-          style: GoogleFonts.outfit(
+          style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w500,
             color: Colors.white,
@@ -723,7 +723,7 @@ class _InstallerHomeState extends State<InstallerHome> {
         const SizedBox(height: 12),
         Text(
           t('finish_sub'),
-          style: GoogleFonts.outfit(color: Colors.white24, fontSize: 14),
+          style: const TextStyle(color: Colors.white24, fontSize: 14),
         ),
       ],
     );
@@ -820,7 +820,8 @@ class _InstallerHomeState extends State<InstallerHome> {
         ),
         child: Text(
           t(labelKey),
-          style: GoogleFonts.outfit(
+          style: TextStyle(
+            fontFamily: 'Outfit',
             fontWeight: FontWeight.w700,
             fontSize: 13,
             letterSpacing: 2,

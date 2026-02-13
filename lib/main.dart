@@ -41,7 +41,11 @@ void main(List<String> args) async {
   // 0.2 Global Error Sentinel
   PlatformDispatcher.instance.onError = (error, stack) {
     logService.log("🚨 UNCAUGHT ASYNC ERROR", level: Level.error, error: error, stackTrace: stack);
-    initializationError.value = "Ocurrió un error inesperado: $error\nConsulta los registros para más detalles.";
+    
+    // Schedule UI update to avoid "setState during build"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initializationError.value = "Ocurrió un error inesperado: $error\nConsulta los registros para más detalles.";
+    });
     return true; // Mark as handled
   };
 
@@ -50,27 +54,33 @@ void main(List<String> args) async {
     
     // Mostramos el error en la UI para diagnóstico
     final errorStr = details.exception.toString();
-    if (initializationError.value == null || !initializationError.value!.contains(errorStr)) {
-      initializationError.value = "Error de Renderizado:\n$errorStr\n\nConsulta los registros para más detalles.";
-    }
+    
+    // Schedule UI update to avoid "setState during build"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (initializationError.value == null || !initializationError.value!.contains(errorStr)) {
+        initializationError.value = "Error de Renderizado:\n$errorStr\n\nConsulta los registros para más detalles.";
+      }
+    });
   };
 
   // 1. Window Manager
+  // 1. Window Manager
   await windowManager.ensureInitialized();
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1280, 720),
-    center: true,
-    backgroundColor: Colors.black,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
-    title: "CTLauncher",
-  );
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+  // WindowOptions removed (unused)
+  
+  // Force window show explicitly to avoid hanging
+  try {
+    await windowManager.setAsFrameless(); // Ensure frameless text/icon
     await windowManager.setIcon('assets/images/app_icon.png');
-    await windowManager.show();
-    await windowManager.focus();
-  });
-  logService.log("🪟 Window Manager Ready");
+    await windowManager.setSize(const Size(1280, 720));
+    await windowManager.center();
+  } catch (e) {
+    logService.log("⚠️ Minor window setup error: $e", level: Level.warning);
+  }
+  
+  await windowManager.show();
+  await windowManager.focus();
+  logService.log("🪟 Window Manager Ready (Forced Show)");
 
   // 2. Load Env
   try {
