@@ -103,6 +103,9 @@ jobs:
           if ($signtool) {
             & $signtool.FullName sign /f $certPath /p "CrystalPass123" /fd SHA256 /t http://timestamp.digicert.com /q "CTSMP_Installer.exe"
           }
+          $hash = (Get-FileHash -Path "CTSMP_Installer.exe" -Algorithm SHA256).Hash.ToLower()
+          echo "INSTALLER_HASH=$hash" >> $env:GITHUB_ENV
+          Write-Host ">>> INSTALLER SHA-256: $hash"
 
       # --- PHASE 5: RELEASE ---
       - name: Create Release

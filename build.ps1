@@ -36,6 +36,16 @@ if ($Clean) { $installerArgs += "-Clean" }
 
 $sw.Stop()
 $elapsed = $sw.Elapsed.ToString()
+
+# Calculate Hash for Integrity verification
+Write-Phase "FINAL STEPS"
+$installerFile = "$launcherRoot\CTSMP_Installer.exe"
+if (Test-Path $installerFile) {
+    Write-Host "Calculating SHA-256 hash..." -ForegroundColor Cyan
+    $hash = (Get-FileHash -Path $installerFile -Algorithm SHA256).Hash.ToLower()
+    Write-Host ">>> SHA-256: $hash" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
 Write-Host " FULL BUILD COMPLETED in $elapsed" -ForegroundColor Green
