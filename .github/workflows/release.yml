@@ -59,7 +59,7 @@ jobs:
           flutter build windows --release
           $unDist = "build/windows/x64/runner/Release"
           Copy-Item "../native/target/release/crystal_native.dll" "$unDist/installer_native.dll" -Force
-          Rename-Item "$unDist/uninstaller.exe" "crystal_uninstaller.exe" -Force
+          # Note: The exe is already named crystal_uninstaller.exe because of pubspec.yaml name
 
       - name: Build Uninstaller Bootstrapper (Rust)
         run: |
