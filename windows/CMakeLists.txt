@@ -87,13 +87,13 @@ if(PLUGIN_BUNDLED_LIBRARIES)
     COMPONENT Runtime)
 endif()
 
-# Install CrystalNative.dll (R2 Sync System)
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../native/target/release/CrystalNative.dll")
-  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../native/target/release/CrystalNative.dll"
+# Install crystal_native.dll (R2 Sync System)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../native/target/release/crystal_native.dll")
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../native/target/release/crystal_native.dll"
     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 else()
-  message(WARNING "CrystalNative.dll not found at ${CMAKE_CURRENT_SOURCE_DIR}/../native/target/release/CrystalNative.dll. Native R2 sync will not be available.")
+  message(WARNING "crystal_native.dll not found at ${CMAKE_CURRENT_SOURCE_DIR}/../native/target/release/crystal_native.dll. Native R2 sync will not be available.")
 endif()
 
 # Copy the native assets provided by the build.dart from all packages.
