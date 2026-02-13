@@ -12,10 +12,10 @@ param(
 $ErrorActionPreference = "Stop"
 
 # --- CONFIGURATION ---
-$launcherRoot = "C:\Users\nacho\Desktop\Portafolio\crystaltides\apps\launcher"
+$launcherRoot = $PSScriptRoot
 $nativeRoot = "$launcherRoot\native"
-$env:Path += ";C:\Users\nacho\Desktop\Portafolio\tools\flutter\bin"
-$tempRoot = "C:\Users\nacho\.crystaltides_build_v2"
+# $env:Path += ";C:\Users\nacho\Desktop\Portafolio\tools\flutter\bin" # Rely on PATH or CI env
+$tempRoot = "$env:TEMP\.crystaltides_build_v2"
 $tempLauncher = "$tempRoot\launcher"
 $tempNative = "$tempRoot\native"
 
@@ -34,7 +34,7 @@ New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
 # ==============================================================================
 # PHASE 1: Build Native DLL (Rust core library)
 # ==============================================================================
-Write-Step "Building Core Rust Library (CrystalNative.dll)..."
+Write-Step "Building Core Rust Library (crystal_native.dll)..."
 New-Item -ItemType Directory -Force -Path $tempNative | Out-Null
 robocopy "$nativeRoot" "$tempNative" /MIR /XD "target" > $null
 if ($LASTEXITCODE -ge 8) { throw "Robocopy (Native Core) failed with code $LASTEXITCODE" }
@@ -43,7 +43,7 @@ Set-Location $tempNative
 $env:CARGO_TARGET_DIR = "$tempRoot\cargo_target_core"
 cargo build --release --lib
 if (-not $?) { throw "Core Lib Build Failed" }
-$nativeDll = "$env:CARGO_TARGET_DIR\release\CrystalNative.dll"
+$nativeDll = "$env:CARGO_TARGET_DIR\release\crystal_native.dll"
 
 # ==============================================================================
 # PHASE 2: Build Main Launcher (Flutter)
@@ -54,7 +54,7 @@ New-Item -ItemType Directory -Force -Path $tempLauncher | Out-Null
 robocopy "$launcherRoot" "$tempLauncher" /MIR /XD "build" "ephemeral" ".dart_tool" "pubspec.lock" "installer" "bootstrapper" "native" "scripts" "uninstaller" "uninstaller_bootstrapper" > $null
 if ($LASTEXITCODE -ge 8) { throw "Robocopy failed with code $LASTEXITCODE" }
 
-# Place CrystalNative.dll where CMake expects it
+# Place crystal_native.dll where CMake expects it
 $nativeDllDest = "$tempLauncher\native\target\release"
 if (!(Test-Path $nativeDllDest)) { New-Item -ItemType Directory -Force -Path $nativeDllDest | Out-Null }
 Copy-Item $nativeDll "$nativeDllDest\crystal_native.dll" -Force

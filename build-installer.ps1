@@ -14,12 +14,13 @@ param(
 $ErrorActionPreference = "Stop"
 
 # --- CONFIGURATION ---
-$launcherRoot = "C:\Users\nacho\Desktop\Portafolio\crystaltides\apps\launcher"
+# --- CONFIGURATION ---
+$launcherRoot = $PSScriptRoot
 $installerRoot = "$launcherRoot\installer"
 $bootstrapperRoot = "$launcherRoot\bootstrapper"
 $nativeRoot = "$launcherRoot\native"
-$env:Path += ";C:\Users\nacho\Desktop\Portafolio\tools\flutter\bin"
-$tempRoot = "C:\Users\nacho\.crystaltides_build_v2"
+# $env:Path += ";C:\Users\nacho\Desktop\Portafolio\tools\flutter\bin"
+$tempRoot = "$env:TEMP\.crystaltides_build_v2"
 $tempLauncher = "$tempRoot\launcher"
 $tempInstaller = "$tempRoot\installer"
 $tempBootstrapper = "$tempRoot\bootstrapper"

@@ -1,7 +1,7 @@
 # Central Build Orchestrator
 param([switch]$Clean)
 $ErrorActionPreference = "Stop"
-$launcherRoot = "C:\Users\nacho\Desktop\Portafolio\crystaltides\apps\launcher"
+$launcherRoot = $PSScriptRoot
 
 function Write-Phase($msg) {
     Write-Host ""
@@ -12,7 +12,7 @@ function Write-Phase($msg) {
 
 if ($Clean) {
     Write-Host ">>> FULL CLEAN: Removing ALL build artifacts..." -ForegroundColor Yellow
-    $tempRoot = "C:\Users\nacho\.crystaltides_build_v2"
+    $tempRoot = "$env:TEMP\.crystaltides_build_v2"
     if (Test-Path $tempRoot) { Remove-Item $tempRoot -Recurse -Force -ErrorAction SilentlyContinue }
     Remove-Item "$launcherRoot\CTSMP_Installer.exe" -Force -ErrorAction SilentlyContinue
 }

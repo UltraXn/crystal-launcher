@@ -12,12 +12,12 @@ param(
 $ErrorActionPreference = "Stop"
 
 # --- CONFIGURATION ---
-$launcherRoot = "C:\Users\nacho\Desktop\Portafolio\crystaltides\apps\launcher"
+$launcherRoot = $PSScriptRoot
 $uninstallerRoot = "$launcherRoot\uninstaller"
 $uninstallerBootRoot = "$launcherRoot\uninstaller_bootstrapper"
 $nativeRoot = "$launcherRoot\native"
-$env:Path += ";C:\Users\nacho\Desktop\Portafolio\tools\flutter\bin"
-$tempRoot = "C:\Users\nacho\.crystaltides_build_v2"
+# $env:Path += ";C:\Users\nacho\Desktop\Portafolio\tools\flutter\bin"
+$tempRoot = "$env:TEMP\.crystaltides_build_v2"
 $tempNative = "$tempRoot\native"
 $tempUninstaller = "$tempRoot\uninstaller"
 $tempUninstallerBoot = "$tempRoot\uninstaller_boot"

@@ -6,11 +6,18 @@ use std::io;
 
 use std::process::Command;
 
+use windows::core::PCWSTR;
+use windows::Win32::UI::WindowsAndMessaging::{MessageBoxW, MB_OK, MB_ICONERROR};
+
 fn main() {
     if let Err(e) = run() {
-        // En un entorno de GUI, podríamos usar un Message Box, pero por ahora fallamos silenciosamente 
-        // o dejamos que el sistema operativo maneje el pánico. 
-        // Para debugguear errores críticos, se puede usar el log de eventos o habilitar la consola.
+        let title: Vec<u16> = "CrystalTides Bootstrapper Error\0".encode_utf16().collect();
+        let message = format!("CRITICAL ERROR:\n{}\n\nPlease contact support.", e);
+        let message_wide: Vec<u16> = message.encode_utf16().chain(std::iter::once(0)).collect();
+
+        unsafe {
+            MessageBoxW(None, PCWSTR(message_wide.as_ptr()), PCWSTR(title.as_ptr()), MB_OK | MB_ICONERROR);
+        }
         eprintln!("CRITICAL ERROR: {}", e);
     }
 }

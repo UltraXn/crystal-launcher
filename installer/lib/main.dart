@@ -16,7 +16,7 @@ void main() async {
     minimumSize: Size(700, 500),
     maximumSize: Size(700, 500),
     center: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: const Color(0xFF1E1E1E),
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
     windowButtonVisibility: false,
@@ -26,7 +26,7 @@ void main() async {
     await windowManager.setAsFrameless();
     await windowManager.setResizable(false);
     await windowManager.setHasShadow(false);
-    await windowManager.setBackgroundColor(Colors.transparent);
+    await windowManager.setBackgroundColor(const Color(0xFF1E1E1E));
     await windowManager.setIcon('assets/images/app_icon.png');
     await windowManager.show();
     await windowManager.focus();
