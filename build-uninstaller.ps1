@@ -37,7 +37,7 @@ New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
 # ==============================================================================
 # PHASE 1: Build Native DLL (needed by uninstaller for FFI)
 # ==============================================================================
-Write-Step "Building Core Rust Library (CrystalNative.dll)..."
+Write-Step "Building Core Rust Library (crystal_native.dll)..."
 New-Item -ItemType Directory -Force -Path $tempNative | Out-Null
 robocopy "$nativeRoot" "$tempNative" /MIR /XD "target" > $null
 if ($LASTEXITCODE -ge 8) { throw "Robocopy (Native Core) failed with code $LASTEXITCODE" }
@@ -46,7 +46,7 @@ Set-Location $tempNative
 $env:CARGO_TARGET_DIR = "$tempRoot\cargo_target_core"
 cargo build --release --lib
 if (-not $?) { throw "Core Lib Build Failed" }
-$nativeDll = "$env:CARGO_TARGET_DIR\release\CrystalNative.dll"
+$nativeDll = "$env:CARGO_TARGET_DIR\release\crystal_native.dll"
 
 # ==============================================================================
 # PHASE 2: Build Uninstaller Flutter UI

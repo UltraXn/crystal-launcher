@@ -68,16 +68,16 @@ class NativeR2Service {
       // Basic check: can we find our functions?
       lib.lookup('upload_mods_parallel');
       lib.lookup('download_mods_parallel');
-      _logService.log('✅ CrystalNative.dll verified at: $path', category: 'RUST');
+      _logService.log('✅ crystal_native.dll verified at: $path', category: 'RUST');
     } catch (e) {
-      _logService.log('❌ Error verifying CrystalNative.dll: $e', level: Level.error, category: 'RUST');
+      _logService.log('❌ Error verifying crystal_native.dll: $e', level: Level.error, category: 'RUST');
       // We don't throw here to avoid crashing the whole app, 
       // but the logs will clearly show the problem.
     }
   }
 
   static String _resolveDllPath() {
-    const dllName = 'CrystalNative.dll';
+    const dllName = 'crystal_native.dll';
     final exeDir = p.dirname(Platform.resolvedExecutable);
     
     final candidates = [
@@ -152,7 +152,7 @@ class NativeR2Service {
     }
 
     if (result == null) {
-      throw Exception('Rust upload isolate exited unexpectedly. Check if CrystalNative.dll is missing.');
+      throw Exception('Rust upload isolate exited unexpectedly. Check if crystal_native.dll is missing.');
     } else if (result != 0) {
       throw Exception('Rust upload failed with code: $result');
     }
@@ -217,7 +217,7 @@ class NativeR2Service {
     }
 
     if (result == null) {
-      throw Exception('Rust download isolate exited unexpectedly. Check if CrystalNative.dll is missing.');
+      throw Exception('Rust download isolate exited unexpectedly. Check if crystal_native.dll is missing.');
     } else if (result != 0) {
       throw Exception('Rust download failed with code: $result');
     }
