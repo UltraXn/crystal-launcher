@@ -34,17 +34,18 @@ jobs:
 
       - name: Prepare Native DLL for Flutter
         run: |
-          $dllSource = "native/target/release/CrystalNative.dll"
+          $dllSource = "native/target/release/crystal_native.dll"
           # Target for Main Launcher
           New-Item -ItemType Directory -Force -Path "windows/runner/native"
-          Copy-Item $dllSource "windows/runner/native/CrystalNative.dll" -Force
+          Copy-Item $dllSource "windows/runner/native/crystal_native.dll" -Force
           # Target for Installer (CMake expectations)
           New-Item -ItemType Directory -Force -Path "installer/native/target/release"
-          Copy-Item $dllSource "installer/native/target/release/CrystalNative.dll" -Force
+          Copy-Item $dllSource "installer/native/target/release/crystal_native.dll" -Force
 
       # --- PHASE 1: BUILD MAIN LAUNCHER ---
       - name: Build Main Launcher (Flutter)
         run: |
+          if (-not (Test-Path ".env")) { New-Item -Path ".env" -ItemType File -Value "DUMMY=true" }
           flutter build windows --release
           $gameDist = "build/windows/x64/runner/Release"
           Rename-Item "$gameDist/launcher.exe" "crystal_launcher.exe" -Force
@@ -54,6 +55,7 @@ jobs:
       - name: Build Uninstaller UI (Flutter)
         working-directory: uninstaller
         run: |
+          if (-not (Test-Path ".env")) { New-Item -Path ".env" -ItemType File -Value "DUMMY=true" }
           flutter build windows --release
           $unDist = "build/windows/x64/runner/Release"
           Copy-Item "../native/target/release/crystal_native.dll" "$unDist/installer_native.dll" -Force
@@ -78,7 +80,7 @@ jobs:
           cd installer
           flutter build windows --release
           $instDist = "build/windows/x64/runner/Release"
-          Copy-Item "../native/target/release/CrystalNative.dll" "$instDist/installer_native.dll" -Force
+          Copy-Item "../native/target/release/crystal_native.dll" "$instDist/installer_native.dll" -Force
 
       - name: Build Final Bootstrapper (Rust)
         run: |

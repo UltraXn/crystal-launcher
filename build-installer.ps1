@@ -29,7 +29,7 @@ function Write-Step { param([string]$msg) Write-Host "`n[STEP] $msg" -Foreground
 # --- VALIDATE PREREQUISITES ---
 $gameDistDir = "$tempLauncher\build\windows\x64\runner\Release"
 $finalUninstallerExe = "$tempRoot\cargo_target_unboot\release\crystal_uninstaller_boot.exe"
-$nativeDll = "$tempRoot\cargo_target_core\release\CrystalNative.dll"
+$nativeDll = "$tempRoot\cargo_target_core\release\crystal_native.dll"
 
 if (!(Test-Path $gameDistDir)) {
     throw "Launcher not built yet! Run .\build-launcher.ps1 first."
