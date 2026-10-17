@@ -249,8 +249,10 @@ fn read_registry_string_value(hkey: HKEY, value_name: &str) -> Option<String> {
         }
 
         let utf16_data: Vec<u16> = data[..data_len as usize]
-            .chunks_exact(2)
-            .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|chunk| u16::from_le_bytes(*chunk))
             .take_while(|code_unit| *code_unit != 0)
             .collect();
 
